@@ -14,11 +14,11 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-1. Summarize proteome BUSCO completeness at both taxon-specific level, and compared to Eukaryota ([`BUSCO`](https://busco.ezlab.org/))
-2. Determine All-v-All sequence similarity using Diamond Ultra-sensitive ([`Diamond`](https://github.com/bbuchfink/diamond))
+1. Summarize proteome [`BUSCO`](https://busco.ezlab.org/) completeness at both taxon-specific level, and compared to Eukaryota
+2. Determine All-v-All sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) ultra-sensitive
 3. Cluster UniProt sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified inflation score
-4. Summarization and quantification of orthogroup inference performance using the Quest for Orthologs ([`QfO`](https://questfororthologs.org/) benchmarking service (i.e. ontology conservations, clustering of known orthologs, etc)
-5. Repeat step three (clusting into orthogroups) for all species under the optimal inflation parameter for the dataset.
+4. Summarization and quantification of orthogroup inference performance using the [`Quest for Orthologs`](https://questfororthologs.org/) benchmarking service
+5. Repeat step three (clusting into orthogroups) for all species under the optimal inflation parameter for the dataset
 6. Infer gene-family multiple sequence alignments with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
 7. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
 8. Infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/)
