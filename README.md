@@ -14,8 +14,16 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+1. Summarize proteome BUSCO completeness at both taxon-specific level, and compared to Eukaryota ([`BUSCO`](https://busco.ezlab.org/))
+2. Determine All-v-All sequence similarity using Diamond Ultra-sensitive ([`Diamond`](https://github.com/bbuchfink/diamond))
+3. Cluster UniProt sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified inflation score
+4. Summarization and quantification of orthogroup inference performance using the Quest for Orthologs ([`QfO`](https://questfororthologs.org/) benchmarking service (i.e. ontology conservations, clustering of known orthologs, etc)
+5. Repeat step three (clusting into orthogroups) for all species under the optimal inflation parameter for the dataset.
+6. Infer gene-family multiple sequence alignments with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
+7. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
+8. Infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/)
+9. Infer the species-tree using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax)
+10. Reconcile gene-trees with the species-tree, inferring patterns of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
 
 ## Quick Start
 
