@@ -23,7 +23,8 @@ On release, automated continuous integration tests run the pipeline on a full-si
 7. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
 8. Infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/)
 9. Infer the species-tree using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax)
-10. Reconcile gene-trees with the species-tree, inferring patterns of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
+10. Reconcile gene-trees with the species-tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
+11. Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 
 ## Quick Start
 
