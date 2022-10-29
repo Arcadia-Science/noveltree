@@ -1,0 +1,10 @@
+species,single_end,filepath,lineage_restriction
+Diacronema_lutheri,,../../data/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta,--auto-lineage-euk
+Entamoeba_histolytica,,../../data/nf-test/final-proteins/Entamoeba_histolytica-test-proteome.fasta,--auto-lineage-euk
+Giardia_intestinalis,,../../data/nf-test/final-proteins/Giardia_intestinalis-test-proteome.fasta,--auto-lineage-euk
+Loa_loa,,../../data/nf-test/final-proteins/Loa_loa-test-proteome.fasta,--auto-lineage-euk
+Lokiarchaeota_archaeon,,../../data/nf-test/final-proteins/Lokiarchaeota_archaeon-test-proteome.fasta,archaea_odb10
+Porphyridium_purpureum,,../../data/nf-test/final-proteins/Porphyridium_purpureum-test-proteome.fasta,--auto-lineage-euk
+Saccharomyces_cerevisiae,,../../data/nf-test/final-proteins/Saccharomyces_cerevisiae-test-proteome.fasta,--auto-lineage-euk
+Thecamonas_trahens,,../../data/nf-test/final-proteins/Thecamonas_trahens-test-proteome.fasta,--auto-lineage-euk
+Toxoplasma_gondii,,../../data/nf-test/final-proteins/Toxoplasma_gondii-test-proteome.fasta,--auto-lineage-euk

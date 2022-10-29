@@ -1,6 +1,6 @@
 process BUSCO {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::busco=5.4.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -10,7 +10,8 @@ process BUSCO {
     input:
     tuple val(meta), path('tmp_input/*')
     val lineage                           // Required:    lineage to check against, "auto" enables --auto-lineage instead
-    //path busco_lineages_path              // Recommended: path to busco lineages - downloads if not set
+    val mode                             // Required:    proteins/transcriptomes
+    path busco_lineages_path              // Recommended: path to busco lineages - downloads if not set
     //path config_file                      // Optional:    busco configuration file
 
     output:
@@ -25,10 +26,11 @@ process BUSCO {
 
     script:
     def args = task.ext.args ?: ''
+    def mode = 'proteins'
     def prefix = task.ext.prefix ?: "${meta.id}-${lineage}"
     //def busco_config = config_file ? "--config $config_file" : ''
     def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
-    //def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
+    def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
     # Check for container variable initialisation script and source it.
@@ -62,8 +64,9 @@ process BUSCO {
 
     busco \\
         --cpu $task.cpus \\
-        --in "\$INPUT_SEQS" \\
+        --in '~/environment/github/phylorthology/assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta' \\
         --out ${prefix}-busco \\
+        --mode $mode \\
         $busco_lineage \\
         $args
 

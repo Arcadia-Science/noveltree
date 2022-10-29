@@ -45,6 +45,7 @@ include { BUSCO                      } from '../modules/nf-core/busco/main'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 proteomeFPathChannel = Channel.fromPath( './assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta', relative: true )
+buscoDatChannel = Channel.fromPath( '~/environment/resources/busco/busco_databases_v5.4.3/lineages/')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,7 +55,8 @@ proteomeFPathChannel = Channel.fromPath( './assets/nf-test/final-proteins/Diacro
 def meta = [ id:'test' ]
 fasta = proteomeFPathChannel.view()
 lineage = 'eukaryota_odb10'
-busco_lineages_path = null
+mode = 'proteins'
+input_seqs = file('~/environment/github/phylorthology/assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta')
 config_file = null
 workflow PHYLORTHOLOGY {
 
@@ -65,8 +67,10 @@ workflow PHYLORTHOLOGY {
     // MODULE: Run BUSCO
     //
     BUSCO (
-        tuple (meta, file('./assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta')),
-        lineage
+        tuple (meta, input_seqs),
+        lineage,
+        mode,
+        buscoDatChannel.view()
     )
   
 
