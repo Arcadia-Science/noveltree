@@ -39,13 +39,13 @@ process BUSCO {
     fi
 
     # If the augustus config directory is not writable, then copy to writeable area
-    #if [ ! -w "\${AUGUSTUS_CONFIG_PATH}" ]; then
-    #    # Create writable tmp directory for augustus
-    #    AUG_CONF_DIR=\$( mktemp -d -p \$PWD )
-    #    cp -r \$AUGUSTUS_CONFIG_PATH/* \$AUG_CONF_DIR
-    #    export AUGUSTUS_CONFIG_PATH=\$AUG_CONF_DIR
-    #    echo "New AUGUSTUS_CONFIG_PATH=\${AUGUSTUS_CONFIG_PATH}"
-    #fi
+    if [ ! -w "\${AUGUSTUS_CONFIG_PATH}" ]; then
+        # Create writable tmp directory for augustus
+        AUG_CONF_DIR=\$( mktemp -d -p \$PWD )
+        cp -r \$AUGUSTUS_CONFIG_PATH/* \$AUG_CONF_DIR
+        export AUGUSTUS_CONFIG_PATH=\$AUG_CONF_DIR
+        echo "New AUGUSTUS_CONFIG_PATH=\${AUGUSTUS_CONFIG_PATH}"
+    fi
 
     # Ensure the input is uncompressed
     INPUT_SEQS=input_seqs
