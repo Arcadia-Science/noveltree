@@ -1,3 +1,10 @@
-sample,fastq_1,fastq_2
-SAMPLE_PAIRED_END,/path/to/fastq/files/AEG588A1_S1_L002_R1_001.fastq.gz,/path/to/fastq/files/AEG588A1_S1_L002_R2_001.fastq.gz
-SAMPLE_SINGLE_END,/path/to/fastq/files/AEG588A4_S4_L003_R1_001.fastq.gz,
+species,file,tax1,tax2
+Diacronema_lutheri,Diacronema_lutheri-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Giardia_intestinalis,Giardia_intestinalis-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Loa_loa,Loa_loa-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Lokiarchaeota_archaeon,Lokiarchaeota_archaeon-test-proteome.fasta,--lineage archaea_odb10,--lineage eukaryota_odb10
+Porphyridium_purpureum,Porphyridium_purpureum-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Saccharomyces_cerevisiae,Saccharomyces_cerevisiae-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Thecamonas_trahens,Thecamonas_trahens-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Toxoplasma_gondii,Toxoplasma_gondii-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10

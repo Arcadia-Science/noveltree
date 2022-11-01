@@ -15,7 +15,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 //for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-//if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,6 +27,12 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 //ch_multiqc_custom_config   = params.multiqc_config ? Channel.fromPath( params.multiqc_config, checkIfExists: true ) : Channel.empty()
 //ch_multiqc_logo            = params.multiqc_logo   ? Channel.fromPath( params.multiqc_logo, checkIfExists: true ) : Channel.empty()
 //ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+
+
+//
+// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
+//
+include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,24 +47,47 @@ include { BUSCO                      } from '../modules/nf-core/busco/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CREATE A CHANNEL SPECIFYING SAMPLE FILEPATHS
+    CREATE CHANNELS: SPECIES NAME, FILE NAME, SHALLOW LINEAGE SPEC, SECOND LINEAGE SPEC
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-proteomeFPathChannel = Channel.fromPath( './assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta', relative: true )
-buscoDatChannel = Channel.fromPath( '~/environment/resources/busco/busco_databases_v5.4.3/lineages/')
+buscoDatChannel = Channel.fromPath( '../resources/busco/busco_databases_v5.4.3/lineages/')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-def meta = [ id:'test' ]
-fasta = proteomeFPathChannel.view()
-lineage = 'eukaryota_odb10'
+//def meta = ch_spp
 mode = 'proteins'
-input_seqs = file('~/environment/github/phylorthology/assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta')
 config_file = null
+
 workflow PHYLORTHOLOGY {
+
+    ch_versions = Channel.empty()
+
+    //
+    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    //
+    INPUT_CHECK (
+        ch_input
+    )
+    .prots
+    .map {
+        meta, fasta ->
+            def meta_clone = meta.clone()
+            meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
+            [ meta_clone, fasta ]
+    }
+    .groupTuple(by: [0])
+    .branch {
+        meta, fasta ->
+            proteomes  : fasta.size() == 1
+                return [ meta, fasta.flatten() ]
+    }
+    .set { ch_fasta }
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
+    ch_fasta.view()
 
     //
     // Read in filenames of samples
@@ -67,8 +96,7 @@ workflow PHYLORTHOLOGY {
     // MODULE: Run BUSCO
     //
     BUSCO (
-        tuple (meta, input_seqs),
-        lineage,
+        ch_fasta,
         mode,
         buscoDatChannel.view()
     )
