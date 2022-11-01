@@ -50,6 +50,7 @@ include { BUSCO                      } from '../modules/nf-core/busco/main'
     CREATE CHANNELS: SPECIES NAME, FILE NAME, SHALLOW LINEAGE SPEC, SECOND LINEAGE SPEC
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// This could probably go in the config file - also not certain it's being used. Seems to still be downloading data?
 buscoDatChannel = Channel.fromPath( '../resources/busco/busco_databases_v5.4.3/lineages/')
 
 /*
@@ -58,8 +59,9 @@ buscoDatChannel = Channel.fromPath( '../resources/busco/busco_databases_v5.4.3/l
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 //def meta = ch_spp
+// This could be put into either the config file or specified via commandline. 
 mode = 'proteins'
-config_file = null
+config_file = null // this is a busco specific config file (external to nextflow)
 
 workflow PHYLORTHOLOGY {
 
