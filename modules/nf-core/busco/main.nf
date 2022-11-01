@@ -31,7 +31,8 @@ process BUSCO {
     def mode = 'proteins'
     def prefix = task.ext.prefix ?: "${meta.id}"
     //def busco_config = config_file ? "--config $config_file" : ''
-    def busco_lineage = "${meta.tax1}"
+    def busco_lineage_shallow = "${meta.tax1}"
+    def busco_lineage_euk = "${meta.tax2}"
     //def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
     """
@@ -52,6 +53,15 @@ process BUSCO {
         echo "New AUGUSTUS_CONFIG_PATH=\${AUGUSTUS_CONFIG_PATH}"
     fi
 
+
+    ############################################################################
+    ############################################################################
+    # All of this input seq stuff, the symlinks they try to generate in the #
+    # tmp_dir that i've overridden - keeps causing problems because the path 
+    # to the file we're trying to make a symlink for is wrong
+    ############################################################################
+    ############################################################################
+    
     # Ensure the input is uncompressed
     #INPUT_SEQS=input_seqs
     #mkdir "\$INPUT_SEQS"
@@ -65,22 +75,23 @@ process BUSCO {
     #done
     #cd ..
 
-    #busco \\
-    #    --cpu $task.cpus \\
-    #    --in ~/environment/github/phylorthology/assets/nf-test/final-proteins/$fasta \\
-    #    --out ${prefix}-busco \\
-    #    --mode $mode \\
-    #    $busco_lineage \\
-    #    $args
-
+    # Here's where my hacky hardcoding path solution pops up
     busco \\
         --cpu $task.cpus \\
-        --in $fasta \\
-        --out ${prefix}-busco \\
+        --in ~/environment/github/phylorthology/assets/nf-test/final-proteins/$fasta \\
+        --out ${prefix}-shallow-busco \\
         --mode $mode \\
-        $busco_lineage \\
+        $busco_lineage_shallow \\
         $args
         
+    busco \\
+        --cpu $task.cpus \\
+        --in ~/environment/github/phylorthology/assets/nf-test/final-proteins/$fasta \\
+        --out ${prefix}-eukaryota-busco \\
+        --mode $mode \\
+        $busco_lineage_euk \\
+        $args
+
     # clean up
     #rm -rf "\$INPUT_SEQS"
 
