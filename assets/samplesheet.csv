@@ -1,10 +1,10 @@
 species,file,tax1,tax2
-Diacronema_lutheri,Diacronema_lutheri-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Giardia_intestinalis,Giardia_intestinalis-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Loa_loa,Loa_loa-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Lokiarchaeota_archaeon,Lokiarchaeota_archaeon-test-proteome.fasta,--lineage archaea_odb10,--lineage eukaryota_odb10
-Porphyridium_purpureum,Porphyridium_purpureum-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Saccharomyces_cerevisiae,Saccharomyces_cerevisiae-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Thecamonas_trahens,Thecamonas_trahens-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
-Toxoplasma_gondii,Toxoplasma_gondii-test-proteome.fasta,--auto-lineage-euk,--lineage eukaryota_odb10
+Diacronema_lutheri,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Diacronema_lutheri-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Entamoeba_histolytica,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Entamoeba_histolytica-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Giardia_intestinalis,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Giardia_intestinalis-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Loa_loa,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Loa_loa-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Lokiarchaeota_archaeon,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Lokiarchaeota_archaeon-test-proteome.fasta,--lineage_dataset archaea_odb10,--lineage_dataset eukaryota_odb10
+Porphyridium_purpureum,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Porphyridium_purpureum-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Saccharomyces_cerevisiae,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Saccharomyces_cerevisiae-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Thecamonas_trahens,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Thecamonas_trahens-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
+Toxoplasma_gondii,/home/ubuntu/environment/github/phylorthology/assets/nf-test/final-proteins/Toxoplasma_gondii-test-proteome.fasta,--auto-lineage-euk,--lineage_dataset eukaryota_odb10
