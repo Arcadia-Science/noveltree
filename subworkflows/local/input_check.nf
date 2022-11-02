@@ -27,6 +27,7 @@ def create_prots_channel(LinkedHashMap row) {
     meta.id   = row.species
     meta.tax1 = row.tax1
     meta.tax2 = row.tax2
+    meta.mode = row.mode
 
     // add path(s) of the proteome file to the meta map
     def prots_meta = []
