@@ -16,6 +16,8 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.mode) { ch_mode = Channel.of(params.mode) } else { exit 1, 'Busco mode not specified!' }
+if (params.busco_lineages_path) { ch_busco_dat = Channel.fromPath(params.busco_lineages_path) } else { exit 1, 'Busco data path not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,7 +53,7 @@ include { BUSCO                      } from '../modules/nf-core/busco/main'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // This could probably go in the config file - also not certain it's being used. Seems to still be downloading data?
-buscoDatChannel = Channel.fromPath( '../resources/busco/busco_databases_v5.4.3/lineages/')
+//buscoDatChannel = Channel.fromPath( '~/environment/resources/busco/busco_databases_v5.4.3/lineages/')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,8 +62,6 @@ buscoDatChannel = Channel.fromPath( '../resources/busco/busco_databases_v5.4.3/l
 */
 //def meta = ch_spp
 // This could be put into either the config file or specified via commandline. 
-mode = 'proteins'
-config_file = null // this is a busco specific config file (external to nextflow)
 
 workflow PHYLORTHOLOGY {
 
@@ -75,21 +75,19 @@ workflow PHYLORTHOLOGY {
     )
     .prots
     .map {
-        meta, fasta ->
+        meta, prots ->
             def meta_clone = meta.clone()
             meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
-            [ meta_clone, fasta ]
+            [ meta_clone, prots ]
     }
     .groupTuple(by: [0])
     .branch {
-        meta, fasta ->
-            proteomes  : fasta.size() == 1
-                return [ meta, fasta.flatten() ]
+        meta, prots ->
+            proteomes  : prots.size() == 1
+                return [ meta, prots.flatten() ]
     }
     .set { ch_fasta }
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
-    ch_fasta.view()
 
     //
     // Read in filenames of samples
@@ -98,11 +96,15 @@ workflow PHYLORTHOLOGY {
     // MODULE: Run BUSCO
     //
     BUSCO (
-        ch_fasta,
-        mode,
-        buscoDatChannel.view()
+        ch_fasta.proteomes,
+        ch_mode,
+        ch_busco_dat
     )
-  
+    //BUSCO (
+    //    ch_fasta,
+    //    mode,
+    //    buscoDatChannel.view()
+    //)
 
     //
     // MODULE: Run FastQC
