@@ -88,7 +88,7 @@ workflow PHYLORTHOLOGY {
     }
     .set { ch_fasta }
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    //ch_fasta.view()
+    ch_fasta.view()
 
 
     //
@@ -98,13 +98,11 @@ workflow PHYLORTHOLOGY {
         ch_busco_dat = Channel.fromPath(params.busco_lineages_path) 
         BUSCO (
             ch_fasta,
-            ch_mode,
             ch_busco_dat
         )
     } else { 
         BUSCO (
             ch_fasta,
-            ch_mode,
             []
         )
     }

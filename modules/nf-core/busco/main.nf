@@ -9,7 +9,6 @@ process BUSCO {
 
     input:
     tuple val(meta), path('tmp_input/*') // path('tmp_input/*')
-    val mode                             // Required:    proteins/transcriptomes
     path busco_lineages_path              // Recommended: path to busco lineages - downloads if not set
     //val lineage                           // Required:    lineage to check against, "auto" enables --auto-lineage instead
     //path config_file                      // Optional:    busco configuration file
@@ -29,7 +28,7 @@ process BUSCO {
 
     // All I want is to be able to save the path leading to it as a variable that I can use in the busco script below. 
     def args = task.ext.args ?: ''
-    def busco_mode = mode.equals('proteins') ? '--mode proteins' : "--mode ${mode}"
+    def busco_mode = "--mode ${meta.mode}"
     def prefix = task.ext.prefix ?: "${meta.id}"
     def busco_lineage_shallow = "${meta.tax1}"
     def busco_lineage_euk = "${meta.tax2}"
