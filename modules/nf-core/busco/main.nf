@@ -8,10 +8,10 @@ process BUSCO {
         'quay.io/biocontainers/busco:5.4.3--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(prots) // path('tmp_input/*')
-    //val lineage                           // Required:    lineage to check against, "auto" enables --auto-lineage instead
+    tuple val(meta), path('tmp_input/*') // path('tmp_input/*')
     val mode                             // Required:    proteins/transcriptomes
     path busco_lineages_path              // Recommended: path to busco lineages - downloads if not set
+    //val lineage                           // Required:    lineage to check against, "auto" enables --auto-lineage instead
     //path config_file                      // Optional:    busco configuration file
 
     output:
@@ -24,11 +24,13 @@ process BUSCO {
     when:
     task.ext.when == null || task.ext.when
 
+    // always gets set as the file itself, excluding the path
     script:
-    def fasta = "${prots}" // always gets set as the file itself, excluding the path
+
     // All I want is to be able to save the path leading to it as a variable that I can use in the busco script below. 
     def args = task.ext.args ?: ''
-    def mode = 'proteins'
+    def busco_mode = mode.equals('proteins') ? '--mode proteins' : "--mode ${mode}"
+    //def mode = 'proteins'
     def prefix = task.ext.prefix ?: "${meta.id}"
     //def busco_config = config_file ? "--config $config_file" : ''
     def busco_lineage_shallow = "${meta.tax1}"
@@ -63,41 +65,34 @@ process BUSCO {
     ############################################################################
     
     # Ensure the input is uncompressed
-    #INPUT_SEQS=input_seqs
-    #mkdir "\$INPUT_SEQS"
-    #cd "\$INPUT_SEQS"
-    #for FASTA in ../tmp_input/*; do
-    #    if [ "\${FASTA##*.}" == 'gz' ]; then
-    #        gzip -cdf "\$FASTA" > \$( basename "\$FASTA" .gz )
-    #    else
-    #        ln -s "\$FASTA" .
-    #    fi
-    #done
-    #cd ..
+    INPUT_SEQS=input_seqs
+    mkdir "\$INPUT_SEQS"
+    cd "\$INPUT_SEQS"
+    for FASTA in ../tmp_input/*; do
+        if [ "\${FASTA##*.}" == 'gz' ]; then
+            gzip -cdf "\$FASTA" > \$( basename "\$FASTA" .gz )
+        else
+            ln -s "\$FASTA" .
+        fi
+    done
+    cd ..
 
     # Here's where my hacky hardcoding path solution pops up
     busco \\
         --cpu $task.cpus \\
-        --in ~/environment/github/phylorthology/assets/nf-test/final-proteins/$fasta \\
+        --in "\$INPUT_SEQS" \\
         --out ${prefix}-shallow-busco \\
-        --mode $mode \\
+        $busco_mode \\
         $busco_lineage_shallow \\
-        $args
-        
-    busco \\
-        --cpu $task.cpus \\
-        --in ~/environment/github/phylorthology/assets/nf-test/final-proteins/$fasta \\
-        --out ${prefix}-eukaryota-busco \\
-        --mode $mode \\
-        $busco_lineage_euk \\
+        $busco_lineage_dir \\
         $args
 
     # clean up
-    #rm -rf "\$INPUT_SEQS"
+    rm -rf "\$INPUT_SEQS"
 
     # Move files to avoid staging/publishing issues
-    #mv ${prefix}-busco/batch_summary.txt ${prefix}-busco.batch_summary.txt
-    #mv ${prefix}-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+    mv ${prefix}-busco/batch_summary.txt ${prefix}-busco.batch_summary.txt
+    mv ${prefix}-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
