@@ -21,16 +21,7 @@ process SAMPLESHEET_CHECK {
     check_samplesheet.py \\
         $samplesheet \\
         samplesheet.valid.csv
-    
-    # Copy (using simlinks) the "good" fasta files to a temporary working directory 
-    #seqs=\$(cut -f2 -d"," samplesheet.valid.csv | tail -n+2)
-    
-    #mkdir -p tmp_input
-    #for seq in \$(echo \$seqs)
-    #do
-    #    ln -s \$seq tmp_input/
-    #done
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

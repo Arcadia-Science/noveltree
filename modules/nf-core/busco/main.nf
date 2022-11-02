@@ -1,6 +1,6 @@
 process BUSCO {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_large'
 
     conda (params.enable_conda ? "bioconda::busco=5.4.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -30,13 +30,13 @@ process BUSCO {
     // All I want is to be able to save the path leading to it as a variable that I can use in the busco script below. 
     def args = task.ext.args ?: ''
     def busco_mode = mode.equals('proteins') ? '--mode proteins' : "--mode ${mode}"
-    //def mode = 'proteins'
     def prefix = task.ext.prefix ?: "${meta.id}"
-    //def busco_config = config_file ? "--config $config_file" : ''
     def busco_lineage_shallow = "${meta.tax1}"
     def busco_lineage_euk = "${meta.tax2}"
-    //def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
+    //def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
+    //def busco_config = config_file ? "--config $config_file" : ''
+    //def mode = 'proteins'
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
     # Check for container variable initialisation script and source it.
@@ -78,12 +78,21 @@ process BUSCO {
     cd ..
 
     # Here's where my hacky hardcoding path solution pops up
+    #busco \\
+    #    --cpu $task.cpus \\
+    #    --in "\$INPUT_SEQS" \\
+    #    --out ${prefix}-shallow-busco \\
+    #    $busco_mode \\
+    #    $busco_lineage_shallow \\
+    #    $busco_lineage_dir \\
+    #    $args
+
     busco \\
         --cpu $task.cpus \\
         --in "\$INPUT_SEQS" \\
-        --out ${prefix}-shallow-busco \\
+        --out ${prefix}-euk-busco \\
         $busco_mode \\
-        $busco_lineage_shallow \\
+        $busco_lineage_euk \\
         $busco_lineage_dir \\
         $args
 
@@ -91,8 +100,11 @@ process BUSCO {
     rm -rf "\$INPUT_SEQS"
 
     # Move files to avoid staging/publishing issues
-    mv ${prefix}-busco/batch_summary.txt ${prefix}-busco.batch_summary.txt
-    mv ${prefix}-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+    #mv ${prefix}-shallow-busco/batch_summary.txt ${prefix}-shallow-busco.batch_summary.txt
+    #mv ${prefix}-shallow-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+
+    mv ${prefix}-euk-busco/batch_summary.txt ${prefix}-euk-busco.batch_summary.txt
+    mv ${prefix}-euk-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -17,7 +17,6 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 if (params.mode) { ch_mode = Channel.of(params.mode) } else { exit 1, 'Busco mode not specified!' }
-if (params.busco_lineages_path) { ch_busco_dat = Channel.fromPath(params.busco_lineages_path) } else { exit 1, 'Busco data path not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,6 +45,7 @@ include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 // MODULE: Installed directly from nf-core/modules
 //
 include { BUSCO                      } from '../modules/nf-core/busco/main'
+include { DIAMOND_MAKEDB             } from '../modules/nf-core/diamond/makedb/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,31 +88,37 @@ workflow PHYLORTHOLOGY {
     }
     .set { ch_fasta }
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    //ch_fasta.view()
+
 
     //
-    // Read in filenames of samples
-    //
-
     // MODULE: Run BUSCO
     //
-    BUSCO (
-        ch_fasta.proteomes,
-        ch_mode,
-        ch_busco_dat
-    )
-    //BUSCO (
-    //    ch_fasta,
-    //    mode,
-    //    buscoDatChannel.view()
+    if (params.busco_lineages_path) { 
+        ch_busco_dat = Channel.fromPath(params.busco_lineages_path) 
+        BUSCO (
+            ch_fasta,
+            ch_mode,
+            ch_busco_dat
+        )
+    } else { 
+        BUSCO (
+            ch_fasta,
+            ch_mode,
+            []
+        )
+    }
+    
+    //
+    // MODULE: Make diamond databases
+    //
+    // need to extract fasta file paths from ch_fasta for input into diamond. 
+    //DIAMOND_MAKEDB (
+    //    ch_fasta
     //)
 
-    //
-    // MODULE: Run FastQC
-    //
-    //FASTQC (
-    //    INPUT_CHECK.out.reads
-    //)
-    //ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    
+
 }
 
 /*
@@ -136,3 +142,4 @@ workflow PHYLORTHOLOGY {
     THE END
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
