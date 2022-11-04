@@ -23,7 +23,7 @@ process DIAMOND_MAKEDB {
     diamond \\
         makedb \\
         --threads $task.cpus \\
-        --in  $fasta \\
+        --in $fasta \\
         -d $fasta \\
         $args
 

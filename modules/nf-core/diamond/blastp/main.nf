@@ -9,7 +9,7 @@ process DIAMOND_BLASTP {
 
     input:
     tuple val(meta), path(fasta)
-    path db
+    each path(db)
     val out_ext
     val blast_columns
 
@@ -46,6 +46,9 @@ process DIAMOND_BLASTP {
     }
     """
     DB=`find -L ./ -name "*.dmnd" | sed 's/.dmnd//'`
+    
+    # Get the species name against which we're querying
+    dbSpp=\$(echo \$DB | sed 's/.fasta//g' | sed 's|.*/||g' | sed "s/-.*//g")
 
     diamond \\
         blastp \\
@@ -54,7 +57,13 @@ process DIAMOND_BLASTP {
         --query $fasta \\
         --outfmt ${outfmt} ${columns} \\
         $args \\
-        --out ${prefix}.${out_ext}
+        --out ${prefix}-v-\$dbSpp.${out_ext}
+    
+    # Compress output
+    #gzip ${prefix}-v-\$dbSpp.${out_ext} > ${prefix}-v-\$dbSpp.tmp 
+    #mv ${prefix}-v-\$dbSpp.tmp ${prefix}-v-\$dbSpp.${out_ext}.gz
+    
+    
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

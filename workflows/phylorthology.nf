@@ -45,6 +45,7 @@ include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 //
 include { BUSCO                      } from '../modules/nf-core/busco/main'
 include { DIAMOND_MAKEDB             } from '../modules/nf-core/diamond/makedb/main'
+include { DIAMOND_BLASTP             } from '../modules/nf-core/diamond/blastp/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,10 +70,12 @@ workflow PHYLORTHOLOGY {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    INPUT_CHECK (
+    ch_prots = INPUT_CHECK (
         ch_input
     )
     .prots
+
+    ch_prots
     .map {
         meta, prots ->
             def meta_clone = meta.clone()
@@ -85,24 +88,60 @@ workflow PHYLORTHOLOGY {
             proteomes  : prots.size() == 1
                 return [ meta, prots.flatten() ]
     }
-    .set { ch_fasta }
+    .set { ch_busco }
+
+    ch_prots
+    .map {
+        meta, prots ->
+            def meta_clone = meta.clone()
+            meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
+            [ meta_clone, prots ]
+    }
+    .groupTuple(by: [0])
+    .branch {
+        meta, prots ->
+            proteomes  : prots.size() == 1
+                return prots.flatten()
+    }
+    .set { ch_diamond }
+    
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    ch_fasta.view()
 
 
     //
     // MODULE: Run BUSCO
+    // Split up into shallow and broad scale runs, since downstream modules
+    // do not use these outputs, so multiple busco runs may be conducted
+    // simultaneously
     //
+    // First at the taxonomically shallow scale
+    //if (params.busco_lineages_path) { 
+    //    ch_busco_dat = file(params.busco_lineages_path)
+    //    BUSCO (
+    //        ch_busco,
+    //        "taxon_specific",
+    //        ch_busco_dat
+    //    )
+    //} else { 
+    //    BUSCO (
+    //        ch_busco,
+    //        "taxon_specific",
+    //        []
+    //    )
+    //}
+    // Then at the broad scale (i.e. eukaryota)
     if (params.busco_lineages_path) { 
-        ch_busco_dat = Channel.fromPath(params.busco_lineages_path) 
+        ch_busco_dat = file(params.busco_lineages_path)
         BUSCO (
-            ch_fasta,
+            ch_busco,
+            "eukaryota",
             ch_busco_dat
         )
     } else { 
         BUSCO (
-            ch_fasta,
-            []
+            ch_busco,
+            "eukaryota",
+           []
         )
     }
     
@@ -110,10 +149,25 @@ workflow PHYLORTHOLOGY {
     // MODULE: Make diamond databases
     //
     // need to extract fasta file paths from ch_fasta for input into diamond. 
-    //DIAMOND_MAKEDB (
-    //    ch_fasta
-    //)
+    ch_dbs_list = DIAMOND_MAKEDB (
+        ch_diamond
+    )
+    .db
+    
+    ch_dbs = ch_dbs_list.mix(ch_dbs_list).collect()
 
+    //
+    // MODULE: All-v-All diamond/blastp
+    //
+    ch_blast = DIAMOND_BLASTP (
+        ch_busco,
+        ch_dbs,
+        "txt",
+        []
+    )
+    .txt
+    
+    
     
 
 }
