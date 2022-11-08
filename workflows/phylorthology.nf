@@ -16,6 +16,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,10 +30,20 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 //ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
 
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT LOCAL MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 //
-// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
+// SUBWORKFLOW
 //
 include { INPUT_CHECK    } from '../subworkflows/local/input_check'
+
+//
+// MODULE
+//
+include { ORTHOFINDER_PREP           } from '../modules/local/orthofinder_prep'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,14 +60,6 @@ include { DIAMOND_BLASTP             } from '../modules/nf-core/diamond/blastp/m
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CREATE CHANNELS: SPECIES NAME, FILE NAME, SHALLOW LINEAGE SPEC, SECOND LINEAGE SPEC
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-// This could probably go in the config file - also not certain it's being used. Seems to still be downloading data?
-//buscoDatChannel = Channel.fromPath( '~/environment/resources/busco/busco_databases_v5.4.3/lineages/')
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -66,6 +69,23 @@ include { DIAMOND_BLASTP             } from '../modules/nf-core/diamond/blastp/m
 workflow PHYLORTHOLOGY {
 
     ch_versions = Channel.empty()
+    //ch_fa = Channel.empty()
+    //ch_dmd = Channel.empty()
+    
+    //
+    // MODULE: Prepare directory structure and fasta files according to 
+    //         OrthoFinder's preferred format for downstream MCL clustering
+    //
+    ORTHOFINDER_PREP (
+        ch_fa_dir
+    )
+    
+    // Fasta files should be redirected into a channel set of filepaths emitted
+    // separately, whereas the diamond databases for each species can be put
+    // into a directory as they are now (as a comma seperated list emitted 
+    // together).
+    ch_fa = ORTHOFINDER_PREP.out.fa.flatten()
+    ch_dmd = ORTHOFINDER_PREP.out.dmd.flatten()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -74,8 +94,6 @@ workflow PHYLORTHOLOGY {
         ch_input
     )
     .prots
-
-    ch_prots
     .map {
         meta, prots ->
             def meta_clone = meta.clone()
@@ -83,31 +101,28 @@ workflow PHYLORTHOLOGY {
             [ meta_clone, prots ]
     }
     .groupTuple(by: [0])
+
+
+    ch_prots
     .branch {
         meta, prots ->
             proteomes  : prots.size() == 1
                 return [ meta, prots.flatten() ]
     }
     .set { ch_busco }
-
-    ch_prots
-    .map {
-        meta, prots ->
-            def meta_clone = meta.clone()
-            meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
-            [ meta_clone, prots ]
-    }
-    .groupTuple(by: [0])
-    .branch {
-        meta, prots ->
-            proteomes  : prots.size() == 1
-                return prots.flatten()
-    }
-    .set { ch_diamond }
+    
+    ch_of_fa = ch_busco.merge(ch_fa)
+    
+    //ch_prots
+    //.branch {
+    //    meta, prots ->
+    //        proteomes  : prots.size() == 1
+    //            return prots.flatten()
+    //}
+    //.set { ch_diamond }
     
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
-
+    
     //
     // MODULE: Run BUSCO
     // Split up into shallow and broad scale runs, since downstream modules
@@ -149,26 +164,24 @@ workflow PHYLORTHOLOGY {
     // MODULE: Make diamond databases
     //
     // need to extract fasta file paths from ch_fasta for input into diamond. 
-    ch_dbs_list = DIAMOND_MAKEDB (
-        ch_diamond
-    )
-    .db
+    //ch_dbs_list = DIAMOND_MAKEDB (
+    //    ch_diamond
+    //)
+    //.db
     
-    ch_dbs = ch_dbs_list.mix(ch_dbs_list).collect()
+    //ch_dbs = ch_dbs_list.mix(ch_dbs_list).collect()
 
     //
     // MODULE: All-v-All diamond/blastp
     //
     ch_blast = DIAMOND_BLASTP (
-        ch_busco,
-        ch_dbs,
+        ch_of_fa,
+        ch_dmd,
         "txt",
         []
     )
     .txt
-    
-    
-    
+
 
 }
 

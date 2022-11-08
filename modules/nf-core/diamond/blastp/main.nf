@@ -8,8 +8,8 @@ process DIAMOND_BLASTP {
         'quay.io/biocontainers/diamond:2.0.15--hb97b32f_0' }"
 
     input:
-    tuple val(meta), path(fasta)
-    each path(db)
+    tuple val(meta), path(fasta), path(of_fasta)
+    each db
     val out_ext
     val blast_columns
 
@@ -28,7 +28,7 @@ process DIAMOND_BLASTP {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    //def prefix = task.ext.prefix ?: "${meta.id}"
     def columns = blast_columns ? "${blast_columns}" : ''
     switch ( out_ext ) {
         case "blast": outfmt = 0; break
@@ -45,24 +45,19 @@ process DIAMOND_BLASTP {
             break
     }
     """
-    DB=`find -L ./ -name "*.dmnd" | sed 's/.dmnd//'`
-    
     # Get the species name against which we're querying
-    dbSpp=\$(echo \$DB | sed 's/.fasta//g' | sed 's|.*/||g' | sed "s/-.*//g")
+    sppQuery=\$(echo $of_fasta | sed "s/Species//g" | sed 's/.fa//g' | sed 's|.*/||g')
+    sbbDB=\$(echo $db | sed "s/diamondDBSpecies//g" | sed 's/.dmnd//g' | sed 's|.*/||g')
 
     diamond \\
         blastp \\
         --threads $task.cpus \\
-        --db \$DB \\
-        --query $fasta \\
+        --db $db \\
+        --query $of_fasta \\
         --outfmt ${outfmt} ${columns} \\
-        $args \\
-        --out ${prefix}-v-\$dbSpp.${out_ext}
-    
-    # Compress output
-    #gzip ${prefix}-v-\$dbSpp.${out_ext} > ${prefix}-v-\$dbSpp.tmp 
-    #mv ${prefix}-v-\$dbSpp.tmp ${prefix}-v-\$dbSpp.${out_ext}.gz
-    
+        --out Blast\${sppQuery}_\${sbbDB}.${out_ext} \\
+        --compress 1 \\
+        $args 
     
 
     cat <<-END_VERSIONS > versions.yml
