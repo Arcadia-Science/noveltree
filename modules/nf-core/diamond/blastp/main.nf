@@ -7,6 +7,12 @@ process DIAMOND_BLASTP {
         'https://depot.galaxyproject.org/singularity/diamond:2.0.15--hb97b32f_0' :
         'quay.io/biocontainers/diamond:2.0.15--hb97b32f_0' }"
 
+    publishDir(
+        path: "${params.outdir}/orthofinder/WorkingDirectory",
+        mode: 'copy',
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    
     input:
     tuple val(meta), path(fasta), path(of_fasta)
     each db
@@ -14,13 +20,13 @@ process DIAMOND_BLASTP {
     val blast_columns
 
     output:
-    tuple val(meta), path('*.blast'), optional: true, emit: blast
-    tuple val(meta), path('*.xml')  , optional: true, emit: xml
-    tuple val(meta), path('*.txt')  , optional: true, emit: txt
-    tuple val(meta), path('*.daa')  , optional: true, emit: daa
-    tuple val(meta), path('*.sam')  , optional: true, emit: sam
-    tuple val(meta), path('*.tsv')  , optional: true, emit: tsv
-    tuple val(meta), path('*.paf')  , optional: true, emit: paf
+    tuple val(meta), path('*.blast*'), optional: true, emit: blast
+    tuple val(meta), path('*.xml*')  , optional: true, emit: xml
+    tuple val(meta), path('*.txt*')  , optional: true, emit: txt
+    tuple val(meta), path('*.daa*')  , optional: true, emit: daa
+    tuple val(meta), path('*.sam*')  , optional: true, emit: sam
+    tuple val(meta), path('*.tsv*')  , optional: true, emit: tsv
+    tuple val(meta), path('*.paf*')  , optional: true, emit: paf
     path "versions.yml"               , emit: versions
 
     when:
@@ -51,14 +57,13 @@ process DIAMOND_BLASTP {
 
     diamond \\
         blastp \\
-        --threads $task.cpus \\
-        --db $db \\
-        --query $of_fasta \\
-        --outfmt ${outfmt} ${columns} \\
         --out Blast\${sppQuery}_\${sbbDB}.${out_ext} \\
+        --outfmt ${outfmt} ${columns} \\
+        --threads $task.cpus \\
+        --query $of_fasta \\
         --compress 1 \\
+        --db $db \\
         $args 
-    
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

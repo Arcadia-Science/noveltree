@@ -6,6 +6,12 @@ process BUSCO {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/busco:5.4.3--pyhdfd78af_0':
         'quay.io/biocontainers/busco:5.4.3--pyhdfd78af_0' }"
+        
+    publishDir(
+        path: "${params.outdir}/BUSCO",
+        mode: 'copy',
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
 
     input:
     tuple val(meta), path('tmp_input/*')    // path('tmp_input/*')
