@@ -32,6 +32,7 @@ process ORTHOFINDER_MCL {
         -n "Inflation_$inflation_param" \\
         -I $inflation_param \\
         -M msa -X -os -z \\
+        -x Orthogroups_Inflation_$inflation_param.xml
         -a $task.cpus \\
         $args
         
@@ -41,7 +42,7 @@ process ORTHOFINDER_MCL {
     # And clean up 
     rm -r ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/
     
-    cp ../../../${params.outdir}/orthofinder/Results_Inflation_$inflation_param/*/*.* .
+    #cp ../../../${params.outdir}/orthofinder/Results_Inflation_$inflation_param/*/*.* .
     """
 }
 
