@@ -5,6 +5,12 @@ process ORTHOFINDER_PREP {
         'https://depot.galaxyproject.org/singularity/orthofinder:2.5.3--hdfd78af_0' :
         'quay.io/biocontainers/orthofinder:2.5.3--hdfd78af_0' }"
 
+    publishDir(
+        path: "${params.outdir}/orthofinder/WorkingDirectory",
+        mode: 'copy',
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    
     input:
     val fasta_dir
     
@@ -24,10 +30,9 @@ process ORTHOFINDER_PREP {
         -t $task.cpus \\
         -op > tmp
         
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/*.dmnd .
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/*.fa .
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/SequenceIDs.txt .
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/SpeciesIDs.txt .
+    # Copy all the other orthofinder scraps (species and sequence IDs, etc) to
+    # here - needed for downstream interfacing with orthofinder. 
+    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* .
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

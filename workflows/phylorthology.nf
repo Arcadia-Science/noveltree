@@ -17,6 +17,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
+if (params.mcl_inflation) { ch_mcl_inflation = params.mcl_inflation } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,6 +45,7 @@ include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 // MODULE
 //
 include { ORTHOFINDER_PREP           } from '../modules/local/orthofinder_prep'
+include { ORTHOFINDER_MCL            } from '../modules/local/orthofinder_mcl'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,7 +176,9 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: All-v-All diamond/blastp
     //
-    ch_blast = DIAMOND_BLASTP (
+    // Set the publishdir so that the similarity scores can be accessed by 
+    // orthofinder in the next step (MCL clustering into orthogroups).
+    ch_blastp = DIAMOND_BLASTP (
         ch_of_fa,
         ch_dmd,
         "txt",
@@ -182,6 +186,21 @@ workflow PHYLORTHOLOGY {
     )
     .txt
 
+    //
+    // MODULE: Run Orthofinder's implementation of MCL (with similarity score
+    //         correction).
+    //
+    // Collect all pairwise similarity scores into a single channel and pass to
+    // the orthofinder MCL analysis so that it doesn't start until the full 
+    // set of all-v-all comparisons have completed.
+    ch_similarities = ch_blastp.mix(ch_blastp).collect()
+
+    ch_blast = ORTHOFINDER_MCL (
+        ch_mcl_inflation,
+        ch_similarities
+    )
+    
+    
 
 }
 
