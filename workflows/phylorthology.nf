@@ -17,7 +17,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
-if (params.mcl_inflation) { ch_mcl_inflation = params.mcl_inflation } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
+if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +69,8 @@ include { DIAMOND_BLASTP             } from '../modules/nf-core/diamond/blastp/m
 // This could be put into either the config file or specified via commandline. 
 
 workflow PHYLORTHOLOGY {
-
+    
+    ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
     //ch_fa = Channel.empty()
     //ch_dmd = Channel.empty()
@@ -196,7 +197,7 @@ workflow PHYLORTHOLOGY {
     ch_similarities = ch_blastp.mix(ch_blastp).collect()
 
     ch_blast = ORTHOFINDER_MCL (
-        ch_mcl_inflation,
+        ch_inflation,
         ch_similarities
     )
     
