@@ -10,15 +10,15 @@ process ORTHOFINDER_MCL {
     val ch_similarities
 
     output:
-    path "*.fa" , emit: msas
-    path "Orthogroups.GeneCount.tsv" , emit: genecounts
-    path "Orthogroups.tsv" , emit: ogs_tsv
-    path "Orthogroups.txt" , emit: ogs_txt
-    path "Orthogroups_SingleCopyOrthologues.txt" , emit: scogs
-    path "Orthogroups_UnassignedGenes.tsv" , emit: unassigned
-    path "Orthogroups_SpeciesOverlaps.tsv" , emit: og_spp_overlap
-    path "Statistics_Overall.tsv" , emit: stats
-    path "Statistics_PerSpecies.tsv" , emit: stats_per_spp
+    //path "*.fa" , emit: msas
+    //path "Orthogroups.GeneCount.tsv" , emit: genecounts
+    //path "Orthogroups.tsv" , emit: ogs_tsv
+    //path "Orthogroups.txt" , emit: ogs_txt
+    //path "Orthogroups_SingleCopyOrthologues.txt" , emit: scogs
+    //path "Orthogroups_UnassignedGenes.tsv" , emit: unassigned
+    //path "Orthogroups_SpeciesOverlaps.tsv" , emit: og_spp_overlap
+    //path "Statistics_Overall.tsv" , emit: stats
+    //path "Statistics_PerSpecies.tsv" , emit: stats_per_spp
 
     when:
     task.ext.when == null || task.ext.when
@@ -32,7 +32,6 @@ process ORTHOFINDER_MCL {
         -n "Inflation_$inflation_param" \\
         -I $inflation_param \\
         -M msa -X -os -z \\
-        -x Orthogroups_Inflation_$inflation_param.xml
         -a $task.cpus \\
         $args
         
@@ -42,6 +41,7 @@ process ORTHOFINDER_MCL {
     # And clean up 
     rm -r ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/
     
+    cp -r mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_$inflation_param/ .
     #cp ../../../${params.outdir}/orthofinder/Results_Inflation_$inflation_param/*/*.* .
     """
 }
