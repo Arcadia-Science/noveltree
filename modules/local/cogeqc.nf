@@ -1,5 +1,5 @@
-process ORTHOFINDER_MCL {
-    tag "MCL clustering"
+process COGEQC {
+    tag "Orthogroup Summary"
     label 'process_medium'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/orthofinder:2.5.3--hdfd78af_0' :
@@ -7,7 +7,7 @@ process ORTHOFINDER_MCL {
 
     input:
     each mcl_inflation
-    val ch_similarities
+    path annotations
 
     output:
     //path "*.fa" , emit: msas
@@ -45,4 +45,3 @@ process ORTHOFINDER_MCL {
     #cp ../../../${params.outdir}/orthofinder/Results_Inflation_$inflation_param/*/*.* .
     """
 }
-

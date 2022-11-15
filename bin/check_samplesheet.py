@@ -44,8 +44,8 @@ def check_samplesheet(file_in, file_out):
     with open(file_in, "r", encoding="utf-8-sig") as fin:
 
         ## Check header
-        MIN_COLS = 5
-        HEADER = ["species", "file", "tax1", "tax2", "mode"]
+        MIN_COLS = 6
+        HEADER = ["species", "file", "tax1", "tax2", "mode", "uniprot"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
             print(f"ERROR: Please check samplesheet header -> {','.join(header)} != {','.join(HEADER)}")
@@ -73,7 +73,7 @@ def check_samplesheet(file_in, file_out):
                     )
 
                 ## Check sample name entries
-                species, file, tax1, tax2, mode = lspl[: len(HEADER)]
+                species, file, tax1, tax2, mode, uniprot = lspl[: len(HEADER)]
                 if species.find(" ") != -1:
                     print(f"WARNING: Spaces have been replaced by underscores for sample: {species}")
                     species = species.replace(" ", "_")
@@ -109,9 +109,9 @@ def check_samplesheet(file_in, file_out):
                 #    )
 
                 ## populate sample data
-                species_info = [file, tax1, tax2, mode]  ## [file, tax1, tax2, mode]
+                species_info = [file, tax1, tax2, mode, uniprot]  ## [file, tax1, tax2, mode, uniprot]
 
-                ## Create species mapping dictionary = {species: [[ file, tax1, tax2, mode ]]}
+                ## Create species mapping dictionary = {species: [[ file, tax1, tax2, mode, uniprot ]]}
                 if species not in species_mapping_dict:
                     species_mapping_dict[species] = [species_info]
                 else:
@@ -125,7 +125,7 @@ def check_samplesheet(file_in, file_out):
         out_dir = os.path.dirname(file_out)
         make_dir(out_dir)
         with open(file_out, "w") as fout:
-            fout.write(",".join(["species", "file", "tax1", "tax2", "mode"]) + "\n")
+            fout.write(",".join(["species", "file", "tax1", "tax2", "mode", "uniprot"]) + "\n")
             for species in sorted(species_mapping_dict.keys()):
 
 
