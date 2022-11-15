@@ -46,6 +46,7 @@ include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 //
 include { ORTHOFINDER_PREP           } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_MCL            } from '../modules/local/orthofinder_mcl'
+include { ANNOTATE_UNIPROT           } from '../modules/local/annotate_uniprot'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,16 +116,16 @@ workflow PHYLORTHOLOGY {
     .set { ch_busco }
     
     ch_of_fa = ch_busco.merge(ch_fa)
-    
-    //ch_prots
-    //.branch {
-    //    meta, prots ->
-    //        proteomes  : prots.size() == 1
-    //            return prots.flatten()
-    //}
-    //.set { ch_diamond }
-    
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    
+    //
+    // MODULE: Annotate UniProt Proteins
+    //
+    ANNOTATE_UNIPROT (
+            ch_busco
+        )
+    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
+
     
     //
     // MODULE: Run BUSCO
