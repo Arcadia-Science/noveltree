@@ -51,7 +51,7 @@ process ANNOTATE_UNIPROT {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         R: \$( R --version | head -n1 | sed "s/R version //g" | sed "s/ (.*//g" )
-        UniProt.ws: \$( cat version.txt | sed "s/\[1] ‘//g" | sed "s/’//g" )
+        UniProt.ws: \$( cat version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
     END_VERSIONS
     """
 }
