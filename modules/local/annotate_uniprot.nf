@@ -1,6 +1,6 @@
 process ANNOTATE_UNIPROT {
     tag "$meta.id"
-    label 'process_small'
+    label 'process_single'
 
     conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

@@ -47,6 +47,7 @@ include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 include { ORTHOFINDER_PREP           } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_MCL            } from '../modules/local/orthofinder_mcl'
 include { ANNOTATE_UNIPROT           } from '../modules/local/annotate_uniprot'
+include { COGEQC                     } from '../modules/local/cogeqc'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,11 +122,12 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: Annotate UniProt Proteins
     //
-    ANNOTATE_UNIPROT (
+    ch_annotations = ANNOTATE_UNIPROT (
             ch_busco
         )
+        .annotations
+        .collect()
     ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
-
     
     //
     // MODULE: Run BUSCO
@@ -149,20 +151,20 @@ workflow PHYLORTHOLOGY {
     //    )
     //}
     // Then at the broad scale (i.e. eukaryota)
-    if (params.busco_lineages_path) { 
-        ch_busco_dat = file(params.busco_lineages_path)
-        BUSCO (
-            ch_busco,
-            "eukaryota",
-            ch_busco_dat
-        )
-    } else { 
-        BUSCO (
-            ch_busco,
-            "eukaryota",
-           []
-        )
-    }
+    //if (params.busco_lineages_path) { 
+    //    ch_busco_dat = file(params.busco_lineages_path)
+    //    BUSCO (
+    //        ch_busco,
+    //        "eukaryota",
+    //        ch_busco_dat
+    //    )
+    //} else { 
+    //    BUSCO (
+    //        ch_busco,
+    //        "eukaryota",
+    //       []
+    //    )
+    //}
     
     //
     // MODULE: Make diamond databases
@@ -197,11 +199,20 @@ workflow PHYLORTHOLOGY {
     // set of all-v-all comparisons have completed.
     ch_similarities = ch_blastp.mix(ch_blastp).collect()
 
-    ch_blast = ORTHOFINDER_MCL (
+    ch_mcl = ORTHOFINDER_MCL (
         ch_inflation,
         ch_similarities
     )
+    .og_fpath
     
+    //
+    // MODULE: Run an R-script that applies cogqc to assess orthogroup inference
+    //         accuracy/performance.
+    //
+    ch_cogeqc = COGEQC (
+        ch_mcl,
+        ch_annotations
+    )
     
 
 }

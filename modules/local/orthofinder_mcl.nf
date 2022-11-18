@@ -10,15 +10,7 @@ process ORTHOFINDER_MCL {
     val ch_similarities
 
     output:
-    //path "*.fa" , emit: msas
-    //path "Orthogroups.GeneCount.tsv" , emit: genecounts
-    //path "Orthogroups.tsv" , emit: ogs_tsv
-    //path "Orthogroups.txt" , emit: ogs_txt
-    //path "Orthogroups_SingleCopyOrthologues.txt" , emit: scogs
-    //path "Orthogroups_UnassignedGenes.tsv" , emit: unassigned
-    //path "Orthogroups_SpeciesOverlaps.tsv" , emit: og_spp_overlap
-    //path "Statistics_Overall.tsv" , emit: stats
-    //path "Statistics_PerSpecies.tsv" , emit: stats_per_spp
+    path "MCL-*-fpath.txt" , emit: og_fpath
 
     when:
     task.ext.when == null || task.ext.when
@@ -29,20 +21,18 @@ process ORTHOFINDER_MCL {
     """
     orthofinder \\
         -b ../../../${params.outdir}/orthofinder/WorkingDirectory/ \\
-        -n "Inflation_$inflation_param" \\
+        -n "Inflation_${inflation_param}" \\
         -I $inflation_param \\
         -M msa -X -os -z \\
-        -a $task.cpus \\
+        -a ${task.cpus} \\
         $args
-        
+    
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_$inflation_param/ ../../../${params.outdir}/orthofinder/
+    mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_${inflation_param}/ ../../../${params.outdir}/orthofinder/
     
-    # And clean up 
-    rm -r ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/
+    # And output a file used to track job completion and specify filepaths downstream
+    ( cd ../../../${params.outdir}/orthofinder/Results_Inflation_${inflation_param}/; pwd ) > MCL-${inflation_param}-fpath.txt
     
-    #cp -r mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_$inflation_param/ .
-    #cp ../../../${params.outdir}/orthofinder/Results_Inflation_$inflation_param/*/*.* .
     """
 }
 

@@ -57,25 +57,24 @@ read_orthofinder_stats <-
 
 args = commandArgs(trailingOnly=TRUE)
 
-# Identify the MCL clustering parameter that we're summarizing. 
-inflation <- args[1]
-
-
 # Get the base directory to where the orthofinder results are.
 # Again, specified from the commandline
-ofDir <- args[2]
+ogDir <- args[1]
 
 # Specify the path to protein annotations to be used by cogeqc.
 # Again, specified from the commandline
-annotDir <- args[3]
+annotDir <- './' #args[2]
 # annotDir <- './results/protein-annotations/'
+
+# Pull out the inflation parameter from the filepath
+inflation <- gsub(".*_", "", ogDir)
 
 # Now, create a variable using these to specify paths to the orthofinder 
 # orthogroups file
-ogFile <- paste0(ofDir, 'Results_Inflation_', inflation, '/Orthogroups/Orthogroups.tsv')
+ogFile <- paste0(ogDir, '/Orthogroups/Orthogroups.tsv')
 
 # Specify the path to orthofinders orthogroup summary stats to be used by cogeqc.
-ogStatDir <- paste0(ofDir, 'Results_Inflation_', inflation, '/Comparative_Genomics_Statistics/')
+ogStatDir <- paste0(ogDir, '/Comparative_Genomics_Statistics/')
 
 # Go ahead and read in the orthogroups file
 orthogroups <- read_orthogroups(ogFile)
@@ -120,12 +119,21 @@ ortho_stats <- read_orthofinder_stats(ogStatDir, species)
 #   2) The proportion of orthogroups with >= 4 spp
 #   3) The proportion of OGs with 90% of species
 #   4) The proportion of OGs with all species
+#   5) The mean per-species gene count per orthogroup for OGs with >= 4 spp
+#   6) the median per-species gene count per orthogroup with >= 4 spp
 #   5) The mean OG composition score for InterPro protein domains
 #   6) The mean per-species percentage genes in orthogroups
 #   7) The mean per-species percentage of single-species orthogroups
 #   8) The mean pairwise species overlap of orthogroups
 
-og.freqs <- summary(as.factor(unique(orthogroups[,1:2])$Orthogroup))
+# Determine how many species are in each orthogroup
+og.freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
+
+# Get the number of gene copies per species, per orthogroup
+per.spp.og.counts <- table(orthogroups[,1:2])
+
+# And from this, get the mean per-species count per orthogroup with at least 4 spp
+per.spp.og.counts <- rowMeans(per.spp.og.counts[!rowSums(per.spp.og.counts == 0) > 4,])
 
 # pull out proportional overlap between species
 overlap <- ortho_stats$og_overlap/do.call(pmax, ortho_stats$og_overlap)
@@ -133,17 +141,20 @@ overlap <- overlap[lower.tri(overlap)]
 
 og_quality <- 
     data.frame(
+        InflationParam = inflation, 
         NumOGs = length(unique(orthogroups$Orthogroup)),
         NumOGs_GT_4spp = length(which(og.freqs >= 4)),
         NumOGs_90perc_spp = length(which(og.freqs >= quantile(og.freqs, 0.9)[[1]])),
         NumOGs_All_spp = length(which(og.freqs == max(og.freqs))),
+        PerSpp_4spp_OG_Counts = mean(per.spp.og.counts),
         interpro_score = mean(interpro_assess$Mean_score),
         perc_genes_in_OGs = mean(ortho_stats$stats$Perc_genes_in_OGs),
         perc_genes_in_ssOGs = mean(ortho_stats$stats$Perc_genes_in_ssOGs),
         pairwise_overlap = mean(overlap)
     )
+
 # Write out to a tsv.
-write.table(og_quality, file = paste0(annotDir, spp, '-protein-annotations.tsv'), col.names = T, row.names = F, sep = '\t', quote = F)
+write.table(og_quality, file = paste0('MCL-Inflation-', inflation, '-cogeqc-summary.tsv'), col.names = T, row.names = F, sep = '\t', quote = F)
 
 sink("version.txt")
 packageVersion("cogeqc")
