@@ -19,6 +19,8 @@ process ORTHOFINDER_MCL {
     def args = task.ext.args ?: ''
     def inflation_param = mcl_inflation ? "${mcl_inflation}" : '1.5'
     """
+    # add a sleep time equal to the inflation parameter in case things get overloaded when running locally?
+    sleep $inflation_param
     orthofinder \\
         -b ../../../${params.outdir}/orthofinder/WorkingDirectory/ \\
         -n "Inflation_${inflation_param}" \\
