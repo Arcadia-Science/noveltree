@@ -1,47 +1,55 @@
 process COGEQC {
     tag "Orthogroup Summary"
-    label 'process_medium'
+    label 'process_single'
+
+    conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/orthofinder:2.5.3--hdfd78af_0' :
-        'quay.io/biocontainers/orthofinder:2.5.3--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/bioconductor-uniprot.ws:2.34.0--r41hdfd78af_0':
+        'bioconductor/bioconductor_docker' }"
+        
+    publishDir(
+        path: "${params.outdir}/orthogroup-summaries",
+        mode: 'copy',
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
 
     input:
-    each mcl_inflation
-    path annotations
+    path orthofinder_outdir // Files storing filepaths to where orthofinder results are stored for each inflation parameter
+    path prot_annotations // Base filepath to where protein annotations are stored
 
     output:
-    //path "*.fa" , emit: msas
-    //path "Orthogroups.GeneCount.tsv" , emit: genecounts
-    //path "Orthogroups.tsv" , emit: ogs_tsv
-    //path "Orthogroups.txt" , emit: ogs_txt
-    //path "Orthogroups_SingleCopyOrthologues.txt" , emit: scogs
-    //path "Orthogroups_UnassignedGenes.tsv" , emit: unassigned
-    //path "Orthogroups_SpeciesOverlaps.tsv" , emit: og_spp_overlap
-    //path "Statistics_Overall.tsv" , emit: stats
-    //path "Statistics_PerSpecies.tsv" , emit: stats_per_spp
+    path "*-cogeqc-summary.tsv", emit: og_summary
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
+    // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
-    def inflation_param = mcl_inflation ? "${mcl_inflation}" : '1.5'
+    def orthogroups_fpath = "${orthofinder_outdir}"
+    //def annotations = "${prot_annotations}"
     """
-    orthofinder \\
-        -b ../../../${params.outdir}/orthofinder/WorkingDirectory/ \\
-        -n "Inflation_$inflation_param" \\
-        -I $inflation_param \\
-        -M msa -X -os -z \\
-        -a $task.cpus \\
-        $args
+    # Assess orthogroups inferred using each inflation parameter, summarizing 
+    # how well they group proteins with the same domains together, as well as
+    # other summary stats like number of ogs with >= 4 species, per-species
+    # gene count per-og, etc. 
         
-    # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_$inflation_param/ ../../../${params.outdir}/orthofinder/
+    # store the orthogroup directory as a bash variable using the file storing
+    # the filepath used to stall initiation of this module until 
+    orthogroups=\$(cat $orthogroups_fpath)
+    Rscript $projectDir/bin/cogeqc-summarize-ogs.R \$orthogroups
     
-    # And clean up 
-    rm -r ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/
-    
-    #cp -r mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_$inflation_param/ .
-    #cp ../../../${params.outdir}/orthofinder/Results_Inflation_$inflation_param/*/*.* .
+    # Also do some cleanup:
+    # The empty "OrthoFinder" directory produced by running the MCL
+    # step still persists, since we couldn't safely remove in the 
+    # past step (otherwise it messes up onging MCL runs). 
+    # Remove it.
+    rmdir ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/ || true
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        cogeqc: \$( cat version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
+    END_VERSIONS
     """
 }

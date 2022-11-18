@@ -1,6 +1,6 @@
 process DIAMOND_BLASTP {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_low'
 
     conda (params.enable_conda ? "bioconda::diamond=2.0.15" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -59,12 +59,12 @@ process DIAMOND_BLASTP {
         blastp \\
         --out Blast\${sppQuery}_\${sbbDB}.${out_ext} \\
         --outfmt ${outfmt} ${columns} \\
-        --threads $task.cpus \\
+        --threads ${task.cpus} \\
         --query $of_fasta \\
         --compress 1 \\
         --db $db \\
         $args 
-
+        
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         diamond: \$(diamond --version 2>&1 | tail -n 1 | sed 's/^diamond version //')
