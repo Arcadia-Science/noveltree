@@ -48,6 +48,7 @@ include { ORTHOFINDER_PREP           } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_MCL            } from '../modules/local/orthofinder_mcl'
 include { ANNOTATE_UNIPROT           } from '../modules/local/annotate_uniprot'
 include { COGEQC                     } from '../modules/local/cogeqc'
+include { SELECT_INFLATION           } from '../modules/local/select_inflation'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,8 +214,14 @@ workflow PHYLORTHOLOGY {
         ch_mcl,
         ch_annotations
     )
-    
 
+    ch_summs = COGEQC.out.og_summary.collect()
+    
+    ch_inflation = SELECT_INFLATION (
+        ch_summs
+    )
+    .best_inflation
+    
 }
 
 /*
