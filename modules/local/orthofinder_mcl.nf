@@ -20,15 +20,16 @@ process ORTHOFINDER_MCL {
     def inflation_param = mcl_inflation ? "${mcl_inflation}" : '1.5'
     """
     # add a sleep time equal to the inflation parameter in case things get overloaded when running locally?
-    sleep $inflation_param
+    sleep \$(( \$RANDOM % 40 + 1 ))
     orthofinder \\
         -b ../../../${params.outdir}/orthofinder/WorkingDirectory/ \\
         -n "Inflation_${inflation_param}" \\
         -I $inflation_param \\
         -M msa -X -os -z \\
-        -a ${task.cpus} \\
+        -a 30 \\
         $args
-    
+    # -a ${task.cpus} \\
+
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
     mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_${inflation_param}/ ../../../${params.outdir}/orthofinder/
     
