@@ -16,10 +16,10 @@ process ORTHOFINDER_PREP {
     val mcl_test
     
     output:
-    path "*.dmnd", emit: dmd
-    path "*.fa", emit: fa
-    path "SequenceIDs.txt", emit: seqIDs
-    path "SpeciesIDs.txt", emit: sppIDs
+    //path "*.dmnd", emit: dmd
+    //path "*.fa", emit: fa
+    //path "SequenceIDs.txt", emit: seqIDs
+    //path "SpeciesIDs.txt", emit: sppIDs
     path "versions.yml" , emit: versions
 
     script:

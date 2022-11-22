@@ -1,5 +1,5 @@
 process MAFFT {
-    tag "$meta.id"
+    tag "$meta.og"
     label 'process_high'
 
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
@@ -11,7 +11,7 @@ process MAFFT {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*.fas"), emit: fas
+    tuple val(meta), path("*.fa"), emit: msa
     path "versions.yml"           , emit: versions
 
     when:
@@ -19,7 +19,7 @@ process MAFFT {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.og}"
     """
     mafft \\
         --thread ${task.cpus} \\

@@ -17,7 +17,7 @@ input:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
+        e.g. [ og:'test', num_spp:4 ]
   - fasta:
       type: file
       description: FASTA file containing the sequences to align
@@ -28,7 +28,7 @@ output:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
+        e.g. [ og:'test', num_spp:4 ]
   - versions:
       type: file
       description: File containing software versions
@@ -36,7 +36,7 @@ output:
   - fas:
       type: file
       description: Aligned sequences in FASTA format
-      pattern: "*.{fas}"
+      pattern: "*.{fa}"
 
 authors:
   - "@MillironX"
