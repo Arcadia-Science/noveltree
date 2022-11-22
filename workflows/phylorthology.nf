@@ -68,7 +68,7 @@ include { CLIPKIT                                   } from '../modules/local/cli
 include { BUSCO                                 } from '../modules/nf-core/busco/main'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
 include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
-
+include { MAFFT                                 } from '../modules/nf-core/mafft/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -82,6 +82,8 @@ def create_og_channel(LinkedHashMap row) {
     // create meta map
     def meta  = [:]
         meta.og   = row.orthogroup
+        meta.nspp = row.num_spp
+        meta.copy_num = row.mean_copy_num
     // add path(s) of the OG file to the meta map
     def og_meta = []
         og_meta = [ meta, [ file(row.file) ] ] 
@@ -266,7 +268,9 @@ workflow PHYLORTHOLOGY {
     ch_mcl = ORTHOFINDER_MCL_TEST (
         ch_inflation,
         ch_similarities_test,
-        "true"
+        "true",
+        [],
+        []
     )
     .og_fpath
     
@@ -294,11 +298,18 @@ workflow PHYLORTHOLOGY {
     ch_orthogroups = ORTHOFINDER_MCL (
         ch_best_inflation,
         ch_similarities,
-        "false"
+        "false",
+        "4",
+        "10"
     )
-    .four_spp_ogs
+    .core_ogs
     .splitCsv ( header:true, sep:',' )
     .map { create_og_channel(it) }
+ 
+    //ch_og_msas = MAFFT (
+    //    ch_orthogroups
+    //)
+    //.msas
     
     //ch_trimmed_msas = CLIPKIT (
     //    ch_orthogroups
