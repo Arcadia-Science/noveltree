@@ -18,8 +18,8 @@ process COGEQC {
     path prot_annotations // Base filepath to where protein annotations are stored
 
     output:
-    path "*-cogeqc-summary.tsv", emit: og_summary
-    path "versions.yml" , emit: versions
+    path "*-cogeqc-summary.tsv" , emit: og_summary
+    path "versions.yml"         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
