@@ -18,8 +18,8 @@ process SELECT_INFLATION {
 
     output:
     path "best-inflation-param.txt", emit: best_inflation
-    path "inflation_summaries.pdf", emit: summary_plot
-    path "versions.yml" , emit: versions
+    path "inflation_summaries.pdf",  emit: summary_plot
+    path "versions.yml" ,            emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,17 +28,15 @@ process SELECT_INFLATION {
     """
     # Pull in the summaries produced by each MCL inflation parameter and 
     # identify the parameter value that produces the best quality results.
-        
-    # Start by assembling all summaries into a single table
-    #cat *summary.tsv | head -n1 > inflation_summaries.tsv # Pull out the header
-    
-    # Now add the summaries
-    #cat *summary.tsv | grep -v "Inflation" >> inflation_summaries.tsv # Pull out the header
 
     # Run the script to summarize and produce a figure of these results. 
     Rscript $projectDir/bin/select_inflation.R
     
-    cat <<-END_VERSIONS > versions.yml
+    # And spit out the value of the selected inflation parameter to be 
+    # captured into a channel from stdout 
+    sed -i "s/\\[1] //g" best-inflation-param.txt
+    
+    cat <<- END_VERSIONS > versions.yml
     "${task.process}":
         tidyverse: \$( grep "tidyverse" version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
         reshape: \$( grep "reshape" version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )

@@ -5,14 +5,15 @@ process ORTHOFINDER_PREP {
         'https://depot.galaxyproject.org/singularity/orthofinder:2.5.4--hdfd78af_0' :
         'quay.io/biocontainers/orthofinder:2.5.4--hdfd78af_0' }"
 
-    publishDir(
-        path: "${params.outdir}/orthofinder/WorkingDirectory",
-        mode: 'copy',
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    //publishDir(
+    //    path: "${params.outdir}/orthofinder/",
+    //    mode: 'copy',
+    //    saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    //)
     
     input:
     val fasta_dir
+    val mcl_test
     
     output:
     path "*.dmnd", emit: dmd
@@ -22,6 +23,7 @@ process ORTHOFINDER_PREP {
     path "versions.yml" , emit: versions
 
     script:
+    def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
     """
     # Prepare the bespoke orthofinder directory structure and stripped down files
     # spit the output commands to a tmp file - we don't care about this
@@ -30,8 +32,22 @@ process ORTHOFINDER_PREP {
         -t ${task.cpus} \\
         -op > tmp
         
+    # Create the publishdir if it's not made yet
+    mkdir -p ../../../${params.outdir}/orthofinder/
+    
     # Copy all the other orthofinder scraps (species and sequence IDs, etc) to
     # here - needed for downstream interfacing with orthofinder. 
+    # Specific outdir will depend on whether we're testing mcl or not. 
+    if [ "$testing_mcl" == "true" ]; then
+        outDir="mcl_testing"
+    else
+        outDir="full_analysis"
+    fi
+    
+    mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/
+    mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/data
+    dataDir="../../../${params.outdir}/orthofinder/\$outDir/data"
+    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* \$dataDir/
     cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* .
     
     cat <<-END_VERSIONS > versions.yml

@@ -20,10 +20,10 @@ library(elbow)
 # Read in summaries of MCL Inflation parameter performance.
 fpaths <- list.files(pattern = 'summary.tsv')
 fs <- list()
-for(i in 1:length(fpaths)){fs[[i]] <- read.delim(fpaths[[i]])}
+for(i in 1:length(fpaths)){
+  fs[[i]] <- read.delim(fpaths[[i]])
+}
 res <- do.call(rbind, fs)
-
-res <- res[,-4]
 
 res$NumOGs_GT_4spp <- res$NumOGs_GT_4spp / res$NumOGs
 res$NumOGs_All_spp <- res$NumOGs_All_spp / res$NumOGs

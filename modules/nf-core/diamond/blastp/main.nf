@@ -7,16 +7,17 @@ process DIAMOND_BLASTP {
         'https://depot.galaxyproject.org/singularity/diamond:2.0.15--hb97b32f_0' :
         'quay.io/biocontainers/diamond:2.0.15--hb97b32f_0' }"
 
-    publishDir(
-        path: "${params.outdir}/orthofinder/WorkingDirectory",
-        mode: 'copy',
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    //publishDir(
+    //    path: "${params.outdir}/orthofinder/data",
+    //    mode: 'copy',
+    //    saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    //)
     
     input:
-    tuple val(meta), path(fasta), path(of_fasta)
+    tuple val(meta), path(fasta), path(of_fasta), path(dmd)
     each db
     val out_ext
+    val mcl_test
     val blast_columns
 
     output:
@@ -27,13 +28,14 @@ process DIAMOND_BLASTP {
     tuple val(meta), path('*.sam*')  , optional: true, emit: sam
     tuple val(meta), path('*.tsv*')  , optional: true, emit: tsv
     tuple val(meta), path('*.paf*')  , optional: true, emit: paf
-    path "versions.yml"               , emit: versions
+    path "versions.yml"              , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
+    def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
     //def prefix = task.ext.prefix ?: "${meta.id}"
     def columns = blast_columns ? "${blast_columns}" : ''
     switch ( out_ext ) {
@@ -55,9 +57,15 @@ process DIAMOND_BLASTP {
     sppQuery=\$(echo $of_fasta | sed "s/Species//g" | sed 's/.fa//g' | sed 's|.*/||g')
     sbbDB=\$(echo $db | sed "s/diamondDBSpecies//g" | sed 's/.dmnd//g' | sed 's|.*/||g')
 
+    if [ "$testing_mcl" == "true" ]; then
+        outName="TestBlast\${sppQuery}_\${sbbDB}.${out_ext}"
+    else
+        outName="Blast\${sppQuery}_\${sbbDB}.${out_ext}"
+    fi
+
     diamond \\
         blastp \\
-        --out Blast\${sppQuery}_\${sbbDB}.${out_ext} \\
+        --out \$outName \\
         --outfmt ${outfmt} ${columns} \\
         --threads ${task.cpus} \\
         --query $of_fasta \\
@@ -65,7 +73,7 @@ process DIAMOND_BLASTP {
         --db $db \\
         $args 
         
-    cat <<-END_VERSIONS > versions.yml
+    cat <<-END_VERSIONS >> versions.yml
     "${task.process}":
         diamond: \$(diamond --version 2>&1 | tail -n 1 | sed 's/^diamond version //')
     END_VERSIONS
