@@ -55,7 +55,7 @@ include { ORTHOFINDER_MCL                           } from '../modules/local/ort
 include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
 include { COGEQC                                    } from '../modules/local/cogeqc'
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
-
+include { CLIPKIT                                   } from '../modules/local/clipkit'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -76,6 +76,17 @@ include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamo
 */
 //def meta = ch_spp
 // This could be put into either the config file or specified via commandline. 
+
+// Function to get list of [ meta, [ file ] ]
+def create_og_channel(LinkedHashMap row) {
+    // create meta map
+    def meta  = [:]
+        meta.og   = row.orthogroup
+    // add path(s) of the OG file to the meta map
+    def og_meta = []
+        og_meta = [ meta, [ file(row.file) ] ] 
+    return og_meta
+}
 
 workflow PHYLORTHOLOGY {
     
@@ -285,7 +296,14 @@ workflow PHYLORTHOLOGY {
         ch_similarities,
         "false"
     )
-    .og_fpath    
+    .four_spp_ogs
+    .splitCsv ( header:true, sep:',' )
+    .map { create_og_channel(it) }
+    
+    //ch_trimmed_msas = CLIPKIT (
+    //    ch_orthogroups
+    //)
+    //.trimmed_msas
     
 }
 
