@@ -40,12 +40,13 @@ process COGEQC {
     orthogroups=\$(cat $orthogroups_fpath)
     Rscript $projectDir/bin/cogeqc-summarize-ogs.R \$orthogroups
     
-    # Also do some cleanup:
-    # The empty "OrthoFinder" directory produced by running the MCL
-    # step still persists, since we couldn't safely remove in the 
-    # past step (otherwise it messes up onging MCL runs). 
-    # Remove it.
-    rmdir ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/ || true
+    # Additionally, move the orthogroup inference directories to a new 
+    # location, so that these 'test' orthogroups do not interfere with 
+    # the full orthogroup inference procedure. 
+    #mv ../../../${params.outdir}/orthofinder/Results_Inflation_* ../../../${params.outdir}/orthogroup-summaries/
+    #mv ../../../${params.outdir}/orthofinder/MCL*fpath.txt ../../../${params.outdir}/orthogroup-summaries/
+    #mv ../../../${params.outdir}/orthofinder/mcl_testing/Results_Inflation_* ../../../${params.outdir}/orthogroup-summaries/
+    #mv ../../../${params.outdir}/orthofinder/mcl_testing/MCL*fpath.txt ../../../${params.outdir}/orthogroup-summaries/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

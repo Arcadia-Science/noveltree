@@ -11,12 +11,14 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-//def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+//def checkPathParamList = [ params.input, params.fasta ]
 //for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.input) { ch_input = file(params.input) } else { exit 1, 'Full samplesheet not specified!' }
+if (params.test_data) { ch_test_data = file(params.test_data) } else { exit 1, 'Test samplesheet not specified!' }
 if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
+if (params.test_fasta_dir) { ch_test_fa_dir = params.test_fasta_dir } else { exit 1, 'Test fasta directory not specified!' }
 if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
 
 /*
@@ -39,16 +41,20 @@ if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) 
 //
 // SUBWORKFLOW
 //
-include { INPUT_CHECK    } from '../subworkflows/local/input_check'
+include { INPUT_CHECK                       } from '../subworkflows/local/input_check'
 
 //
 // MODULE
 //
-include { ORTHOFINDER_PREP           } from '../modules/local/orthofinder_prep'
-include { ORTHOFINDER_MCL            } from '../modules/local/orthofinder_mcl'
-include { ANNOTATE_UNIPROT           } from '../modules/local/annotate_uniprot'
-include { COGEQC                     } from '../modules/local/cogeqc'
-include { SELECT_INFLATION           } from '../modules/local/select_inflation'
+// Modules breing run twice (for MCL testing and fulla analysis)
+// needs to be included twice under different names.
+include { ORTHOFINDER_PREP                          } from '../modules/local/orthofinder_prep'
+include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
+include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
+include { ORTHOFINDER_MCL                           } from '../modules/local/orthofinder_mcl'
+include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
+include { COGEQC                                    } from '../modules/local/cogeqc'
+include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,9 +65,9 @@ include { SELECT_INFLATION           } from '../modules/local/select_inflation'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { BUSCO                      } from '../modules/nf-core/busco/main'
-include { DIAMOND_MAKEDB             } from '../modules/nf-core/diamond/makedb/main'
-include { DIAMOND_BLASTP             } from '../modules/nf-core/diamond/blastp/main'
+include { BUSCO                                 } from '../modules/nf-core/busco/main'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
+include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -83,7 +89,13 @@ workflow PHYLORTHOLOGY {
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
     ORTHOFINDER_PREP (
-        ch_fa_dir
+        ch_fa_dir,
+        "false"
+    )
+    
+    ORTHOFINDER_PREP_TEST (
+        ch_test_fa_dir,
+        "true"
     )
     
     // Fasta files should be redirected into a channel set of filepaths emitted
@@ -92,11 +104,14 @@ workflow PHYLORTHOLOGY {
     // together).
     ch_fa = ORTHOFINDER_PREP.out.fa.flatten()
     ch_dmd = ORTHOFINDER_PREP.out.dmd.flatten()
+    ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.flatten()
+    ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.flatten()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    ch_prots = INPUT_CHECK (
+    // First the full set
+    ch_prots_all = INPUT_CHECK (
         ch_input
     )
     .prots
@@ -108,23 +123,55 @@ workflow PHYLORTHOLOGY {
     }
     .groupTuple(by: [0])
 
-
-    ch_prots
+    // Pull out the test and full sets
+    ch_prots_all
     .branch {
         meta, prots ->
-            proteomes  : prots.size() == 1
+            proteomes  : meta.mcl_test == 'false'
                 return [ meta, prots.flatten() ]
     }
-    .set { ch_busco }
+    .set { ch_prots_full }
     
-    ch_of_fa = ch_busco.merge(ch_fa)
+    ch_prots_all
+    .branch {
+        meta, prots ->
+            proteomes  : meta.mcl_test == 'true'
+                return [ meta, prots.flatten() ]
+    }
+    .set { ch_prots_test }
+    
+    ch_prots_full
+    .branch {
+        meta, prots ->
+            proteomes  : prots
+                return [ meta, prots.flatten() ]
+    }
+    .set { ch_busco_full }
+
+    ch_prots_test
+    .branch {
+        meta, prots ->
+            proteomes  : prots
+                return [ meta, prots.flatten() ]
+    }
+    .set { ch_busco_test }
+    
+    // Create an orthofinder channel with paths to the new fasta/diamond DBs
+    ch_orthofinder_full = ch_busco_full.merge(ch_fa, ch_dmd)
+    ch_orthofinder_test = ch_busco_test.merge(ch_test_fa, ch_test_dmd)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
+    // Now, there will be a couple of modules below that we reapply, both to 
+    // the full dataset, and to the MCL inflation parameter test set. 
+    // These repeat modules include:
+    // uniprot annotation (ch_annotations)
+    // diamond blastp (ch_blastp & ch_similarities)
     
     //
     // MODULE: Annotate UniProt Proteins
     //
     ch_annotations = ANNOTATE_UNIPROT (
-            ch_busco
+            ch_busco_full
         )
         .annotations
         .collect()
@@ -140,13 +187,13 @@ workflow PHYLORTHOLOGY {
     //if (params.busco_lineages_path) { 
     //    ch_busco_dat = file(params.busco_lineages_path)
     //    BUSCO (
-    //        ch_busco,
+    //        ch_busco_full,
     //        "taxon_specific",
     //        ch_busco_dat
     //    )
     //} else { 
     //    BUSCO (
-    //        ch_busco,
+    //        ch_busco_full,
     //        "taxon_specific",
     //        []
     //    )
@@ -155,38 +202,37 @@ workflow PHYLORTHOLOGY {
     //if (params.busco_lineages_path) { 
     //    ch_busco_dat = file(params.busco_lineages_path)
     //    BUSCO (
-    //        ch_busco,
+    //        ch_busco_full,
     //        "eukaryota",
     //        ch_busco_dat
     //    )
     //} else { 
     //    BUSCO (
-    //        ch_busco,
+    //        ch_busco_full,
     //        "eukaryota",
     //       []
     //    )
     //}
-    
-    //
-    // MODULE: Make diamond databases
-    //
-    // need to extract fasta file paths from ch_fasta for input into diamond. 
-    //ch_dbs_list = DIAMOND_MAKEDB (
-    //    ch_diamond
-    //)
-    //.db
-    
-    //ch_dbs = ch_dbs_list.mix(ch_dbs_list).collect()
 
     //
     // MODULE: All-v-All diamond/blastp
     //
     // Set the publishdir so that the similarity scores can be accessed by 
     // orthofinder in the next step (MCL clustering into orthogroups).
+    ch_blastp_test = DIAMOND_BLASTP_TEST (
+        ch_orthofinder_test,
+        ch_test_dmd,
+        "txt",
+        "true",
+        []
+    )
+    .txt
+    
     ch_blastp = DIAMOND_BLASTP (
-        ch_of_fa,
+        ch_orthofinder_full,
         ch_dmd,
         "txt",
+        "false",
         []
     )
     .txt
@@ -198,11 +244,18 @@ workflow PHYLORTHOLOGY {
     // Collect all pairwise similarity scores into a single channel and pass to
     // the orthofinder MCL analysis so that it doesn't start until the full 
     // set of all-v-all comparisons have completed.
+    ch_similarities_test = ch_blastp_test.mix(ch_blastp_test).collect()
     ch_similarities = ch_blastp.mix(ch_blastp).collect()
 
-    ch_mcl = ORTHOFINDER_MCL (
+    //ch_similarities_remaining = ch_blastp.mix(ch_blastp).collect()
+    //ch_similarities = ch_similarities_test.mix(ch_similarities_remaining)
+    
+    // First determine the optimal MCL inflation parameter, and then 
+    // subsequently use this for full orthogroup inference. 
+    ch_mcl = ORTHOFINDER_MCL_TEST (
         ch_inflation,
-        ch_similarities
+        ch_similarities_test,
+        "true"
     )
     .og_fpath
     
@@ -217,10 +270,22 @@ workflow PHYLORTHOLOGY {
 
     ch_summs = COGEQC.out.og_summary.collect()
     
-    ch_inflation = SELECT_INFLATION (
+    // Now, from these orthogroup summaries, select the best inflation parameter
+    SELECT_INFLATION (
         ch_summs
     )
     .best_inflation
+    .map{ file -> file.text.trim() } 
+    .set { ch_best_inflation } 
+
+    // Using this best-performing inflation parameter, infer orthogroups for
+    // all samples. 
+    ch_orthogroups = ORTHOFINDER_MCL (
+        ch_best_inflation,
+        ch_similarities,
+        "false"
+    )
+    .og_fpath    
     
 }
 

@@ -84,25 +84,34 @@ orthogroups <- read_orthogroups(ogFile)
 # the species here. 
 orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
 
+# Pull out the list of species - we are only running this script on a 
+# on a subset of species, so we want to be sure that we're not reading in 
+# annotations for species other than those we're testing inflation 
+# parameters with. 
+species <- orthogroups$Species
+
 # and remove the Species name from the gene name - this will create issues when
 # pairing with the annotations. 
 orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
 
 # Read in the annotations. 
 annots <- list.files(annotDir, pattern = "annotations.tsv")
+spps <- gsub("-protein-annotations.tsv", "", annots)
+annots <- annots[which(spps %in% unique(species))]
 interpro <- list()
 
 for(i in 1:length(annots)){
     spp <- gsub("-protein-annotations.tsv", "", annots[i]) # So we can name the entry
+    
+    # read in their annotations
     annotations <- read.delim(paste0(annotDir, annots[i]), sep = "\t", header = T)
     
-    # Pull out the specific annotations individually. 
+    # Pull out the InterPro annotations 
     interpro[[i]] <- get_annots(spp, annotations$From, annotations$InterPro)
 }
 
 # Now name all the entries according to their OrthoFinder species ID (second column)
-species <- gsub("-protein-annotations.tsv", "", annots)
-names(interpro) <- species
+names(interpro) <- spps[which(spps %in% species)]
 
 # Great, now we can pair these annotations with the orthogroups, assessing how 
 # well each inflation parameter infers sensible orthogroups with respect to the
@@ -110,21 +119,20 @@ names(interpro) <- species
 interpro_assess <- assess_orthogroups(orthogroups, interpro)
 
 # Read in the orthofinder orthogroup statistics
-ortho_stats <- read_orthofinder_stats(ogStatDir, species)
+ortho_stats <- read_orthofinder_stats(ogStatDir, spps[which(spps %in% species)])
 
 # Let's focus on a subset of particularly informative summary statistics 
 # that can characterize the "quality" of our inferred orthogroups. 
 # Namely, we'll look closely at:
 #   1) The number of orthogroups
 #   2) The proportion of orthogroups with >= 4 spp
-#   3) The proportion of OGs with 90% of species
-#   4) The proportion of OGs with all species
-#   5) The mean per-species gene count per orthogroup for OGs with >= 4 spp
-#   6) the median per-species gene count per orthogroup with >= 4 spp
-#   5) The mean OG composition score for InterPro protein domains
-#   6) The mean per-species percentage genes in orthogroups
-#   7) The mean per-species percentage of single-species orthogroups
-#   8) The mean pairwise species overlap of orthogroups
+#   3) The proportion of OGs with all species
+#   4) The mean per-species gene count per orthogroup for OGs with >= 4 spp
+#   5) the median per-species gene count per orthogroup with >= 4 spp
+#   6) The mean OG composition score for InterPro protein domains
+#   7) The mean per-species percentage genes in orthogroups
+#   8) The mean per-species percentage of single-species orthogroups
+#   9) The mean pairwise species overlap of orthogroups
 
 # Determine how many species are in each orthogroup
 og.freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
@@ -144,7 +152,6 @@ og_quality <-
         InflationParam = inflation, 
         NumOGs = length(unique(orthogroups$Orthogroup)),
         NumOGs_GT_4spp = length(which(og.freqs >= 4)),
-        NumOGs_90perc_spp = length(which(og.freqs >= quantile(og.freqs, 0.9)[[1]])),
         NumOGs_All_spp = length(which(og.freqs == max(og.freqs))),
         PerSpp_4spp_OG_Counts = mean(per.spp.og.counts),
         interpro_score = mean(interpro_assess$Mean_score),

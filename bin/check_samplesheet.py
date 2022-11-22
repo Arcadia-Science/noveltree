@@ -36,7 +36,7 @@ def print_error(error, context="Line", context_str=""):
 def check_samplesheet(file_in, file_out):
     """
     This function checks that the samplesheet follows the following structure:
-    species,file,tax1,tax2
+    species,file,tax1,tax2,mode,uniprot,mcl_test
     genus_species,genus_species.fasta,--lineage archaea_odb10,--lineage eukaryota_odb10
     """
 
@@ -44,8 +44,8 @@ def check_samplesheet(file_in, file_out):
     with open(file_in, "r", encoding="utf-8-sig") as fin:
 
         ## Check header
-        MIN_COLS = 6
-        HEADER = ["species", "file", "tax1", "tax2", "mode", "uniprot"]
+        MIN_COLS = 7
+        HEADER = ["species", "file", "tax1", "tax2", "mode", "uniprot", "mcl_test"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
             print(f"ERROR: Please check samplesheet header -> {','.join(header)} != {','.join(HEADER)}")
@@ -73,7 +73,7 @@ def check_samplesheet(file_in, file_out):
                     )
 
                 ## Check sample name entries
-                species, file, tax1, tax2, mode, uniprot = lspl[: len(HEADER)]
+                species, file, tax1, tax2, mode, uniprot, mcl_test = lspl[: len(HEADER)]
                 if species.find(" ") != -1:
                     print(f"WARNING: Spaces have been replaced by underscores for sample: {species}")
                     species = species.replace(" ", "_")
@@ -92,26 +92,10 @@ def check_samplesheet(file_in, file_out):
                                 line,
                             )
 
-                ## Check strandedness
-                #strandednesses = ["unstranded", "forward", "reverse"]
-                #if strandedness:
-                #    if strandedness not in strandednesses:
-                #        print_error(
-                #            f"Strandedness must be one of '{', '.join(strandednesses)}'!",
-                #            "Line",
-                #            line,
-                #        )
-                #else:
-                #    print_error(
-                #        f"Strandedness has not been specified! Must be one of {', '.join(strandednesses)}.",
-                #        "Line",
-                #        line,
-                #    )
-
                 ## populate sample data
-                species_info = [file, tax1, tax2, mode, uniprot]  ## [file, tax1, tax2, mode, uniprot]
+                species_info = [file, tax1, tax2, mode, uniprot, mcl_test]  ## [file, tax1, tax2, mode, uniprot, mcl_test]
 
-                ## Create species mapping dictionary = {species: [[ file, tax1, tax2, mode, uniprot ]]}
+                ## Create species mapping dictionary = {species: [[ file, tax1, tax2, mode, uniprot, mcl_test ]]}
                 if species not in species_mapping_dict:
                     species_mapping_dict[species] = [species_info]
                 else:
@@ -125,18 +109,8 @@ def check_samplesheet(file_in, file_out):
         out_dir = os.path.dirname(file_out)
         make_dir(out_dir)
         with open(file_out, "w") as fout:
-            fout.write(",".join(["species", "file", "tax1", "tax2", "mode", "uniprot"]) + "\n")
+            fout.write(",".join(["species", "file", "tax1", "tax2", "mode", "uniprot", "mcl_test"]) + "\n")
             for species in sorted(species_mapping_dict.keys()):
-
-
-                ### Check that multiple runs of the same species are of the same strandedness
-                #if not all(x[-1] == species_mapping_dict[species][0][-1] for x in species_mapping_dict[species]):
-                #    print_error(
-                #        f"Multiple runs of a species must have the same strandedness!",
-                #        "Species",
-                #        species,
-                #    )
-
                 for idx, val in enumerate(species_mapping_dict[species]):
                     fout.write(",".join([f"{species}_T{idx+1}"] + val) + "\n")
     else:
