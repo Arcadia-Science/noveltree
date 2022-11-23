@@ -74,6 +74,9 @@ process SPECIES_TREE_PREP {
         echo "subst_model = LG+G4+F" >> generax-orthogroup.families
     done
     
+    # clean up the families file a bit 
+    sed -i 's|\\./||g' generax-orthogroup.families
+    
     # Now concatenate the maps for input to Asteroid
     cat *generax-map.link > asteroid-map.link
     """

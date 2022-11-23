@@ -58,6 +58,7 @@ include { SELECT_INFLATION                          } from '../modules/local/sel
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
 include { ASTEROID                         } from '../modules/local/asteroid'
+include { SPECIESRAX                         } from '../modules/local/speciesrax'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -369,8 +370,19 @@ workflow PHYLORTHOLOGY {
         ch_treefile,
         ch_asteroid_map
     )
+    .spp_tree
     .set { ch_asteroid }
     
+    // Now infer the rooted species tree with SpeciesRax,
+    // reconcile gene family trees, and infer per-family 
+    // rates of gene-family duplication, transfer, and loss
+    SPECIESRAX (
+        ch_asteroid,
+        ch_generax_map,
+        ch_all_trees,
+        ch_all_msas,
+        ch_families
+    )
 }
 
 /*
