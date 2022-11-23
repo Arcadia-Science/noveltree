@@ -56,7 +56,6 @@ include { ANNOTATE_UNIPROT                          } from '../modules/local/ann
 include { COGEQC                                    } from '../modules/local/cogeqc'
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
-
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -348,14 +347,20 @@ workflow PHYLORTHOLOGY {
     .collect()
     .set { ch_all_msas } 
     
+    // Now, go ahead and prepare input files for initial unrooted species 
+    // tree inference with Asteroid, rooted species-tree inference with 
+    // SpeciesRax, and gene-tree species-tree reconciliation and estimation 
+    // of gene family duplication transfer and loss with GeneRax. 
+    SPECIES_TREE_PREP (
+        ch_all_trees,
+        ch_all_msas
+    )
+    .set { ch_spp_tree_prep }
     
-    
-    //ch_all_gf_trees = ch_gene_trees.mix(ch_gene_trees).collect()
-    
-    // Then alignments....
-    //ch_all_msas = ch_og_msas.mix(ch_og_msas).collect()
-
-
+    ch_treefile = ch_spp_tree_prep.treefile
+    ch_families = ch_spp_tree_prep.families
+    ch_generax_map = ch_spp_tree_prep.generax_map
+    ch_asteroid_map = ch_spp_tree_prep.asteroid_map
 }
 
 /*
