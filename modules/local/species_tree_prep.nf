@@ -60,8 +60,8 @@ process SPECIES_TREE_PREP {
         # Now pull out the sequences, and split into a TreeRecs format mapping
         # file, where each protein in the tree is a new line, listing species 
         # and then the protein
-        grep ">" \${og}* | sed "s/>//g" > prot
-        sed "s/^[^_]*_//" prot | sed "s/_P.*//g" > spp
+        grep ">" \${og}* | sed "s/>//g"  | sed "s/.*://g" > prot
+        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
         paste prot spp > \${og}-generax-map.link
         rm prot && rm spp
         

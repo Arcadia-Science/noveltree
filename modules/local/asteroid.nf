@@ -1,23 +1,23 @@
 process ASTEROID {
-    tag "meta.og"
+    tag "Asteroid"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/generax:2.0.4--h19e7193_0':
-        'quay.io/biocontainers/generax:2.0.4--h19e7193_0' }"
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid:1.0.0':
+        '' }"
         
     publishDir(
-        path: "${params.outdir}/trimmed-msas",
+        path: "${params.outdir}/asteroid",
         mode: 'copy',
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input:
-    tuple val(meta), path(fasta)   // Filepaths to the MSAs with at least four species 
-
+    path treefile     // Filepath to the asteroid treefile (all newick gene trees)
+    path asteroid_map // Filepath to the asteroid gene-species map
+    
     output:
-    tuple val(meta), path("*-clipkit.fa") , emit: trimmed_msas
+    path "*" , emit: output
+    //tuple val(meta), path("*-clipkit.fa") , emit: trimmed_msas
     path "versions.yml"                   , emit: versions
 
     when:
@@ -27,12 +27,13 @@ process ASTEROID {
     script:
     def args = task.ext.args ?: ''
     """
-    # Trim the MSAs for each orthogroup containing at least 4 species. 
-    clipkit ${fasta} -o ${meta.og}-clipkit.fa
-    
+    # Run asteroid using the multithreaded mpi version
+    mpiexec -np 16 --allow-run-as-root asteroid -i $treefile -m $asteroid_map -p asteroid
+
+    # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        clipkit: \$( clipkit --version | sed "s/clipkit //g" )
+        asteroid: 1.0
     END_VERSIONS
     """
 }

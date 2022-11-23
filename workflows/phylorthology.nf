@@ -57,6 +57,7 @@ include { COGEQC                                    } from '../modules/local/cog
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
+include { ASTEROID                         } from '../modules/local/asteroid'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -361,6 +362,15 @@ workflow PHYLORTHOLOGY {
     ch_families = ch_spp_tree_prep.families
     ch_generax_map = ch_spp_tree_prep.generax_map
     ch_asteroid_map = ch_spp_tree_prep.asteroid_map
+    
+    // Alrighty, now let's infer an intial, unrooted species tree using 
+    // Asteroid
+    ASTEROID (
+        ch_treefile,
+        ch_asteroid_map
+    )
+    .set { ch_asteroid }
+    
 }
 
 /*
