@@ -8,12 +8,13 @@ process IQTREE {
         'quay.io/biocontainers/iqtree:2.1.4_beta--hdcc8f71_0' }"
 
     input:
-    path alignment
+    tuple val(meta), path(alignment)
     val constant_sites
 
     output:
-    path "*.treefile",    emit: phylogeny
-    path "versions.yml" , emit: versions
+    tuple val(meta), path("*.treefile") , emit: phylogeny
+    path "*.log" ,                        emit: iqtree_log
+    path "versions.yml" ,                 emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,13 +24,16 @@ process IQTREE {
     def fconst_args = constant_sites ? "-fconst $constant_sites" : ''
     def memory      = task.memory.toString().replaceAll(' ', '')
     """
+    memory=\$(echo ${task.memory} | sed "s/.G/G/g")
     iqtree \\
-        $fconst_args \\
-        $args \\
         -s $alignment \\
         -nt AUTO \\
-        -ntmax $task.cpus \\
+        -ntmax ${task.cpus} \\
         -mem $memory \\
+        -m C60 \\
+        -alrt 1000 \\
+        $args \\
+        $fconst_args \\
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

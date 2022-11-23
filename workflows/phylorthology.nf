@@ -69,6 +69,7 @@ include { BUSCO                                 } from '../modules/nf-core/busco
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
 include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
 include { MAFFT                                 } from '../modules/nf-core/mafft/main'
+include { IQTREE                                 } from '../modules/nf-core/iqtree/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -299,23 +300,34 @@ workflow PHYLORTHOLOGY {
         ch_best_inflation,
         ch_similarities,
         "false",
-        "4",
-        "10"
+        "7",
+        "1.5"
     )
     .core_ogs
     .splitCsv ( header:true, sep:',' )
     .map { create_og_channel(it) }
  
-    //ch_og_msas = MAFFT (
-    //    ch_orthogroups
-    //)
-    //.msas
+    ch_og_msas = MAFFT (
+        ch_orthogroups
+    )
+    .msas
     
-    //ch_trimmed_msas = CLIPKIT (
-    //    ch_orthogroups
-    //)
-    //.trimmed_msas
+    ch_trimmed_msas = CLIPKIT (
+        ch_og_msas
+    )
+    .trimmed_msas
     
+    ch_gene_trees = IQTREE (
+        ch_trimmed_msas,
+        []
+    )
+    .phylogeny
+    
+    // Collect these gene family trees - they will be used for unrooted 
+    // species tree inference with Asteroid
+    ch_gf_trees = ch_gene_trees.mix(ch_gene_trees).collect()
+    
+
 }
 
 /*
