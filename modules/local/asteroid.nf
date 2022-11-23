@@ -16,9 +16,9 @@ process ASTEROID {
     path asteroid_map // Filepath to the asteroid gene-species map
     
     output:
-    path "*" , emit: output
-    //tuple val(meta), path("*-clipkit.fa") , emit: trimmed_msas
-    path "versions.yml"                   , emit: versions
+    path "*bestTree.newick" , emit: spp_tree
+    path "*scores.txt" ,      emit: asteroid_scores
+    path "versions.yml" ,     emit: versions
 
     when:
     task.ext.when == null || task.ext.when
