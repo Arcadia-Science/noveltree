@@ -13,7 +13,7 @@ process ORTHOFINDER_MCL {
     val max_copy_num
 
     output:
-    path "MCL-*-fpath.txt"     , emit: og_fpath
+    path "MCL-*-fpath.txt"      , emit: og_fpath
     path "core_ogs*.csv"        , emit: core_ogs
     path "all_ogs*.csv"         , emit: all_ogs
 
@@ -55,7 +55,7 @@ process ORTHOFINDER_MCL {
     # -a ${task.cpus} \\
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    #mv ./OrthoFinder/Results_Inflation_${inflation_param}/ \$dataDir/
+    mv ./OrthoFinder/Results_Inflation_${inflation_param}/ \$dataDir/
     #mv ../../../${params.outdir}/orthofinder/WorkingDirectory/OrthoFinder/Results_Inflation_${inflation_param}/ ../../../${params.outdir}/orthofinder/
     
     # And output a file used to track job completion and specify filepaths downstream
@@ -103,7 +103,8 @@ process ORTHOFINDER_MCL {
         cat header tmp > all_ogs_final_${inflation_param}.csv
         
         # Pull out the OGs with at least the specified number of species with at most the specified mean copy number per species
-        awk -F"," '(NR>=1) && (\$2 >= $num_spp ) && (\$3 <= $copy_num )' all_ogs_final_${inflation_param}.csv > core_ogs_final_${inflation_param}.csv
+        awk -F"," '(NR>=1) && (\$2 >= $num_spp ) && (\$3 <= $copy_num )' all_ogs_final_${inflation_param}.csv > tmp
+        cat header tmp > core_ogs_final_${inflation_param}.csv
     fi   
     """
 }

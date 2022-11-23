@@ -1,11 +1,11 @@
-process CLIPKIT {
+process GENERAX {
     tag "meta.og"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
+    conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-uniprot.ws:2.34.0--r41hdfd78af_0':
-        'docker.io/austinhpatton123/clipkit' }"
+        'https://depot.galaxyproject.org/singularity/generax:2.0.4--h19e7193_0':
+        'quay.io/biocontainers/generax:2.0.4--h19e7193_0' }"
         
     publishDir(
         path: "${params.outdir}/trimmed-msas",

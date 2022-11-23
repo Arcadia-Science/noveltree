@@ -11,7 +11,7 @@ process MAFFT {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*.fa"), emit: msa
+    tuple val(meta), path("*-mafft.fa"), emit: msas
     path "versions.yml"           , emit: versions
 
     when:
@@ -23,9 +23,11 @@ process MAFFT {
     """
     mafft \\
         --thread ${task.cpus} \\
-        ${args} \\
+        --localpair \\
+        --maxiterate 1000 \\
+        --anysymbol \\
         ${fasta} \\
-        > ${prefix}.fas
+        > ${prefix}-mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
