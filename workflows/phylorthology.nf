@@ -56,6 +56,8 @@ include { ANNOTATE_UNIPROT                          } from '../modules/local/ann
 include { COGEQC                                    } from '../modules/local/cogeqc'
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
+
+include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -323,9 +325,30 @@ workflow PHYLORTHOLOGY {
     )
     .phylogeny
     
-    // Collect these gene family trees - they will be used for unrooted 
-    // species tree inference with Asteroid
-    ch_gf_trees = ch_gene_trees.mix(ch_gene_trees).collect()
+    // Collect these gene family trees and alignments;
+    // they will be used for unrooted species tree inference 
+    // with Asteroid and downstream analysis with GeneRax and 
+    // SpeciesRax
+    // First trees....
+    ch_all_gf_trees = ch_gene_trees.mix(ch_gene_trees).collect()
+    ch_all_gf_trees
+    .branch {
+        meta, trees ->
+            trees  : trees
+                return [ trees ]
+    }
+    .set { ch_gf_trees }
+    
+    // Then alignments....
+    ch_all_msas = ch_og_msas.mix(ch_og_msas).collect()
+    ch_all_msas
+    .branch {
+        meta, msas ->
+            alignments  : msas
+                return [ msas ]
+    }
+    .set { ch_msas }
+    
     
 
 }
