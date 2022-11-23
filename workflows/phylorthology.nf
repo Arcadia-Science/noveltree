@@ -330,26 +330,31 @@ workflow PHYLORTHOLOGY {
     // with Asteroid and downstream analysis with GeneRax and 
     // SpeciesRax
     // First trees....
-    ch_all_gf_trees = ch_gene_trees.mix(ch_gene_trees).collect()
-    ch_all_gf_trees
+    ch_gene_trees
     .branch {
-        meta, trees ->
-            trees  : trees
-                return [ trees ]
+        meta, phylogeny ->
+            trees  : phylogeny
+                return phylogeny
     }
-    .set { ch_gf_trees }
+    .collect()
+    .set { ch_all_trees } 
+    
+    ch_trimmed_msas
+    .branch {
+        meta, trimmed_msas ->
+            msas  : trimmed_msas
+                return trimmed_msas
+    }
+    .collect()
+    .set { ch_all_msas } 
+    
+    
+    
+    //ch_all_gf_trees = ch_gene_trees.mix(ch_gene_trees).collect()
     
     // Then alignments....
-    ch_all_msas = ch_og_msas.mix(ch_og_msas).collect()
-    ch_all_msas
-    .branch {
-        meta, msas ->
-            alignments  : msas
-                return [ msas ]
-    }
-    .set { ch_msas }
-    
-    
+    //ch_all_msas = ch_og_msas.mix(ch_og_msas).collect()
+
 
 }
 

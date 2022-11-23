@@ -14,8 +14,8 @@ process SPECIES_TREE_PREP {
     )
 
     input:
-    tuple val(meta), path(genetree)   // Output from IQ-tree: filepaths to gene family trees with metadata
-    tuple val(meta), path(alignments) // Output from ClipKit: filepaths to trimmed alignments with metadata  
+    path genetrees   // Output from IQ-tree: filepaths to gene family trees with metadata
+    path alignments // Output from ClipKit: filepaths to trimmed alignments with metadata  
 
     output:
     path "gene-family-trees.txt" ,       emit: treefile
