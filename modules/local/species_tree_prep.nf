@@ -38,7 +38,7 @@ process SPECIES_TREE_PREP {
     
     # From these inputs we need to make:
     # 1) A file that contains each gene-family tree in newick 
-         format, one per line
+    #    format, one per line
     # 2) A tab separated species-gene mapping file, one gene-species pair per line
     #    - Two versions need to be made:
     #       a) Asteroid: a single file, with all mappings
