@@ -51,6 +51,7 @@ process SPECIES_TREE_PREP {
     
     # Now, create the GeneRax mapping files, and concatenate for Asteroid.
     # We will concurrently populate the families file.
+    echo "[FAMILIES]" > generax-orthogroup.families
     for msa in \$(ls ./*fa)
     do
         # Get the OG name
