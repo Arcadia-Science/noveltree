@@ -304,7 +304,7 @@ workflow PHYLORTHOLOGY {
         ch_similarities,
         "false",
         "7",
-        "1.5"
+        "2"
     )
     .core_ogs
     .splitCsv ( header:true, sep:',' )
