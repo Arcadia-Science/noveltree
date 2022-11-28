@@ -25,7 +25,16 @@ process IQTREE {
     def memory      = task.memory.toString().replaceAll(' ', '')
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
-    iqtree \\
+    
+    # Check if this is a resumed run:
+    # error trying to resume if not.) 
+    # If the checkpoint file indicates the run finished, go ahead and 
+    # skip the analyses, otherwise run iqtree as normal.
+    
+    if zgrep -q "finished: true" *.ckp.gz; then
+        echo "Run completed"
+    else
+        iqtree \\
         -s $alignment \\
         -nt AUTO \\
         -ntmax ${task.cpus} \\
@@ -33,8 +42,9 @@ process IQTREE {
         -m C60 \\
         -alrt 1000 \\
         $args \\
-        $fconst_args \\
-
+        $fconst_args
+    fi
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         iqtree: \$(echo \$(iqtree -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')

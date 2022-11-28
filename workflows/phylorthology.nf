@@ -57,8 +57,8 @@ include { COGEQC                                    } from '../modules/local/cog
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
-include { ASTEROID                         } from '../modules/local/asteroid'
-include { SPECIESRAX                         } from '../modules/local/speciesrax'
+include { ASTEROID                                  } from '../modules/local/asteroid'
+include { SPECIESRAX                                } from '../modules/local/speciesrax'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
