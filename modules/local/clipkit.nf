@@ -1,11 +1,9 @@
 process CLIPKIT {
     tag "meta.og"
-    label 'process_medium'
+    label 'process_clipkit'
 
-    conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-uniprot.ws:2.34.0--r41hdfd78af_0':
-        'docker.io/austinhpatton123/clipkit' }"
+    container "${ workflow.containerEngine == 'docker' ? 'docker.io/austinhpatton123/clipkit' :
+        '' }"
         
     publishDir(
         path: "${params.outdir}/trimmed-msas",

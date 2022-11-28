@@ -1,6 +1,6 @@
 process IQTREE {
     tag "$alignment"
-    label 'process_medium'
+    label 'process_iqtree'
 
     conda (params.enable_conda ? 'bioconda::iqtree=2.1.4_beta' : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

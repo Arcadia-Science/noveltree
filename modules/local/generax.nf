@@ -1,6 +1,6 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    label 'process_medium'
+    label 'process_speciesrax'
 
     conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -30,7 +30,7 @@ process SPECIESRAX {
     script:
     def args = task.ext.args ?: ''
     """
-    mpiexec -np 16 generax --families $families --strategy SPR \
+    mpiexec -np ${tax.cpus} generax --families $families --strategy SPR \
     --si-strategy HYBRID --species-tree $init_species_tree --rec-model UndatedDTL \
     --per-family-rates --prune-species-tree --si-estimate-bl \
     --si-spr-radius 5 --max-spr-radius 5 --si-quartet-support \

@@ -236,6 +236,9 @@ workflow PHYLORTHOLOGY {
     //
     // Set the publishdir so that the similarity scores can be accessed by 
     // orthofinder in the next step (MCL clustering into orthogroups).
+    
+    // Run for the test set (used to determine the best value of the MCL
+    // inflation parameter)
     ch_blastp_test = DIAMOND_BLASTP_TEST (
         ch_orthofinder_test,
         ch_test_dmd,
@@ -245,6 +248,8 @@ workflow PHYLORTHOLOGY {
     )
     .txt
     
+    // And for the full dataset, to be clustered into orthogroups using 
+    // the best inflation parameter. 
     ch_blastp = DIAMOND_BLASTP (
         ch_orthofinder_full,
         ch_dmd,
@@ -279,8 +284,9 @@ workflow PHYLORTHOLOGY {
     .og_fpath
     
     //
-    // MODULE: Run an R-script that applies cogqc to assess orthogroup inference
-    //         accuracy/performance.
+    // MODULE: COGEQC
+    // Run an R-script that applies cogqc to assess orthogroup inference
+    // accuracy/performance.
     //
     ch_cogeqc = COGEQC (
         ch_mcl,
@@ -310,16 +316,29 @@ workflow PHYLORTHOLOGY {
     .splitCsv ( header:true, sep:',' )
     .map { create_og_channel(it) }
  
+    //
+    // MODULE: MAFFT
+    // Infer multiple sequence alignments of orthogroups/gene 
+    // families using MAFFT 
+    //
     ch_og_msas = MAFFT (
         ch_orthogroups
     )
     .msas
     
+    //
+    //MODULE: CLIPKIT 
+    // Trim gappy and phylogenetically uninformative sites from the MSAs
+    //
     ch_trimmed_msas = CLIPKIT (
         ch_og_msas
     )
     .trimmed_msas
     
+    //
+    // MODULE: IQTREE
+    // Infer gene-family trees from the trimmed MSAs
+    //
     ch_gene_trees = IQTREE (
         ch_trimmed_msas,
         []
@@ -340,6 +359,7 @@ workflow PHYLORTHOLOGY {
     .collect()
     .set { ch_all_trees } 
     
+    // Then the alignments.
     ch_trimmed_msas
     .branch {
         meta, trimmed_msas ->
@@ -364,8 +384,10 @@ workflow PHYLORTHOLOGY {
     ch_generax_map = ch_spp_tree_prep.generax_map
     ch_asteroid_map = ch_spp_tree_prep.asteroid_map
     
-    // Alrighty, now let's infer an intial, unrooted species tree using 
-    // Asteroid
+    //
+    // MODULE: ASTEROID
+    // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
+    //
     ASTEROID (
         ch_treefile,
         ch_asteroid_map
@@ -373,9 +395,12 @@ workflow PHYLORTHOLOGY {
     .spp_tree
     .set { ch_asteroid }
     
+    //
+    // MODULE: SPECIESRAX
     // Now infer the rooted species tree with SpeciesRax,
     // reconcile gene family trees, and infer per-family 
     // rates of gene-family duplication, transfer, and loss
+    //
     SPECIESRAX (
         ch_asteroid,
         ch_generax_map,
