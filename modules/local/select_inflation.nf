@@ -3,9 +3,8 @@ process SELECT_INFLATION {
     label 'process_single'
 
     conda (params.enable_conda ? "bioconda::bioconductor-r-tidyverse==1.2.1" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/r-tidyverse:1.2.1':
-        'austinhpatton123/select_inflation_param:latest' }"
+    container "${ workflow.containerEngine == 'docker' ?
+        'austinhpatton123/select_inflation_param:latest': '' }"
         
     publishDir(
         path: "${params.outdir}/orthogroup-summaries",

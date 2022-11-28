@@ -1,6 +1,6 @@
 process ASTEROID {
     tag "Asteroid"
-    label 'process_medium'
+    label 'process_speciesrax'
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid:1.0.0':
         '' }"
@@ -28,7 +28,7 @@ process ASTEROID {
     def args = task.ext.args ?: ''
     """
     # Run asteroid using the multithreaded mpi version
-    mpiexec -np 16 --allow-run-as-root asteroid -i $treefile -m $asteroid_map -p asteroid
+    mpiexec -np ${task.cpu} --allow-run-as-root asteroid -i $treefile -m $asteroid_map -p asteroid
 
     # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml
