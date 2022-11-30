@@ -1,7 +1,5 @@
 #!/usr/bin/env Rscript
-# Libraries to get annotations using the uniprot web service
-# The docker image on quay.io is out of date, so pull a docker image of
-# bioconductor, and then install from the binary that comes with it.
+library(parallel)
 
 # Be sure to set the library path to a temporary directory first. 
 dir.create('./Rlibs', showWarnings = FALSE)
@@ -55,6 +53,32 @@ read_orthofinder_stats <-
             return(result_list)
         }
 
+# Additionally, edit the assess_orthogroups function to run in parallel,
+# using mclappy from the parallel package
+assess_orthogroups <- 
+function (orthogroups = NULL, annotation = NULL, correct_overclustering = TRUE, mc.cores = 1) 
+{
+    og_list <- split(orthogroups, orthogroups$Species)
+    og_list <- mclapply(seq_along(og_list), mc.cores = mc.cores, function(x) {
+        species <- names(og_list)[x]
+        idx <- which(names(annotation) == species)
+        merged <- merge(og_list[[x]], annotation[[idx]])
+        names(merged)[4] <- "Annotation"
+        H <- calculate_H(merged, correct_overclustering = correct_overclustering)
+        names(H) <- c("Orthogroups", paste0(species, "_score"))
+        return(H)
+    })
+    merge_func <- function(x, y) {
+        merge(x, y, by = "Orthogroups", all = TRUE)
+    }
+    final_df <- Reduce(merge_func, og_list)
+    means <- apply(final_df[, -1], 1, mean, na.rm = TRUE)
+    medians <- apply(final_df[, -1], 1, median, na.rm = TRUE)
+    final_df$Mean_score <- means
+    final_df$Median_score <- medians
+    return(final_df)
+}
+
 args = commandArgs(trailingOnly=TRUE)
 
 # Get the base directory to where the orthofinder results are.
@@ -88,7 +112,7 @@ orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
 # on a subset of species, so we want to be sure that we're not reading in 
 # annotations for species other than those we're testing inflation 
 # parameters with. 
-species <- orthogroups$Species
+species <- unique(orthogroups$Species)
 
 # and remove the Species name from the gene name - this will create issues when
 # pairing with the annotations. 
@@ -116,7 +140,9 @@ names(interpro) <- spps[which(spps %in% species)]
 # Great, now we can pair these annotations with the orthogroups, assessing how 
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
-interpro_assess <- assess_orthogroups(orthogroups, interpro)
+mc.cores <- detectCores()-2
+makeForkCluster(nnodes = mc.cores)
+interpro_assess <- assess_orthogroups(orthogroups, interpro, mc.cores = mc.cores)
 
 # Read in the orthofinder orthogroup statistics
 ortho_stats <- read_orthofinder_stats(ogStatDir, spps[which(spps %in% species)])

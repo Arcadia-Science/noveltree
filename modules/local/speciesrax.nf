@@ -14,15 +14,16 @@ process SPECIESRAX {
     )
 
     input:
-    path init_species_tree   // Filepath to the starting species tree
-    path generax_map // Filepath to the generax gene-species map file
-    path gene_trees // Filepaths to the starting gene trees
-    path alignments // Filepaths to the gene family alignments
-    path families // Filepath to the families file
+    path init_species_tree // Filepath to the starting species tree
+    path generax_map       // Filepath to the generax gene-species map file
+    path gene_trees        // Filepaths to the starting gene trees
+    path alignments        // Filepaths to the gene family alignments
+    path families          // Filepath to the families file
 
     output:
-    path "*" , emit: results
-    path "versions.yml"                   , emit: versions
+    path "*" ,                                    emit: results
+    path "speciesrax_final_species_tree.newick" , emit: speciesrax_tree
+    path "versions.yml" ,                         emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,12 +31,24 @@ process SPECIESRAX {
     // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
+
     """
-    mpiexec -np ${task.cpus} --allow-run-as-root generax --families $families --strategy SPR \
-    --si-strategy HYBRID --species-tree $init_species_tree --rec-model UndatedDTL \
-    --per-family-rates --prune-species-tree --si-estimate-bl \
-    --si-spr-radius 5 --max-spr-radius 5 --si-quartet-support \
+    mpiexec -np ${task.cpus} --allow-run-as-root generax \
+    --species-tree $init_species_tree \
+    --families $families \
+    --per-family-rates \
+    --rec-model UndatedDTL \
+    --prune-species-tree \
+    --si-strategy HYBRID \
+    --si-quartet-support \
+    --si-estimate-bl \
+    --strategy SPR \
     --prefix SpeciesRax
+    
+    # Copy the final starting tree to the current working directory - 
+    # this will be used as the starting tree for generax application to the 
+    # remaining gene families. 
+    cp SpeciesRax/species_trees/inferred_species_tree.newick ./speciesrax_final_species_tree.newick
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

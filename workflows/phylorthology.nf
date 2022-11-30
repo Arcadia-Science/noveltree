@@ -56,9 +56,12 @@ include { ANNOTATE_UNIPROT                          } from '../modules/local/ann
 include { COGEQC                                    } from '../modules/local/cogeqc'
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
+include { CLIPKIT as CLIPKIT_REMAINING              } from '../modules/local/clipkit'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
+include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/species_tree_prep'
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
+include { GENERAX                                   } from '../modules/local/generax'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -68,11 +71,15 @@ include { SPECIESRAX                                } from '../modules/local/spe
 //
 // MODULE: Installed directly from nf-core/modules
 //
+include { BUSCO as BUSCO_SHALLOW                } from '../modules/nf-core/busco/main'
+include { BUSCO as BUSCO_BROAD                  } from '../modules/nf-core/busco/main'
 include { BUSCO                                 } from '../modules/nf-core/busco/main'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
 include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
 include { MAFFT                                 } from '../modules/nf-core/mafft/main'
-include { IQTREE                                 } from '../modules/nf-core/iqtree/main'
+include { MAFFT as MAFFT_REMAINING              } from '../modules/nf-core/mafft/main'
+include { IQTREE                                } from '../modules/nf-core/iqtree/main'
+include { IQTREE as IQTREE_REMAINING            } from '../modules/nf-core/iqtree/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -98,8 +105,6 @@ workflow PHYLORTHOLOGY {
     
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
-    //ch_fa = Channel.empty()
-    //ch_dmd = Channel.empty()
     
     //
     // MODULE: Prepare directory structure and fasta files according to 
@@ -200,43 +205,25 @@ workflow PHYLORTHOLOGY {
     // do not use these outputs, so multiple busco runs may be conducted
     // simultaneously
     //
-    // First at the taxonomically shallow scale
-    //if (params.busco_lineages_path) { 
-    //    ch_busco_dat = file(params.busco_lineages_path)
-    //    BUSCO (
-    //        ch_busco_full,
-    //        "taxon_specific",
-    //        ch_busco_dat
-    //    )
-    //} else { 
-    //    BUSCO (
-    //        ch_busco_full,
-    //        "taxon_specific",
-    //        []
-    //    )
-    //}
-    // Then at the broad scale (i.e. eukaryota)
-    //if (params.busco_lineages_path) { 
-    //    ch_busco_dat = file(params.busco_lineages_path)
-    //    BUSCO (
-    //        ch_busco_full,
-    //        "eukaryota",
-    //        ch_busco_dat
-    //    )
-    //} else { 
-    //    BUSCO (
-    //        ch_busco_full,
-    //        "eukaryota",
-    //       []
-    //    )
-    //}
-
+    // Shallow taxonomic scale:
+    BUSCO_SHALLOW (
+        ch_busco_full,
+        "shallow",
+        [],
+        []
+        )
+    
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_busco_full,
+        "broad",
+        [],
+        []
+        )
+        
     //
     // MODULE: All-v-All diamond/blastp
     //
-    // Set the publishdir so that the similarity scores can be accessed by 
-    // orthofinder in the next step (MCL clustering into orthogroups).
-    
     // Run for the test set (used to determine the best value of the MCL
     // inflation parameter)
     ch_blastp_test = DIAMOND_BLASTP_TEST (
@@ -269,15 +256,14 @@ workflow PHYLORTHOLOGY {
     ch_similarities_test = ch_blastp_test.mix(ch_blastp_test).collect()
     ch_similarities = ch_blastp.mix(ch_blastp).collect()
 
-    //ch_similarities_remaining = ch_blastp.mix(ch_blastp).collect()
-    //ch_similarities = ch_similarities_test.mix(ch_similarities_remaining)
-    
     // First determine the optimal MCL inflation parameter, and then 
     // subsequently use this for full orthogroup inference. 
     ch_mcl = ORTHOFINDER_MCL_TEST (
         ch_inflation,
         ch_similarities_test,
         "true",
+        [],
+        [],
         [],
         []
     )
@@ -309,20 +295,46 @@ workflow PHYLORTHOLOGY {
         ch_best_inflation,
         ch_similarities,
         "false",
-        "7",
+        "6",
+        "5",
+        "1",
         "2"
-    )
-    .core_ogs
+        )
+    
+    // Subset, pulling out two orthogroup sets:
+    // one for species tree inference (core) and a remaining core set 
+    // that we will infer gene family trees for (remaining (rem)). 
+    // All 'core' gene family trees will be reconciled with the species tree, 
+    // and duplication/tranfer/loss rates will be estimated for these, 
+    // but not all orthogroups will have MSAs/gene family trees estimated 
+    // (because they are either very taxon specific, or incredibly large, e.g. 
+    // a mean per-species gene-copy number > 10).
+    ch_orthogroups
+    .extreme_core_ogs
     .splitCsv ( header:true, sep:',' )
     .map { create_og_channel(it) }
+    .set { ch_core_ogs }
+    
+    ch_orthogroups
+    .remaining_core_ogs
+    .splitCsv ( header:true, sep:',' )
+    .map { create_og_channel(it) }
+    .set { ch_rem_ogs }
  
     //
     // MODULE: MAFFT
     // Infer multiple sequence alignments of orthogroups/gene 
     // families using MAFFT 
     //
-    ch_og_msas = MAFFT (
-        ch_orthogroups
+    // For the extreme core set to be used in species tree inference
+    ch_core_og_msas = MAFFT (
+        ch_core_ogs
+    )
+    .msas
+    
+    // And for the remaining orthogroups
+    ch_rem_og_msas = MAFFT_REMAINING (
+        ch_rem_ogs
     )
     .msas
     
@@ -330,8 +342,13 @@ workflow PHYLORTHOLOGY {
     //MODULE: CLIPKIT 
     // Trim gappy and phylogenetically uninformative sites from the MSAs
     //
-    ch_trimmed_msas = CLIPKIT (
-        ch_og_msas
+    ch_core_trimmed_msas = CLIPKIT (
+        ch_core_og_msas
+    )
+    .trimmed_msas
+    
+    ch_rem_trimmed_msas = CLIPKIT_REMAINING (
+        ch_rem_og_msas
     )
     .trimmed_msas
     
@@ -339,8 +356,14 @@ workflow PHYLORTHOLOGY {
     // MODULE: IQTREE
     // Infer gene-family trees from the trimmed MSAs
     //
-    ch_gene_trees = IQTREE (
-        ch_trimmed_msas,
+    ch_core_gene_trees = IQTREE (
+        ch_core_trimmed_msas,
+        []
+    )
+    .phylogeny
+    
+    ch_rem_gene_trees = IQTREE_REMAINING (
+        ch_rem_trimmed_msas,
         []
     )
     .phylogeny
@@ -349,47 +372,83 @@ workflow PHYLORTHOLOGY {
     // they will be used for unrooted species tree inference 
     // with Asteroid and downstream analysis with GeneRax and 
     // SpeciesRax
+    
+    // Do this for both the core and remaining orthogroups
     // First trees....
-    ch_gene_trees
+    ch_core_gene_trees
     .branch {
         meta, phylogeny ->
             trees  : phylogeny
                 return phylogeny
     }
     .collect()
-    .set { ch_all_trees } 
+    .set { ch_all_core_trees } 
+    
+    ch_rem_gene_trees
+    .branch {
+        meta, phylogeny ->
+            trees  : phylogeny
+                return phylogeny
+    }
+    .collect()
+    .set { ch_all_rem_trees } 
     
     // Then the alignments.
-    ch_trimmed_msas
+    ch_core_trimmed_msas
     .branch {
         meta, trimmed_msas ->
             msas  : trimmed_msas
                 return trimmed_msas
     }
     .collect()
-    .set { ch_all_msas } 
+    .set { ch_all_core_msas } 
+    
+    ch_rem_trimmed_msas
+    .branch {
+        meta, trimmed_msas ->
+            msas  : trimmed_msas
+                return trimmed_msas
+    }
+    .collect()
+    .set { ch_all_rem_msas }
     
     // Now, go ahead and prepare input files for initial unrooted species 
     // tree inference with Asteroid, rooted species-tree inference with 
     // SpeciesRax, and gene-tree species-tree reconciliation and estimation 
     // of gene family duplication transfer and loss with GeneRax. 
+    
+    // Do this for both the core and non-core gene families.
+    // All outputs are needed for species tree inference, but not for the 
+    // remainder. 
     SPECIES_TREE_PREP (
-        ch_all_trees,
-        ch_all_msas
+        ch_all_core_trees,
+        ch_all_core_msas
     )
-    .set { ch_spp_tree_prep }
+    .set { ch_core_spptree_prep }
     
-    ch_treefile = ch_spp_tree_prep.treefile
-    ch_families = ch_spp_tree_prep.families
-    ch_generax_map = ch_spp_tree_prep.generax_map
-    ch_asteroid_map = ch_spp_tree_prep.asteroid_map
+    ch_core_treefile = ch_core_spptree_prep.treefile
+    ch_core_families = ch_core_spptree_prep.families
+    ch_core_generax_map = ch_core_spptree_prep.generax_map
+    ch_asteroid_map = ch_core_spptree_prep.asteroid_map
     
+    GENE_TREE_PREP (
+        ch_all_rem_trees,
+        ch_all_rem_msas
+    )
+    .set { ch_rem_genetree_prep }
+    
+    ch_rem_treefile = ch_rem_genetree_prep.treefile
+    ch_rem_families = ch_rem_genetree_prep.families
+    ch_rem_generax_map = ch_rem_genetree_prep.generax_map
+
+    // The following two steps will just be done for the core set of 
+    // orthogroups that will be used to infer the species tree
     //
     // MODULE: ASTEROID
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
     ASTEROID (
-        ch_treefile,
+        ch_core_treefile,
         ch_asteroid_map
     )
     .spp_tree
@@ -403,11 +462,25 @@ workflow PHYLORTHOLOGY {
     //
     SPECIESRAX (
         ch_asteroid,
-        ch_generax_map,
-        ch_all_trees,
-        ch_all_msas,
-        ch_families
+        ch_core_generax_map,
+        ch_all_core_trees,
+        ch_all_core_msas,
+        ch_core_families
     )
+    .speciesrax_tree
+    .set { ch_speciesrax }
+    
+    // Run again, but this time only using the GeneRax component, 
+    // reconciling gene family trees with the rooted species tree 
+    // inferred from SpeciesRax for all remaining gene families
+    GENERAX (
+        ch_speciesrax,
+        ch_rem_generax_map,
+        ch_all_rem_trees,
+        ch_all_rem_msas,
+        ch_rem_families
+    )
+    
 }
 
 /*
