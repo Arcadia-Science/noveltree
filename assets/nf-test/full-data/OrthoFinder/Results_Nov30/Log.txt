@@ -1,0 +1,16 @@
+2022-11-30 20:18:58 : Started OrthoFinder version 2.5.4
+Command Line: /usr/local/bin/orthofinder -f /home/ubuntu/environment/data/nf-test/full-data/ -t 2 -op
+
+WorkingDirectory_Base: /home/ubuntu/environment/data/nf-test/full-data/OrthoFinder/Results_Nov30/WorkingDirectory/
+
+Species used: 
+0: Diacronema_lutheri-test-proteome.fasta
+1: Entamoeba_histolytica-test-proteome.fasta
+2: Giardia_intestinalis-test-proteome.fasta
+3: Loa_loa-test-proteome.fasta
+4: Lokiarchaeota_archaeon-test-proteome.fasta
+5: Porphyridium_purpureum-test-proteome.fasta
+6: Saccharomyces_cerevisiae-test-proteome.fasta
+7: Thecamonas_trahens-test-proteome.fasta
+8: Toxoplasma_gondii-test-proteome.fasta
+
