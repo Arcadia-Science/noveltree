@@ -1,6 +1,6 @@
 process ASTEROID {
     tag "Asteroid"
-    label 'process_speciesrax'
+    label 'process_highthread'
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid:1.0.0':
         '' }"

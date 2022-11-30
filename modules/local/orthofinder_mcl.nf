@@ -1,6 +1,6 @@
 process ORTHOFINDER_MCL {
     tag "MCL clustering"
-    label 'process_mcl'
+    label 'process_highthread'
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/orthofinder-2.5.4_r-4.2.2' : 
         '' }"
 

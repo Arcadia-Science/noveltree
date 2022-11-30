@@ -1,6 +1,6 @@
 process CLIPKIT {
     tag "${meta.og}"
-    label 'process_clipkit'
+    label 'process_medium'
 
     container "${ workflow.containerEngine == 'docker' ? 'docker.io/austinhpatton123/clipkit' :
         '' }"

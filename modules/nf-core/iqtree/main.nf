@@ -1,6 +1,6 @@
 process IQTREE {
     tag "$alignment"
-    label 'process_iqtree'
+    label 'process_highthread'
 
     conda (params.enable_conda ? 'bioconda::iqtree=2.1.4_beta' : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -38,13 +38,12 @@ process IQTREE {
         iqtree \\
         -s $alignment \\
         -nt AUTO \\
-        -ntmax 16 \\
+        -ntmax ${task.cpus} \\
+        -mem \$memory \\
         -m LG+F+G \\
         $args \\
         $fconst_args
-        #-ntmax ${task.cpus} \\
-        #-mem $memory \\
-        
+
         # Identify the best number of threads
         nt=\$(grep "BEST NUMBER" *.log | sed "s/.*: //g")
         
@@ -55,12 +54,11 @@ process IQTREE {
         iqtree \\
         -s $alignment \\
         -nt \$nt \\
+        -mem \$memory \\
         -m LG+C40+F+G \\
         -ft guidetree.treefile \\
         $args \\
         $fconst_args
-        #-ntmax ${task.cpus} \\
-        #-mem $memory \\
         
         # Clean up
         rm ./guidetree.treefile

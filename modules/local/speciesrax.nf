@@ -1,6 +1,6 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    label 'process_speciesrax'
+    label 'process_highthread'
 
     conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

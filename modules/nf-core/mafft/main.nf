@@ -1,6 +1,6 @@
 process MAFFT {
     tag "$meta.og"
-    label 'process_high'
+    label 'process_highthread'
 
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
