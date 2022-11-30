@@ -1,0 +1,6 @@
+{
+  "input": "/home/ubuntu/environment/github/phylorthology/assets/samplesheet.csv",
+  "fasta_dir": "/home/ubuntu/environment/github/phylorthology/assets/nf-test/full-data/",
+  "test_fasta_dir": "/home/ubuntu/environment/github/phylorthology/assets/nf-test/test-data/",
+  "mcl_inflation": [ "0.9", "1.1", "1.3" ]
+}

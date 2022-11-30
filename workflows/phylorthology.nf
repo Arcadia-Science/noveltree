@@ -16,7 +16,6 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Full samplesheet not specified!' }
-if (params.test_data) { ch_test_data = file(params.test_data) } else { exit 1, 'Test samplesheet not specified!' }
 if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
 if (params.test_fasta_dir) { ch_test_fa_dir = params.test_fasta_dir } else { exit 1, 'Test fasta directory not specified!' }
 if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
