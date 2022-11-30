@@ -34,15 +34,37 @@ process IQTREE {
     if zgrep -q "finished: true" *.ckp.gz; then
         echo "Run completed"
     else
+        # Infer the guide tree for PMSF approximation
         iqtree \\
         -s $alignment \\
         -nt AUTO \\
-        -ntmax ${task.cpus} \\
-        -mem $memory \\
-        -m C60 \\
-        -alrt 1000 \\
+        -ntmax 16 \\
+        -m LG+F+G \\
         $args \\
         $fconst_args
+        #-ntmax ${task.cpus} \\
+        #-mem $memory \\
+        
+        # Identify the best number of threads
+        nt=\$(grep "BEST NUMBER" *.log | sed "s/.*: //g")
+        
+        # Rename it and clean up
+        mv *.treefile guidetree.treefile
+        rm *fa.*
+        
+        iqtree \\
+        -s $alignment \\
+        -nt \$nt \\
+        -m LG+C40+F+G \\
+        -ft guidetree.treefile \\
+        $args \\
+        $fconst_args
+        #-ntmax ${task.cpus} \\
+        #-mem $memory \\
+        
+        # Clean up
+        rm ./guidetree.treefile
+        
     fi
     
     cat <<-END_VERSIONS > versions.yml

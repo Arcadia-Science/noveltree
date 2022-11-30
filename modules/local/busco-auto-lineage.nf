@@ -1,19 +1,24 @@
 process BUSCO {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_large'
 
     conda (params.enable_conda ? "bioconda::busco=5.4.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/busco:5.4.3--pyhdfd78af_0':
         'quay.io/biocontainers/busco:5.4.3--pyhdfd78af_0' }"
+        
+    publishDir(
+        path: "${params.outdir}/BUSCO",
+        mode: 'copy',
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
 
     input:
-    tuple val(meta), path('tmp_input/*')
-    val lineage_scale                     // Required: Taxonomically shallow- or broad-scale busco database to compare against? Determines busco lineage to use from samplesheet.
-    path busco_lineages_path              // Recommended: path to busco lineages - downloads if not set
-    path config_file                      // Optional:    busco configuration file
-    //val lineage                         // Required:    lineage to check against, "auto" enables --auto-lineage instead
-
+    tuple val(meta), path('tmp_input/*')    // path('tmp_input/*')
+    val lineage_scale                       // Taxonomically shallow- or broad-scale busco database to compare against?
+    path busco_lineages_path                // Recommended: path to busco lineages - downloads if not set
+    //val lineage                           // Required:    lineage to check against, "auto" enables --auto-lineage instead
+    //path config_file                      // Optional:    busco configuration file
 
     output:
     tuple val(meta), path("*-busco.batch_summary.txt"), emit: batch_summary
@@ -25,13 +30,19 @@ process BUSCO {
     when:
     task.ext.when == null || task.ext.when
 
+    // always gets set as the file itself, excluding the path
     script:
+
+    // All I want is to be able to save the path leading to it as a variable that I can use in the busco script below. 
     def args = task.ext.args ?: ''
-    def prefix = lineage_scale.equals('shallow') ? "${meta.id}-${meta.shallow}" : "${meta.id}-${meta.broad}"
-    def busco_config = config_file ? "--config $config_file" : ''
-    //def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
-    def busco_lineage = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow}" : "--lineage_dataset ${meta.broad}"
+    def busco_mode = "--mode ${meta.mode}"
+    //def prefix = task.ext.prefix ?: "${meta.id}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
+    def busco_lineage_scale = lineage_scale.equals('taxon_specific') ? "${meta.tax1}" : "${meta.tax2}"
+    def prefix = lineage_scale.equals('taxon_specific') ? "${meta.id}-shallow" : "${meta.id}-euk"
+    //def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
+    //def busco_config = config_file ? "--config $config_file" : ''
+    //def mode = 'proteins'
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
     # Check for container variable initialisation script and source it.
@@ -50,6 +61,15 @@ process BUSCO {
         echo "New AUGUSTUS_CONFIG_PATH=\${AUGUSTUS_CONFIG_PATH}"
     fi
 
+
+    ############################################################################
+    ############################################################################
+    # All of this input seq stuff, the symlinks they try to generate in the #
+    # tmp_dir that i've overridden - keeps causing problems because the path 
+    # to the file we're trying to make a symlink for is wrong
+    ############################################################################
+    ############################################################################
+    
     # Ensure the input is uncompressed
     INPUT_SEQS=input_seqs
     mkdir "\$INPUT_SEQS"
@@ -64,13 +84,12 @@ process BUSCO {
     cd ..
 
     busco \\
-        --cpu ${task.cpus} \\
+        --cpu $task.cpus \\
         --in "\$INPUT_SEQS" \\
         --out ${prefix}-busco \\
-        --mode ${meta.mode} \\
-        $busco_lineage \\
+        $busco_mode \\
+        $busco_lineage_scale \\
         $busco_lineage_dir \\
-        $busco_config \\
         $args
 
     # clean up

@@ -25,8 +25,9 @@ def create_prots_channel(LinkedHashMap row) {
     // create meta map
     def meta  = [:]
         meta.id   = row.species
-        meta.tax1 = row.tax1
-        meta.tax2 = row.tax2
+        meta.taxon = row.taxonomy
+        meta.shallow = row.shallow
+        meta.broad = row.broad
         meta.mode = row.mode
         meta.uniprot = row.uniprot
         meta.mcl_test = row.mcl_test
