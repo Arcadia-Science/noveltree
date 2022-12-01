@@ -1,3 +1,0 @@
-0: Entamoeba_histolytica-test-proteome.fasta
-1: Loa_loa-test-proteome.fasta
-2: Toxoplasma_gondii-test-proteome.fasta
