@@ -11,3 +11,4 @@ Toxoplasma_gondii,/home/ubuntu/environment/github/phylorthology/assets/nf-test/f
 Entamoeba_histolytica,/home/ubuntu/environment/github/phylorthology/assets/nf-test/test-data/Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
 Loa_loa,/home/ubuntu/environment/github/phylorthology/assets/nf-test/test-data/Loa_loa-test-proteome.fasta,Opisthokonta,nematoda_odb10,eukaryota_odb10,proteins,true,true
 Toxoplasma_gondii,/home/ubuntu/environment/github/phylorthology/assets/nf-test/test-data/Toxoplasma_gondii-test-proteome.fasta,Alveolata,eukaryota_odb10,eukaryota_odb10,proteins,true,true
+Saccharomyces_cerevisiae,/home/ubuntu/environment/github/phylorthology/assets/nf-test/test-data/Saccharomyces_cerevisiae-test-proteome.fasta,Opisthokonta,ascomycota_odb10,eukaryota_odb10,proteins,true,true
