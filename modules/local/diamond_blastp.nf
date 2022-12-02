@@ -1,18 +1,13 @@
 process DIAMOND_BLASTP {
     tag "$meta.id"
-    label 'process_highthread'
+    //label 'process_highthread'
+    label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::diamond=2.0.15" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/diamond:2.0.15--hb97b32f_0' :
         'quay.io/biocontainers/diamond:2.0.15--hb97b32f_0' }"
 
-    //publishDir(
-    //    path: "${params.outdir}/orthofinder/data",
-    //    mode: 'copy',
-    //    saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    //)
-    
     input:
     tuple val(meta), path(fasta), path(of_fasta), path(dmd)
     each db
@@ -36,7 +31,6 @@ process DIAMOND_BLASTP {
     script:
     def args = task.ext.args ?: ''
     def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
-    //def prefix = task.ext.prefix ?: "${meta.id}"
     def columns = blast_columns ? "${blast_columns}" : ''
     switch ( out_ext ) {
         case "blast": outfmt = 0; break

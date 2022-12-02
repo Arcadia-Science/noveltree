@@ -41,8 +41,12 @@ include { INPUT_CHECK                       } from '../subworkflows/local/input_
 //
 // Modules breing run twice (for MCL testing and fulla analysis)
 // needs to be included twice under different names.
+include { BUSCO as BUSCO_SHALLOW                    } from '../modules/local/busco'
+include { BUSCO as BUSCO_BROAD                      } from '../modules/local/busco'
 include { ORTHOFINDER_PREP                          } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
+include { DIAMOND_BLASTP                            } from '../modules/local/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/local/diamond_blastp'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
 include { ORTHOFINDER_MCL                           } from '../modules/local/orthofinder_mcl'
 include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
@@ -51,11 +55,14 @@ include { SELECT_INFLATION                          } from '../modules/local/sel
 include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { CLIPKIT as CLIPKIT_REMAINING              } from '../modules/local/clipkit'
+include { IQTREE                                    } from '../modules/local/iqtree'
+include { IQTREE as IQTREE_REMAINING                } from '../modules/local/iqtree'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
 include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/species_tree_prep'
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
 include { GENERAX                                   } from '../modules/local/generax'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -65,14 +72,9 @@ include { GENERAX                                   } from '../modules/local/gen
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { BUSCO as BUSCO_SHALLOW                } from '../modules/local/busco'
-include { BUSCO as BUSCO_BROAD                  } from '../modules/local/busco'
-include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
-include { MAFFT                                 } from '../modules/nf-core/mafft/main'
+include { MAFFT                                 } from '../modules/nf-core/mafft/main' // Slightly modified (specific parameters)
 include { MAFFT as MAFFT_REMAINING              } from '../modules/nf-core/mafft/main'
-include { IQTREE                                } from '../modules/nf-core/iqtree/main'
-include { IQTREE as IQTREE_REMAINING            } from '../modules/nf-core/iqtree/main'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
