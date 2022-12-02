@@ -48,6 +48,7 @@ include { ORTHOFINDER_MCL                           } from '../modules/local/ort
 include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
 include { COGEQC                                    } from '../modules/local/cogeqc'
 include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
+include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { CLIPKIT as CLIPKIT_REMAINING              } from '../modules/local/clipkit'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
@@ -254,11 +255,7 @@ workflow PHYLORTHOLOGY {
     ch_mcl = ORTHOFINDER_MCL_TEST (
         ch_inflation,
         ch_similarities_test,
-        "true",
-        [],
-        [],
-        [],
-        []
+        "true"
     )
     .og_fpath
     
@@ -288,12 +285,22 @@ workflow PHYLORTHOLOGY {
         ch_best_inflation,
         ch_similarities,
         "false",
-        "6",
-        "5",
+        )
+        .og_fpath
+    
+    // 
+    // MODULE: FILTER_ORTHOGROUPS
+    // Subset orthogroups based on their copy number and distribution 
+    // across species and taxonomic group. 
+    // The conservative subset will be used for species tree inference, 
+    // and the remainder will be used to infer gene family trees only. 
+    ch_filtered_ogs = FILTER_ORTHOGROUPS (
+        ch_orthogroups,
+        "2",
+        "3",
         "1",
         "2"
         )
-    
     // Subset, pulling out two orthogroup sets:
     // one for species tree inference (core) and a remaining core set 
     // that we will infer gene family trees for (remaining (rem)). 
@@ -302,14 +309,14 @@ workflow PHYLORTHOLOGY {
     // but not all orthogroups will have MSAs/gene family trees estimated 
     // (because they are either very taxon specific, or incredibly large, e.g. 
     // a mean per-species gene-copy number > 10).
-    ch_orthogroups
-    .extreme_core_ogs
+    ch_filtered_ogs
+    .spptree_core_ogs
     .splitCsv ( header:true, sep:',' )
     .map { create_og_channel(it) }
     .set { ch_core_ogs }
     
-    ch_orthogroups
-    .remaining_core_ogs
+    ch_filtered_ogs
+    .genetree_core_ogs
     .splitCsv ( header:true, sep:',' )
     .map { create_og_channel(it) }
     .set { ch_rem_ogs }
