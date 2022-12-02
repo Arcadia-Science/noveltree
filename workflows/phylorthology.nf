@@ -86,9 +86,9 @@ def create_og_channel(LinkedHashMap row) {
     def meta  = [:]
         meta.og   = row.orthogroup
         meta.nspp = row.num_spp
-        meta.total_copy_num = total_copy_num
+        meta.total_copy_num = row.total_copy_num
         meta.copy_num = row.mean_copy_num
-        meta.num_grps = num_tax_grps
+        meta.num_grps = row.num_tax_grps
     // add path(s) of the OG file to the meta map
     def og_meta = []
         og_meta = [ meta, [ file(row.file) ] ] 
@@ -296,8 +296,8 @@ workflow PHYLORTHOLOGY {
     // and the remainder will be used to infer gene family trees only. 
     ch_filtered_ogs = FILTER_ORTHOGROUPS (
         ch_orthogroups,
-        "2",
-        "3",
+        "4",
+        "4",
         "1",
         "2"
         )

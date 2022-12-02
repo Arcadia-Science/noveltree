@@ -13,10 +13,10 @@ for(i in 1:length(fpaths)){
 }
 res <- do.call(rbind, fs)
 
-res$NumOGs_GT_4spp <- res$NumOGs_GT_4spp / res$NumOGs
-res$NumOGs_All_spp <- res$NumOGs_All_spp / res$NumOGs
+res$num_ogs_gt_4spp <- res$num_ogs_gt_4spp / res$num_ogs
+res$num_ogs_all_spp <- res$num_ogs_all_spp / res$num_ogs
 
-res <- melt(res, id.vars = 'InflationParam')
+res <- melt(res, id.vars = 'inflation_param')
 vars <- unique(res$variable)
 plts <- list()
 
@@ -34,12 +34,12 @@ for(i in 1:length(vars)){
   
   if(i %in% c(1:9)){
     inflect <- 
-      elbow(res[which(res$variable == vars[[i]]),c(1,3)])$InflationParam_selected
+      elbow(res[which(res$variable == vars[[i]]),c(1,3)])$inflation_param_selected
     elbows[i] <- inflect
     
     plts[[i]] <- 
       ggplot(data = res[which(res$variable == var),], 
-             aes(x = InflationParam, y = value)) +
+             aes(x = inflation_param, y = value)) +
       theme_classic() + 
       geom_vline(xintercept = inflect) + 
       geom_point(size = 3) +
@@ -48,7 +48,7 @@ for(i in 1:length(vars)){
   }else{
     plts[[i]] <- 
       ggplot(data = res[which(res$variable == var),], 
-             aes(x = InflationParam, y = value)) +
+             aes(x = inflation_param, y = value)) +
       geom_point(size = 3) +
       geom_line() +
       ylab(ylabs[i]) + 
@@ -56,20 +56,20 @@ for(i in 1:length(vars)){
   }
 }
 
-og.summs <- 
+og_summs <- 
   plot_grid(plts[[1]], plts[[2]], plts[[3]], 
             plts[[4]], plts[[5]], plts[[6]], 
             plts[[7]], plts[[8]], 
             ncol = 3, nrow = 3)
 
-best.i <- median(elbows)
+best_i <- median(elbows)
 
-ggsave(og.summs, filename = 'inflation_summaries.pdf',
+ggsave(og_summs, filename = 'inflation_summaries.pdf',
        height = 9, width = 9)
 
 # And write out the inflation parameter we selected
 sink("best-inflation-param.txt")
-best.i
+best_i
 sink()
 
 # And write out package versions

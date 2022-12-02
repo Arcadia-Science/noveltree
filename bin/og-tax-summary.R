@@ -66,11 +66,11 @@ res <-
 # Create the subsets
 spptree_core <- 
     res[which(res$mean_copy_num <= copy_num_filt1 & 
-              res$num_spp <= num_spp_filt & 
+              res$num_spp >= num_spp_filt & 
               res$num_tax_grps >= num_grp_filt),]
 genetree_core <- 
     res[which(res$mean_copy_num <= copy_num_filt2 & 
-              res$num_spp <= num_spp_filt & 
+              res$num_spp >= num_spp_filt & 
               res$num_tax_grps >= num_grp_filt),]
 
 # And remove the species tree core ogs from the remnants we'll just infer gene
