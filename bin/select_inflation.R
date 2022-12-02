@@ -5,18 +5,6 @@ library(reshape)
 library(cowplot)
 library(elbow)
 
-# Install the remaining necessary packages and then load
-#dir.create('./Rlibs', showWarnings = FALSE)
-#.libPaths('./Rlibs')
-
-#install.packages(c('reshape', 'cowplot', 'devtools'), 
-#  lib = './Rlibs', repos='https://ftp.osuosl.org/pub/cran/')
-#devtools::install_github("ahasverus/elbow", build_vignettes = FALSE, lib = './Rlibs')
-
-#library(reshape, lib = './Rlibs')
-#library(cowplot, lib = './Rlibs')
-#library(elbow, lib = './Rlibs')
-
 # Read in summaries of MCL Inflation parameter performance.
 fpaths <- list.files(pattern = 'summary.tsv')
 fs <- list()
@@ -38,9 +26,7 @@ ylabs <-
     'Protein Domain Score', '% Genes in OGs', '% Genes in ssOGs', 
     'Mean % Species Overlap')
 
-# Remove:
-# % genes in OG
-# 
+# Initialize empty vector to hold inflection point results. 
 elbows <- c()
 
 for(i in 1:length(vars)){
