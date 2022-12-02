@@ -8,10 +8,10 @@ ogcounts <- args[1]
 # And then the path to the samplesheet
 samples <- args[2]
 
-numsppFilt <- args[3]
-numgrpFilt <- args[4]
-copynumFilt1 <- args[5]
-copynumFilt2 <- args[6]
+num_spp_filt <- args[3]
+num_grp_filt <- args[4]
+copy_num_filt1 <- args[5]
+copy_num_filt2 <- args[6]
 
 ogs <- read.delim(ogcounts)
 samples <- read.delim(samples, sep = ",")
@@ -50,6 +50,7 @@ for(i in 2:ncol(ogs)){
 taxcount <- t(rowsum(t(ogs[-1]), 
               group = colnames(ogs)[-1], 
               na.rm = T))
+# Convert counts to binary for easy counts of species in each og. 
 taxcount[taxcount > 1] <- 1
 taxcount <- rowSums(taxcount)
 
@@ -63,19 +64,19 @@ res <-
     )
 
 # Create the subsets
-extreme_core <- 
-    res[which(res$mean_copy_num <= copynumFilt1 & 
-              res$num_spp <= numsppFilt & 
-              res$num_tax_grps >= numgrpFilt),]
-remaining_core <- 
-    res[which(res$mean_copy_num <= copynumFilt2 & 
-              res$num_spp <= numsppFilt & 
-              res$num_tax_grps >= numgrpFilt),]
+spptree_core <- 
+    res[which(res$mean_copy_num <= copy_num_filt1 & 
+              res$num_spp <= num_spp_filt & 
+              res$num_tax_grps >= num_grp_filt),]
+genetree_core <- 
+    res[which(res$mean_copy_num <= copy_num_filt2 & 
+              res$num_spp <= num_spp_filt & 
+              res$num_tax_grps >= num_grp_filt),]
 
-# And remove the extreme core ogs from the remnants (to eliminate redundant
-# computational effort)
-remaining_core <- remaining_core[-which(remaining_core$orthogroup %in% extreme_core$orthogroup),]
+# And remove the species tree core ogs from the remnants we'll just infer gene
+# family trees for (to eliminate redundant computational effort)
+genetree_core <- genetree_core[-which(genetree_core$orthogroup %in% spptree_core$orthogroup),]
 
 write.csv(res, paste0("all_ogs_counts.csv"), quote = F, row.names = F)
-write.csv(extreme_core, paste0("extreme_core_ogs_counts.csv"), quote = F, row.names = F)
-write.csv(remaining_core, paste0("remaining_core_ogs_counts.csv"), quote = F, row.names = F)
+write.csv(spptree_core, paste0("spptree_core_ogs_counts.csv"), quote = F, row.names = F)
+write.csv(genetree_core, paste0("genetree_core_ogs_counts.csv"), quote = F, row.names = F)
