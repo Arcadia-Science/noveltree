@@ -8,10 +8,10 @@ ogcounts <- args[1]
 # And then the path to the samplesheet
 samples <- args[2]
 
-num_spp_filt <- args[3]
-num_grp_filt <- args[4]
-copy_num_filt1 <- args[5]
-copy_num_filt2 <- args[6]
+num_spp_filt <- as.numeric(args[3])
+num_grp_filt <- as.numeric(args[4])
+copy_num_filt1 <- as.numeric(args[5])
+copy_num_filt2 <- as.numeric(args[6])
 
 ogs <- read.delim(ogcounts)
 samples <- read.delim(samples, sep = ",")
@@ -19,7 +19,7 @@ samples <- read.delim(samples, sep = ",")
 colnames(ogs) <- gsub("\\..*", "", colnames(ogs))
 
 # Extract and remove the totals column
-totals <- ogs['Total']
+totals <- ogs[,which(colnames(ogs) == 'Total')]
 ogs <- ogs[,-which(colnames(ogs) == 'Total')]
 
 # Convert zero-counts to NA
