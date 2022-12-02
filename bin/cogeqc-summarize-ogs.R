@@ -51,10 +51,10 @@ read_orthofinder_stats <-
 # Additionally, edit the assess_orthogroups function to run in parallel,
 # using mclappy from the parallel package
 assess_orthogroups <- 
-function (orthogroups = NULL, annotation = NULL, correct_overclustering = TRUE, mc.cores = 1) 
+function (orthogroups = NULL, annotation = NULL, correct_overclustering = TRUE, mc_cores = 1) 
 {
     og_list <- split(orthogroups, orthogroups$Species)
-    og_list <- mclapply(seq_along(og_list), mc.cores = mc.cores, function(x) {
+    og_list <- mclapply(seq_along(og_list), mc.cores = mc_cores, function(x) {
         species <- names(og_list)[x]
         idx <- which(names(annotation) == species)
         merged <- merge(og_list[[x]], annotation[[idx]])
@@ -129,8 +129,8 @@ names(interpro) <- spps[which(spps %in% species)]
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
 mc_cores <- detectCores()-2
-makeForkCluster(nnodes = mc.cores)
-interpro_assess <- assess_orthogroups(orthogroups, interpro, mc.cores = mc_cores)
+makeForkCluster(nnodes = mc_cores)
+interpro_assess <- assess_orthogroups(orthogroups, interpro, mc_cores = mc_cores)
 
 # Read in the orthofinder orthogroup statistics
 ortho_stats <- read_orthofinder_stats(og_stat_dir, spps[which(spps %in% species)])
@@ -154,7 +154,7 @@ og_freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
 per_spp_og_counts <- table(orthogroups[,1:2])
 
 # And from this, get the mean per-species count per orthogroup with at least 4 spp
-per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) > 4,])
+per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) >= 4,])
 
 # pull out proportional overlap between species
 overlap <- ortho_stats$og_overlap/do.call(pmax, ortho_stats$og_overlap)

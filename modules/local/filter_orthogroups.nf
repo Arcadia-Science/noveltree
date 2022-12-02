@@ -9,7 +9,7 @@ process FILTER_ORTHOGROUPS {
         'austinhpatton123/cogeqc-1.2.0_r-4.2.2': '' }"
         
     publishDir(
-        path: "${params.outdir}/orthogroup-summaries",
+        path: "${params.outdir}/orthofinder/full_analysis",
         mode: 'copy',
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
