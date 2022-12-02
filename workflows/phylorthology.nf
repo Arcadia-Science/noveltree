@@ -78,12 +78,16 @@ include { IQTREE as IQTREE_REMAINING            } from '../modules/nf-core/iqtre
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Function to get list of [ meta, [ file ] ]
+// This function is applied to a csv produced by the "og-tax-summary.R"
+// script called as part of the "filter_orthogroups.nf" local module.
 def create_og_channel(LinkedHashMap row) {
     // create meta map
     def meta  = [:]
         meta.og   = row.orthogroup
         meta.nspp = row.num_spp
+        meta.total_copy_num = total_copy_num
         meta.copy_num = row.mean_copy_num
+        meta.num_grps = num_tax_grps
     // add path(s) of the OG file to the meta map
     def og_meta = []
         og_meta = [ meta, [ file(row.file) ] ] 
