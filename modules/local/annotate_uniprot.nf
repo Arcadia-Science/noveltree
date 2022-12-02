@@ -2,10 +2,8 @@ process ANNOTATE_UNIPROT {
     tag "$meta.id"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-uniprot.ws:2.34.0--r41hdfd78af_0':
-        'bioconductor/bioconductor_docker' }"
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/r-4.2.2_uniprot.ws:2.38.0':
+        '' }"
         
     publishDir(
         path: "${params.outdir}/protein-annotations",
