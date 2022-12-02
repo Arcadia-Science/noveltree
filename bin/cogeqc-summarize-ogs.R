@@ -38,8 +38,8 @@ read_orthofinder_stats <-
             stats <- read.csv(stats, sep = "\t", nrows = 10, header = TRUE, 
                 row.names = 1)
             stats <- as.data.frame(t(stats))[, -c(3, 5, 6, 7)]
-            colnames(stats) <- c("N_genes", "N_genes_in_OGs", "Perc_genes_in_OGs", 
-                "N_ssOGs", "N_genes_in_ssOGs", "Perc_genes_in_ssOGs")
+            colnames(stats) <- c("n_genes", "n_genes_in_ogs", "perc_genes_in_ogs", 
+                "n_ss_ogs", "n_genes_in_ss_ogs", "perc_genes_in_ss_ogs")
             rownames(stats) <- species
             stats <- cbind(data.frame(Species = rownames(stats)), stats)
             stats$Species <- as.factor(stats$Species)
@@ -68,9 +68,7 @@ function (orthogroups = NULL, annotation = NULL, correct_overclustering = TRUE, 
     }
     final_df <- Reduce(merge_func, og_list)
     means <- apply(final_df[, -1], 1, mean, na.rm = TRUE)
-    medians <- apply(final_df[, -1], 1, median, na.rm = TRUE)
-    final_df$Mean_score <- means
-    final_df$Median_score <- medians
+    final_df$mean_score <- means
     return(final_df)
 }
 
@@ -78,20 +76,20 @@ args = commandArgs(trailingOnly=TRUE)
 
 # Get the base directory to where the orthofinder results are.
 # Again, specified from the commandline
-ogDir <- args[1]
+og_dir <- args[1]
 
 # Pull out the inflation parameter from the filepath
-inflation <- gsub(".*_", "", ogDir)
+inflation <- gsub(".*_", "", og_dir)
 
 # Now, create a variable using these to specify paths to the orthofinder 
 # orthogroups file
-ogFile <- paste0(ogDir, '/Orthogroups/Orthogroups.tsv')
+og_file <- paste0(og_dir, '/Orthogroups/Orthogroups.tsv')
 
 # Specify the path to orthofinders orthogroup summary stats to be used by cogeqc.
-ogStatDir <- paste0(ogDir, '/Comparative_Genomics_Statistics/')
+og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 
 # Go ahead and read in the orthogroups file
-orthogroups <- read_orthogroups(ogFile)
+orthogroups <- read_orthogroups(og_file)
 
 # Strip trailing text from species name - may not need in full implementation. 
 # Names are determined in orthofinder using the file name, so just include 
@@ -130,12 +128,12 @@ names(interpro) <- spps[which(spps %in% species)]
 # Great, now we can pair these annotations with the orthogroups, assessing how 
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
-mc.cores <- detectCores()-2
+mc_cores <- detectCores()-2
 makeForkCluster(nnodes = mc.cores)
-interpro_assess <- assess_orthogroups(orthogroups, interpro, mc.cores = mc.cores)
+interpro_assess <- assess_orthogroups(orthogroups, interpro, mc.cores = mc_cores)
 
 # Read in the orthofinder orthogroup statistics
-ortho_stats <- read_orthofinder_stats(ogStatDir, spps[which(spps %in% species)])
+ortho_stats <- read_orthofinder_stats(og_stat_dir, spps[which(spps %in% species)])
 
 # Let's focus on a subset of particularly informative summary statistics 
 # that can characterize the "quality" of our inferred orthogroups. 
@@ -150,13 +148,13 @@ ortho_stats <- read_orthofinder_stats(ogStatDir, spps[which(spps %in% species)])
 #   8) The mean pairwise species overlap of orthogroups
 
 # Determine how many species are in each orthogroup
-og.freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
+og_freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
 
 # Get the number of gene copies per species, per orthogroup
-per.spp.og.counts <- table(orthogroups[,1:2])
+per_spp_og_counts <- table(orthogroups[,1:2])
 
 # And from this, get the mean per-species count per orthogroup with at least 4 spp
-per.spp.og.counts <- rowMeans(per.spp.og.counts[!rowSums(per.spp.og.counts == 0) > 4,])
+per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) > 4,])
 
 # pull out proportional overlap between species
 overlap <- ortho_stats$og_overlap/do.call(pmax, ortho_stats$og_overlap)
@@ -164,14 +162,14 @@ overlap <- overlap[lower.tri(overlap)]
 
 og_quality <- 
     data.frame(
-        InflationParam = inflation, 
-        NumOGs = length(unique(orthogroups$Orthogroup)),
-        NumOGs_GT_4spp = length(which(og.freqs >= 4)),
-        NumOGs_All_spp = length(which(og.freqs == max(og.freqs))),
-        PerSpp_4spp_OG_Counts = mean(per.spp.og.counts),
-        interpro_score = mean(interpro_assess$Mean_score),
-        perc_genes_in_OGs = mean(ortho_stats$stats$Perc_genes_in_OGs),
-        perc_genes_in_ssOGs = mean(ortho_stats$stats$Perc_genes_in_ssOGs),
+        inflation_param = inflation, 
+        num_ogs = length(unique(orthogroups$Orthogroup)),
+        num_ogs_gt_4spp = length(which(og_freqs >= 4)),
+        num_ogs_all_spp = length(which(og_freqs == max(og_freqs))),
+        per_spp_4spp_og_counts = mean(per_spp_og_counts),
+        interpro_score = mean(interpro_assess$mean_score),
+        perc_genes_in_ogs = mean(ortho_stats$stats$perc_genes_in_ogs),
+        perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
         pairwise_overlap = mean(overlap)
     )
 
