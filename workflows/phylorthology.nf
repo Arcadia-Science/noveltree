@@ -64,8 +64,8 @@ include { GENERAX                                   } from '../modules/local/gen
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { BUSCO as BUSCO_SHALLOW                } from '../modules/nf-core/busco/main'
-include { BUSCO as BUSCO_BROAD                  } from '../modules/nf-core/busco/main'
+include { BUSCO as BUSCO_SHALLOW                } from '../modules/local/busco'
+include { BUSCO as BUSCO_BROAD                  } from '../modules/local/busco'
 include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
 include { MAFFT                                 } from '../modules/nf-core/mafft/main'
