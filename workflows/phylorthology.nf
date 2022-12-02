@@ -15,7 +15,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 //for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Full samplesheet not specified!' }
+if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
 if (params.test_fasta_dir) { ch_test_fa_dir = params.test_fasta_dir } else { exit 1, 'Test fasta directory not specified!' }
 if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
@@ -25,12 +25,6 @@ if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) 
     CONFIG FILES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-//ch_multiqc_config          = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-//ch_multiqc_custom_config   = params.multiqc_config ? Channel.fromPath( params.multiqc_config, checkIfExists: true ) : Channel.empty()
-//ch_multiqc_logo            = params.multiqc_logo   ? Channel.fromPath( params.multiqc_logo, checkIfExists: true ) : Channel.empty()
-//ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,9 +66,8 @@ include { GENERAX                                   } from '../modules/local/gen
 //
 include { BUSCO as BUSCO_SHALLOW                } from '../modules/nf-core/busco/main'
 include { BUSCO as BUSCO_BROAD                  } from '../modules/nf-core/busco/main'
-include { BUSCO                                 } from '../modules/nf-core/busco/main'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
 include { DIAMOND_BLASTP                        } from '../modules/nf-core/diamond/blastp/main'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST } from '../modules/nf-core/diamond/blastp/main'
 include { MAFFT                                 } from '../modules/nf-core/mafft/main'
 include { MAFFT as MAFFT_REMAINING              } from '../modules/nf-core/mafft/main'
 include { IQTREE                                } from '../modules/nf-core/iqtree/main'
@@ -84,9 +77,6 @@ include { IQTREE as IQTREE_REMAINING            } from '../modules/nf-core/iqtre
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-//def meta = ch_spp
-// This could be put into either the config file or specified via commandline. 
-
 // Function to get list of [ meta, [ file ] ]
 def create_og_channel(LinkedHashMap row) {
     // create meta map
