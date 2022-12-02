@@ -1,11 +1,6 @@
 #!/usr/bin/env Rscript
 library(parallel)
-
-# Be sure to set the library path to a temporary directory first. 
-dir.create('./Rlibs', showWarnings = FALSE)
-.libPaths('./Rlibs')
-BiocManager::install('cogeqc', lib = './Rlibs')
-library(cogeqc, lib = './Rlibs')
+library(cogeqc)
 
 # A quick function to pull out annotations and reformat for cogeqc
 get_annots <- 

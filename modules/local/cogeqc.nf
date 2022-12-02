@@ -2,10 +2,8 @@ process COGEQC {
     tag "Orthogroup Summary"
     label 'process_highthread'
 
-    conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-uniprot.ws:2.34.0--r41hdfd78af_0':
-        'bioconductor/bioconductor_docker' }"
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/cogeqc-1.2.0_r-4.2.2':
+        '' }"
         
     publishDir(
         path: "${params.outdir}/orthogroup-summaries",
@@ -28,7 +26,6 @@ process COGEQC {
     script:
     def args = task.ext.args ?: ''
     def orthogroups_fpath = "${orthofinder_outdir}"
-    //def annotations = "${prot_annotations}"
     """
     # Assess orthogroups inferred using each inflation parameter, summarizing 
     # how well they group proteins with the same domains together, as well as
@@ -40,14 +37,6 @@ process COGEQC {
     orthogroups=\$(cat $orthogroups_fpath)
     Rscript $projectDir/bin/cogeqc-summarize-ogs.R \$orthogroups
     
-    # Additionally, move the orthogroup inference directories to a new 
-    # location, so that these 'test' orthogroups do not interfere with 
-    # the full orthogroup inference procedure. 
-    #mv ../../../${params.outdir}/orthofinder/Results_Inflation_* ../../../${params.outdir}/orthogroup-summaries/
-    #mv ../../../${params.outdir}/orthofinder/MCL*fpath.txt ../../../${params.outdir}/orthogroup-summaries/
-    #mv ../../../${params.outdir}/orthofinder/mcl_testing/Results_Inflation_* ../../../${params.outdir}/orthogroup-summaries/
-    #mv ../../../${params.outdir}/orthofinder/mcl_testing/MCL*fpath.txt ../../../${params.outdir}/orthogroup-summaries/
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         cogeqc: \$( cat version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
