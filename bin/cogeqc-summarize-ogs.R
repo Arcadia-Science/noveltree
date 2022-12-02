@@ -80,11 +80,6 @@ args = commandArgs(trailingOnly=TRUE)
 # Again, specified from the commandline
 ogDir <- args[1]
 
-# Specify the path to protein annotations to be used by cogeqc.
-# Again, specified from the commandline
-annotDir <- './' #args[2]
-# annotDir <- './results/protein-annotations/'
-
 # Pull out the inflation parameter from the filepath
 inflation <- gsub(".*_", "", ogDir)
 
@@ -114,7 +109,7 @@ species <- unique(orthogroups$Species)
 orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
 
 # Read in the annotations. 
-annots <- list.files(annotDir, pattern = "annotations.tsv")
+annots <- list.files('./', pattern = "annotations.tsv")
 spps <- gsub("-protein-annotations.tsv", "", annots)
 annots <- annots[which(spps %in% unique(species))]
 interpro <- list()
@@ -123,7 +118,7 @@ for(i in 1:length(annots)){
     spp <- gsub("-protein-annotations.tsv", "", annots[i]) # So we can name the entry
     
     # read in their annotations
-    annotations <- read.delim(paste0(annotDir, annots[i]), sep = "\t", header = T)
+    annotations <- read.delim(paste0('./', annots[i]), sep = "\t", header = T)
     
     # Pull out the InterPro annotations 
     interpro[[i]] <- get_annots(spp, annotations$From, annotations$InterPro)
@@ -149,11 +144,10 @@ ortho_stats <- read_orthofinder_stats(ogStatDir, spps[which(spps %in% species)])
 #   2) The proportion of orthogroups with >= 4 spp
 #   3) The proportion of OGs with all species
 #   4) The mean per-species gene count per orthogroup for OGs with >= 4 spp
-#   5) the median per-species gene count per orthogroup with >= 4 spp
-#   6) The mean OG composition score for InterPro protein domains
-#   7) The mean per-species percentage genes in orthogroups
-#   8) The mean per-species percentage of single-species orthogroups
-#   9) The mean pairwise species overlap of orthogroups
+#   5) The mean OG composition score for InterPro protein domains
+#   6) The mean per-species percentage genes in orthogroups
+#   7) The mean per-species percentage of single-species orthogroups
+#   8) The mean pairwise species overlap of orthogroups
 
 # Determine how many species are in each orthogroup
 og.freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
