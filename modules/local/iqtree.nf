@@ -1,6 +1,7 @@
 process IQTREE {
     tag "$alignment"
-    label 'process_highthread'
+    //label 'process_highthread' // Possible specification for full analysis
+    label 'process_medium' // Used for debugging
 
     conda (params.enable_conda ? 'bioconda::iqtree=2.1.4_beta' : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
