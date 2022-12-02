@@ -12,8 +12,6 @@ process BUSCO {
     val lineage_scale                     // Required: Taxonomically shallow- or broad-scale busco database to compare against? Determines busco lineage to use from samplesheet.
     path busco_lineages_path              // Recommended: path to busco lineages - downloads if not set
     path config_file                      // Optional:    busco configuration file
-    //val lineage                         // Required:    lineage to check against, "auto" enables --auto-lineage instead
-
 
     output:
     tuple val(meta), path("*-busco.batch_summary.txt"), emit: batch_summary
@@ -29,7 +27,6 @@ process BUSCO {
     def args = task.ext.args ?: ''
     def prefix = lineage_scale.equals('shallow') ? "${meta.id}-${meta.shallow}" : "${meta.id}-${meta.broad}"
     def busco_config = config_file ? "--config $config_file" : ''
-    //def busco_lineage = lineage.equals('auto') ? '--auto-lineage' : "--lineage_dataset ${lineage}"
     def busco_lineage = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow}" : "--lineage_dataset ${meta.broad}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
     """
