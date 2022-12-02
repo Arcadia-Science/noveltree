@@ -2,9 +2,8 @@ process SELECT_INFLATION {
     tag "Selecting best MCL Inflation"
     label 'process_single'
 
-    conda (params.enable_conda ? "bioconda::bioconductor-r-tidyverse==1.2.1" : null)
     container "${ workflow.containerEngine == 'docker' ?
-        'austinhpatton123/select_inflation_param:latest': '' }"
+        'austinhpatton123/select_mcl_inflation_r-4.2.2_elbow_tidy_reshape_cowplot': '' }"
         
     publishDir(
         path: "${params.outdir}/orthogroup-summaries",
