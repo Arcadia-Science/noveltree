@@ -12,7 +12,7 @@ process CLIPKIT {
     )
 
     input:
-    tuple val(meta), path(fasta)   // Filepaths to the MSAs with at least four species 
+    tuple val(meta), path(fasta)   // Filepaths to the MSAs
 
     output:
     tuple val(meta), path("*-clipkit.fa") , emit: trimmed_msas
