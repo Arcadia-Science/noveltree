@@ -58,12 +58,15 @@ TODO: ADD ORTHOGROUP FILTERS TO PARAMS.FILE AND PHYLORTHOLOGY.NF
 
 3. Create two samplesheets (one for the complete dataset, one for MCL testing) following the required format:
 NOTE: the "mode" column for busco can be incorporated into params file
+```
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
-- "uniprot" column is a true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
-- mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score). 
+```
+    - "uniprot" column is a true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
+    - mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score). 
 
-4. Create a parameter file that includes all necessary input, output, and parameter specifications: example below:
+4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below:
+```
 {
   "input": "/path/to/complete_dataset_samplesheet.csv",
   "mcl_test_input": "/path/to/mcl_testing_dataset_samplesheet.csv",
@@ -71,20 +74,18 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
   "outdir": "name_of_results_dir",
   "mcl_inflation": [ "1.0", "1.1", "1.2" ]
 }
+```
 
 5. Ensure that proteins are named following the following convention. 
 - Species_genus:GeneID
-- Example: >Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1
-- Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. 
-- Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. 
-- Additional sequence info may be included following a space. 
-- If the proteome comes from UniProt, this must be the UniProt protein accession.
-- We use the string that follows the colon to extract the uniprot accession and annotate proteins. 
+- Example: 
+`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`
+- Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins. 
 
 6. Download the pipeline and test it on a minimal dataset with a single command:
 
    ```bash
-   nextflow run Arcadia-Science/phylorthology -profile test,YOURPROFILE --outdir <OUTDIR>
+   nextflow run phylorthology -profile docker -params-file <PARAMS.JSON>
    ```
 
    Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
@@ -94,17 +95,17 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
    > - If you are using `singularity`, please use the [`nf-core download`](https://nf-co.re/tools/#downloading-pipelines-for-offline-use) command to download images first, before running the pipeline. Setting the [`NXF_SINGULARITY_CACHEDIR` or `singularity.cacheDir`](https://www.nextflow.io/docs/latest/singularity.html?#singularity-docker-hub) Nextflow options enables you to store and re-use the images from a central location for future pipeline runs.
    > - If you are using `conda`, it is highly recommended to use the [`NXF_CONDA_CACHEDIR` or `conda.cacheDir`](https://www.nextflow.io/docs/latest/conda.html) settings to store the environments in a central location for future pipeline runs.
 
-4. Start running your own analysis!
+7. Start running your own analysis!
 
    <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
    ```bash
-   nextflow run Arcadia-Science/phylorthology --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
+   nextflow run phylorthology -profile docker -params-file <PARAMS.JSON>
    ```
 
 ## Credits
 
-Arcadia-Science/phylorthology was originally written by Arcadia Science.
+phylorthology was originally written by Arcadia Science.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
