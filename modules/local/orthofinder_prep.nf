@@ -27,8 +27,9 @@ process ORTHOFINDER_PREP {
     """
     # Prepare the bespoke orthofinder directory structure and stripped down files
     # spit the output commands to a tmp file - we don't care about this
+    input_dir=\$(cat $fasta_dir)
     orthofinder \\
-        -f $fasta_dir \\
+        -f \$input_dir \\
         -t ${task.cpus} \\
         -op > tmp
         
@@ -47,8 +48,8 @@ process ORTHOFINDER_PREP {
     mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/
     mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/data
     dataDir="../../../${params.outdir}/orthofinder/\$outDir/data"
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* \$dataDir/
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* .
+    cp \$input_dir/OrthoFinder/Results*/WorkingDirectory/* \$dataDir/
+    cp \$input_dir/OrthoFinder/Results*/WorkingDirectory/* .
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
