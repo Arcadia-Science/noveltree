@@ -1,0 +1,7 @@
+species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
+Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,false
+Diacronema_lutheri,Diacronema_lutheri-test-proteome.fasta,Haptophyta,eukaryota_odb10,eukaryota_odb10,proteins,true,false
+Giardia_intestinalis,Giardia_intestinalis-test-proteome.fasta,Fornicata,eukaryota_odb10,eukaryota_odb10,proteins,true,false
+Porphyridium_purpureum,Porphyridium_purpureum-test-proteome.fasta,Rhodophyta,eukaryota_odb10,eukaryota_odb10,proteins,true,false
+Saccharomyces_cerevisiae,Saccharomyces_cerevisiae-test-proteome.fasta,Opisthokonta,ascomycota_odb10,eukaryota_odb10,proteins,true,false
+Loa_loa,Loa_loa-test-proteome.fasta,Opisthokonta,nematoda_odb10,eukaryota_odb10,proteins,true,false
