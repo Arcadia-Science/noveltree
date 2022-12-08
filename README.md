@@ -62,17 +62,17 @@ NOTE: the "mode" column for busco can be incorporated into params file
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
 ```
-    - "uniprot" column is a true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
-    - mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score). 
+- "uniprot" column is a true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
+- mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score). 
 
 4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below:
 ```
 {
-  "input": "/path/to/complete_dataset_samplesheet.csv",
-  "mcl_test_input": "/path/to/mcl_testing_dataset_samplesheet.csv",
-  "s3_dir": "s3://path/to/aws-S3-directory/containing/fastas",
-  "outdir": "name_of_results_dir",
-  "mcl_inflation": [ "1.0", "1.1", "1.2" ]
+  "input": "/home/ubuntu/environment/github/phylorthology/test/complete_samplesheet.csv",
+  "mcl_test_input": "/home/ubuntu/environment/github/phylorthology/test/mcl_test_samplesheet.csv",
+  "s3_dir": "s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test",
+  "outdir": "results-s3-test",
+  "mcl_inflation": [ "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7" ]
 }
 ```
 
@@ -82,10 +82,10 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 `>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`
 - Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins. 
 
-6. Download the pipeline and test it on a minimal dataset with a single command:
+6. Download the pipeline and test it on a minimal dataset with a single command run in the "test" directory of this repository:
 
    ```bash
-   nextflow run phylorthology -profile docker -params-file <PARAMS.JSON>
+   nextflow run phylorthology -profile docker -params-file parameters.json
    ```
 
    Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
