@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+library(tidyverse)
 library(parallel)
 library(cogeqc)
 
@@ -14,64 +15,42 @@ get_annots <-
         # Convert to a list, with a named entry of multiple annotations per accession
         anns <- strsplit(anns, split = ";")
         
-        # Reformat for cogeqc (data.frame with row for genes, row for annotation)
-        anns <- data.frame(t(stack(anns)[,2:1]))
-        
-        # Rename rows
-        rownames(anns) <- c("Gene", "Annotation")
+        # Reformat for cogeqc (data.frame with column each for genes and annotation)
+        anns <- stack(anns)[,2:1]
+        colnames(anns) <- c("Gene", "Annotation")
+        anns$Gene <- as.character(anns$Gene)
         
         return(anns)
     }
 
-# Slighly modify the cogeqc read_orthofinder_stats() function to ignore the
-# duplications file, since we're comparing orthogroups prior to inferring
-# the species tree
-read_orthofinder_stats <-
-    function (stats_dir = NULL, species = NULL)
-        {
-            og_overlap <- file.path(stats_dir, "Orthogroups_SpeciesOverlaps.tsv")
-            og_overlap <- read.csv(og_overlap, sep = "\t", header = TRUE, 
-                row.names = 1)
-            rownames(og_overlap) <- species
-            colnames(og_overlap) <- species
-            stats <- file.path(stats_dir, "Statistics_PerSpecies.tsv")
-            stats <- read.csv(stats, sep = "\t", nrows = 10, header = TRUE, 
-                row.names = 1)
-            stats <- as.data.frame(t(stats))[, -c(3, 5, 6, 7)]
-            colnames(stats) <- c("n_genes", "n_genes_in_ogs", "perc_genes_in_ogs", 
-                "n_ss_ogs", "n_genes_in_ss_ogs", "perc_genes_in_ss_ogs")
-            rownames(stats) <- species
-            stats <- cbind(data.frame(Species = rownames(stats)), stats)
-            stats$Species <- as.factor(stats$Species)
-            rownames(stats) <- NULL
-            result_list <- list(stats = stats, og_overlap = og_overlap)
-            return(result_list)
-        }
+# A function to read in the orthogroup statistics produced by orthofinder 
+# that are needed for this analysis. 
+get_orthofinder_stats <- 
+    function(og_stats_dir = NULL, species = NULL){
+        # Read in stats
+        spp_overlap <- 
+            read_tsv(paste0(og_stats_dir, "Orthogroups_SpeciesOverlaps.tsv"),
+                     skip = 1, col_names=c("V1", species),
+                     show_col_types = FALSE)
+        og_stats <- 
+            read_tsv(paste0(og_stats_dir, "Statistics_PerSpecies.tsv"), 
+                     skip = 1, n_max = 10, col_names=c("Statistic", species),
+                     show_col_types = FALSE)
+                     
+        og_stats <- 
+            data.frame(Species = as.factor(species), 
+                       n_genes = unlist(og_stats[1,-1]),
+                       n_genes_in_ogs = unlist(og_stats[2,-1]),
+                       perc_genes_in_ogs = unlist(og_stats[4,-1]),
+                       n_ss_ogs = unlist(og_stats[8,-1]),
+                       n_genes_in_ss_ogs = unlist(og_stats[9,-1]),
+                       perc_genes_in_ss_ogs = unlist(og_stats[10,-1]),
+                       row.names = NULL)
 
-# Additionally, edit the assess_orthogroups function to run in parallel,
-# using mclappy from the parallel package
-assess_orthogroups <- 
-function (orthogroups = NULL, annotation = NULL, correct_overclustering = TRUE, mc_cores = 1) 
-{
-    og_list <- split(orthogroups, orthogroups$Species)
-    og_list <- mclapply(seq_along(og_list), mc.cores = mc_cores, function(x) {
-        species <- names(og_list)[x]
-        idx <- which(names(annotation) == species)
-        merged <- merge(og_list[[x]], annotation[[idx]])
-        names(merged)[4] <- "Annotation"
-        H <- calculate_H(merged, correct_overclustering = correct_overclustering)
-        names(H) <- c("Orthogroups", paste0(species, "_score"))
-        return(H)
-    })
-    merge_func <- function(x, y) {
-        merge(x, y, by = "Orthogroups", all = TRUE)
+        result_list <- list(stats = og_stats, og_overlap = spp_overlap)
+        return(result_list)
     }
-    final_df <- Reduce(merge_func, og_list)
-    means <- apply(final_df[, -1], 1, mean, na.rm = TRUE)
-    final_df$mean_score <- means
-    return(final_df)
-}
-
+ 
 args = commandArgs(trailingOnly=TRUE)
 
 # Get the base directory to where the orthofinder results are.
@@ -107,33 +86,114 @@ species <- unique(orthogroups$Species)
 orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
 
 # Read in the annotations. 
-annots <- list.files('./', pattern = "annotations.tsv")
-spps <- gsub("-protein-annotations.tsv", "", annots)
-annots <- annots[which(spps %in% unique(species))]
-interpro <- list()
+annots <- list.files('./', pattern = "cogeqc-annotations.tsv")
+spps <- gsub("-cogeqc-annotations.tsv", "", annots)
 
-for(i in 1:length(annots)){
-    spp <- gsub("-protein-annotations.tsv", "", annots[i]) # So we can name the entry
+# Reduce down to the species included in the MCL test dataset
+spps <- spps[which(spps %in% species)]
+
+# Initialize
+interpro <- list()
+supfam <- list()
+prosite <- list()
+hogenom <- list()
+oma <- list()
+orthodb <- list()
+
+for(i in 1:length(spps)){
+    spp <- spps[i] # So we can name the entry
     
     # read in their annotations
-    annotations <- read.delim(paste0('./', annots[i]), sep = "\t", header = T)
+    annotations <- read.delim(paste0('./', spp, '-cogeqc-annotations.tsv'), sep = "\t", header = T)
     
+    # Identify which we have annotations for this species. 
+    non_missing <- 
+        c(sum(is.na(annotations$InterPro)) == length(annotations$InterPro),
+        sum(is.na(annotations$SUPFAM)) == length(annotations$SUPFAM),
+        sum(is.na(annotations$PROSITE)) == length(annotations$PROSITE),
+        sum(is.na(annotations$HOGENOM)) == length(annotations$HOGENOM),
+        sum(is.na(annotations$OMA)) == length(annotations$OMA),
+        sum(is.na(annotations$OrthoDB)) == length(annotations$OrthoDB))
+        
     # Pull out the InterPro annotations 
-    interpro[[i]] <- get_annots(spp, annotations$From, annotations$InterPro)
+    interpro[[i]] <- 
+        if(non_missing[1] == FALSE){
+            interpro[[i]] <- get_annots(spp, annotations$From, annotations$InterPro)
+        }else{
+            interpro[[i]] <- NA
+        }
+    supfam[[i]] <- 
+        if(non_missing[2] == FALSE){
+            supfam[[i]] <- get_annots(spp, annotations$From, annotations$SUPFAM)
+        }else{
+            supfam[[i]] <- NA
+        }
+    prosite[[i]] <- 
+        if(non_missing[3] == FALSE){
+            prosite[[i]] <- get_annots(spp, annotations$From, annotations$PROSITE)
+        }else{
+            prosite[[i]] <- NA
+        }
+    hogenom[[i]] <- 
+        if(non_missing[4] == FALSE){
+            hogenom[[i]] <- get_annots(spp, annotations$From, annotations$HOGENOM)
+        }else{
+            hogenom[[i]] <- NA
+        }
+    oma[[i]] <- 
+        if(non_missing[5] == FALSE){
+            oma[[i]] <- get_annots(spp, annotations$From, annotations$OMA)
+        }else{
+            oma[[i]] <- NA
+        }
+    orthodb[[i]] <- 
+        if(non_missing[6] == FALSE){
+            orthodb[[i]] <- get_annots(spp, annotations$From, annotations$OrthoDB)
+        }else{
+            orthodb[[i]] <- NA
+        }
 }
 
 # Now name all the entries according to their OrthoFinder species ID (second column)
-names(interpro) <- spps[which(spps %in% species)]
+names(interpro) <- spps
+names(supfam) <- spps
+names(prosite) <- spps
+names(hogenom) <- spps
+names(oma) <- spps
+names(orthodb) <- spps
+
+# And drop species for each that are missing the annotations
+interpro <- Filter(function(a) any(!is.na(a)), interpro)
+supfam <- Filter(function(a) any(!is.na(a)), supfam)
+prosite <- Filter(function(a) any(!is.na(a)), prosite)
+hogenom <- Filter(function(a) any(!is.na(a)), hogenom)
+oma <- Filter(function(a) any(!is.na(a)), oma)
+orthodb <- Filter(function(a) any(!is.na(a)), orthodb)
 
 # Great, now we can pair these annotations with the orthogroups, assessing how 
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
-mc_cores <- detectCores()-2
-makeForkCluster(nnodes = mc_cores)
-interpro_assess <- assess_orthogroups(orthogroups, interpro, mc_cores = mc_cores)
+interpro_assess <- 
+    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(interpro)),], 
+                       interpro)
+supfam_assess <- 
+    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(supfam)),], 
+                       supfam)
+prosite_assess <- 
+    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(prosite)),], 
+                       prosite)
+hogenom_assess <- 
+    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(hogenom)),], 
+                       hogenom)
+oma_assess <- 
+    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(oma)),], 
+                       oma)
+orthodb_assess <- 
+    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(orthodb)),], 
+                       orthodb)
 
 # Read in the orthofinder orthogroup statistics
-ortho_stats <- read_orthofinder_stats(og_stat_dir, spps[which(spps %in% species)])
+ortho_stats <- get_orthofinder_stats(og_stats_dir = og_stat_dir, species = spps[which(spps %in% species)])
 
 # Let's focus on a subset of particularly informative summary statistics 
 # that can characterize the "quality" of our inferred orthogroups. 
@@ -157,7 +217,7 @@ per_spp_og_counts <- table(orthogroups[,1:2])
 per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) >= 4,])
 
 # pull out proportional overlap between species
-overlap <- ortho_stats$og_overlap/do.call(pmax, ortho_stats$og_overlap)
+overlap <- ortho_stats$og_overlap[,-1]/do.call(pmax, ortho_stats$og_overlap[,-1])
 overlap <- overlap[lower.tri(overlap)]
 
 og_quality <- 
@@ -167,9 +227,15 @@ og_quality <-
         num_ogs_gt_4spp = length(which(og_freqs >= 4)),
         num_ogs_all_spp = length(which(og_freqs == max(og_freqs))),
         per_spp_4spp_og_counts = mean(per_spp_og_counts),
-        interpro_score = mean(interpro_assess$mean_score),
-        perc_genes_in_ogs = mean(ortho_stats$stats$perc_genes_in_ogs),
+        interpro_score = mean(interpro_assess$Mean_score),
+        supfam_score = mean(supfam_assess$Mean_score),
+        prosite_score = mean(prosite_assess$Mean_score),
+        hogenom_score = mean(hogenom_assess$Mean_score),
+        oma_score = mean(oma_assess$Mean_score),
+        orthodb_score = mean(orthodb_assess$Mean_score),
         perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
+        total_num_ss_ogs = sum(ortho_stats$stats$n_ss_ogs),
+        mean_num_ss_ogs = mean(ortho_stats$stats$n_ss_ogs),
         pairwise_overlap = mean(overlap)
     )
 
