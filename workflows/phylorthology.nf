@@ -16,6 +16,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.data_dir) { ch_data_dir = Channel.fromPath(params.data_dir) } else { exit 1, 'Data directory not specified!' }
 //if (params.mcl_test_input) { ch_mcl_test_input = file(params.mcl_test_input) } else { exit 1, 'Input samplesheet for MCL testing not specified!' }
 //if (params.s3_dir) { ch_s3_dir = params.s3_dir } else { exit 1, 'S3 directory not specified!' }
 //if (params.data_location) { ch_data_location = val(params.data_location) } else { exit 1, 'Data storage location (local/S3) not specified!' }
@@ -104,27 +105,27 @@ workflow PHYLORTHOLOGY {
     
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
-    
+
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     // First the full set
     ch_all_data = INPUT_CHECK (
         ch_input,
+        ch_data_dir
     )
-
+    
     ch_all_data
-    .prots
+    .complete_prots
     .map {
-        meta, prots ->
+        meta, complete_prots ->
             def meta_clone = meta.clone()
             meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
-            [ meta_clone, prots ]
+            [ meta_clone, complete_prots ]
     }
     .groupTuple(by: [0])
     .set { ch_prots_all }
     
-    ch_prots_all.view()
     // ORTHOFINDER_PREP (
     //     ch_prots_all,
     //     "false"

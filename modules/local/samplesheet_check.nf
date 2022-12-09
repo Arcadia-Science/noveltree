@@ -15,13 +15,12 @@ process SAMPLESHEET_CHECK {
     //)
 
     input:
-    path s3_dir // Path to the directory on S3 containing all proteomes
     path complete_samplesheet // Samplesheet formatted as described in the README
-
+    path data_dir
+    
     output:
-    path '*.csv'                 , emit: csv     // Checked samplesheet
-    path '*.fasta'               , emit: fasta   // Per-species proteomes
-    path '*orthofinder_prep.txt' , emit: of_prep // Path to directory containing data formatted for Orthofinder
+    path complete_samplesheet    , emit: complete_csv     // Original samplesheet
+    path 'mcl_test_samplesheet.csv' , emit: mcl_test_csv   // Per-species proteomes
     path "versions.yml"          , emit: versions
 
     when:
@@ -33,29 +32,19 @@ process SAMPLESHEET_CHECK {
     check_samplesheet.py \\
         $complete_samplesheet \\
         complete_samplesheet.valid.csv
-        
-    # Copy the S3 files to the publishdir, adding this as a column to the 
-    # samplesheet
-    # NOTE: If the full S3 paths are provided (rather than the filename, 
-    # and S3 directory given separately as done here), nextflow will not 
-    # recognize the files as being from S3.
-    samps=\$(tail -n+2 complete_samplesheet.valid.csv | cut -f2 -d",")
     
-    echo "fpath" > fpaths.txt # Instantiate with a header
+    mkdir -p ${params.outdir}/complete_dataset
+    mkdir -p ${params.outdir}/mcl_test_dataset
+    mv $data_dir/*.fasta ${params.outdir}/complete_dataset
     
-    # Loop through, combining the S3 directory with the fasta filename and 
-    # adding this column to the file
-    for samp in \$(echo \$samps)
+    # Create the mcl testing datasheet and copy over to its directory
+    head -n1 $complete_samplesheet > mcl_test_samplesheet.csv
+    awk -F, '\$8 == "true"' $complete_samplesheet >> mcl_test_samplesheet.csv
+    
+    for spp in \$(tail -n+2 mcl_test_samplesheet.csv | cut -f1 -d",")
     do
-        cp $s3_dir/\$samp .
-        echo \$(pwd)/\$samp >> fpaths.txt
-    done
-    paste -d"," complete_samplesheet.valid.csv fpaths.txt > tmp
-    mv tmp complete_samplesheet.valid.csv
-    
-    # And write out the base filepath where data is stored to file so we can 
-    # use this when preparing for orthofinder 
-    pwd > complete_orthofinder_prep.txt
+        cp ${params.outdir}/complete_dataset/\${spp}* ${params.outdir}/mcl_test_dataset/
+    done 
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
