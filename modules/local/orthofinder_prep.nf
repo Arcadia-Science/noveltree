@@ -12,7 +12,7 @@ process ORTHOFINDER_PREP {
     //)
     
     input:
-    val fasta_dir
+    tuple val(meta), path(fasta)    // samplesheet with filepaths
     val mcl_test
     
     output:
@@ -23,11 +23,12 @@ process ORTHOFINDER_PREP {
     path "versions.yml" , emit: versions
 
     script:
+    def fas = path(fasta)
     def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
     """
     # Prepare the bespoke orthofinder directory structure and stripped down files
     # spit the output commands to a tmp file - we don't care about this
-    input_dir=\$(cat $fasta_dir)
+    input_dir=\$(cat ./)
     orthofinder \\
         -f \$input_dir \\
         -t ${task.cpus} \\
