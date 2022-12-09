@@ -1,7 +1,5 @@
 {
   "input": "complete_samplesheet.csv",
-  "mcl_test_input": "mcl_test_samplesheet.csv",
-  "s3_dir": "s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test",
   "outdir": "results-s3-test",
-  "mcl_inflation": [ "0.9", "1.0", "1.1", "1.2", "1.3" ]
+  "mcl_inflation": [ "0.5", "1.0", "1.5", "2.0", "2.5", "3.0" ]
 }
