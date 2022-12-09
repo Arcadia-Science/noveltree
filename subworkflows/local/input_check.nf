@@ -7,17 +7,26 @@ include { SAMPLESHEET_CHECK          } from '../../modules/local/samplesheet_che
 workflow INPUT_CHECK {
     take:
     complete_samplesheet // file: /path/to/complete_samplesheet.csv
-
+    data_dir
+    
     main:
-    SAMPLESHEET_CHECK ( complete_samplesheet )
-        .csv
+    SAMPLESHEET_CHECK ( complete_samplesheet, data_dir )
+    
+    SAMPLESHEET_CHECK.out
+        .complete_csv
         .splitCsv ( header:true, sep:',' )
         .map { create_prots_channel(it) }
-        .set { prots }
+        .set { complete_prots }
+        
+    SAMPLESHEET_CHECK.out
+        .mcl_test_csv
+        .splitCsv ( header:true, sep:',' )
+        .map { create_prots_channel(it) }
+        .set { mcl_test_prots }
     
     emit:
-    prots                                                  // channel: [ val(meta), [ prots ] ]
-    all_data_prep = SAMPLESHEET_CHECK.out.of_prep          // path to a file that specifies where proteomes were downloaded into - to prep for orthofinder
+    complete_prots                                                  // channel: [ val(meta), [ prots ] ]
+    mcl_test_prots
     versions = SAMPLESHEET_CHECK.out.versions              // channel: [ versions.yml ]
 }
 

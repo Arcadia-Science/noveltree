@@ -1,5 +1,6 @@
 {
   "input": "complete_samplesheet.csv",
-  "outdir": "results-s3-test",
+  "outdir": "/home/ubuntu/environment/s3-test/results-s3-test",
+  "data_dir": "s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/",
   "mcl_inflation": [ "0.5", "1.0", "1.5", "2.0", "2.5", "3.0" ]
 }
