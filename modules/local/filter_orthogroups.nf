@@ -15,6 +15,7 @@ process FILTER_ORTHOGROUPS {
     )
 
     input:
+    path samplesheet       // Path to samplesheet produced by input check containing sample metadata
     path "MCL-*-fpath.txt" // File storing filepath to the results of the MCL clustering
     val min_num_spp        // Minimum number of species to infer MSAs/trees for
     val min_num_groups     // Minimum number of clades/taxonomic groups
@@ -48,7 +49,7 @@ process FILTER_ORTHOGROUPS {
     ogSppCounts=\$ogRes/Orthogroups/Orthogroups.GeneCount.tsv
     
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
-    Rscript $projectDir/bin/og-tax-summary.R \$ogSppCounts ${params.input} $num_spp $num_grp $copy_num1 $copy_num2
+    Rscript $projectDir/bin/og-tax-summary.R \$ogSppCounts $samplesheet $num_spp $num_grp $copy_num1 $copy_num2
     
     # Add a column of filepaths to these
     msaDir=\$( cd \$ogRes/Orthogroup_Sequences/; pwd )
