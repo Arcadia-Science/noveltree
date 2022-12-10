@@ -20,10 +20,10 @@ process ORTHOFINDER_PREP {
     output:
     path fasta_list_fname, emit: fa
     path dmnd_list_fname, emit: dmd
-    //path "*.dmnd", emit: dmd
-    //path "*.fa", emit: fa
-    //path "SequenceIDs.txt", emit: seqIDs
-    //path "SpeciesIDs.txt", emit: sppIDs
+    path "*.dmnd", emit: dmnd
+    path "*.fa", emit: fastas
+    path "SequenceIDs.txt", emit: seqIDs
+    path "SpeciesIDs.txt", emit: sppIDs
     path "versions.yml" , emit: versions
 
     script:
@@ -37,14 +37,14 @@ process ORTHOFINDER_PREP {
         
     # Move the output to a more sensible directory
     mkdir -p ${params.outdir}/orthofinder/$out_dir
-    mv \${fastaDir}/OrthoFinder/Results*/WorkingDirectory/* ${params.outdir}/orthofinder/$out_dir
+    cp \${fastaDir}/OrthoFinder/Results*/WorkingDirectory/* ${params.outdir}/orthofinder/$out_dir
+    cp \${fastaDir}/OrthoFinder/Results*/WorkingDirectory/* .
     rm -r \${fastaDir}/OrthoFinder/
     
     # output the paths to fasta files and dmnd dbs
     ls ${params.outdir}/orthofinder/$out_dir/*fa > $fasta_list_fname
     ls ${params.outdir}/orthofinder/$out_dir/*dmnd > $dmnd_list_fname
-    #| sed ':a;N;\$!ba;s/\\n/,/g'
-    
+
     #mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/
     #mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/data
     #dataDir="../../../${params.outdir}/orthofinder/\$outDir/data"

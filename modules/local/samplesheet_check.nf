@@ -37,7 +37,7 @@ process SAMPLESHEET_CHECK {
     
     mkdir -p ${params.outdir}/complete_dataset
     mkdir -p ${params.outdir}/mcl_test_dataset
-    mv $data_dir/*.fasta ${params.outdir}/complete_dataset
+    cp $data_dir/*.fasta ${params.outdir}/complete_dataset
     
     # Create the mcl testing datasheet and copy over to its directory
     head -n1 $complete_samplesheet > mcl_test_samplesheet.csv
