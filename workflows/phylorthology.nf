@@ -134,15 +134,6 @@ workflow PHYLORTHOLOGY {
     }
     .set { ch_prots_mcl_test }
 
-    // ch_prots_all
-    // .branch {
-    //     meta, complete_prots ->
-    //         proteomes  : complete_prots
-    //             return [ meta, complete_prots.flatten() ]
-    // }
-    // .set { ch_busco }   
-    // ch_busco.view()
-    
     // ch_all_data_dir = ch_all_data.all_data_prep
     //
     // MODULE: Prepare directory structure and fasta files according to 
@@ -172,25 +163,16 @@ workflow PHYLORTHOLOGY {
     ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().map{it -> it.trim()}
     ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().map{it -> it.trim()}
 
-    // // TODO: CAN PROBABLY DELETE WHAT'S BELOW
-    // // ch_prots_test
-    // // .branch {
-    // //     meta, prots ->
-    // //         proteomes  : prots
-    // //             return [ meta, prots.flatten() ]
-    // // }
-    // // .set { ch_busco_test }
-    
-    // // Create an orthofinder channel with paths to the new fasta/diamond DBs
+    // Create an orthofinder channel with paths to the new fasta/diamond DBs
     ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
     ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
-    // // Now, there will be a couple of modules below that we reapply, both to 
-    // // the full dataset, and to the MCL inflation parameter test set. 
-    // // These repeat modules include:
-    // // uniprot annotation (ch_annotations)
-    // // diamond blastp (ch_blastp & ch_similarities)
+    // Now, there will be a couple of modules below that we reapply, both to 
+    // the full dataset, and to the MCL inflation parameter test set. 
+    // These repeat modules include:
+    // uniprot annotation (ch_annotations)
+    // diamond blastp (ch_blastp & ch_similarities)
     //
     // MODULE: Annotate UniProt Proteins
     //
@@ -201,27 +183,27 @@ workflow PHYLORTHOLOGY {
         .collect()
     ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
     
-    // //
-    // // MODULE: Run BUSCO
-    // // Split up into shallow and broad scale runs, since downstream modules
-    // // do not use these outputs, so multiple busco runs may be conducted
-    // // simultaneously
-    // //
-    // // Shallow taxonomic scale:
-    // // BUSCO_SHALLOW (
-    // //     ch_busco,
-    // //     "shallow",
-    // //     [],
-    // //     []
-    // //     )
+    //
+    // MODULE: Run BUSCO
+    // Split up into shallow and broad scale runs, since downstream modules
+    // do not use these outputs, so multiple busco runs may be conducted
+    // simultaneously
+    //
+    // Shallow taxonomic scale:
+    BUSCO_SHALLOW (
+        ch_prots_complete,
+        "shallow",
+        [],
+        []
+        )
     
-    // // // Broad taxonomic scale (Eukaryotes)
-    // // BUSCO_BROAD (
-    // //     ch_busco,
-    // //     "broad",
-    // //     [],
-    // //     []
-    // //     )
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_prots_complete,
+        "broad",
+        [],
+        []
+        )
         
     //
     // MODULE: All-v-All diamond/blastp
