@@ -115,38 +115,18 @@ workflow PHYLORTHOLOGY {
         ch_data_dir
     )
     
+    // Pull out the test and full sets
     ch_all_data
     .complete_prots
-    .map {
-        meta, complete_prots ->
-            def meta_clone = meta.clone()
-            meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
-            [ meta_clone, complete_prots ]
-    }
-    .groupTuple(by: [0])
-    .set { ch_prots_all }
-
-    ch_all_data
-    .mcl_test_prots
-    .map {
-        meta, mcl_test_prots ->
-            def meta_clone = meta.clone()
-            meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
-            [ meta_clone, mcl_test_prots ]
-    }
-    .groupTuple(by: [0])
-    .set { ch_mcl_test_prots }
-
-    // // Pull out the test and full sets
-    ch_prots_all
     .branch {
         meta, complete_prots ->
-            proteomes  : meta.mcl_test == 'false'
+            proteomes  : complete_prots
                 return [ meta, complete_prots.flatten() ]
     }
     .set { ch_prots_complete }
     
-    ch_mcl_test_prots
+    ch_all_data
+    .mcl_test_prots
     .branch {
         meta, mcl_test_prots ->
             proteomes  : meta.mcl_test == 'true'
@@ -205,22 +185,21 @@ workflow PHYLORTHOLOGY {
     ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
     ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    ch_orthof_complete.view()
+
     // // Now, there will be a couple of modules below that we reapply, both to 
     // // the full dataset, and to the MCL inflation parameter test set. 
     // // These repeat modules include:
     // // uniprot annotation (ch_annotations)
     // // diamond blastp (ch_blastp & ch_similarities)
-    
-    // //
-    // // MODULE: Annotate UniProt Proteins
-    // //
-    // ch_annotations = ANNOTATE_UNIPROT (
-    //         ch_prots_complete
-    //     )
-    //     .cogeqc_annotations
-    //     .collect()
-    // ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
+    //
+    // MODULE: Annotate UniProt Proteins
+    //
+    ch_annotations = ANNOTATE_UNIPROT (
+            ch_prots_complete
+        )
+        .cogeqc_annotations
+        .collect()
+    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
     
     // //
     // // MODULE: Run BUSCO
@@ -260,14 +239,14 @@ workflow PHYLORTHOLOGY {
     
     // // And for the full dataset, to be clustered into orthogroups using 
     // // the best inflation parameter. 
-    // ch_blastp_complete = DIAMOND_BLASTP (
-    //     ch_orthof_complete,
-    //     ch_dmd,
-    //     "txt",
-    //     "false",
-    //     []
-    // )
-    // .txt
+    ch_blastp_complete = DIAMOND_BLASTP (
+        ch_orthof_complete,
+        ch_dmd,
+        "txt",
+        "false",
+        []
+    )
+    .txt
 
     // //
     // // MODULE: Run Orthofinder's implementation of MCL (with similarity score
