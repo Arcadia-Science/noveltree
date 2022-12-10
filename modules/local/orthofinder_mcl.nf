@@ -1,6 +1,7 @@
 process ORTHOFINDER_MCL {
     tag "MCL clustering"
-    label 'process_highthread'
+    // label 'process_highthread'
+    label 'process_medium'
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/orthofinder-2.5.4_r-4.2.2' : 
         '' }"
 
@@ -26,18 +27,20 @@ process ORTHOFINDER_MCL {
 
     # The following depends on whether we're testing mcl or not. 
     if [ "$testing_mcl" == "true" ]; then
-        dataDir="../../../${params.outdir}/orthofinder/mcl_testing"
-        cp ../../../${params.outdir}/diamond/TestBlast* .
+        dataDir="${params.outdir}/orthofinder/mcl_test_dataset"
+        cp ${params.outdir}/diamond/TestBlast* .
         for f in \$(ls TestBlast*)
         do
             mv \$f \$(echo \$f | sed "s/TestBlast/Blast/g")
         done
     else
-        dataDir="../../../${params.outdir}/orthofinder/full_analysis"
-        cp ../../../${params.outdir}/diamond/Blast* .
+        dataDir="${params.outdir}/orthofinder/complete_dataset"
+        cp ${params.outdir}/diamond/Blast* .
     fi
     
-    cp \$dataDir/data/* .
+    cp \$dataDir/*dmnd .
+    cp \$dataDir/*fa .
+    cp \$dataDir/*IDs.txt .
 
     orthofinder \\
         -b ./ \\
