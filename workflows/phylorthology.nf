@@ -125,72 +125,74 @@ workflow PHYLORTHOLOGY {
     }
     .groupTuple(by: [0])
     .set { ch_prots_all }
-    
-    // ORTHOFINDER_PREP (
-    //     ch_prots_all,
-    //     "false"
-    // )
-    
-    // ch_all_data
-    // .mcl_test_prots
-    // .map {
-    //     meta, mcl_test_prots ->
-    //         def meta_clone = meta.clone()
-    //         meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
-    //         [ meta_clone, mcl_test_prots ]
-    // }
-    // .groupTuple(by: [0])
-    // .set { ch_mcl_test_prots }
-    
-    // ch_all_data_dir = ch_all_data.all_data_prep
-    // //
-    // // MODULE: Prepare directory structure and fasta files according to 
-    // //         OrthoFinder's preferred format for downstream MCL clustering
-    // //
-    // ORTHOFINDER_PREP (
-    //     ch_all_data_dir,
-    //     "false"
-    // )
-    
-    // ORTHOFINDER_PREP_TEST (
-    //     ch_mcl_test_dir,
-    //     "true"
-    // )
-    
-    // // Fasta files should be redirected into a channel set of filepaths emitted
-    // // separately, whereas the diamond databases for each species can be put
-    // // into a directory as they are now (as a comma seperated list emitted 
-    // // together).
-    // ch_fa = ORTHOFINDER_PREP.out.fa.flatten()
-    // ch_dmd = ORTHOFINDER_PREP.out.dmd.flatten()
-    // ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.flatten()
-    // ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.flatten()
+
+    ch_all_data
+    .mcl_test_prots
+    .map {
+        meta, mcl_test_prots ->
+            def meta_clone = meta.clone()
+            meta_clone.id = meta_clone.id.split('_')[0..-2].join('_')
+            [ meta_clone, mcl_test_prots ]
+    }
+    .groupTuple(by: [0])
+    .set { ch_mcl_test_prots }
 
     // // Pull out the test and full sets
-    // ch_prots_all
-    // .branch {
-    //     meta, prots ->
-    //         proteomes  : meta.mcl_test == 'false'
-    //             return [ meta, prots.flatten() ]
-    // }
-    // .set { ch_prots_complete }
+    ch_prots_all
+    .branch {
+        meta, complete_prots ->
+            proteomes  : meta.mcl_test == 'false'
+                return [ meta, complete_prots.flatten() ]
+    }
+    .set { ch_prots_complete }
     
-    // ch_mcl_test_prots
-    // .branch {
-    //     meta, mcl_test_prots ->
-    //         proteomes  : meta.mcl_test == 'true'
-    //             return [ meta, mcl_test_prots.flatten() ]
-    // }
-    // .set { ch_prots_mcl_test }
-    
-    // ch_prots_all
-    // .branch {
-    //     meta, prots ->
-    //         proteomes  : prots
-    //             return [ meta, prots.flatten() ]
-    // }
-    // .set { ch_busco }
+    ch_mcl_test_prots
+    .branch {
+        meta, mcl_test_prots ->
+            proteomes  : meta.mcl_test == 'true'
+                return [ meta, mcl_test_prots.flatten() ]
+    }
+    .set { ch_prots_mcl_test }
 
+    // ch_prots_all
+    // .branch {
+    //     meta, complete_prots ->
+    //         proteomes  : complete_prots
+    //             return [ meta, complete_prots.flatten() ]
+    // }
+    // .set { ch_busco }   
+    // ch_busco.view()
+    
+    // ch_all_data_dir = ch_all_data.all_data_prep
+    //
+    // MODULE: Prepare directory structure and fasta files according to 
+    //         OrthoFinder's preferred format for downstream MCL clustering
+    //
+    
+    ORTHOFINDER_PREP (
+        ch_all_data.complete_fastadir,
+        "complete_dataset",
+        "complete_fasta_list.txt",
+        "complete_dmnd_list.txt"
+    )
+    
+    ORTHOFINDER_PREP_TEST (
+        ch_all_data.mcl_test_fastadir,
+        "mcl_test_dataset",
+        "mcl_test_fasta_list.txt",
+        "mcl_test_dmnd_list.txt"
+    )
+    
+    // Fasta files should be redirected into a channel set of filepaths emitted
+    // separately, whereas the diamond databases for each species can be put
+    // into a directory as they are now (as a comma seperated list emitted 
+    // together).
+    ch_fa = ORTHOFINDER_PREP.out.fa.splitText().flatten()
+    ch_dmd = ORTHOFINDER_PREP.out.dmd.splitText().flatten()
+    ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().flatten()
+    ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().flatten()
+    ch_fa.view()
+    ch_dmd.view()
     // // TODO: CAN PROBABLY DELETE WHAT'S BELOW
     // // ch_prots_test
     // // .branch {

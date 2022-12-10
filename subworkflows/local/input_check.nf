@@ -2,7 +2,7 @@
 // Check input samplesheet and get proteome channels
 //
 
-include { SAMPLESHEET_CHECK          } from '../../modules/local/samplesheet_check' //params(params)
+include { SAMPLESHEET_CHECK } from '../../modules/local/samplesheet_check'
 
 workflow INPUT_CHECK {
     take:
@@ -25,9 +25,11 @@ workflow INPUT_CHECK {
         .set { mcl_test_prots }
     
     emit:
-    complete_prots                                                  // channel: [ val(meta), [ prots ] ]
-    mcl_test_prots
-    versions = SAMPLESHEET_CHECK.out.versions              // channel: [ versions.yml ]
+    complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
+    mcl_test_prots                            // channel: [ val(meta), [ mcl_test_prots ] ]
+    complete_fastadir = SAMPLESHEET_CHECK.out.complete_fastadir
+    mcl_test_fastadir = SAMPLESHEET_CHECK.out.mcl_test_fastadir
+    versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
 
 // Function to get list of [ meta, [ file ] ]
