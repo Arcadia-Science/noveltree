@@ -28,9 +28,6 @@ process ORTHOFINDER_PREP {
 
     script:
     """
-    # Prepare the bespoke orthofinder directory structure and stripped down files
-    # spit the output commands to a tmp file - we don't care about this
-    
     # The fasta directroy depends on whether we're running the mcl testing or not.  
     fastaDir=\$(cat $fasta_dir)
     orthofinder \\
@@ -45,8 +42,8 @@ process ORTHOFINDER_PREP {
     
     # output the paths to fasta files and dmnd dbs
     ls ${params.outdir}/orthofinder/$out_dir/*fa > $fasta_list_fname
-    ls ${params.outdir}/orthofinder/$out_dir/*dmnd | sed ':a;N;\$!ba;s/\\n/,/g' > $dmnd_list_fname
-    
+    ls ${params.outdir}/orthofinder/$out_dir/*dmnd > $dmnd_list_fname
+    #| sed ':a;N;\$!ba;s/\\n/,/g'
     
     #mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/
     #mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/data

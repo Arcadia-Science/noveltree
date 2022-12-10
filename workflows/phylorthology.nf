@@ -173,26 +173,25 @@ workflow PHYLORTHOLOGY {
         ch_all_data.complete_fastadir,
         "complete_dataset",
         "complete_fasta_list.txt",
-        "complete_dmnd_list.txt"
+        "complete_dmnd_dir.txt"
     )
     
     ORTHOFINDER_PREP_TEST (
         ch_all_data.mcl_test_fastadir,
         "mcl_test_dataset",
         "mcl_test_fasta_list.txt",
-        "mcl_test_dmnd_list.txt"
+        "mcl_test_dmnd_dir.txt"
     )
     
     // Fasta files should be redirected into a channel set of filepaths emitted
     // separately, whereas the diamond databases for each species can be put
     // into a directory as they are now (as a comma seperated list emitted 
     // together).
-    ch_fa = ORTHOFINDER_PREP.out.fa.splitText().flatten()
-    ch_dmd = ORTHOFINDER_PREP.out.dmd.splitText().flatten()
-    ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().flatten()
-    ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().flatten()
-    ch_fa.view()
-    ch_dmd.view()
+    ch_fa = ORTHOFINDER_PREP.out.fa.splitText().map{it -> it.trim()}
+    ch_dmd = ORTHOFINDER_PREP.out.dmd.splitText().map{it -> it.trim()}
+    ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().map{it -> it.trim()}
+    ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().map{it -> it.trim()}
+
     // // TODO: CAN PROBABLY DELETE WHAT'S BELOW
     // // ch_prots_test
     // // .branch {
@@ -203,10 +202,10 @@ workflow PHYLORTHOLOGY {
     // // .set { ch_busco_test }
     
     // // Create an orthofinder channel with paths to the new fasta/diamond DBs
-    // ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
-    // ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
-    // ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
+    ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
+    ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    ch_orthof_complete.view()
     // // Now, there will be a couple of modules below that we reapply, both to 
     // // the full dataset, and to the MCL inflation parameter test set. 
     // // These repeat modules include:
@@ -245,19 +244,19 @@ workflow PHYLORTHOLOGY {
     // //     []
     // //     )
         
-    // //
-    // // MODULE: All-v-All diamond/blastp
-    // //
-    // // Run for the test set (used to determine the best value of the MCL
-    // // inflation parameter)
-    // ch_blastp_mcl_test = DIAMOND_BLASTP_TEST (
-    //     ch_orthof_mcl_test,
-    //     ch_test_dmd,
-    //     "txt",
-    //     "true",
-    //     []
-    // )
-    // .txt
+    //
+    // MODULE: All-v-All diamond/blastp
+    //
+    // Run for the test set (used to determine the best value of the MCL
+    // inflation parameter)
+    ch_blastp_mcl_test = DIAMOND_BLASTP_TEST (
+        ch_orthof_mcl_test,
+        ch_test_dmd,
+        "txt",
+        "true",
+        []
+    )
+    .txt
     
     // // And for the full dataset, to be clustered into orthogroups using 
     // // the best inflation parameter. 
