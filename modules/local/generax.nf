@@ -1,6 +1,7 @@
 process GENERAX {
     tag "GeneRax"
-    label 'process_highthread'
+    //label 'process_highthread' // Possible specification for full analysis
+    label 'process_medium' // Used for debugging
 
     conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
