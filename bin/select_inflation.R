@@ -13,8 +13,11 @@ for(i in 1:length(fpaths)){
 }
 res <- do.call(rbind, fs)
 
+# Subset to the columns we're using
+res <- res[,c(1:3,5:12,15)]
+
 res$num_ogs_gt_4spp <- res$num_ogs_gt_4spp / res$num_ogs
-res$num_ogs_all_spp <- res$num_ogs_all_spp / res$num_ogs
+res$pairwise_overlap <- res$pairwise_overlap * 100
 
 res <- melt(res, id.vars = 'inflation_param')
 vars <- unique(res$variable)
@@ -22,23 +25,33 @@ plts <- list()
 
 ylabs <- 
   c('Number of Orthogroups', '% Orthogroups with\n>= 4 Spp.', 
-    '% Orthogroups\nwith All Spp.', 'Mean Copy # Per Spp/Per OG', 
-    'Protein Domain Score', '% Genes in OGs', '% Genes in ssOGs', 
+    'Mean Copy # Per Spp/Per OG', 'InterPro Score', 
+    'SUPFAM Score', 'PROSITE Score', 'HOGENOM Score', 
+    'OMA Score', 'OrthoDB Score', '% Genes in ssOGs', 
     'Mean % Species Overlap')
 
-# Initialize empty vector to hold inflection point results. 
-elbows <- c()
+# In some cases we want to identify the inflation parameter that is the best 
+# or most representative "compromise" (e.g. % genes in ssOGs, which typically
+# exhibits a pattern of hovering around some value before inflecting 
+# sharply). For these, we want to identify these inflection points (using elbow).
+# For others, we want the value that maximizes some value (e.g InterPro score).
+# Initialize empty vector to hold the results. 
+best <- c()
+invariant <- c()
 
 for(i in 1:length(vars)){
-  var <- vars[i]
+  # As a safety, check if the values are constant for all inflation parameters:
+  # If so, we'll ignore these
+  invariant[i] <- var(res$variable == vars[i]) == 0
   
-  if(i %in% c(1:9)){
+  if(i %in% c(1:3, 10:11)){
+    tmp.res <- res[which(res$variable == vars[i]),]
     inflect <- 
-      elbow(res[which(res$variable == vars[[i]]),c(1,3)])$inflation_param_selected
-    elbows[i] <- inflect
+      elbow(tmp.res[,c(1,3)])$inflation_param_selected
+    best[i] <- inflect
     
     plts[[i]] <- 
-      ggplot(data = res[which(res$variable == var),], 
+      ggplot(data = tmp.res, 
              aes(x = inflation_param, y = value)) +
       theme_classic() + 
       geom_vline(xintercept = inflect) + 
@@ -46,9 +59,13 @@ for(i in 1:length(vars)){
       geom_line() +
       ylab(ylabs[i])
   }else{
+    tmp.res <- res[which(res$variable == vars[i]),]
+    best[i] <- tmp.res$inflation_param[which(tmp.res$value == max(tmp.res$value))]
+    
     plts[[i]] <- 
-      ggplot(data = res[which(res$variable == var),], 
+      ggplot(data = tmp.res, 
              aes(x = inflation_param, y = value)) +
+      geom_vline(xintercept = best[i]) + 
       geom_point(size = 3) +
       geom_line() +
       ylab(ylabs[i]) + 
@@ -57,15 +74,15 @@ for(i in 1:length(vars)){
 }
 
 og_summs <- 
-  plot_grid(plts[[1]], plts[[2]], plts[[3]], 
-            plts[[4]], plts[[5]], plts[[6]], 
-            plts[[7]], plts[[8]], 
-            ncol = 3, nrow = 3)
+  plot_grid(plts[[1]], plts[[2]], plts[[3]], plts[[4]], 
+            plts[[5]], plts[[6]], plts[[7]], plts[[8]], 
+            plts[[9]], plts[[10]], plts[[11]], 
+            ncol = 4, nrow = 3)
 
-best_i <- median(elbows)
+best_i <- mean(best[which(invariant == FALSE)])
 
 ggsave(og_summs, filename = 'inflation_summaries.pdf',
-       height = 9, width = 9)
+       height = 9, width = 12)
 
 # And write out the inflation parameter we selected
 sink("best-inflation-param.txt")
