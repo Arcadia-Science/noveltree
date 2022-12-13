@@ -24,8 +24,9 @@ vars <- unique(res$variable)
 plts <- list()
 
 ylabs <- 
-  c('Mean Copy # Per Spp/Per OG', 
-    'InterPro Score', 'SUPFAM Score', 'PROSITE Score', 
+  c('Number of Orthogroups', '% Orthogroups with\n>= 4 Spp.', 
+    'Mean Copy # Per Spp/Per OG', 
+    'InterPro Score', 'SUPFAM Score', 'PROSITE Score',
     'HOGENOM Score', 'OMA Score', 'OrthoDB Score', 
     '% Genes in ssOGs', 'Mean % Species Overlap')
 
