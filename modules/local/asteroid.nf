@@ -1,6 +1,7 @@
 process ASTEROID {
     tag "Asteroid"
-    label 'process_highthread'
+    //label 'process_highthread' // Possible specification for full analysis
+    label 'process_medium' // Used for debugging
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid:1.0.0':
         '' }"

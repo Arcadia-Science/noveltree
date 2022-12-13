@@ -6,17 +6,30 @@ include { SAMPLESHEET_CHECK } from '../../modules/local/samplesheet_check'
 
 workflow INPUT_CHECK {
     take:
-    samplesheet // file: /path/to/samplesheet.csv
-
+    complete_samplesheet // file: /path/to/complete_samplesheet.csv
+    data_dir
+    
     main:
-    SAMPLESHEET_CHECK ( samplesheet )
-        .csv
+    SAMPLESHEET_CHECK ( complete_samplesheet, data_dir )
+    
+    SAMPLESHEET_CHECK.out
+        .complete_csv
         .splitCsv ( header:true, sep:',' )
         .map { create_prots_channel(it) }
-        .set { prots }
+        .set { complete_prots }
+        
+    SAMPLESHEET_CHECK.out
+        .mcl_test_csv
+        .splitCsv ( header:true, sep:',' )
+        .map { create_prots_channel(it) }
+        .set { mcl_test_prots }
     
     emit:
-    prots                                     // channel: [ val(meta), [ prots ] ]
+    complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
+    mcl_test_prots                            // channel: [ val(meta), [ mcl_test_prots ] ]
+    complete_samplesheet = SAMPLESHEET_CHECK.out.complete_csv
+    complete_fastadir = SAMPLESHEET_CHECK.out.complete_fastadir
+    mcl_test_fastadir = SAMPLESHEET_CHECK.out.mcl_test_fastadir
     versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
 

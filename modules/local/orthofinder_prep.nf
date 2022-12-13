@@ -12,43 +12,44 @@ process ORTHOFINDER_PREP {
     //)
     
     input:
-    val fasta_dir
-    val mcl_test
+    path fasta_dir // directory containing fasta files
+    val out_dir   // name of directory where prepped files will be stored
+    val fasta_list_fname
+    val dmnd_list_fname
     
     output:
-    path "*.dmnd", emit: dmd
-    path "*.fa", emit: fa
+    path fasta_list_fname, emit: fa
+    path dmnd_list_fname, emit: dmd
+    path "*.dmnd", emit: dmnd
+    path "*.fa", emit: fastas
     path "SequenceIDs.txt", emit: seqIDs
     path "SpeciesIDs.txt", emit: sppIDs
     path "versions.yml" , emit: versions
 
     script:
-    def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
     """
-    # Prepare the bespoke orthofinder directory structure and stripped down files
-    # spit the output commands to a tmp file - we don't care about this
+    # The fasta directroy depends on whether we're running the mcl testing or not.  
+    fastaDir=\$(cat $fasta_dir)
     orthofinder \\
-        -f $fasta_dir \\
+        -f \$fastaDir \\
         -t ${task.cpus} \\
         -op > tmp
         
-    # Create the publishdir if it's not made yet
-    mkdir -p ../../../${params.outdir}/orthofinder/
+    # Move the output to a more sensible directory
+    mkdir -p ${params.outdir}/orthofinder/$out_dir
+    cp \${fastaDir}/OrthoFinder/Results*/WorkingDirectory/* ${params.outdir}/orthofinder/$out_dir
+    cp \${fastaDir}/OrthoFinder/Results*/WorkingDirectory/* .
+    rm -r \${fastaDir}/OrthoFinder/
     
-    # Copy all the other orthofinder scraps (species and sequence IDs, etc) to
-    # here - needed for downstream interfacing with orthofinder. 
-    # Specific outdir will depend on whether we're testing mcl or not. 
-    if [ "$testing_mcl" == "true" ]; then
-        outDir="mcl_testing"
-    else
-        outDir="full_analysis"
-    fi
-    
-    mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/
-    mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/data
-    dataDir="../../../${params.outdir}/orthofinder/\$outDir/data"
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* \$dataDir/
-    cp ${fasta_dir}/OrthoFinder/Results*/WorkingDirectory/* .
+    # output the paths to fasta files and dmnd dbs
+    ls ${params.outdir}/orthofinder/$out_dir/*fa > $fasta_list_fname
+    ls ${params.outdir}/orthofinder/$out_dir/*dmnd > $dmnd_list_fname
+
+    #mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/
+    #mkdir -p ../../../${params.outdir}/orthofinder/\$outDir/data
+    #dataDir="../../../${params.outdir}/orthofinder/\$outDir/data"
+    #cp \$input_dir/OrthoFinder/Results*/WorkingDirectory/* \$dataDir/
+    #cp \$input_dir/OrthoFinder/Results*/WorkingDirectory/* .
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

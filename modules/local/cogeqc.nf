@@ -1,6 +1,6 @@
 process COGEQC {
     tag "Orthogroup Summary"
-    label 'process_highthread'
+    label 'process_medium'
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/cogeqc-1.2.0_r-4.2.2':
         '' }"
@@ -39,7 +39,7 @@ process COGEQC {
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        cogeqc: \$( cat version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
+        cogeqc: \$( cat version.txt | head -n1 | sed "s/\\[1] ‘//g" | sed "s/’//g" )
     END_VERSIONS
     """
 }

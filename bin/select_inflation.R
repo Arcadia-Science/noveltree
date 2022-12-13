@@ -13,8 +13,11 @@ for(i in 1:length(fpaths)){
 }
 res <- do.call(rbind, fs)
 
+# Subset to the columns we're using
+res <- res[,c(1:3,5:12,15)]
+
 res$num_ogs_gt_4spp <- res$num_ogs_gt_4spp / res$num_ogs
-res$num_ogs_all_spp <- res$num_ogs_all_spp / res$num_ogs
+res$pairwise_overlap <- res$pairwise_overlap * 100
 
 res <- melt(res, id.vars = 'inflation_param')
 vars <- unique(res$variable)
