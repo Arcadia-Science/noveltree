@@ -32,10 +32,7 @@ process IQTREE {
     # If the checkpoint file indicates the run finished, go ahead and 
     # skip the analyses, otherwise run iqtree as normal.
     
-    if zgrep -q "finished: true" *.ckp.gz; then
-        echo "Run completed"
-    else
-        # Infer the guide tree for PMSF approximation
+    # Infer the guide tree for PMSF approximation
         iqtree \\
         -s $alignment \\
         -nt AUTO \\
@@ -64,7 +61,12 @@ process IQTREE {
         # Clean up
         rm ./guidetree.treefile
         
-    fi
+    #if zgrep -q "finished: true" *.ckp.gz; then
+    #    echo "Run completed"
+    #else
+    #    
+    #    
+    #fi
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
