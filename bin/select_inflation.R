@@ -24,11 +24,10 @@ vars <- unique(res$variable)
 plts <- list()
 
 ylabs <- 
-  c('Number of Orthogroups', '% Orthogroups with\n>= 4 Spp.', 
-    'Mean Copy # Per Spp/Per OG', 'InterPro Score', 
-    'SUPFAM Score', 'PROSITE Score', 'HOGENOM Score', 
-    'OMA Score', 'OrthoDB Score', '% Genes in ssOGs', 
-    'Mean % Species Overlap')
+  c('Mean Copy # Per Spp/Per OG', 
+    'InterPro Score', 'SUPFAM Score', 'PROSITE Score', 
+    'HOGENOM Score', 'OMA Score', 'OrthoDB Score', 
+    '% Genes in ssOGs', 'Mean % Species Overlap')
 
 # In some cases we want to identify the inflation parameter that is the best 
 # or most representative "compromise" (e.g. % genes in ssOGs, which typically
