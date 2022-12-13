@@ -43,14 +43,14 @@ include { INPUT_CHECK                       } from '../subworkflows/local/input_
 //
 // MODULE
 //
-// Modules breing run twice (for MCL testing and fulla analysis)
+// Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { BUSCO as BUSCO_SHALLOW                    } from '../modules/local/busco'
-include { BUSCO as BUSCO_BROAD                      } from '../modules/local/busco'
+include { BUSCO as BUSCO_SHALLOW                    } from '../modules/local/nf-core-modified/busco'
+include { BUSCO as BUSCO_BROAD                      } from '../modules/local/nf-core-modified/busco'
 include { ORTHOFINDER_PREP                          } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
-include { DIAMOND_BLASTP                            } from '../modules/local/diamond_blastp'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/local/diamond_blastp'
+include { DIAMOND_BLASTP                            } from '../modules/local/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/local/nf-core-modified/diamond_blastp'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
 include { ORTHOFINDER_MCL                           } from '../modules/local/orthofinder_mcl'
 include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
@@ -59,8 +59,8 @@ include { SELECT_INFLATION                          } from '../modules/local/sel
 include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { CLIPKIT as CLIPKIT_REMAINING              } from '../modules/local/clipkit'
-include { IQTREE                                    } from '../modules/local/iqtree'
-include { IQTREE as IQTREE_REMAINING                } from '../modules/local/iqtree'
+include { IQTREE                                    } from '../modules/local/nf-core-modified/iqtree'
+include { IQTREE as IQTREE_REMAINING                } from '../modules/local/nf-core-modified/iqtree'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
 include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/species_tree_prep'
 include { ASTEROID                                  } from '../modules/local/asteroid'
