@@ -20,12 +20,6 @@ if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) 
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -106,8 +100,28 @@ workflow PHYLORTHOLOGY {
     ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    //
+    // MODULE: Run BUSCO
+    // Split up into shallow and broad scale runs, since downstream modules
+    // do not use these outputs, so multiple busco runs may be conducted
+    // simultaneously
+    //
+    // Shallow taxonomic scale:
+    BUSCO_SHALLOW (
+        ch_all_data.complete_prots,
+        "shallow",
+        [],
+        []
+    )
 
-    // ch_all_data_dir = ch_all_data.all_data_prep
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_all_data.complete_prots,
+        "broad",
+        [],
+        []
+    )
+
     //
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
@@ -155,28 +169,6 @@ workflow PHYLORTHOLOGY {
     //     .cogeqc_annotations
     //     .collect()
     // ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
-
-    // //
-    // // MODULE: Run BUSCO
-    // // Split up into shallow and broad scale runs, since downstream modules
-    // // do not use these outputs, so multiple busco runs may be conducted
-    // // simultaneously
-    // //
-    // // Shallow taxonomic scale:
-    // // BUSCO_SHALLOW (
-    // //     ch_prots_complete,
-    // //     "shallow",
-    // //     [],
-    // //     []
-    // //     )
-
-    // // // Broad taxonomic scale (Eukaryotes)
-    // // BUSCO_BROAD (
-    // //     ch_prots_complete,
-    // //     "broad",
-    // //     [],
-    // //     []
-    // //     )
 
     // //
     // // MODULE: All-v-All diamond/blastp
