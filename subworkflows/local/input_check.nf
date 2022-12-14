@@ -13,16 +13,14 @@ workflow INPUT_CHECK {
     SAMPLESHEET_CHECK(complete_samplesheet, data_dir)
 
     SAMPLESHEET_CHECK.out
-        .complete_csv
+        .csv
         .splitCsv (header:true, sep:',')
         .map { create_prots_channel(it) }
         .set { complete_prots }
 
-    SAMPLESHEET_CHECK.out
-        .mcl_test_csv
-        .splitCsv (header:true, sep:',')
-        .map { create_prots_channel(it) }
-        .set { mcl_test_prots }
+    complete_prots.filter {
+        it[0].mcl_test == 'true'
+    }.set { mcl_test_prots }
 
     emit:
     complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
