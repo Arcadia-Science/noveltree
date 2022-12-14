@@ -121,11 +121,6 @@ workflow PHYLORTHOLOGY {
         []
     )
 
-    // Now, there will be a couple of modules below that we reapply, both to
-    // the full dataset, and to the MCL inflation parameter test set.
-    // These repeat modules include:
-    // uniprot annotation (ch_annotations)
-    // diamond blastp (ch_blastp & ch_similarities)
     //
     // MODULE: Annotate UniProt Proteins
     //
