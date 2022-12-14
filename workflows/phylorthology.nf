@@ -90,7 +90,6 @@ def create_og_channel(LinkedHashMap row) {
 }
 
 workflow PHYLORTHOLOGY {
-
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
 
@@ -121,6 +120,19 @@ workflow PHYLORTHOLOGY {
         [],
         []
     )
+
+    // Now, there will be a couple of modules below that we reapply, both to
+    // the full dataset, and to the MCL inflation parameter test set.
+    // These repeat modules include:
+    // uniprot annotation (ch_annotations)
+    // diamond blastp (ch_blastp & ch_similarities)
+    //
+    // MODULE: Annotate UniProt Proteins
+    //
+    ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
+        .cogeqc_annotations
+        .collect()
+    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
     // MODULE: Prepare directory structure and fasta files according to
@@ -154,21 +166,6 @@ workflow PHYLORTHOLOGY {
     // // Create an orthofinder channel with paths to the new fasta/diamond DBs
     // ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
     // ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
-
-    // // Now, there will be a couple of modules below that we reapply, both to
-    // // the full dataset, and to the MCL inflation parameter test set.
-    // // These repeat modules include:
-    // // uniprot annotation (ch_annotations)
-    // // diamond blastp (ch_blastp & ch_similarities)
-    // //
-    // // MODULE: Annotate UniProt Proteins
-    // //
-    // ch_annotations = ANNOTATE_UNIPROT (
-    //         ch_prots_complete
-    //     )
-    //     .cogeqc_annotations
-    //     .collect()
-    // ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     // //
     // // MODULE: All-v-All diamond/blastp

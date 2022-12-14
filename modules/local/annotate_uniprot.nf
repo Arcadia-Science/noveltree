@@ -4,7 +4,7 @@ process ANNOTATE_UNIPROT {
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/r-4.2.2_uniprot.ws:2.38.0':
         '' }"
-        
+
     publishDir(
         path: "${params.outdir}/protein-annotations",
         mode: 'copy',
@@ -32,18 +32,18 @@ process ANNOTATE_UNIPROT {
     """
     # Only annotate species for which protein IDs are found in UniProt (i.e.
     # proteomes come from UniProt).
-    # Check below - if from uniprot, go ahead and annotate, otherwise skip the species. 
+    # Check below - if from uniprot, go ahead and annotate, otherwise skip the species.
     if [ "$is_uniprot" == "true" ]; then
-        # Pull out the sequence names, strip trailing info, and remove spp name. 
+        # Pull out the sequence names, strip trailing info, and remove spp name.
         grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > $spp-protein-accessions.txt
-        
-        # Now run the script to pull down annotations for the protein accessions in this species. 
-        # This R script uses the UniProt.ws bioconducter package to accomplish this. 
-        # NOTE: The script is packaged in the bin/ subdirectory of this workflow. 
-        
+
+        # Now run the script to pull down annotations for the protein accessions in this species.
+        # This R script uses the UniProt.ws bioconducter package to accomplish this.
+        # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
+
         Rscript $projectDir/bin/UniProt-Protein-Annotation-NF.R $spp ${spp}-protein-accessions.txt
     fi
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         R: \$( R --version | sed "s/R version //g" | sed "s/ (.*//g" )
