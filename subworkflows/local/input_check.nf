@@ -7,10 +7,9 @@ include { SAMPLESHEET_CHECK } from '../../modules/local/samplesheet_check'
 workflow INPUT_CHECK {
     take:
     complete_samplesheet // file: /path/to/complete_samplesheet.csv
-    data_dir
 
     main:
-    SAMPLESHEET_CHECK(complete_samplesheet, data_dir)
+    SAMPLESHEET_CHECK(complete_samplesheet)
 
     SAMPLESHEET_CHECK.out
         .csv

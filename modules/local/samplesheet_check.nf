@@ -8,7 +8,6 @@ process SAMPLESHEET_CHECK {
 
     input:
     path complete_samplesheet // Samplesheet formatted as described in the README
-    path data_dir
 
     output:
     path '*.csv'       , emit: csv

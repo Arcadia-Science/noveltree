@@ -16,12 +16,6 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-if (params.data_dir) { ch_data_dir = Channel.fromPath(params.data_dir) } else { exit 1, 'Data directory not specified!' }
-//if (params.mcl_test_input) { ch_mcl_test_input = file(params.mcl_test_input) } else { exit 1, 'Input samplesheet for MCL testing not specified!' }
-//if (params.s3_dir) { ch_s3_dir = params.s3_dir } else { exit 1, 'S3 directory not specified!' }
-//if (params.data_location) { ch_data_location = val(params.data_location) } else { exit 1, 'Data storage location (local/S3) not specified!' }
-//if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
-//if (params.test_fasta_dir) { ch_test_fa_dir = params.test_fasta_dir } else { exit 1, 'Test fasta directory not specified!' }
 if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
 
 /*
@@ -109,11 +103,8 @@ workflow PHYLORTHOLOGY {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    ch_all_data = INPUT_CHECK(ch_input, ch_data_dir)
+    ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
-    ch_all_data.complete_prots.view()
-    ch_all_data.mcl_test_prots.view()
 
 
     // ch_all_data_dir = ch_all_data.all_data_prep
