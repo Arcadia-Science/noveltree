@@ -1,7 +1,3 @@
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,false
 Diacronema_lutheri,s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/Diacronema_lutheri-test-proteome.fasta,Haptophyta,eukaryota_odb10,eukaryota_odb10,proteins,true,true
-Giardia_intestinalis,s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/Giardia_intestinalis-test-proteome.fasta,Fornicata,eukaryota_odb10,eukaryota_odb10,proteins,true,true
-Porphyridium_purpureum,s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/Porphyridium_purpureum-test-proteome.fasta,Rhodophyta,eukaryota_odb10,eukaryota_odb10,proteins,true,true
-Saccharomyces_cerevisiae,s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/Saccharomyces_cerevisiae-test-proteome.fasta,Opisthokonta,ascomycota_odb10,eukaryota_odb10,proteins,true,true
-Loa_loa,s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/Loa_loa-test-proteome.fasta,Opisthokonta,nematoda_odb10,eukaryota_odb10,proteins,true,true

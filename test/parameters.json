@@ -1,6 +1,6 @@
 {
-  "input": "/home/ubuntu/environment/github/phylorthology/test/complete_samplesheet.csv",
-  "outdir": "/home/ubuntu/environment/github/phylorthology/testresults-s3-test",
+  "input": "/home/ubuntu/phylorthology/test/complete_samplesheet_s3.csv",
+  "outdir": "/home/ubuntu/phylorthology/testresults-s3-test",
   "data_dir": "s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test/",
   "mcl_inflation": [ "1.0","2.0", "3.0", "4.0", "5.0" ]
 }
