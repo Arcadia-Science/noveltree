@@ -22,9 +22,10 @@ process SPECIESRAX {
     path families          // Filepath to the families file
 
     output:
-    path "*" ,                                    emit: results
-    path "speciesrax_final_species_tree.newick" , emit: speciesrax_tree
-    path "versions.yml" ,                         emit: versions
+    path "*" ,                                           emit: results
+    path "speciesrax_final_species_tree.newick" ,        emit: speciesrax_tree
+    path "SpeciesRax/results/*/*_reconciled_gft.newick", emit: speciesrax_gfts
+    path "versions.yml" ,                                emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -50,6 +51,12 @@ process SPECIESRAX {
     # this will be used as the starting tree for generax application to the 
     # remaining gene families. 
     cp SpeciesRax/species_trees/inferred_species_tree.newick ./speciesrax_final_species_tree.newick
+    
+    # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
+    for og in \$(ls SpeciesRax/results/)
+    do
+        mv SpeciesRax/results/\$og/*.newick SpeciesRax/results/\$og/\${og}_reconciled_gft.newick
+    done
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

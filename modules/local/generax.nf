@@ -22,7 +22,8 @@ process GENERAX {
     path families          // Filepath to the families file
 
     output:
-    path "*" , emit: results
+    path "*" ,                                        emit: results
+    path "GeneRax/results/*/*_reconciled_gft.newick", emit: generax_gfts
 
     when:
     task.ext.when == null || task.ext.when
@@ -40,6 +41,13 @@ process GENERAX {
     --per-family-rates \
     --strategy SPR \
     --prefix GeneRax
+    
+    # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
+    for og in \$(ls GeneRax/results/)
+    do
+        mv GeneRax/results/\$og/*.newick GeneRax/results/\$og/\${og}_reconciled_gft.newick
+    done
+    
     """
 }
 
