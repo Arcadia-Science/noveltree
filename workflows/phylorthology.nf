@@ -112,6 +112,9 @@ workflow PHYLORTHOLOGY {
     ch_all_data = INPUT_CHECK(ch_input, ch_data_dir)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    ch_all_data.complete_prots.view()
+    ch_all_data.mcl_test_prots.view()
+
 
     // ch_all_data_dir = ch_all_data.all_data_prep
     //
