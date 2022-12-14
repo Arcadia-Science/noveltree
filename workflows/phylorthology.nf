@@ -66,6 +66,7 @@ include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/spe
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
 include { GENERAX                                   } from '../modules/local/generax'
+include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -290,10 +291,10 @@ workflow PHYLORTHOLOGY {
     ch_filtered_ogs = FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ch_orthogroups,
-        "4",
-        "4",
-        "1",
-        "2"
+        "3",
+        "3",
+        "2",
+        "4"
         )
         
     // Subset, pulling out two orthogroup sets:
@@ -467,20 +468,43 @@ workflow PHYLORTHOLOGY {
         ch_core_families
     )
     .speciesrax_tree
-    .set { ch_speciesrax }
+    .set { ch_rooted_spptree }
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
     
     // Run again, but this time only using the GeneRax component, 
     // reconciling gene family trees with the rooted species tree 
     // inferred from SpeciesRax for all remaining gene families
     GENERAX (
-        ch_speciesrax,
+        ch_rooted_spptree,
         ch_rem_generax_map,
         ch_all_rem_trees,
         ch_all_rem_msas,
         ch_rem_families
     )
     
+    //
+    // MODULE: ORTHOFINDER_PHYLOHOGS
+    // Now using the reconciled gene family trees and rooted species tree,
+    // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
+    // to identify orthologs and output orthogroup-level summary stats. 
+    //
+    ORTHOFINDER_PHYLOHOGS (
+        ch_rooted_spptree,
+        SPECIESRAX.out.speciesrax_gfts.collect(),
+        GENERAX.out.generax_gfts.collect()
+    )
+    .phylohogs
+    .set { ch_phylohogs }
+    
+    // //
+    // // MODULE: COGEQC_PHYLOHOGS
+    // // Now, summarize the phylogenetic hierarchical orthogroups (PhyloHOGs) 
+    // // in a manner similar to what was done for orthogroups, using COGEQC
+    // //
+    // COGEQC_PHYLOHOGS (
+    //     ch_phylohogs,
+    //     ch_annotations
+    // )
 }
 
 /*
