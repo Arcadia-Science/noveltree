@@ -130,22 +130,6 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
-    // MODULE: COGEQC
-    // Run an R-script that applies cogqc to assess orthogroup inference
-    // accuracy/performance.
-    //
-    COGEQC(ch_mcl, ch_annotations)
-    ch_cogeqc_summary = COGEQC.out.og_summary.collect()
-    ch_versions = ch_versions.mix(COGEQC.out.versions)
-
-    // Now, from these orthogroup summaries, select the best inflation parameter
-    SELECT_INFLATION (ch_cogeqc_summary)
-        .best_inflation
-        .map{ file -> file.text.trim() }
-        .set { ch_best_inflation }
-    ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
-
-    //
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
@@ -222,6 +206,22 @@ workflow PHYLORTHOLOGY {
     //     "true"
     // )
     // .og_fpath
+
+    //
+    // MODULE: COGEQC
+    // Run an R-script that applies cogqc to assess orthogroup inference
+    // accuracy/performance.
+    //
+    COGEQC(ch_mcl, ch_annotations)
+    ch_cogeqc_summary = COGEQC.out.og_summary.collect()
+    ch_versions = ch_versions.mix(COGEQC.out.versions)
+
+    // Now, from these orthogroup summaries, select the best inflation parameter
+    SELECT_INFLATION (ch_cogeqc_summary)
+        .best_inflation
+        .map{ file -> file.text.trim() }
+        .set { ch_best_inflation }
+    ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
 
     // // Using this best-performing inflation parameter, infer orthogroups for
     // // all samples.
