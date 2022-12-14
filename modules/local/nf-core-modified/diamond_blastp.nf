@@ -9,7 +9,7 @@ process DIAMOND_BLASTP {
         'quay.io/biocontainers/diamond:2.0.15--hb97b32f_0' }"
 
     input:
-    tuple val(meta), path(fasta), path(of_fasta), path(dmd)
+    path(of_fasta)
     each db
     val out_ext
     val mcl_test
@@ -65,8 +65,8 @@ process DIAMOND_BLASTP {
         --query $of_fasta \\
         --compress 1 \\
         --db $db \\
-        $args 
-        
+        $args
+
     cat <<-END_VERSIONS >> versions.yml
     "${task.process}":
         diamond: \$(diamond --version 2>&1 | tail -n 1 | sed 's/^diamond version //')

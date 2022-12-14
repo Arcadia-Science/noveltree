@@ -99,54 +99,47 @@ workflow PHYLORTHOLOGY {
     ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
-    //
-    // MODULE: Run BUSCO
-    // Split up into shallow and broad scale runs, since downstream modules
-    // do not use these outputs, so multiple busco runs may be conducted
-    // simultaneously
-    //
-    // Shallow taxonomic scale:
-    BUSCO_SHALLOW (
-        ch_all_data.complete_prots,
-        "shallow",
-        [],
-        []
-    )
+    // //
+    // // MODULE: Run BUSCO
+    // // Split up into shallow and broad scale runs, since downstream modules
+    // // do not use these outputs, so multiple busco runs may be conducted
+    // // simultaneously
+    // //
+    // // Shallow taxonomic scale:
+    // BUSCO_SHALLOW (
+    //     ch_all_data.complete_prots,
+    //     "shallow",
+    //     [],
+    //     []
+    // )
 
-    // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD (
-        ch_all_data.complete_prots,
-        "broad",
-        [],
-        []
-    )
+    // // Broad taxonomic scale (Eukaryotes)
+    // BUSCO_BROAD (
+    //     ch_all_data.complete_prots,
+    //     "broad",
+    //     [],
+    //     []
+    // )
 
-    //
-    // MODULE: Annotate UniProt Proteins
-    //
-    ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
-        .cogeqc_annotations
-        .collect()
-    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
+    // //
+    // // MODULE: Annotate UniProt Proteins
+    // //
+    // ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
+    //     .cogeqc_annotations
+    //     .collect()
+    // ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
 
-    // ORTHOFINDER_PREP (
-    //     ch_all_data.complete_fastadir,
-    //     "complete_dataset",
-    //     "complete_fasta_list.txt",
-    //     "complete_dmnd_dir.txt"
-    // )
+    complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
+    mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
+    // TODO: FIX mcl_test vs complete directories
+    ORTHOFINDER_PREP(complete_prots_list)
 
-    // ORTHOFINDER_PREP_TEST (
-    //     ch_all_data.mcl_test_fastadir,
-    //     "mcl_test_dataset",
-    //     "mcl_test_fasta_list.txt",
-    //     "mcl_test_dmnd_dir.txt"
-    // )
+    // ORTHOFINDER_PREP_TEST(mcl_test_prots_list)
 
     // // Fasta files should be redirected into a channel set of filepaths emitted
     // // separately, whereas the diamond databases for each species can be put
@@ -178,13 +171,13 @@ workflow PHYLORTHOLOGY {
 
     // // And for the full dataset, to be clustered into orthogroups using
     // // the best inflation parameter.
-    // ch_blastp_complete = DIAMOND_BLASTP (
-    //     ch_orthof_complete,
-    //     ch_dmd,
-    //     "txt",
-    //     "false",
-    //     []
-    // )
+    ch_blastp_complete = DIAMOND_BLASTP (
+        complete_prots_list,
+        ORTHOFINDER_PREP.out.dmnd,
+        "txt",
+        "false",
+        []
+    )
     // .txt
     // ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
@@ -207,21 +200,21 @@ workflow PHYLORTHOLOGY {
     // )
     // .og_fpath
 
-    //
-    // MODULE: COGEQC
-    // Run an R-script that applies cogqc to assess orthogroup inference
-    // accuracy/performance.
-    //
-    COGEQC(ch_mcl, ch_annotations)
-    ch_cogeqc_summary = COGEQC.out.og_summary.collect()
-    ch_versions = ch_versions.mix(COGEQC.out.versions)
+    // //
+    // // MODULE: COGEQC
+    // // Run an R-script that applies cogqc to assess orthogroup inference
+    // // accuracy/performance.
+    // //
+    // COGEQC(ch_mcl, ch_annotations)
+    // ch_cogeqc_summary = COGEQC.out.og_summary.collect()
+    // ch_versions = ch_versions.mix(COGEQC.out.versions)
 
-    // Now, from these orthogroup summaries, select the best inflation parameter
-    SELECT_INFLATION (ch_cogeqc_summary)
-        .best_inflation
-        .map{ file -> file.text.trim() }
-        .set { ch_best_inflation }
-    ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
+    // // Now, from these orthogroup summaries, select the best inflation parameter
+    // SELECT_INFLATION (ch_cogeqc_summary)
+    //     .best_inflation
+    //     .map{ file -> file.text.trim() }
+    //     .set { ch_best_inflation }
+    // ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
 
     // // Using this best-performing inflation parameter, infer orthogroups for
     // // all samples.
