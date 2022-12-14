@@ -7,21 +7,22 @@ process ORTHOFINDER_PREP {
 
     input:
     path(fasta), stageAs: "fasta/"
+    val directory
 
     output:
-    // path fasta_list_fname, emit: fa
-    // path dmnd_list_fname, emit: dmd
     path "**.dmnd", emit: dmnd
     path "**.fa", emit: fastas
-    // path "SequenceIDs.txt", emit: seqIDs
-    // path "SpeciesIDs.txt", emit: sppIDs
+    path "**SequenceIDs.txt", emit: seqIDs
+    path "**SpeciesIDs.txt", emit: sppIDs
     path "versions.yml" , emit: versions
 
     script:
     """
+    # TODO: Look into fixing this "hack"
+    mv fasta/ ${directory}
     # The fasta directroy depends on whether we're running the mcl testing or not.
     orthofinder \\
-        -f fasta/ \\
+        -f ${directory}/ \\
         -t ${task.cpus} \\
         -op > tmp
 

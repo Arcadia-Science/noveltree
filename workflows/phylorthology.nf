@@ -98,6 +98,8 @@ workflow PHYLORTHOLOGY {
     //
     ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
+    mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
 
     // //
     // // MODULE: Run BUSCO
@@ -133,13 +135,8 @@ workflow PHYLORTHOLOGY {
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
-
-    complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
-    mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
-    // TODO: FIX mcl_test vs complete directories
-    ORTHOFINDER_PREP(complete_prots_list)
-
-    // ORTHOFINDER_PREP_TEST(mcl_test_prots_list)
+    ORTHOFINDER_PREP(complete_prots_list, "casta")
+    ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "masta")
 
     // // Fasta files should be redirected into a channel set of filepaths emitted
     // // separately, whereas the diamond databases for each species can be put
@@ -171,13 +168,13 @@ workflow PHYLORTHOLOGY {
 
     // // And for the full dataset, to be clustered into orthogroups using
     // // the best inflation parameter.
-    ch_blastp_complete = DIAMOND_BLASTP (
-        complete_prots_list,
-        ORTHOFINDER_PREP.out.dmnd,
-        "txt",
-        "false",
-        []
-    )
+    // ch_blastp_complete = DIAMOND_BLASTP (
+    //     complete_prots_list,
+    //     ORTHOFINDER_PREP.out.dmnd,
+    //     "txt",
+    //     "false",
+    //     []
+    // )
     // .txt
     // ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
