@@ -24,6 +24,7 @@ workflow INPUT_CHECK {
     emit:
     complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
     mcl_test_prots                            // channel: [ val(meta), [ mcl_test_prots ] ]
+    complete_samplesheet = SAMPLESHEET_CHECK.out.csv
     versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
 

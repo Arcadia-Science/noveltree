@@ -14,12 +14,12 @@ process FILTER_ORTHOGROUPS {
     )
 
     input:
-    path samplesheet       // Path to samplesheet produced by input check containing sample metadata
-    path "MCL-*-fpath.txt" // File storing filepath to the results of the MCL clustering
-    val min_num_spp        // Minimum number of species to infer MSAs/trees for
-    val min_num_groups     // Minimum number of clades/taxonomic groups
-    val max_copy_num_filt1 // Max copy number for genes intended for species tree inference
-    val max_copy_num_filt2 // Max copy number for all other gene family tree inference
+    path samplesheet        // Path to samplesheet produced by input check containing sample metadata
+    path orthofinder_outdir // File storing filepath to the results of the MCL clustering
+    val min_num_spp         // Minimum number of species to infer MSAs/trees for
+    val min_num_groups      // Minimum number of clades/taxonomic groups
+    val max_copy_num_filt1  // Max copy number for genes intended for species tree inference
+    val max_copy_num_filt2  // Max copy number for all other gene family tree inference
 
     output:
     path "all_ogs_counts.csv"           , emit: all_ogs
@@ -42,16 +42,13 @@ process FILTER_ORTHOGROUPS {
     # species/gene tree inference based on their distribution
     # and copy numbers
 
-    # Take the orthofinder filepath and store as a variable
-    ogRes=\$(cat MCL-*-fpath.txt)
-
-    ogSppCounts=\$ogRes/Orthogroups/Orthogroups.GeneCount.tsv
+    ogSppCounts=${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
 
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
     Rscript $projectDir/bin/og-tax-summary.R \$ogSppCounts $samplesheet $num_spp $num_grp $copy_num1 $copy_num2
 
     # Add a column of filepaths to these
-    msaDir=\$( cd \$ogRes/Orthogroup_Sequences/; pwd )
+    msaDir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
 
     # Create the column
     echo "file" > colname.txt
@@ -66,6 +63,5 @@ process FILTER_ORTHOGROUPS {
 
     # Clean up
     rm *og_fpaths.txt
-
     """
 }
