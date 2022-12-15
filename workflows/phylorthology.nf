@@ -101,27 +101,27 @@ workflow PHYLORTHOLOGY {
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
     mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
 
-    //
-    // MODULE: Run BUSCO
-    // Split up into shallow and broad scale runs, since downstream modules
-    // do not use these outputs, so multiple busco runs may be conducted
-    // simultaneously
-    //
-    // Shallow taxonomic scale:
-    BUSCO_SHALLOW (
-        ch_all_data.complete_prots,
-        "shallow",
-        [],
-        []
-    )
+    // //
+    // // MODULE: Run BUSCO
+    // // Split up into shallow and broad scale runs, since downstream modules
+    // // do not use these outputs, so multiple busco runs may be conducted
+    // // simultaneously
+    // //
+    // // Shallow taxonomic scale:
+    // BUSCO_SHALLOW (
+    //     ch_all_data.complete_prots,
+    //     "shallow",
+    //     [],
+    //     []
+    // )
 
-    // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD (
-        ch_all_data.complete_prots,
-        "broad",
-        [],
-        []
-    )
+    // // Broad taxonomic scale (Eukaryotes)
+    // BUSCO_BROAD (
+    //     ch_all_data.complete_prots,
+    //     "broad",
+    //     [],
+    //     []
+    // )
 
     //
     // MODULE: Annotate UniProt Proteins
@@ -153,17 +153,17 @@ workflow PHYLORTHOLOGY {
         []
     )
 
-    // And for the full dataset, to be clustered into orthogroups using
-    // the best inflation parameter.
-    DIAMOND_BLASTP(
-        ch_all_data.complete_prots,
-        ORTHOFINDER_PREP.out.fastas.flatten(),
-        ORTHOFINDER_PREP.out.diamonds.flatten(),
-        "txt",
-        "false",
-        []
-    )
-    ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
+    // // And for the full dataset, to be clustered into orthogroups using
+    // // the best inflation parameter.
+    // DIAMOND_BLASTP(
+    //     ch_all_data.complete_prots,
+    //     ORTHOFINDER_PREP.out.fastas.flatten(),
+    //     ORTHOFINDER_PREP.out.diamonds.flatten(),
+    //     "txt",
+    //     "false",
+    //     []
+    // )
+    // ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
     //
     // MODULE: Run Orthofinder's implementation of MCL (with similarity score
@@ -202,32 +202,32 @@ workflow PHYLORTHOLOGY {
         .set { ch_best_inflation }
     ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
 
-    // Using this best-performing inflation parameter, infer orthogroups for
-    // all samples.
-    ORTHOFINDER_MCL(
-        ch_best_inflation,
-        DIAMOND_BLASTP.out.txt.collect(),
-        ORTHOFINDER_PREP.out.fastas,
-        ORTHOFINDER_PREP.out.diamonds,
-        ORTHOFINDER_PREP.out.sppIDs,
-        ORTHOFINDER_PREP.out.seqIDs,
-        "complete_dataset"
-    )
+    // // Using this best-performing inflation parameter, infer orthogroups for
+    // // all samples.
+    // ORTHOFINDER_MCL(
+    //     ch_best_inflation,
+    //     DIAMOND_BLASTP.out.txt.collect(),
+    //     ORTHOFINDER_PREP.out.fastas,
+    //     ORTHOFINDER_PREP.out.diamonds,
+    //     ORTHOFINDER_PREP.out.sppIDs,
+    //     ORTHOFINDER_PREP.out.seqIDs,
+    //     "complete_dataset"
+    // )
 
-    //
-    // MODULE: FILTER_ORTHOGROUPS
-    // Subset orthogroups based on their copy number and distribution
-    // across species and taxonomic group.
-    // The conservative subset will be used for species tree inference,
-    // and the remainder will be used to infer gene family trees only.
-    ch_filtered_ogs = FILTER_ORTHOGROUPS (
-        INPUT_CHECK.out.complete_samplesheet,
-        ch_orthogroups,
-        "4",
-        "4",
-        "1",
-        "2"
-        )
+    // //
+    // // MODULE: FILTER_ORTHOGROUPS
+    // // Subset orthogroups based on their copy number and distribution
+    // // across species and taxonomic group.
+    // // The conservative subset will be used for species tree inference,
+    // // and the remainder will be used to infer gene family trees only.
+    // ch_filtered_ogs = FILTER_ORTHOGROUPS (
+    //     INPUT_CHECK.out.complete_samplesheet,
+    //     ch_orthogroups,
+    //     "4",
+    //     "4",
+    //     "1",
+    //     "2"
+    //     )
 
     // // Subset, pulling out two orthogroup sets:
     // // one for species tree inference (core) and a remaining core set

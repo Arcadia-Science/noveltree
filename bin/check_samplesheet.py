@@ -111,7 +111,7 @@ def check_samplesheet(file_in, file_out):
             fout.write(",".join(["species", "file", "taxonomy", "shallow", "broad", "mode", "uniprot", "mcl_test"]) + "\n")
             for species in sorted(species_mapping_dict.keys()):
                 for idx, val in enumerate(species_mapping_dict[species]):
-                    fout.write(",".join([f"{species}_T{idx+1}"] + val) + "\n")
+                    fout.write(",".join([f"{species}"] + val) + "\n")
     else:
         print_error(f"No entries to process!", "Samplesheet: {file_in}")
 
@@ -123,4 +123,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     sys.exit(main())
-    
