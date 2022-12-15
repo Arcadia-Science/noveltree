@@ -16,7 +16,7 @@ process FILTER_ORTHOGROUPS {
 
     input:
     path samplesheet        // Path to samplesheet produced by input check containing sample metadata
-    path orthofinder_outdir // File storing filepath to the results of the MCL clustering
+    path orthofinder_outdir // Directory containing all the inflation params
     val min_num_spp         // Minimum number of species to infer MSAs/trees for
     val min_num_groups      // Minimum number of clades/taxonomic groups
     val max_copy_num_filt1  // Max copy number for genes intended for species tree inference

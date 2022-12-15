@@ -219,6 +219,7 @@ workflow PHYLORTHOLOGY {
     // across species and taxonomic group.
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
+    // TODO: parametrize the variables here
     ch_filtered_ogs = FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
