@@ -135,8 +135,8 @@ workflow PHYLORTHOLOGY {
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
-    ORTHOFINDER_PREP(complete_prots_list, "casta")
-    ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "masta")
+    ORTHOFINDER_PREP(complete_prots_list, "complete_dataset")
+    ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
     ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
 
     // // Fasta files should be redirected into a channel set of filepaths emitted
@@ -158,7 +158,7 @@ workflow PHYLORTHOLOGY {
     //
     // Run for the test set (used to determine the best value of the MCL
     // inflation parameter)
-    ch_blastp_mcl_test = DIAMOND_BLASTP_TEST(
+    DIAMOND_BLASTP_TEST(
         ch_all_data.mcl_test_prots,
         ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
         ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
@@ -166,12 +166,10 @@ workflow PHYLORTHOLOGY {
         "true",
         []
     )
-    .txt
-
 
     // And for the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
-    ch_blastp_complete = DIAMOND_BLASTP(
+    DIAMOND_BLASTP(
         ch_all_data.complete_prots,
         ORTHOFINDER_PREP.out.fastas.flatten(),
         ORTHOFINDER_PREP.out.diamonds.flatten(),
@@ -179,7 +177,6 @@ workflow PHYLORTHOLOGY {
         "false",
         []
     )
-    .txt
     ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
     //
@@ -189,29 +186,30 @@ workflow PHYLORTHOLOGY {
     // Collect all pairwise similarity scores into a single channel and pass to
     // the orthofinder MCL analysis so that it doesn't start until the full
     // set of all-v-all comparisons have completed.
-    ch_simil_mcl_test = ch_blastp_mcl_test.mix(ch_blastp_mcl_test).collect()
-    ch_simil_complete = ch_blastp_complete.mix(ch_blastp_complete).collect()
+    // ch_simil_mcl_test = ch_blastp_mcl_test.mix(ch_blastp_mcl_test).collect()
+    // ch_simil_complete = ch_blastp_complete.mix(ch_blastp_complete).collect()
 
-    ch_blastp_mcl_test.view()
-    ch_blastp_mcl_test.collect().view()
-
+    // TODO: Fix the output_dir determination logic
     // First determine the optimal MCL inflation parameter, and then
     // subsequently use this for full orthogroup inference.
-    // ch_mcl = ORTHOFINDER_MCL_TEST(
-    //     ch_inflation,
-    //     ch_blastp_mcl_test,
-    //     "true"
-    // )
-    // .og_fpath
+    ORTHOFINDER_MCL_TEST(
+        ch_inflation,
+        DIAMOND_BLASTP_TEST.out.txt.collect(),
+        ORTHOFINDER_PREP_TEST.out.fastas,
+        ORTHOFINDER_PREP_TEST.out.diamonds,
+        ORTHOFINDER_PREP_TEST.out.sppIDs,
+        ORTHOFINDER_PREP_TEST.out.seqIDs,
+        "mcl_test_dataset"
+    )
 
-    // //
-    // // MODULE: COGEQC
-    // // Run an R-script that applies cogqc to assess orthogroup inference
-    // // accuracy/performance.
-    // //
-    // COGEQC(ch_mcl, ch_annotations)
-    // ch_cogeqc_summary = COGEQC.out.og_summary.collect()
-    // ch_versions = ch_versions.mix(COGEQC.out.versions)
+    //
+    // MODULE: COGEQC
+    // Run an R-script that applies cogqc to assess orthogroup inference
+    // accuracy/performance.
+    //
+    COGEQC(ch_mcl, ch_annotations)
+    ch_cogeqc_summary = COGEQC.out.og_summary.collect()
+    ch_versions = ch_versions.mix(COGEQC.out.versions)
 
     // // Now, from these orthogroup summaries, select the best inflation parameter
     // SELECT_INFLATION (ch_cogeqc_summary)
