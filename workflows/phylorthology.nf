@@ -101,35 +101,35 @@ workflow PHYLORTHOLOGY {
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
     mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
 
-    // //
-    // // MODULE: Run BUSCO
-    // // Split up into shallow and broad scale runs, since downstream modules
-    // // do not use these outputs, so multiple busco runs may be conducted
-    // // simultaneously
-    // //
-    // // Shallow taxonomic scale:
-    // BUSCO_SHALLOW (
-    //     ch_all_data.complete_prots,
-    //     "shallow",
-    //     [],
-    //     []
-    // )
+    //
+    // MODULE: Run BUSCO
+    // Split up into shallow and broad scale runs, since downstream modules
+    // do not use these outputs, so multiple busco runs may be conducted
+    // simultaneously
+    //
+    // Shallow taxonomic scale:
+    BUSCO_SHALLOW (
+        ch_all_data.complete_prots,
+        "shallow",
+        [],
+        []
+    )
 
-    // // Broad taxonomic scale (Eukaryotes)
-    // BUSCO_BROAD (
-    //     ch_all_data.complete_prots,
-    //     "broad",
-    //     [],
-    //     []
-    // )
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_all_data.complete_prots,
+        "broad",
+        [],
+        []
+    )
 
-    // //
-    // // MODULE: Annotate UniProt Proteins
-    // //
-    // ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
-    //     .cogeqc_annotations
-    //     .collect()
-    // ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
+    //
+    // MODULE: Annotate UniProt Proteins
+    //
+    ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
+        .cogeqc_annotations
+        .collect()
+    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
     // MODULE: Prepare directory structure and fasta files according to
@@ -188,40 +188,46 @@ workflow PHYLORTHOLOGY {
     // Run an R-script that applies cogqc to assess orthogroup inference
     // accuracy/performance.
     //
-    COGEQC(ch_mcl, ch_annotations)
+    COGEQC(
+        ORTHOFINDER_MCL_TEST.out.inflation_dir,
+        ch_annotations
+    )
     ch_cogeqc_summary = COGEQC.out.og_summary.collect()
     ch_versions = ch_versions.mix(COGEQC.out.versions)
 
-    // // Now, from these orthogroup summaries, select the best inflation parameter
-    // SELECT_INFLATION (ch_cogeqc_summary)
-    //     .best_inflation
-    //     .map{ file -> file.text.trim() }
-    //     .set { ch_best_inflation }
-    // ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
+    // Now, from these orthogroup summaries, select the best inflation parameter
+    SELECT_INFLATION(ch_cogeqc_summary)
+        .best_inflation
+        .map{ file -> file.text.trim() }
+        .set { ch_best_inflation }
+    ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
 
-    // // Using this best-performing inflation parameter, infer orthogroups for
-    // // all samples.
-    // ch_orthogroups = ORTHOFINDER_MCL (
-    //     ch_best_inflation,
-    //     ch_simil_complete,
-    //     "false",
-    //     )
-    //     .og_fpath
+    // Using this best-performing inflation parameter, infer orthogroups for
+    // all samples.
+    ORTHOFINDER_MCL(
+        ch_best_inflation,
+        DIAMOND_BLASTP.out.txt.collect(),
+        ORTHOFINDER_PREP.out.fastas,
+        ORTHOFINDER_PREP.out.diamonds,
+        ORTHOFINDER_PREP.out.sppIDs,
+        ORTHOFINDER_PREP.out.seqIDs,
+        "complete_dataset"
+    )
 
-    // //
-    // // MODULE: FILTER_ORTHOGROUPS
-    // // Subset orthogroups based on their copy number and distribution
-    // // across species and taxonomic group.
-    // // The conservative subset will be used for species tree inference,
-    // // and the remainder will be used to infer gene family trees only.
-    // ch_filtered_ogs = FILTER_ORTHOGROUPS (
-    //     INPUT_CHECK.out.complete_samplesheet,
-    //     ch_orthogroups,
-    //     "4",
-    //     "4",
-    //     "1",
-    //     "2"
-    //     )
+    //
+    // MODULE: FILTER_ORTHOGROUPS
+    // Subset orthogroups based on their copy number and distribution
+    // across species and taxonomic group.
+    // The conservative subset will be used for species tree inference,
+    // and the remainder will be used to infer gene family trees only.
+    ch_filtered_ogs = FILTER_ORTHOGROUPS (
+        INPUT_CHECK.out.complete_samplesheet,
+        ch_orthogroups,
+        "4",
+        "4",
+        "1",
+        "2"
+        )
 
     // // Subset, pulling out two orthogroup sets:
     // // one for species tree inference (core) and a remaining core set
