@@ -101,27 +101,27 @@ workflow PHYLORTHOLOGY {
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
     mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
 
-    // //
-    // // MODULE: Run BUSCO
-    // // Split up into shallow and broad scale runs, since downstream modules
-    // // do not use these outputs, so multiple busco runs may be conducted
-    // // simultaneously
-    // //
-    // // Shallow taxonomic scale:
-    // BUSCO_SHALLOW (
-    //     ch_all_data.complete_prots,
-    //     "shallow",
-    //     [],
-    //     []
-    // )
+    //
+    // MODULE: Run BUSCO
+    // Split up into shallow and broad scale runs, since downstream modules
+    // do not use these outputs, so multiple busco runs may be conducted
+    // simultaneously
+    //
+    // Shallow taxonomic scale:
+    BUSCO_SHALLOW (
+        ch_all_data.complete_prots,
+        "shallow",
+        [],
+        []
+    )
 
-    // // Broad taxonomic scale (Eukaryotes)
-    // BUSCO_BROAD (
-    //     ch_all_data.complete_prots,
-    //     "broad",
-    //     [],
-    //     []
-    // )
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_all_data.complete_prots,
+        "broad",
+        [],
+        []
+    )
 
     //
     // MODULE: Annotate UniProt Proteins
