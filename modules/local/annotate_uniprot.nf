@@ -7,7 +7,6 @@ process ANNOTATE_UNIPROT {
 
     publishDir(
         path: "${params.outdir}/protein-annotations",
-        mode: 'copy',
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 

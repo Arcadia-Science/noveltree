@@ -254,48 +254,28 @@ workflow PHYLORTHOLOGY {
     // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    ch_core_og_msas = MAFFT (
-        ch_core_ogs
-    )
-    .msas
+    ch_core_og_msas = MAFFT(ch_core_ogs).msas
 
     // And for the remaining orthogroups
-    ch_rem_og_msas = MAFFT_REMAINING (
-        ch_rem_ogs
-    )
-    .msas
+    ch_rem_og_msas = MAFFT_REMAINING(ch_rem_ogs).msas
     ch_versions = ch_versions.mix(MAFFT.out.versions)
 
     //
     //MODULE: CLIPKIT
     // Trim gappy and phylogenetically uninformative sites from the MSAs
     //
-    ch_core_trimmed_msas = CLIPKIT (
-        ch_core_og_msas
-    )
-    .trimmed_msas
+    ch_core_trimmed_msas = CLIPKIT(ch_core_og_msas).trimmed_msas
 
-    ch_rem_trimmed_msas = CLIPKIT_REMAINING (
-        ch_rem_og_msas
-    )
-    .trimmed_msas
+    ch_rem_trimmed_msas = CLIPKIT_REMAINING(ch_rem_og_msas).trimmed_msas
     ch_versions = ch_versions.mix(CLIPKIT.out.versions)
 
     //
     // MODULE: IQTREE
     // Infer gene-family trees from the trimmed MSAs
     //
-    ch_core_gene_trees = IQTREE (
-        ch_core_trimmed_msas,
-        []
-    )
-    .phylogeny
+    ch_core_gene_trees = IQTREE(ch_core_trimmed_msas, []).phylogeny
 
-    ch_rem_gene_trees = IQTREE_REMAINING (
-        ch_rem_trimmed_msas,
-        []
-    )
-    .phylogeny
+    ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
     // Collect these gene family trees and alignments;
@@ -350,22 +330,22 @@ workflow PHYLORTHOLOGY {
     // Do this for both the core and non-core gene families.
     // All outputs are needed for species tree inference, but not for the
     // remainder.
-    SPECIES_TREE_PREP (
+    SPECIES_TREE_PREP(
         ch_all_core_trees,
         ch_all_core_msas
     )
-    .set { ch_core_spptree_prep }
+        .set { ch_core_spptree_prep }
 
     ch_core_treefile = ch_core_spptree_prep.treefile
     ch_core_families = ch_core_spptree_prep.families
     ch_core_generax_map = ch_core_spptree_prep.generax_map
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
-    GENE_TREE_PREP (
+    GENE_TREE_PREP(
         ch_all_rem_trees,
         ch_all_rem_msas
     )
-    .set { ch_rem_genetree_prep }
+        .set { ch_rem_genetree_prep }
 
     ch_rem_treefile = ch_rem_genetree_prep.treefile
     ch_rem_families = ch_rem_genetree_prep.families
@@ -377,12 +357,12 @@ workflow PHYLORTHOLOGY {
     // MODULE: ASTEROID
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
-    ASTEROID (
+    ASTEROID(
         ch_core_treefile,
         ch_asteroid_map
     )
-    .spp_tree
-    .set { ch_asteroid }
+        .spp_tree
+        .set { ch_asteroid }
     ch_versions = ch_versions.mix(ASTEROID.out.versions)
 
     //
@@ -391,21 +371,21 @@ workflow PHYLORTHOLOGY {
     // reconcile gene family trees, and infer per-family
     // rates of gene-family duplication, transfer, and loss
     //
-    SPECIESRAX (
+    SPECIESRAX(
         ch_asteroid,
         ch_core_generax_map,
         ch_all_core_trees,
         ch_all_core_msas,
         ch_core_families
     )
-    .speciesrax_tree
-    .set { ch_speciesrax }
+        .speciesrax_tree
+        .set { ch_speciesrax }
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
 
     // Run again, but this time only using the GeneRax component,
     // reconciling gene family trees with the rooted species tree
     // inferred from SpeciesRax for all remaining gene families
-    GENERAX (
+    GENERAX(
         ch_speciesrax,
         ch_rem_generax_map,
         ch_all_rem_trees,

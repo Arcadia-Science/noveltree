@@ -4,10 +4,9 @@ process SELECT_INFLATION {
 
     container "${ workflow.containerEngine == 'docker' ?
         'austinhpatton123/select_mcl_inflation_r-4.2.2_elbow_tidy_reshape_cowplot': '' }"
-        
+
     publishDir(
         path: "${params.outdir}/orthogroup-summaries",
-        mode: 'copy',
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
@@ -24,16 +23,16 @@ process SELECT_INFLATION {
 
     script:
     """
-    # Pull in the summaries produced by each MCL inflation parameter and 
+    # Pull in the summaries produced by each MCL inflation parameter and
     # identify the parameter value that produces the best quality results.
 
-    # Run the script to summarize and produce a figure of these results. 
+    # Run the script to summarize and produce a figure of these results.
     Rscript $projectDir/bin/select_inflation.R
-    
-    # And spit out the value of the selected inflation parameter to be 
-    # captured into a channel from stdout 
+
+    # And spit out the value of the selected inflation parameter to be
+    # captured into a channel from stdout
     sed -i "s/\\[1] //g" best-inflation-param.txt
-    
+
     cat <<- END_VERSIONS > versions.yml
     "${task.process}":
         tidyverse: \$( grep "tidyverse" version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
