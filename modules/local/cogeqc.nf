@@ -15,7 +15,7 @@ process COGEQC {
     path prot_annotations // Base filepath to where protein annotations are stored
 
     output:
-    path "*-cogeqc-summary.tsv" , emit: og_summary
+    path "*-cogeqc-summary.tsv" , emit: cogeqc_summary
     path "versions.yml"         , emit: versions
 
     when:
