@@ -12,13 +12,12 @@ process ANNOTATE_UNIPROT {
     )
 
     input:
-    tuple val(meta), path(fasta)    // path('tmp_input/*')
+    tuple val(meta), path(fasta)
 
     output:
     path "*accessions.txt"  , emit: accessions
     path "*" , emit: all_annotations
     path "*cogeqc-annotations.tsv" , emit: cogeqc_annotations
-    //path "annotations/*" , emit: annotations
     path "versions.yml" , emit: versions
 
     when:

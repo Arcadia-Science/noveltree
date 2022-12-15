@@ -23,19 +23,12 @@ process COGEQC {
 
     // always gets set as the file itself, excluding the path
     script:
-    def args = task.ext.args ?: ''
-
     """
     # Assess orthogroups inferred using each inflation parameter, summarizing
     # how well they group proteins with the same domains together, as well as
     # other summary stats like number of ogs with >= 4 species, per-species
     # gene count per-og, etc.
-
-    # store the orthogroup directory as a bash variable using the file storing
-    # the filepath used to stall initiation of this module until
-    mv *-cogeqc-annotations.tsv ${orthofinder_outdir}
-
-    Rscript $projectDir/bin/cogeqc-summarize-ogs.R ${orthofinder_outdir}/
+    Rscript $projectDir/bin/cogeqc-summarize-ogs.R ${orthofinder_outdir}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
