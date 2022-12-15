@@ -1,5 +1,5 @@
 {
-  "input": "/home/ubuntu/phylorthology/test/complete_samplesheet_s3.csv",
-  "outdir": "/home/ubuntu/phylorthology/results",
+  "input": "/home/ubuntu/environment/github/phylorthology/test/complete_samplesheet_s3.csv",
+  "outdir": "/home/ubuntu/environment/github/phylorthology/test",
   "mcl_inflation": [ "1.0","2.0", "3.0", "4.0", "5.0" ]
 }
