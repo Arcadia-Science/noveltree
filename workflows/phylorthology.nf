@@ -137,6 +137,7 @@ workflow PHYLORTHOLOGY {
     //
     ORTHOFINDER_PREP(complete_prots_list, "casta")
     ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "masta")
+    ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
 
     // // Fasta files should be redirected into a channel set of filepaths emitted
     // // separately, whereas the diamond databases for each species can be put
@@ -146,53 +147,59 @@ workflow PHYLORTHOLOGY {
     // ch_dmd = ORTHOFINDER_PREP.out.dmd.splitText().map{it -> it.trim()}
     // ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().map{it -> it.trim()}
     // ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().map{it -> it.trim()}
-    // ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
+
 
     // // Create an orthofinder channel with paths to the new fasta/diamond DBs
     // ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
     // ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
 
-    // //
-    // // MODULE: All-v-All diamond/blastp
-    // //
-    // // Run for the test set (used to determine the best value of the MCL
-    // // inflation parameter)
-    // ch_blastp_mcl_test = DIAMOND_BLASTP_TEST (
-    //     ch_orthof_mcl_test,
-    //     ch_test_dmd,
-    //     "txt",
-    //     "true",
-    //     []
-    // )
-    // .txt
+    //
+    // MODULE: All-v-All diamond/blastp
+    //
+    // Run for the test set (used to determine the best value of the MCL
+    // inflation parameter)
+    ch_blastp_mcl_test = DIAMOND_BLASTP_TEST(
+        ch_all_data.mcl_test_prots,
+        ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
+        ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
+        "txt",
+        "true",
+        []
+    )
+    .txt
 
-    // // And for the full dataset, to be clustered into orthogroups using
-    // // the best inflation parameter.
-    // ch_blastp_complete = DIAMOND_BLASTP (
-    //     complete_prots_list,
-    //     ORTHOFINDER_PREP.out.dmnd,
-    //     "txt",
-    //     "false",
-    //     []
-    // )
-    // .txt
-    // ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
-    // //
-    // // MODULE: Run Orthofinder's implementation of MCL (with similarity score
-    // //         correction).
-    // //
-    // // Collect all pairwise similarity scores into a single channel and pass to
-    // // the orthofinder MCL analysis so that it doesn't start until the full
-    // // set of all-v-all comparisons have completed.
-    // ch_simil_mcl_test = ch_blastp_mcl_test.mix(ch_blastp_mcl_test).collect()
-    // ch_simil_complete = ch_blastp_complete.mix(ch_blastp_complete).collect()
+    // And for the full dataset, to be clustered into orthogroups using
+    // the best inflation parameter.
+    ch_blastp_complete = DIAMOND_BLASTP(
+        ch_all_data.complete_prots,
+        ORTHOFINDER_PREP.out.fastas.flatten(),
+        ORTHOFINDER_PREP.out.diamonds.flatten(),
+        "txt",
+        "false",
+        []
+    )
+    .txt
+    ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
-    // // First determine the optimal MCL inflation parameter, and then
-    // // subsequently use this for full orthogroup inference.
-    // ch_mcl = ORTHOFINDER_MCL_TEST (
+    //
+    // MODULE: Run Orthofinder's implementation of MCL (with similarity score
+    //         correction).
+    //
+    // Collect all pairwise similarity scores into a single channel and pass to
+    // the orthofinder MCL analysis so that it doesn't start until the full
+    // set of all-v-all comparisons have completed.
+    ch_simil_mcl_test = ch_blastp_mcl_test.mix(ch_blastp_mcl_test).collect()
+    ch_simil_complete = ch_blastp_complete.mix(ch_blastp_complete).collect()
+
+    ch_blastp_mcl_test.view()
+    ch_blastp_mcl_test.collect().view()
+
+    // First determine the optimal MCL inflation parameter, and then
+    // subsequently use this for full orthogroup inference.
+    // ch_mcl = ORTHOFINDER_MCL_TEST(
     //     ch_inflation,
-    //     ch_simil_mcl_test,
+    //     ch_blastp_mcl_test,
     //     "true"
     // )
     // .og_fpath
