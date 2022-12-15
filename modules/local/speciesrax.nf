@@ -7,10 +7,10 @@ process SPECIESRAX {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/generax:2.0.4--h19e7193_0':
         'quay.io/biocontainers/generax:2.0.4--h19e7193_0' }"
-        
+
     publishDir(
         path: "${params.outdir}/speciesrax",
-        mode: 'copy',
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
@@ -45,10 +45,10 @@ process SPECIESRAX {
     --si-estimate-bl \
     --strategy SPR \
     --prefix SpeciesRax
-    
-    # Copy the final starting tree to the current working directory - 
-    # this will be used as the starting tree for generax application to the 
-    # remaining gene families. 
+
+    # Copy the final starting tree to the current working directory -
+    # this will be used as the starting tree for generax application to the
+    # remaining gene families.
     cp SpeciesRax/species_trees/inferred_species_tree.newick ./speciesrax_final_species_tree.newick
 
     cat <<-END_VERSIONS > versions.yml
@@ -57,4 +57,3 @@ process SPECIESRAX {
     END_VERSIONS
     """
 }
-

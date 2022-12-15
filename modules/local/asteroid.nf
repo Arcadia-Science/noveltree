@@ -5,17 +5,17 @@ process ASTEROID {
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid:1.0.0':
         '' }"
-        
+
     publishDir(
         path: "${params.outdir}/asteroid",
-        mode: 'copy',
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input:
     path treefile     // Filepath to the asteroid treefile (all newick gene trees)
     path asteroid_map // Filepath to the asteroid gene-species map
-    
+
     output:
     path "*bestTree.newick" , emit: spp_tree
     path "*scores.txt" ,      emit: asteroid_scores
@@ -38,4 +38,3 @@ process ASTEROID {
     END_VERSIONS
     """
 }
-
