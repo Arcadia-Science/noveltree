@@ -10,7 +10,7 @@ process ORTHOFINDER_PREP {
     val directory
 
     output:
-    path "**.dmnd", emit: dmnd
+    path "**.dmnd", emit: diamonds
     path "**.fa", emit: fastas
     path "**SequenceIDs.txt", emit: seqIDs
     path "**SpeciesIDs.txt", emit: sppIDs
