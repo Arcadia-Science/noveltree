@@ -9,6 +9,7 @@ process SPECIES_TREE_PREP {
 
     publishDir(
         path: "${params.outdir}/species_tree_prep",
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 

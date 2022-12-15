@@ -10,6 +10,7 @@ process GENERAX {
 
     publishDir(
         path: "${params.outdir}/generax",
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 

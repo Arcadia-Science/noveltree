@@ -7,6 +7,7 @@ process CLIPKIT {
 
     publishDir(
         path: "${params.outdir}/trimmed-msas",
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
