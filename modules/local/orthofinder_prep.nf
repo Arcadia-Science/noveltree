@@ -20,7 +20,7 @@ process ORTHOFINDER_PREP {
     """
     # TODO: Look into fixing this "hack"
     mv fasta/ ${output_directory}
-    # The fasta directroy depends on whether we're running the mcl testing or not.
+    # The fasta directory depends on whether we're running the mcl testing or not.
     orthofinder \\
         -f ${output_directory}/ \\
         -t ${task.cpus} \\
