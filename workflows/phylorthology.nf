@@ -16,19 +16,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-if (params.data_dir) { ch_data_dir = Channel.fromPath(params.data_dir) } else { exit 1, 'Data directory not specified!' }
-//if (params.mcl_test_input) { ch_mcl_test_input = file(params.mcl_test_input) } else { exit 1, 'Input samplesheet for MCL testing not specified!' }
-//if (params.s3_dir) { ch_s3_dir = params.s3_dir } else { exit 1, 'S3 directory not specified!' }
-//if (params.data_location) { ch_data_location = val(params.data_location) } else { exit 1, 'Data storage location (local/S3) not specified!' }
-//if (params.fasta_dir) { ch_fa_dir = params.fasta_dir } else { exit 1, 'Fasta directory not specified!' }
-//if (params.test_fasta_dir) { ch_test_fa_dir = params.test_fasta_dir } else { exit 1, 'Test fasta directory not specified!' }
 if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,93 +85,22 @@ def create_og_channel(LinkedHashMap row) {
         meta.num_grps = row.num_tax_grps
     // add path(s) of the OG file to the meta map
     def og_meta = []
-        og_meta = [ meta, [ file(row.file) ] ] 
+        og_meta = [ meta, [ file(row.file) ] ]
     return og_meta
 }
 
 workflow PHYLORTHOLOGY {
-    
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    // First the full set
-    ch_all_data = INPUT_CHECK (
-        ch_input,
-        ch_data_dir
-    )
+    ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
+    mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
 
-    // Pull out the test and full sets
-    ch_all_data
-    .complete_prots
-    .branch {
-        meta, complete_prots ->
-            proteomes  : complete_prots
-                return [ meta, complete_prots.flatten() ]
-    }
-    .set { ch_prots_complete }
-    
-    ch_all_data
-    .mcl_test_prots
-    .branch {
-        meta, mcl_test_prots ->
-            proteomes  : meta.mcl_test == 'true'
-                return [ meta, mcl_test_prots.flatten() ]
-    }
-    .set { ch_prots_mcl_test }
-
-    // ch_all_data_dir = ch_all_data.all_data_prep
-    //
-    // MODULE: Prepare directory structure and fasta files according to 
-    //         OrthoFinder's preferred format for downstream MCL clustering
-    //
-    
-    ORTHOFINDER_PREP (
-        ch_all_data.complete_fastadir,
-        "complete_dataset",
-        "complete_fasta_list.txt",
-        "complete_dmnd_dir.txt"
-    )
-    
-    ORTHOFINDER_PREP_TEST (
-        ch_all_data.mcl_test_fastadir,
-        "mcl_test_dataset",
-        "mcl_test_fasta_list.txt",
-        "mcl_test_dmnd_dir.txt"
-    )
-    
-    // Fasta files should be redirected into a channel set of filepaths emitted
-    // separately, whereas the diamond databases for each species can be put
-    // into a directory as they are now (as a comma seperated list emitted 
-    // together).
-    ch_fa = ORTHOFINDER_PREP.out.fa.splitText().map{it -> it.trim()}
-    ch_dmd = ORTHOFINDER_PREP.out.dmd.splitText().map{it -> it.trim()}
-    ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().map{it -> it.trim()}
-    ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().map{it -> it.trim()}
-    ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
-
-    // Create an orthofinder channel with paths to the new fasta/diamond DBs
-    ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
-    ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
-
-    // Now, there will be a couple of modules below that we reapply, both to 
-    // the full dataset, and to the MCL inflation parameter test set. 
-    // These repeat modules include:
-    // uniprot annotation (ch_annotations)
-    // diamond blastp (ch_blastp & ch_similarities)
-    //
-    // MODULE: Annotate UniProt Proteins
-    //
-    ch_annotations = ANNOTATE_UNIPROT (
-            ch_prots_complete
-        )
-        .cogeqc_annotations
-        .collect()
-    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
-    
     //
     // MODULE: Run BUSCO
     // Split up into shallow and broad scale runs, since downstream modules
@@ -191,186 +108,182 @@ workflow PHYLORTHOLOGY {
     // simultaneously
     //
     // Shallow taxonomic scale:
-    // BUSCO_SHALLOW (
-    //     ch_prots_complete,
-    //     "shallow",
-    //     [],
-    //     []
-    //     )
-    
-    // // Broad taxonomic scale (Eukaryotes)
-    // BUSCO_BROAD (
-    //     ch_prots_complete,
-    //     "broad",
-    //     [],
-    //     []
-    //     )
-        
+    BUSCO_SHALLOW (
+        ch_all_data.complete_prots,
+        "shallow",
+        [],
+        []
+    )
+
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_all_data.complete_prots,
+        "broad",
+        [],
+        []
+    )
+
+    //
+    // MODULE: Annotate UniProt Proteins
+    //
+    ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
+        .cogeqc_annotations
+        .collect()
+    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
+
+    //
+    // MODULE: Prepare directory structure and fasta files according to
+    //         OrthoFinder's preferred format for downstream MCL clustering
+    //
+    ORTHOFINDER_PREP(complete_prots_list, "complete_dataset")
+    ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
+    ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
+
     //
     // MODULE: All-v-All diamond/blastp
     //
     // Run for the test set (used to determine the best value of the MCL
     // inflation parameter)
-    ch_blastp_mcl_test = DIAMOND_BLASTP_TEST (
-        ch_orthof_mcl_test,
-        ch_test_dmd,
+    DIAMOND_BLASTP_TEST(
+        ch_all_data.mcl_test_prots,
+        ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
+        ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
         "txt",
         "true",
         []
     )
-    .txt
-    
-    // And for the full dataset, to be clustered into orthogroups using 
-    // the best inflation parameter. 
-    ch_blastp_complete = DIAMOND_BLASTP (
-        ch_orthof_complete,
-        ch_dmd,
+
+    // And for the full dataset, to be clustered into orthogroups using
+    // the best inflation parameter.
+    DIAMOND_BLASTP(
+        ch_all_data.complete_prots,
+        ORTHOFINDER_PREP.out.fastas.flatten(),
+        ORTHOFINDER_PREP.out.diamonds.flatten(),
         "txt",
         "false",
         []
     )
-    .txt
     ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
     //
     // MODULE: Run Orthofinder's implementation of MCL (with similarity score
     //         correction).
     //
-    // Collect all pairwise similarity scores into a single channel and pass to
-    // the orthofinder MCL analysis so that it doesn't start until the full 
-    // set of all-v-all comparisons have completed.
-    ch_simil_mcl_test = ch_blastp_mcl_test.mix(ch_blastp_mcl_test).collect()
-    ch_simil_complete = ch_blastp_complete.mix(ch_blastp_complete).collect()
 
-    // First determine the optimal MCL inflation parameter, and then 
-    // subsequently use this for full orthogroup inference. 
-    ch_mcl = ORTHOFINDER_MCL_TEST (
+    // TODO: Fix the output_dir determination logic
+    // First determine the optimal MCL inflation parameter, and then
+    // subsequently use this for full orthogroup inference.
+    ORTHOFINDER_MCL_TEST(
         ch_inflation,
-        ch_simil_mcl_test,
-        "true"
+        DIAMOND_BLASTP_TEST.out.txt.collect(),
+        ORTHOFINDER_PREP_TEST.out.fastas,
+        ORTHOFINDER_PREP_TEST.out.diamonds,
+        ORTHOFINDER_PREP_TEST.out.sppIDs,
+        ORTHOFINDER_PREP_TEST.out.seqIDs,
+        "mcl_test_dataset"
     )
-    .og_fpath
-    
+
     //
     // MODULE: COGEQC
     // Run an R-script that applies cogqc to assess orthogroup inference
     // accuracy/performance.
     //
-    ch_cogeqc = COGEQC (
-        ch_mcl,
+    COGEQC(
+        ORTHOFINDER_MCL_TEST.out.inflation_dir,
         ch_annotations
     )
-    ch_summs = COGEQC.out.og_summary.collect()
+    ch_cogeqc_summary = COGEQC.out.cogeqc_summary.collect()
     ch_versions = ch_versions.mix(COGEQC.out.versions)
 
     // Now, from these orthogroup summaries, select the best inflation parameter
-    SELECT_INFLATION (
-        ch_summs
-    )
-    .best_inflation
-    .map{ file -> file.text.trim() } 
-    .set { ch_best_inflation } 
+    SELECT_INFLATION(ch_cogeqc_summary)
+        .best_inflation.text.trim()
+        .set { ch_best_inflation }
     ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
 
     // Using this best-performing inflation parameter, infer orthogroups for
-    // all samples. 
-    ch_orthogroups = ORTHOFINDER_MCL (
+    // all samples.
+    ORTHOFINDER_MCL(
         ch_best_inflation,
-        ch_simil_complete,
-        "false",
-        )
-        .og_fpath
-    
-    // 
+        DIAMOND_BLASTP.out.txt.collect(),
+        ORTHOFINDER_PREP.out.fastas,
+        ORTHOFINDER_PREP.out.diamonds,
+        ORTHOFINDER_PREP.out.sppIDs,
+        ORTHOFINDER_PREP.out.seqIDs,
+        "complete_dataset"
+    )
+
+    //
     // MODULE: FILTER_ORTHOGROUPS
-    // Subset orthogroups based on their copy number and distribution 
-    // across species and taxonomic group. 
-    // The conservative subset will be used for species tree inference, 
-    // and the remainder will be used to infer gene family trees only. 
+    // Subset orthogroups based on their copy number and distribution
+    // across species and taxonomic group.
+    // The conservative subset will be used for species tree inference,
+    // and the remainder will be used to infer gene family trees only.
+    // TODO: parametrize the variables here
     ch_filtered_ogs = FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
-        ch_orthogroups,
+        ORTHOFINDER_MCL.out.inflation_dir,
         "4",
         "4",
         "1",
         "2"
-        )
-        
+    )
+
     // Subset, pulling out two orthogroup sets:
-    // one for species tree inference (core) and a remaining core set 
-    // that we will infer gene family trees for (remaining (rem)). 
-    // All 'core' gene family trees will be reconciled with the species tree, 
-    // and duplication/tranfer/loss rates will be estimated for these, 
-    // but not all orthogroups will have MSAs/gene family trees estimated 
-    // (because they are either very taxon specific, or incredibly large, e.g. 
+    // one for species tree inference (core) and a remaining core set
+    // that we will infer gene family trees for (remaining (rem)).
+    // All 'core' gene family trees will be reconciled with the species tree,
+    // and duplication/tranfer/loss rates will be estimated for these,
+    // but not all orthogroups will have MSAs/gene family trees estimated
+    // (because they are either very taxon specific, or incredibly large, e.g.
     // a mean per-species gene-copy number > 10).
     ch_filtered_ogs
-    .spptree_core_ogs
-    .splitCsv ( header:true, sep:',' )
-    .map { create_og_channel(it) }
-    .set { ch_core_ogs }
-    
+        .spptree_core_ogs
+        .splitCsv ( header:true, sep:',' )
+        .map { create_og_channel(it) }
+        .set { ch_core_ogs }
+
     ch_filtered_ogs
-    .genetree_core_ogs
-    .splitCsv ( header:true, sep:',' )
-    .map { create_og_channel(it) }
-    .set { ch_rem_ogs }
- 
+        .genetree_core_ogs
+        .splitCsv ( header:true, sep:',' )
+        .map { create_og_channel(it) }
+        .set { ch_rem_ogs }
+
     //
     // MODULE: MAFFT
-    // Infer multiple sequence alignments of orthogroups/gene 
-    // families using MAFFT 
+    // Infer multiple sequence alignments of orthogroups/gene
+    // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    ch_core_og_msas = MAFFT (
-        ch_core_ogs
-    )
-    .msas
-    
+    ch_core_og_msas = MAFFT(ch_core_ogs).msas
+
     // And for the remaining orthogroups
-    ch_rem_og_msas = MAFFT_REMAINING (
-        ch_rem_ogs
-    )
-    .msas
+    ch_rem_og_msas = MAFFT_REMAINING(ch_rem_ogs).msas
     ch_versions = ch_versions.mix(MAFFT.out.versions)
 
     //
-    //MODULE: CLIPKIT 
+    //MODULE: CLIPKIT
     // Trim gappy and phylogenetically uninformative sites from the MSAs
     //
-    ch_core_trimmed_msas = CLIPKIT (
-        ch_core_og_msas
-    )
-    .trimmed_msas
-    
-    ch_rem_trimmed_msas = CLIPKIT_REMAINING (
-        ch_rem_og_msas
-    )
-    .trimmed_msas
+    ch_core_trimmed_msas = CLIPKIT(ch_core_og_msas).trimmed_msas
+
+    ch_rem_trimmed_msas = CLIPKIT_REMAINING(ch_rem_og_msas).trimmed_msas
     ch_versions = ch_versions.mix(CLIPKIT.out.versions)
 
     //
     // MODULE: IQTREE
     // Infer gene-family trees from the trimmed MSAs
     //
-    ch_core_gene_trees = IQTREE (
-        ch_core_trimmed_msas,
-        []
-    )
-    .phylogeny
-    
-    ch_rem_gene_trees = IQTREE_REMAINING (
-        ch_rem_trimmed_msas,
-        []
-    )
-    .phylogeny
+    ch_core_gene_trees = IQTREE(ch_core_trimmed_msas, []).phylogeny
+
+    ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
     // Collect these gene family trees and alignments;
-    // they will be used for unrooted species tree inference 
-    // with Asteroid and downstream analysis with GeneRax and 
+    // they will be used for unrooted species tree inference
+    // with Asteroid and downstream analysis with GeneRax and
     // SpeciesRax
-    
+
     // Do this for both the core and remaining orthogroups
     // First trees....
     ch_core_gene_trees
@@ -380,8 +293,8 @@ workflow PHYLORTHOLOGY {
                 return phylogeny
     }
     .collect()
-    .set { ch_all_core_trees } 
-    
+    .set { ch_all_core_trees }
+
     ch_rem_gene_trees
     .branch {
         meta, phylogeny ->
@@ -389,8 +302,8 @@ workflow PHYLORTHOLOGY {
                 return phylogeny
     }
     .collect()
-    .set { ch_all_rem_trees } 
-    
+    .set { ch_all_rem_trees }
+
     // Then the alignments.
     ch_core_trimmed_msas
     .branch {
@@ -399,8 +312,8 @@ workflow PHYLORTHOLOGY {
                 return trimmed_msas
     }
     .collect()
-    .set { ch_all_core_msas } 
-    
+    .set { ch_all_core_msas }
+
     ch_rem_trimmed_msas
     .branch {
         meta, trimmed_msas ->
@@ -409,78 +322,77 @@ workflow PHYLORTHOLOGY {
     }
     .collect()
     .set { ch_all_rem_msas }
-    
-    // Now, go ahead and prepare input files for initial unrooted species 
-    // tree inference with Asteroid, rooted species-tree inference with 
-    // SpeciesRax, and gene-tree species-tree reconciliation and estimation 
-    // of gene family duplication transfer and loss with GeneRax. 
-    
+
+    // Now, go ahead and prepare input files for initial unrooted species
+    // tree inference with Asteroid, rooted species-tree inference with
+    // SpeciesRax, and gene-tree species-tree reconciliation and estimation
+    // of gene family duplication transfer and loss with GeneRax.
+
     // Do this for both the core and non-core gene families.
-    // All outputs are needed for species tree inference, but not for the 
-    // remainder. 
-    SPECIES_TREE_PREP (
+    // All outputs are needed for species tree inference, but not for the
+    // remainder.
+    SPECIES_TREE_PREP(
         ch_all_core_trees,
         ch_all_core_msas
     )
-    .set { ch_core_spptree_prep }
-    
+        .set { ch_core_spptree_prep }
+
     ch_core_treefile = ch_core_spptree_prep.treefile
     ch_core_families = ch_core_spptree_prep.families
     ch_core_generax_map = ch_core_spptree_prep.generax_map
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
-    
-    GENE_TREE_PREP (
+
+    GENE_TREE_PREP(
         ch_all_rem_trees,
         ch_all_rem_msas
     )
-    .set { ch_rem_genetree_prep }
-    
+        .set { ch_rem_genetree_prep }
+
     ch_rem_treefile = ch_rem_genetree_prep.treefile
     ch_rem_families = ch_rem_genetree_prep.families
     ch_rem_generax_map = ch_rem_genetree_prep.generax_map
 
-    // The following two steps will just be done for the core set of 
+    // The following two steps will just be done for the core set of
     // orthogroups that will be used to infer the species tree
     //
     // MODULE: ASTEROID
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
-    ASTEROID (
+    ASTEROID(
         ch_core_treefile,
         ch_asteroid_map
     )
-    .spp_tree
-    .set { ch_asteroid }
+        .spp_tree
+        .set { ch_asteroid }
     ch_versions = ch_versions.mix(ASTEROID.out.versions)
 
     //
     // MODULE: SPECIESRAX
     // Now infer the rooted species tree with SpeciesRax,
-    // reconcile gene family trees, and infer per-family 
+    // reconcile gene family trees, and infer per-family
     // rates of gene-family duplication, transfer, and loss
     //
-    SPECIESRAX (
+    SPECIESRAX(
         ch_asteroid,
         ch_core_generax_map,
         ch_all_core_trees,
         ch_all_core_msas,
         ch_core_families
     )
-    .speciesrax_tree
-    .set { ch_speciesrax }
+        .speciesrax_tree
+        .set { ch_speciesrax }
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
-    
-    // Run again, but this time only using the GeneRax component, 
-    // reconciling gene family trees with the rooted species tree 
+
+    // Run again, but this time only using the GeneRax component,
+    // reconciling gene family trees with the rooted species tree
     // inferred from SpeciesRax for all remaining gene families
-    GENERAX (
+    GENERAX(
         ch_speciesrax,
         ch_rem_generax_map,
         ch_all_rem_trees,
         ch_all_rem_msas,
         ch_rem_families
     )
-    
 }
 
 /*
@@ -504,4 +416,3 @@ workflow PHYLORTHOLOGY {
     THE END
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
