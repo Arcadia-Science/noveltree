@@ -7,10 +7,10 @@ process GENERAX {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/generax:2.0.4--h19e7193_0':
         'quay.io/biocontainers/generax:2.0.4--h19e7193_0' }"
-        
+
     publishDir(
         path: "${params.outdir}/generax",
-        mode: 'copy',
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
@@ -50,4 +50,3 @@ process GENERAX {
     
     """
 }
-
