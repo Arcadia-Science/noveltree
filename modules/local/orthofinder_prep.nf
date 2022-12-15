@@ -7,7 +7,7 @@ process ORTHOFINDER_PREP {
 
     input:
     path(fasta), stageAs: "fasta/"
-    val directory
+    val output_directory
 
     output:
     path "**.dmnd", emit: diamonds
@@ -19,10 +19,10 @@ process ORTHOFINDER_PREP {
     script:
     """
     # TODO: Look into fixing this "hack"
-    mv fasta/ ${directory}
+    mv fasta/ ${output_directory}
     # The fasta directroy depends on whether we're running the mcl testing or not.
     orthofinder \\
-        -f ${directory}/ \\
+        -f ${output_directory}/ \\
         -t ${task.cpus} \\
         -op > tmp
 
