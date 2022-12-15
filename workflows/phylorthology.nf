@@ -139,20 +139,6 @@ workflow PHYLORTHOLOGY {
     ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
     ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
 
-    // // Fasta files should be redirected into a channel set of filepaths emitted
-    // // separately, whereas the diamond databases for each species can be put
-    // // into a directory as they are now (as a comma seperated list emitted
-    // // together).
-    // ch_fa = ORTHOFINDER_PREP.out.fa.splitText().map{it -> it.trim()}
-    // ch_dmd = ORTHOFINDER_PREP.out.dmd.splitText().map{it -> it.trim()}
-    // ch_test_fa = ORTHOFINDER_PREP_TEST.out.fa.splitText().map{it -> it.trim()}
-    // ch_test_dmd = ORTHOFINDER_PREP_TEST.out.dmd.splitText().map{it -> it.trim()}
-
-
-    // // Create an orthofinder channel with paths to the new fasta/diamond DBs
-    // ch_orthof_complete = ch_prots_complete.merge(ch_fa, ch_dmd)
-    // ch_orthof_mcl_test = ch_prots_mcl_test.merge(ch_test_fa, ch_test_dmd)
-
     //
     // MODULE: All-v-All diamond/blastp
     //
@@ -183,11 +169,6 @@ workflow PHYLORTHOLOGY {
     // MODULE: Run Orthofinder's implementation of MCL (with similarity score
     //         correction).
     //
-    // Collect all pairwise similarity scores into a single channel and pass to
-    // the orthofinder MCL analysis so that it doesn't start until the full
-    // set of all-v-all comparisons have completed.
-    // ch_simil_mcl_test = ch_blastp_mcl_test.mix(ch_blastp_mcl_test).collect()
-    // ch_simil_complete = ch_blastp_complete.mix(ch_blastp_complete).collect()
 
     // TODO: Fix the output_dir determination logic
     // First determine the optimal MCL inflation parameter, and then
