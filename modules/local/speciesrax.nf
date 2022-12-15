@@ -10,6 +10,7 @@ process SPECIESRAX {
 
     publishDir(
         path: "${params.outdir}/speciesrax",
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 

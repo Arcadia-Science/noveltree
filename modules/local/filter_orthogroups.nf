@@ -10,6 +10,7 @@ process FILTER_ORTHOGROUPS {
 
     publishDir(
         path: "${params.outdir}/orthofinder/full_analysis",
+        mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
