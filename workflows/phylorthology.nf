@@ -109,20 +109,20 @@ workflow PHYLORTHOLOGY {
     // simultaneously
     //
     // Shallow taxonomic scale:
-    BUSCO_SHALLOW (
-        ch_all_data.complete_prots,
-        "shallow",
-        [],
-        []
-    )
+    // BUSCO_SHALLOW (
+    //     ch_all_data.complete_prots,
+    //     "shallow",
+    //     [],
+    //     []
+    // )
 
-    // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD (
-        ch_all_data.complete_prots,
-        "broad",
-        [],
-        []
-    )
+    // // Broad taxonomic scale (Eukaryotes)
+    // BUSCO_BROAD (
+    //     ch_all_data.complete_prots,
+    //     "broad",
+    //     [],
+    //     []
+    // )
 
     //
     // MODULE: Annotate UniProt Proteins
@@ -293,8 +293,8 @@ workflow PHYLORTHOLOGY {
             trees  : phylogeny
                 return phylogeny
     }
-    .collect()
-    .set { ch_all_core_trees }
+        .collect()
+        .set { ch_all_core_trees }
 
     ch_rem_gene_trees
     .branch {
@@ -302,8 +302,8 @@ workflow PHYLORTHOLOGY {
             trees  : phylogeny
                 return phylogeny
     }
-    .collect()
-    .set { ch_all_rem_trees }
+        .collect()
+        .set { ch_all_rem_trees }
 
     // Then the alignments.
     ch_core_trimmed_msas
@@ -312,8 +312,8 @@ workflow PHYLORTHOLOGY {
             msas  : trimmed_msas
                 return trimmed_msas
     }
-    .collect()
-    .set { ch_all_core_msas }
+        .collect()
+        .set { ch_all_core_msas }
 
     ch_rem_trimmed_msas
     .branch {
@@ -321,8 +321,8 @@ workflow PHYLORTHOLOGY {
             msas  : trimmed_msas
                 return trimmed_msas
     }
-    .collect()
-    .set { ch_all_rem_msas }
+        .collect()
+        .set { ch_all_rem_msas }
 
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
@@ -402,22 +402,17 @@ workflow PHYLORTHOLOGY {
     // to identify orthologs and output orthogroup-level summary stats. 
     //
     ORTHOFINDER_PHYLOHOGS (
-        ch_rooted_spptree,
+        ch_speciesrax,
+        ORTHOFINDER_MCL.out.inflation_dir,
+        ORTHOFINDER_PREP.out.fastas,
+        ORTHOFINDER_PREP.out.sppIDs,
+        ORTHOFINDER_PREP.out.seqIDs,
         SPECIESRAX.out.speciesrax_gfts.collect(),
-        GENERAX.out.generax_gfts.collect()
+        GENERAX.out.generax_gfts.collect(),
+        DIAMOND_BLASTP.out.txt.collect()
     )
-    .phylohogs
-    .set { ch_phylohogs }
-    
-    // //
-    // // MODULE: COGEQC_PHYLOHOGS
-    // // Now, summarize the phylogenetic hierarchical orthogroups (PhyloHOGs) 
-    // // in a manner similar to what was done for orthogroups, using COGEQC
-    // //
-    // COGEQC_PHYLOHOGS (
-    //     ch_phylohogs,
-    //     ch_annotations
-    // )
+        .phylohogs
+        .set { ch_phylohogs }
 }
 
 /*
