@@ -243,50 +243,6 @@ workflow PHYLORTHOLOGY {
     ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
-    // Collect these gene family trees and alignments;
-    // they will be used for unrooted species tree inference
-    // with Asteroid and downstream analysis with GeneRax and
-    // SpeciesRax
-
-    // Do this for both the core and remaining orthogroups
-    // First trees....
-    ch_core_gene_trees
-    .branch {
-        meta, phylogeny ->
-            trees  : phylogeny
-                return phylogeny
-    }
-    .collect()
-    .set { ch_all_core_trees }
-
-    ch_rem_gene_trees
-    .branch {
-        meta, phylogeny ->
-            trees  : phylogeny
-                return phylogeny
-    }
-    .collect()
-    .set { ch_all_rem_trees }
-
-    // Then the alignments.
-    ch_core_trimmed_msas
-    .branch {
-        meta, trimmed_msas ->
-            msas  : trimmed_msas
-                return trimmed_msas
-    }
-    .collect()
-    .set { ch_all_core_msas }
-
-    ch_rem_trimmed_msas
-    .branch {
-        meta, trimmed_msas ->
-            msas  : trimmed_msas
-                return trimmed_msas
-    }
-    .collect()
-    .set { ch_all_rem_msas }
-
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
     // SpeciesRax, and gene-tree species-tree reconciliation and estimation
@@ -296,8 +252,8 @@ workflow PHYLORTHOLOGY {
     // All outputs are needed for species tree inference, but not for the
     // remainder.
     SPECIES_TREE_PREP(
-        ch_all_core_trees,
-        ch_all_core_msas
+        ch_core_gene_trees.collect(),
+        ch_core_trimmed_msas.collect()
     )
         .set { ch_core_spptree_prep }
 
@@ -307,8 +263,8 @@ workflow PHYLORTHOLOGY {
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
     GENE_TREE_PREP(
-        ch_all_rem_trees,
-        ch_all_rem_msas
+        ch_rem_gene_trees.collect(),
+        ch_rem_trimmed_msas.collect()
     )
         .set { ch_rem_genetree_prep }
 
@@ -339,8 +295,8 @@ workflow PHYLORTHOLOGY {
     SPECIESRAX(
         ch_asteroid,
         ch_core_generax_map,
-        ch_all_core_trees,
-        ch_all_core_msas,
+        ch_core_gene_trees.collect(),
+        ch_core_trimmed_msas.collect(),
         ch_core_families
     )
         .speciesrax_tree
@@ -353,8 +309,8 @@ workflow PHYLORTHOLOGY {
     GENERAX(
         ch_speciesrax,
         ch_rem_generax_map,
-        ch_all_rem_trees,
-        ch_all_rem_msas,
+        ch_rem_gene_trees.collect(),
+        ch_rem_trimmed_msas.collect(),
         ch_rem_families
     )
 }
