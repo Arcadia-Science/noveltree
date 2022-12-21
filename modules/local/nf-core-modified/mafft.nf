@@ -2,7 +2,7 @@
 // meta input
 
 process MAFFT {
-    tag "${fasta}"
+    tag "$fasta"
     //label 'process_highthread' // Possible specification for full analysis
     label 'process_medium' // Used for debugging
 
