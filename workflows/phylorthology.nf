@@ -72,22 +72,6 @@ include { MAFFT as MAFFT_REMAINING              } from '../modules/nf-core/mafft
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// Function to get list of [ meta, [ file ] ]
-// This function is applied to a csv produced by the "og-tax-summary.R"
-// script called as part of the "filter_orthogroups.nf" local module.
-def create_og_channel(LinkedHashMap row) {
-    // create meta map
-    def meta  = [:]
-        meta.og   = row.orthogroup
-        meta.nspp = row.num_spp
-        meta.total_copy_num = row.total_copy_num
-        meta.copy_num = row.mean_copy_num
-        meta.num_grps = row.num_tax_grps
-    // add path(s) of the OG file to the meta map
-    def og_meta = []
-        og_meta = [ meta, [ file(row.file) ] ]
-    return og_meta
-}
 
 workflow PHYLORTHOLOGY {
     ch_inflation = ch_mcl_inflation.toList().flatten()
@@ -220,7 +204,7 @@ workflow PHYLORTHOLOGY {
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
     // TODO: parametrize the variables here
-    ch_filtered_ogs = FILTER_ORTHOGROUPS (
+    FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
         "4",
@@ -228,26 +212,6 @@ workflow PHYLORTHOLOGY {
         "1",
         "2"
     )
-
-    // Subset, pulling out two orthogroup sets:
-    // one for species tree inference (core) and a remaining core set
-    // that we will infer gene family trees for (remaining (rem)).
-    // All 'core' gene family trees will be reconciled with the species tree,
-    // and duplication/tranfer/loss rates will be estimated for these,
-    // but not all orthogroups will have MSAs/gene family trees estimated
-    // (because they are either very taxon specific, or incredibly large, e.g.
-    // a mean per-species gene-copy number > 10).
-    ch_filtered_ogs
-        .spptree_core_ogs
-        .splitCsv ( header:true, sep:',' )
-        .map { create_og_channel(it) }
-        .set { ch_core_ogs }
-
-    ch_filtered_ogs
-        .genetree_core_ogs
-        .splitCsv ( header:true, sep:',' )
-        .map { create_og_channel(it) }
-        .set { ch_rem_ogs }
 
     //
     // MODULE: MAFFT
