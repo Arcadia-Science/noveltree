@@ -219,10 +219,10 @@ workflow PHYLORTHOLOGY {
     // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    ch_core_og_msas = MAFFT(ch_core_ogs).msas
+    ch_core_og_msas = MAFFT(FILTER_ORTHOGROUPS.out.spptree_fas.flatten()).msas
 
     // And for the remaining orthogroups
-    ch_rem_og_msas = MAFFT_REMAINING(ch_rem_ogs).msas
+    ch_rem_og_msas = MAFFT_REMAINING(FILTER_ORTHOGROUPS.out.genetree_fas.flatten()).msas
     ch_versions = ch_versions.mix(MAFFT.out.versions)
 
     //
