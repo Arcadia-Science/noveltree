@@ -1,3 +1,6 @@
+// This process is originall from nf-core but is modified to remove the
+// meta input
+
 process MAFFT {
     tag "${fasta}"
     //label 'process_highthread' // Possible specification for full analysis

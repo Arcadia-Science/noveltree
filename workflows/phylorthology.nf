@@ -54,6 +54,8 @@ include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/spe
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
 include { GENERAX                                   } from '../modules/local/generax'
+include { MAFFT                                     } from '../modules/local/nf-core-modified/mafft'
+include { MAFFT as MAFFT_REMAINING                  } from '../modules/local/nf-core-modified/mafft'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,8 +66,6 @@ include { GENERAX                                   } from '../modules/local/gen
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MAFFT                                 } from '../modules/nf-core/mafft/main' // Slightly modified (specific parameters)
-include { MAFFT as MAFFT_REMAINING              } from '../modules/nf-core/mafft/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
