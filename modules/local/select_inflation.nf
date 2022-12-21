@@ -28,7 +28,7 @@ process SELECT_INFLATION {
     # identify the parameter value that produces the best quality results.
 
     # Run the script to summarize and produce a figure of these results.
-    Rscript $projectDir/bin/select_inflation.R
+    select_inflation.R
 
     # And spit out the value of the selected inflation parameter to be
     # captured into a channel from stdout
