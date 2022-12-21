@@ -26,6 +26,8 @@ process FILTER_ORTHOGROUPS {
     path "all_ogs_counts.csv"           , emit: all_ogs
     path "spptree_core_ogs_counts.csv"  , emit: spptree_core_ogs
     path "genetree_core_ogs_counts.csv" , emit: genetree_core_ogs
+    path "SpeciesTreeFastas/*.fa"       , emit: spptree_fas
+    path "GeneTreeFastas/*.fa"          , emit: genetree_fas
 
     when:
     task.ext.when == null || task.ext.when
@@ -52,17 +54,21 @@ process FILTER_ORTHOGROUPS {
     msaDir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
 
     # Create the column
-    echo "file" > colname.txt
-    tail -n+2 all_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" | sed '1 i\\file' > all_og_fpaths.txt
     tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" | sed '1 i\\file' > spptree_core_og_fpaths.txt
     tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" | sed '1 i\\file' > genetree_core_og_fpaths.txt
 
-    # Combine them
-    paste -d"," all_ogs_counts.csv all_og_fpaths.txt > tmp && mv tmp all_og_fpaths.csv
-    paste -d"," spptree_core_ogs_counts.csv spptree_core_og_fpaths.txt > tmp && mv tmp spptree_core_ogs_counts.csv
-    paste -d"," genetree_core_ogs_counts.csv genetree_core_og_fpaths.txt > tmp && mv tmp genetree_core_ogs_counts.csv
+    mkdir SpeciesTreeFastas
+    mkdir GeneTreeFastas
 
-    # Clean up
-    rm *og_fpaths.txt
+    while IFS= read -r line
+    do
+        # Copy the file to the destination directory
+        cp "\$line" SpeciesTreeFastas/
+    done < spptree_core_og_fpaths.txt
+    while IFS= read -r line
+    do
+        # Copy the file to the destination directory
+        cp "\$line" GeneTreeFastas/
+    done < genetree_core_og_fpaths.txt
     """
 }
