@@ -15,8 +15,16 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 //for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-if (params.mcl_inflation) { ch_mcl_inflation = Channel.of(params.mcl_inflation) } else { exit 1, 'MCL Inflation parameter(s) not specified!' }
+if (params.input) {
+    ch_input = file(params.input)
+} else {
+    exit 1, 'Input samplesheet not specified!'
+}
+if (params.mcl_inflation) {
+    ch_mcl_inflation = Channel.of(params.mcl_inflation.split(","))
+} else {
+    exit 1, 'MCL Inflation parameter(s) not specified!'
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
