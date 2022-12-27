@@ -1,4 +1,4 @@
-// This process is originall from nf-core but is modified to remove the
+// This process is originally from nf-core but is modified to remove the
 // meta input
 
 process MAFFT {
