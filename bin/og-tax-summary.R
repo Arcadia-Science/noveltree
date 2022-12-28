@@ -38,23 +38,23 @@ numspp <- rowSums(ogs[-1], na.rm = T)
 for(i in 2:ncol(ogs)){
     # Identify the species
     spp <- colnames(ogs)[i]
-    
+
     # And the taxonomic group for this species
     grp <- unique(as.character(samples$taxonomy[which(samples$species == spp)]))
-    
+
     # Now replace the species name with group name
     colnames(ogs)[i] <- grp
 }
 
 # Count number of taxonomic groups included in each orthogroup
-taxcount <- t(rowsum(t(ogs[-1]), 
-              group = colnames(ogs)[-1], 
+taxcount <- t(rowsum(t(ogs[-1]),
+              group = colnames(ogs)[-1],
               na.rm = T))
-# Convert counts to binary for easy counts of species in each og. 
+# Convert counts to binary for easy counts of species in each og.
 taxcount[taxcount > 1] <- 1
 taxcount <- rowSums(taxcount)
 
-res <- 
+res <-
     data.frame(
         orthogroup = ogs$Orthogroup,
         num_spp = numspp,
@@ -64,13 +64,13 @@ res <-
     )
 
 # Create the subsets
-spptree_core <- 
-    res[which(res$mean_copy_num <= copy_num_filt1 & 
-              res$num_spp >= num_spp_filt & 
+spptree_core <-
+    res[which(res$mean_copy_num <= copy_num_filt1 &
+              res$num_spp >= num_spp_filt &
               res$num_tax_grps >= num_grp_filt),]
-genetree_core <- 
-    res[which(res$mean_copy_num <= copy_num_filt2 & 
-              res$num_spp >= num_spp_filt & 
+genetree_core <-
+    res[which(res$mean_copy_num <= copy_num_filt2 &
+              res$num_spp >= num_spp_filt &
               res$num_tax_grps >= num_grp_filt),]
 
 # And remove the species tree core ogs from the remnants we'll just infer gene
