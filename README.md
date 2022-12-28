@@ -89,10 +89,10 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
    nextflow run . -profile docker -params-file parameters.json
    ```
 
-   Or
+   OR
 
    ```bash
-   # If you're using Arcadia Science's test data
+   # If you're using Arcadia Science's test dataset
    nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/phylorthology/nextflow_parameters.json
    ```
 
@@ -108,7 +108,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
    <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
    ```bash
-   nextflow run phylorthology -profile docker -params-file <PARAMS.JSON>
+   nextflow run . -profile docker -params-file <PARAMS.JSON>
    ```
 
 ## Credits
