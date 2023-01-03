@@ -29,7 +29,7 @@ process COGEQC {
     # how well they group proteins with the same domains together, as well as
     # other summary stats like number of ogs with >= 4 species, per-species
     # gene count per-og, etc.
-    Rscript $projectDir/bin/cogeqc-summarize-ogs.R ${orthofinder_outdir}
+    cogeqc-summarize-ogs.R ${orthofinder_outdir}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
