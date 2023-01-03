@@ -70,7 +70,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 {
   "input": "<FILE_PATH_TO_YOUR_SAMPLESHEET>",
   "outdir": "results",
-  "mcl_inflation": "0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7"
+  "mcl_inflation": "1.0,2.0,3.0,4.0,5.0"
 }
 ```
 
