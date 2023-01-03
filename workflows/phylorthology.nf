@@ -100,7 +100,7 @@ workflow PHYLORTHOLOGY {
     // do not use these outputs, so multiple busco runs may be conducted
     // simultaneously
     //
-    Shallow taxonomic scale:
+    // Shallow taxonomic scale:
     BUSCO_SHALLOW (
         ch_all_data.complete_prots,
         "shallow",
