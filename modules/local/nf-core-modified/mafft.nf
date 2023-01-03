@@ -1,5 +1,8 @@
+// This process is originally from nf-core but is modified to remove the
+// meta input
+
 process MAFFT {
-    tag "$meta.og"
+    tag "$fasta"
     //label 'process_highthread' // Possible specification for full analysis
     label 'process_medium' // Used for debugging
 
@@ -9,10 +12,10 @@ process MAFFT {
         'quay.io/biocontainers/mafft:7.490--h779adbc_0' }"
 
     input:
-    tuple val(meta), path(fasta)
+    path(fasta)
 
     output:
-    tuple val(meta), path("*-mafft.fa"), emit: msas
+    path("*-mafft.fa") , emit: msas
     path "versions.yml"           , emit: versions
 
     when:
@@ -20,15 +23,16 @@ process MAFFT {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.og}"
     """
+    prefix=\$(basename "${fasta}" .fa)
+
     mafft \\
         --thread ${task.cpus} \\
         --localpair \\
         --maxiterate 1000 \\
         --anysymbol \\
         ${fasta} \\
-        > ${prefix}-mafft.fa
+        > \$prefix-mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -11,17 +11,17 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
 
 ## Pipeline summary
-At its core, PhylOrthology used the OrthoFinder algorithm to normalize pairwise protein similarity scores to account for evolutionary divergence prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, PhylOrthology automates the identification of the inflation parameter that returns the most biologically sensible and tractable set of orthogroups. 
+At its core, PhylOrthology used the OrthoFinder algorithm to normalize pairwise protein similarity scores to account for evolutionary divergence prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, PhylOrthology automates the identification of the inflation parameter that returns the most biologically sensible and tractable set of orthogroups.
 
 Thus, two rounds of protein clustering takes place - an initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and a second round on the complete dataset. Because Nextflow can automate the parallelization of tasks that are independent of each other, PhylOrthology will begin the all-v-all protein comparisons for both rounds simultaneously across available compute resources. Once the first round of MCL clustering has completed, we summarize orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein domain annotation score calculated with COGEQC, which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups.
 
-With orthogroups/gene families inferred, we will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 200 species and mean copy # of 20) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10). 
+With orthogroups/gene families inferred, we will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 200 species and mean copy # of 20) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
 We then distribute these two subsets of orthogroups into two, independent channels to ba anlyzed in parallel. Simultanously for both subsets, we infer multiple sequences alignments (using MAFFT), trim these alignments for gappy/uninformative regions (using ClipKit), and infer gene-family trees using IQ-TREE under a approximated mixture model of amino acid substitution (LG+C40+F+G) using the posterior mean site frequency model (PMSF).
 
 Using the first, conservative subset of gene family trees, we infer a starting, unrooted species tree using Asteroid. This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to SpeciesRax, which roots the species tree and improves the topology under a model of gene duplication, loss and transfer.
 
-Using this improved species tree, we then use GeneRax for both subsets of gene families, reconciling them with the species tree and inferring rates of gene duplication, transfer and loss on a per-family and (TBD) per-species basis. 
+Using this improved species tree, we then use GeneRax for both subsets of gene families, reconciling them with the species tree and inferring rates of gene duplication, transfer and loss on a per-family and (TBD) per-species basis.
 
 ### The workflow thus proceeds as follows:
 1. Proteomes are downloaded from S3
@@ -32,7 +32,7 @@ Using this improved species tree, we then use GeneRax for both subsets of gene f
 6. Cluster UniProt sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
 7. Summarization and quantification of orthogroup inference performance using a set of summary statistics, including the functional protein domain score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html)
 8. Repeat step five (5: MCL clustering into orthogroups) for all species under the optimal inflation parameter
-9. Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference. 
+9. Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
 10. Infer multiple sequence alignments for each focal gene family with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
 11. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
 12. Infer gene family trees using [`IQ-TREE`](http://www.iqtree.org/)
@@ -41,12 +41,12 @@ Using this improved species tree, we then use GeneRax for both subsets of gene f
 15. Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
 16. Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 
-#### Upon initiation, several things happen in parallel. 
+#### Upon initiation, several things happen in parallel.
 1. First, proteomes are summarized with BUSCO at (currently) two user-defined scales: one that is taxonomically shallow (as close to each species as possible), and one that is taxonomically broad (e.g. Eukaryotes).
    - The goal here is to quantify input proteome quality and completeness - comparison at the broad-scale (e.g. across eukaryotes) may facilitate more direct biological comparisons across species, but for understudied groups may provide misleadingly poor summaries of proteome completeness as compared to analysis at the shallower taxonomic scale.
    - Results of these analyses are independent of everything downstream and so each may be done in parallel of all other steps (i.e. will not prevent subsequent analyses from beginning).
 2. Second, we prepare proteomes for the highly parallized distribution of all-v-all protein comparisons with Diamond BlastP using Nextflow and subsequent MCL clustering with OrthoFinder. This involves calling orthofinder, and formatting data in a manner that the software is built to deal with. This is largely a technicality.
-3. Third, we begin running the all-v-all protein comparisons in parallel for both the MCL inflation parameter testing dataset and complete dataset, distributing jobs across AWS spot instances. Doing so in this way, we limit the extent to which the MCL inflation parameter test slows progress on analyzing the complete dataset, and takes advantage of the wealth of compute resources provided by AWS, all while saving up to 90% on costs by using spot instances. 
+3. Third, we begin running the all-v-all protein comparisons in parallel for both the MCL inflation parameter testing dataset and complete dataset, distributing jobs across AWS spot instances. Doing so in this way, we limit the extent to which the MCL inflation parameter test slows progress on analyzing the complete dataset, and takes advantage of the wealth of compute resources provided by AWS, all while saving up to 90% on costs by using spot instances.
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
@@ -63,29 +63,37 @@ species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
 ```
 - "uniprot" column is a true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
-- mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score). 
+- mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).
 
 4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below:
 ```
 {
-  "input": "/home/ubuntu/environment/github/phylorthology/test/complete_samplesheet.csv",
-  "mcl_test_input": "/home/ubuntu/environment/github/phylorthology/test/mcl_test_samplesheet.csv",
-  "s3_dir": "s3://organism-selection-engines/sequence-data/aa-seqs/phylorthology-test",
-  "outdir": "results-s3-test",
-  "mcl_inflation": [ "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7" ]
+  "input": "<FILE_PATH_TO_YOUR_SAMPLESHEET>",
+  "outdir": "results",
+  "mcl_inflation": "1.0,2.0,3.0,4.0,5.0"
 }
 ```
 
-5. Ensure that proteins are named following the following convention. 
-- Species_genus:GeneID
-- Example: 
-`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`
-- Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins. 
+Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology).
 
-6. Download the pipeline and test it on a minimal dataset with a single command run in the "test" directory of this repository:
+5. Ensure that proteins are named following the following convention.
+- Species_genus:GeneID
+- Example:
+`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`
+- Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins.
+
+6. Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
 
    ```bash
-   nextflow run phylorthology -profile docker -params-file parameters.json
+   # If you're using your own test data
+   nextflow run . -profile docker -params-file parameters.json
+   ```
+
+   OR
+
+   ```bash
+   # If you're using Arcadia Science's test dataset
+   nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/phylorthology/nextflow_parameters.json
    ```
 
    Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
@@ -100,7 +108,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
    <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
    ```bash
-   nextflow run phylorthology -profile docker -params-file <PARAMS.JSON>
+   nextflow run . -profile docker -params-file <PARAMS.JSON>
    ```
 
 ## Credits
