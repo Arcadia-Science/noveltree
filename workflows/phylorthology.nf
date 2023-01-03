@@ -64,6 +64,7 @@ include { SPECIESRAX                                } from '../modules/local/spe
 include { GENERAX                                   } from '../modules/local/generax'
 include { MAFFT                                     } from '../modules/local/nf-core-modified/mafft'
 include { MAFFT as MAFFT_REMAINING                  } from '../modules/local/nf-core-modified/mafft'
+include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -251,6 +252,7 @@ workflow PHYLORTHOLOGY {
     ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
+
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
     // SpeciesRax, and gene-tree species-tree reconciliation and estimation
@@ -320,6 +322,23 @@ workflow PHYLORTHOLOGY {
         ch_rem_gene_trees.collect(),
         ch_rem_trimmed_msas.collect(),
         ch_rem_families
+    )
+    
+    //
+    // MODULE: ORTHOFINDER_PHYLOHOGS
+    // Now using the reconciled gene family trees and rooted species tree,
+    // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
+    // to identify orthologs and output orthogroup-level summary stats. 
+    //
+    ORTHOFINDER_PHYLOHOGS(
+        ch_speciesrax,
+        ORTHOFINDER_MCL.out.inflation_dir,
+        ORTHOFINDER_PREP.out.fastas,
+        ORTHOFINDER_PREP.out.sppIDs,
+        ORTHOFINDER_PREP.out.seqIDs,
+        SPECIESRAX.out.speciesrax_gfts,
+        GENERAX.out.generax_gfts,
+        DIAMOND_BLASTP.out.txt.collect()
     )
 }
 
