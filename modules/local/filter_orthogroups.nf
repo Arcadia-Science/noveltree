@@ -54,8 +54,8 @@ process FILTER_ORTHOGROUPS {
     msaDir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
 
     # Create the column
-    tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" | sed '1 i\\file' > spptree_core_og_fpaths.txt
-    tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" | sed '1 i\\file' > genetree_core_og_fpaths.txt
+    tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" > spptree_core_og_fpaths.txt
+    tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" > genetree_core_og_fpaths.txt
 
     mkdir SpeciesTreeFastas
     mkdir GeneTreeFastas

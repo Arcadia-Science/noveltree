@@ -19,7 +19,7 @@ process ORTHOFINDER_PHYLOHOGS {
     path speciesrax_gfts     // Reconciled gene family trees used in species tree inference
     path generax_gfts        // Remaining reconciled gene family trees
     path blast               // Blast similarity scores
-
+    
     output:
     path "*" , emit: phylohogs
 
@@ -27,7 +27,6 @@ process ORTHOFINDER_PHYLOHOGS {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     """
     #####################################################################################
     # Some prep-work needs to be done prior to running orthofinder one last time,
@@ -46,10 +45,6 @@ process ORTHOFINDER_PHYLOHOGS {
     sed -i "s|\${of_working_dir}|\$(pwd)/|g" \$of_results_dir/Log.txt
     sed -i "s|OrthoFinder/Results_.*/Work|\$of_results_dir/Work|g" \$of_results_dir/Log.txt
     sed -i "s|\${of_working_dir}|\$(pwd)/|g" \$of_results_dir/WorkingDirectory/clusters_OrthoFinder_*
-    
-    # TODO: Delete eventually
-    # proteomes should be named exactly what we want tip labels to be. 
-    sed -i "s/-clean-proteome.fasta//g" \$of_results_dir/Log.txt 
     
     # Now, add the "WorkingDirectory_Trees" path to trick orthofinder into recognizing the input 
     sed -i "/^WorkingDirectory_Base.*/a WorkingDirectory_Trees: \$(pwd)/\$of_results_dir/Gene_Trees/" \$of_results_dir/Log.txt

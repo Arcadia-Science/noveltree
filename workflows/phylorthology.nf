@@ -100,21 +100,21 @@ workflow PHYLORTHOLOGY {
     // do not use these outputs, so multiple busco runs may be conducted
     // simultaneously
     //
-    // Shallow taxonomic scale:
-    // BUSCO_SHALLOW (
-    //     ch_all_data.complete_prots,
-    //     "shallow",
-    //     [],
-    //     []
-    // )
+    Shallow taxonomic scale:
+    BUSCO_SHALLOW (
+        ch_all_data.complete_prots,
+        "shallow",
+        [],
+        []
+    )
 
-    // // Broad taxonomic scale (Eukaryotes)
-    // BUSCO_BROAD (
-    //     ch_all_data.complete_prots,
-    //     "broad",
-    //     [],
-    //     []
-    // )
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD (
+        ch_all_data.complete_prots,
+        "broad",
+        [],
+        []
+    )
 
     //
     // MODULE: Annotate UniProt Proteins
@@ -216,10 +216,10 @@ workflow PHYLORTHOLOGY {
     FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
-        "9",
-        "9",
-        "2",
-        "3"
+        "4",
+        "4",
+        "1",
+        "2"
     )
 
     //
@@ -330,7 +330,7 @@ workflow PHYLORTHOLOGY {
     // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
     // to identify orthologs and output orthogroup-level summary stats. 
     //
-    ORTHOFINDER_PHYLOHOGS (
+    ORTHOFINDER_PHYLOHOGS(
         ch_speciesrax,
         ORTHOFINDER_MCL.out.inflation_dir,
         ORTHOFINDER_PREP.out.fastas,
@@ -338,10 +338,8 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.seqIDs,
         SPECIESRAX.out.speciesrax_gfts,
         GENERAX.out.generax_gfts,
-        DIAMOND_BLASTP.out.txt
+        DIAMOND_BLASTP.out.txt.collect()
     )
-        .phylohogs
-        .set { ch_phylohogs }
 }
 
 /*
