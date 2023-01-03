@@ -23,7 +23,7 @@ process GENERAX {
 
     output:
     path "*" ,                                        emit: results
-    path "GeneRax/results/*/*_reconciled_gft.newick", emit: generax_gfts
+    path "GeneRax/results/**_reconciled_gft.newick", emit: generax_gfts
 
     when:
     task.ext.when == null || task.ext.when

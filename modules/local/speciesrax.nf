@@ -24,7 +24,7 @@ process SPECIESRAX {
     output:
     path "*" ,                                           emit: results
     path "speciesrax_final_species_tree.newick" ,        emit: speciesrax_tree
-    path "SpeciesRax/results/*/*_reconciled_gft.newick", emit: speciesrax_gfts
+    path "SpeciesRax/results/**_reconciled_gft.newick", emit: speciesrax_gfts
     path "versions.yml" ,                                emit: versions
 
     when:
