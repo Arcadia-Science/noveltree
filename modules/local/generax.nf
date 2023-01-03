@@ -22,8 +22,8 @@ process GENERAX {
     path families          // Filepath to the families file
 
     output:
-    path "*" ,                                        emit: results
-    path "GeneRax/results/**_reconciled_gft.newick", emit: generax_gfts
+    path "*"                        , emit: results
+    path "**_reconciled_gft.newick" , emit: generax_gfts
 
     when:
     task.ext.when == null || task.ext.when
@@ -47,6 +47,5 @@ process GENERAX {
     do
         mv GeneRax/results/\$og/*.newick GeneRax/results/\$og/\${og}_reconciled_gft.newick
     done
-    
     """
 }
