@@ -336,9 +336,9 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.fastas,
         ORTHOFINDER_PREP.out.sppIDs,
         ORTHOFINDER_PREP.out.seqIDs,
-        SPECIESRAX.out.speciesrax_gfts.collect(),
-        GENERAX.out.generax_gfts.collect(),
-        DIAMOND_BLASTP.out.txt.collect()
+        SPECIESRAX.out.speciesrax_gfts,
+        GENERAX.out.generax_gfts,
+        DIAMOND_BLASTP.out.txt
     )
         .phylohogs
         .set { ch_phylohogs }
