@@ -2,11 +2,8 @@ process SPECIES_TREE_PREP {
     tag "Preparing for species tree inference."
     label 'process_single'
 
-    //conda (params.enable_conda ? "bioconda::bioconductor-uniprot.ws==2.34.0--r41hdfd78af_0" : null)
-    //container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //    'https://depot.galaxyproject.org/singularity/bioconductor-uniprot.ws:2.34.0--r41hdfd78af_0':
-    //    'docker.io/austinhpatton123/clipkit' }"
-
+    container "ubuntu:20.04"
+    
     publishDir(
         path: "${params.outdir}/species_tree_prep",
         mode: params.publish_dir_mode,
