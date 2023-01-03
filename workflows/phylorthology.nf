@@ -216,10 +216,10 @@ workflow PHYLORTHOLOGY {
     FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
-        "4",
-        "4",
-        "1",
-        "2"
+        "9",
+        "9",
+        "2",
+        "3"
     )
 
     //
