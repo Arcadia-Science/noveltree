@@ -39,7 +39,7 @@ process IQTREE {
         -nt AUTO \\
         -ntmax ${task.cpus} \\
         -mem \$memory \\
-        -m LG+F+G \\
+        -m LG+F+G4 \\
         $args \\
         $fconst_args
 
@@ -54,7 +54,7 @@ process IQTREE {
         -s $alignment \\
         -nt \$nt \\
         -mem \$memory \\
-        -m LG+C40+F+G \\
+        -m LG+C40+F+G4 \\
         -ft guidetree.treefile \\
         $args \\
         $fconst_args
