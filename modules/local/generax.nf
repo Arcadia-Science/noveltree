@@ -33,7 +33,8 @@ process GENERAX {
     def args = task.ext.args ?: ''
 
     """
-    mpiexec -np ${task.cpus} --allow-run-as-root generax \
+    mpiexec -np ${task.cpus} --allow-run-as-root --use-hwthread-cpus \
+    generax \
     --species-tree $init_species_tree \
     --families $families \
     --rec-model UndatedDTL \
