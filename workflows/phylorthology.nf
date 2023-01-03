@@ -62,6 +62,8 @@ include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/spe
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
 include { GENERAX                                   } from '../modules/local/generax'
+include { MAFFT                                     } from '../modules/local/nf-core-modified/mafft'
+include { MAFFT as MAFFT_REMAINING                  } from '../modules/local/nf-core-modified/mafft'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,30 +74,12 @@ include { GENERAX                                   } from '../modules/local/gen
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MAFFT                                 } from '../modules/nf-core/mafft/main' // Slightly modified (specific parameters)
-include { MAFFT as MAFFT_REMAINING              } from '../modules/nf-core/mafft/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// Function to get list of [ meta, [ file ] ]
-// This function is applied to a csv produced by the "og-tax-summary.R"
-// script called as part of the "filter_orthogroups.nf" local module.
-def create_og_channel(LinkedHashMap row) {
-    // create meta map
-    def meta  = [:]
-        meta.og   = row.orthogroup
-        meta.nspp = row.num_spp
-        meta.total_copy_num = row.total_copy_num
-        meta.copy_num = row.mean_copy_num
-        meta.num_grps = row.num_tax_grps
-    // add path(s) of the OG file to the meta map
-    def og_meta = []
-        og_meta = [ meta, [ file(row.file) ] ]
-    return og_meta
-}
 
 workflow PHYLORTHOLOGY {
     ch_inflation = ch_mcl_inflation.toList().flatten()
@@ -228,7 +212,7 @@ workflow PHYLORTHOLOGY {
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
     // TODO: parametrize the variables here
-    ch_filtered_ogs = FILTER_ORTHOGROUPS (
+    FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
         "4",
@@ -237,36 +221,16 @@ workflow PHYLORTHOLOGY {
         "2"
     )
 
-    // Subset, pulling out two orthogroup sets:
-    // one for species tree inference (core) and a remaining core set
-    // that we will infer gene family trees for (remaining (rem)).
-    // All 'core' gene family trees will be reconciled with the species tree,
-    // and duplication/tranfer/loss rates will be estimated for these,
-    // but not all orthogroups will have MSAs/gene family trees estimated
-    // (because they are either very taxon specific, or incredibly large, e.g.
-    // a mean per-species gene-copy number > 10).
-    ch_filtered_ogs
-        .spptree_core_ogs
-        .splitCsv ( header:true, sep:',' )
-        .map { create_og_channel(it) }
-        .set { ch_core_ogs }
-
-    ch_filtered_ogs
-        .genetree_core_ogs
-        .splitCsv ( header:true, sep:',' )
-        .map { create_og_channel(it) }
-        .set { ch_rem_ogs }
-
     //
     // MODULE: MAFFT
     // Infer multiple sequence alignments of orthogroups/gene
     // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    ch_core_og_msas = MAFFT(ch_core_ogs).msas
+    ch_core_og_msas = MAFFT(FILTER_ORTHOGROUPS.out.spptree_fas.flatten()).msas
 
     // And for the remaining orthogroups
-    ch_rem_og_msas = MAFFT_REMAINING(ch_rem_ogs).msas
+    ch_rem_og_msas = MAFFT_REMAINING(FILTER_ORTHOGROUPS.out.genetree_fas.flatten()).msas
     ch_versions = ch_versions.mix(MAFFT.out.versions)
 
     //
@@ -287,50 +251,6 @@ workflow PHYLORTHOLOGY {
     ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
-    // Collect these gene family trees and alignments;
-    // they will be used for unrooted species tree inference
-    // with Asteroid and downstream analysis with GeneRax and
-    // SpeciesRax
-
-    // Do this for both the core and remaining orthogroups
-    // First trees....
-    ch_core_gene_trees
-    .branch {
-        meta, phylogeny ->
-            trees  : phylogeny
-                return phylogeny
-    }
-    .collect()
-    .set { ch_all_core_trees }
-
-    ch_rem_gene_trees
-    .branch {
-        meta, phylogeny ->
-            trees  : phylogeny
-                return phylogeny
-    }
-    .collect()
-    .set { ch_all_rem_trees }
-
-    // Then the alignments.
-    ch_core_trimmed_msas
-    .branch {
-        meta, trimmed_msas ->
-            msas  : trimmed_msas
-                return trimmed_msas
-    }
-    .collect()
-    .set { ch_all_core_msas }
-
-    ch_rem_trimmed_msas
-    .branch {
-        meta, trimmed_msas ->
-            msas  : trimmed_msas
-                return trimmed_msas
-    }
-    .collect()
-    .set { ch_all_rem_msas }
-
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
     // SpeciesRax, and gene-tree species-tree reconciliation and estimation
@@ -340,8 +260,8 @@ workflow PHYLORTHOLOGY {
     // All outputs are needed for species tree inference, but not for the
     // remainder.
     SPECIES_TREE_PREP(
-        ch_all_core_trees,
-        ch_all_core_msas
+        ch_core_gene_trees.collect(),
+        ch_core_trimmed_msas.collect()
     )
         .set { ch_core_spptree_prep }
 
@@ -351,8 +271,8 @@ workflow PHYLORTHOLOGY {
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
     GENE_TREE_PREP(
-        ch_all_rem_trees,
-        ch_all_rem_msas
+        ch_rem_gene_trees.collect(),
+        ch_rem_trimmed_msas.collect()
     )
         .set { ch_rem_genetree_prep }
 
@@ -383,8 +303,8 @@ workflow PHYLORTHOLOGY {
     SPECIESRAX(
         ch_asteroid,
         ch_core_generax_map,
-        ch_all_core_trees,
-        ch_all_core_msas,
+        ch_core_gene_trees.collect(),
+        ch_core_trimmed_msas.collect(),
         ch_core_families
     )
         .speciesrax_tree
@@ -397,8 +317,8 @@ workflow PHYLORTHOLOGY {
     GENERAX(
         ch_speciesrax,
         ch_rem_generax_map,
-        ch_all_rem_trees,
-        ch_all_rem_msas,
+        ch_rem_gene_trees.collect(),
+        ch_rem_trimmed_msas.collect(),
         ch_rem_families
     )
 }
