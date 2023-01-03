@@ -1,5 +1,5 @@
 process CLIPKIT {
-    tag "${meta.og}"
+    tag "$fasta"
     label 'process_medium'
 
     container "${ workflow.containerEngine == 'docker' ? 'docker.io/austinhpatton123/clipkit' :
@@ -12,10 +12,10 @@ process CLIPKIT {
     )
 
     input:
-    tuple val(meta), path(fasta)   // Filepaths to the MSAs
+    path(fasta)   // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("*-clipkit.fa") , emit: trimmed_msas
+    path("*-clipkit.fa")                  , emit: trimmed_msas
     path "versions.yml"                   , emit: versions
 
     when:
@@ -25,8 +25,10 @@ process CLIPKIT {
     script:
     def args = task.ext.args ?: ''
     """
+    prefix=\$(basename "${fasta}" -mafft.fa)
+
     # Trim the MSAs for each orthogroup containing at least 4 species.
-    clipkit ${fasta} -o ${meta.og}-clipkit.fa
+    clipkit ${fasta} -o \$prefix-clipkit.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
