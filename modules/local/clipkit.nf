@@ -28,7 +28,7 @@ process CLIPKIT {
     prefix=\$(basename "${fasta}" -mafft.fa)
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
-    clipkit ${fasta} -o \$prefix-clipkit.fa
+    clipkit ${fasta} -o \$prefix-clipkit.fa $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
