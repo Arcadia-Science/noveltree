@@ -39,14 +39,8 @@ process SPECIESRAX {
     generax \
     --species-tree $init_species_tree \
     --families $families \
-    --per-family-rates \
-    --rec-model UndatedDTL \
-    --prune-species-tree \
-    --si-strategy HYBRID \
-    --si-quartet-support \
-    --si-estimate-bl \
-    --strategy SPR \
-    --prefix SpeciesRax
+    --prefix SpeciesRax \
+    $args
 
     # Copy the final starting tree to the current working directory -
     # this will be used as the starting tree for generax application to the
