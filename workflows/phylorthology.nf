@@ -26,6 +26,29 @@ if (params.mcl_inflation) {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
 
+// Set custom parameters to either user-specified or default values. 
+// Set the filtering parameters:
+// Try to use user-specified values, otherwise use defaults.
+if (params.min_num_spp_per_og) {
+    ch_min_num_spp = Channel.of(params.min_num_spp_per_og)
+} else {
+    ch_min_num_spp = Channel.of('4')
+}
+if (params.min_num_grp_per_og) {
+    ch_min_num_grp = Channel.of(params.min_num_grp_per_og)
+} else {
+    ch_min_num_grp = Channel.of('1')
+}
+if (params.max_copy_num_spp_tree) {
+    ch_max_copy_num1 = Channel.of(params.max_copy_num_spp_tree)
+} else {
+    ch_max_copy_num1 = Channel.of('5')
+}
+if (params.max_copy_num_gene_trees) {
+    ch_max_copy_num2 = Channel.of(params.max_copy_num_gene_trees)
+} else {
+    ch_max_copy_num2 = Channel.of('10')
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -212,14 +235,13 @@ workflow PHYLORTHOLOGY {
     // across species and taxonomic group.
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
-    // TODO: parametrize the variables here
     FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
-        "4",
-        "4",
-        "1",
-        "2"
+        ch_min_num_spp,
+        ch_min_num_grp,
+        ch_max_copy_num1,
+        ch_max_copy_num2
     )
 
     //
