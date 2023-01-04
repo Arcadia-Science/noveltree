@@ -30,12 +30,13 @@ ylabs <-
     'HOGENOM Score', 'OMA Score', 'OrthoDB Score',
     '% Genes in ssOGs', 'Mean % Species Overlap')
 
-# In some cases we want to identify the inflation parameter that is the best
-# or most representative "compromise" (e.g. % genes in ssOGs, which typically
-# exhibits a pattern of hovering around some value before inflecting
-# sharply). For these, we want to identify these inflection points (using elbow).
-# For others, we want the value that maximizes some value (e.g InterPro score).
-# Initialize empty vector to hold the results.
+# We want to generate some plots of each summary statistic, but we're going to 
+# choose our best inflation parameter on the basis of how well inferred 
+# orthogroups 1) place together proteins sharing the same domains 
+# (InterPro Score), or 2) recapitulate known orthologs (using the OMA score). 
+# This will be determined using "the elbow method" to identify natural
+# inflection points in the curve, since marginal increases in scores may be 
+# expected with increasing inflation parameters (i.e. overfitting). 
 best <- c()
 invariant <- c()
 
@@ -44,7 +45,7 @@ for(i in 1:length(vars)){
   # If so, we'll ignore these
   invariant[i] <- var(res$variable == vars[i]) == 0
 
-  if(i %in% c(1:3, 10:11)){
+  if(i %in% c(4,8)){
     tmp.res <- res[which(res$variable == vars[i]),]
     inflect <-
       elbow(tmp.res[,c(1,3)])$inflation_param_selected
@@ -59,13 +60,9 @@ for(i in 1:length(vars)){
       geom_line() +
       ylab(ylabs[i])
   }else{
-    tmp.res <- res[which(res$variable == vars[i]),]
-    best[i] <- tmp.res$inflation_param[which(tmp.res$value == max(tmp.res$value))]
-
     plts[[i]] <-
       ggplot(data = tmp.res,
              aes(x = inflation_param, y = value)) +
-      geom_vline(xintercept = best[i]) +
       geom_point(size = 3) +
       geom_line() +
       ylab(ylabs[i]) +

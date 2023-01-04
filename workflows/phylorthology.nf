@@ -108,13 +108,13 @@ workflow PHYLORTHOLOGY {
         []
     )
 
-    // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD (
-        ch_all_data.complete_prots,
-        "broad",
-        [],
-        []
-    )
+    // // Broad taxonomic scale (Eukaryotes)
+    // BUSCO_BROAD (
+    //     ch_all_data.complete_prots,
+    //     "broad",
+    //     [],
+    //     []
+    // )
 
     //
     // MODULE: Annotate UniProt Proteins
@@ -218,8 +218,8 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_MCL.out.inflation_dir,
         "4",
         "4",
-        "1",
-        "2"
+        "4",
+        "6"
     )
 
     //

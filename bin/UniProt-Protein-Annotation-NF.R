@@ -115,7 +115,8 @@ tax_id <- UniProt.ws::queryUniProt(paste0("accession:", accessions[1]),
 up <- UniProt.ws::UniProt.ws(tax_id)
 
 # And pull down annotations, removing rows for proteins without any annotations.
-for(i in 1:15){
+# for(i in 1:15){
+for(i in 1:1){
     annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
     to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
 
