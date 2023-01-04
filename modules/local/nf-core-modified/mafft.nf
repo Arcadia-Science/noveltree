@@ -29,7 +29,7 @@ process MAFFT {
     mafft \\
         --thread ${task.cpus} \\
         ${fasta} \\
-        > \$prefix-mafft.fa
+        ${args} > \$prefix-mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
