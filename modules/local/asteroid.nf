@@ -29,7 +29,11 @@ process ASTEROID {
     def args = task.ext.args ?: ''
     """
     # Run asteroid using the multithreaded mpi version
-    mpiexec -np ${task.cpus} --allow-run-as-root asteroid -i $treefile -m $asteroid_map -p asteroid
+    mpiexec -np ${task.cpus} --allow-run-as-root --use-hwthread-cpus \
+    asteroid \
+    -i $treefile \
+    -m $asteroid_map \
+    -p asteroid
 
     # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml
