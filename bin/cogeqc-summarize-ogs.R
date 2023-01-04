@@ -91,8 +91,77 @@ spps <- gsub("-cogeqc-annotations.tsv", "", annots)
 
 # Reduce down to the species included in the MCL test dataset
 spps <- spps[which(spps %in% species)]
+    
+# Create a function that will extract annotations for a given species. 
+get_spp_annots <- 
+    function(species_index){
+        spp <- spps[species_index] # So we can name the entry
 
-# Initialize
+        # read in their annotations
+        annotations <- read.delim(paste0('./', spp, '-cogeqc-annotations.tsv'), sep = "\t", header = T)
+    
+        # Identify which we have annotations for this species.
+        non_missing <-
+            c(sum(is.na(annotations$InterPro)) == length(annotations$InterPro),
+            sum(is.na(annotations$SUPFAM)) == length(annotations$SUPFAM),
+            sum(is.na(annotations$PROSITE)) == length(annotations$PROSITE),
+            sum(is.na(annotations$HOGENOM)) == length(annotations$HOGENOM),
+            sum(is.na(annotations$OMA)) == length(annotations$OMA),
+            sum(is.na(annotations$OrthoDB)) == length(annotations$OrthoDB))
+    
+        # Pull out the InterPro annotations
+        interpro <-
+            if(non_missing[1] == FALSE){
+                interpro <- get_annots(spp, annotations$From, annotations$InterPro)
+            }else{
+                interpro <- NA
+            }
+        supfam <-
+            if(non_missing[2] == FALSE){
+                supfam <- get_annots(spp, annotations$From, annotations$SUPFAM)
+            }else{
+                supfam <- NA
+            }
+        prosite <-
+            if(non_missing[3] == FALSE){
+                prosite <- get_annots(spp, annotations$From, annotations$PROSITE)
+            }else{
+                prosite <- NA
+            }
+        hogenom <-
+            if(non_missing[4] == FALSE){
+                hogenom <- get_annots(spp, annotations$From, annotations$HOGENOM)
+            }else{
+                hogenom <- NA
+            }
+        oma <-
+            if(non_missing[5] == FALSE){
+                oma <- get_annots(spp, annotations$From, annotations$OMA)
+            }else{
+                oma <- NA
+            }
+        orthodb <-
+            if(non_missing[6] == FALSE){
+                orthodb <- get_annots(spp, annotations$From, annotations$OrthoDB)
+            }else{
+                orthodb <- NA
+            }
+        annotation_res <- 
+            list(
+                interpro = interpro,
+                supfam = supfam,
+                prosite = prosite,
+                hogenom = hogenom,
+                oma = oma,
+                orthodb = orthodb
+            )
+        annotation_res
+    }
+
+# Now extract annotations for each species, doing this in parallel cause we can. 
+annotation_list <- mclapply(1:length(spps), get_spp_annots)
+
+# And pull out each individual annotation, creating a list of species
 interpro <- list()
 supfam <- list()
 prosite <- list()
@@ -101,66 +170,13 @@ oma <- list()
 orthodb <- list()
 
 for(i in 1:length(spps)){
-    spp <- spps[i] # So we can name the entry
-
-    # read in their annotations
-    annotations <- read.delim(paste0('./', spp, '-cogeqc-annotations.tsv'), sep = "\t", header = T)
-
-    # Identify which we have annotations for this species.
-    non_missing <-
-        c(sum(is.na(annotations$InterPro)) == length(annotations$InterPro),
-        sum(is.na(annotations$SUPFAM)) == length(annotations$SUPFAM),
-        sum(is.na(annotations$PROSITE)) == length(annotations$PROSITE),
-        sum(is.na(annotations$HOGENOM)) == length(annotations$HOGENOM),
-        sum(is.na(annotations$OMA)) == length(annotations$OMA),
-        sum(is.na(annotations$OrthoDB)) == length(annotations$OrthoDB))
-
-    # Pull out the InterPro annotations
-    interpro[[i]] <-
-        if(non_missing[1] == FALSE){
-            interpro[[i]] <- get_annots(spp, annotations$From, annotations$InterPro)
-        }else{
-            interpro[[i]] <- NA
-        }
-    supfam[[i]] <-
-        if(non_missing[2] == FALSE){
-            supfam[[i]] <- get_annots(spp, annotations$From, annotations$SUPFAM)
-        }else{
-            supfam[[i]] <- NA
-        }
-    prosite[[i]] <-
-        if(non_missing[3] == FALSE){
-            prosite[[i]] <- get_annots(spp, annotations$From, annotations$PROSITE)
-        }else{
-            prosite[[i]] <- NA
-        }
-    hogenom[[i]] <-
-        if(non_missing[4] == FALSE){
-            hogenom[[i]] <- get_annots(spp, annotations$From, annotations$HOGENOM)
-        }else{
-            hogenom[[i]] <- NA
-        }
-    oma[[i]] <-
-        if(non_missing[5] == FALSE){
-            oma[[i]] <- get_annots(spp, annotations$From, annotations$OMA)
-        }else{
-            oma[[i]] <- NA
-        }
-    orthodb[[i]] <-
-        if(non_missing[6] == FALSE){
-            orthodb[[i]] <- get_annots(spp, annotations$From, annotations$OrthoDB)
-        }else{
-            orthodb[[i]] <- NA
-        }
+    interpro[[spps[i]]] <- annotation_list[[i]]$interpro
+    supfam[[spps[i]]] <- annotation_list[[i]]$supfam
+    prosite[[spps[i]]] <- annotation_list[[i]]$prosite
+    hogenom[[spps[i]]] <- annotation_list[[i]]$hogenom
+    oma[[spps[i]]] <- annotation_list[[i]]$oma
+    orthodb[[spps[i]]] <- annotation_list[[i]]$orthodb
 }
-
-# Now name all the entries according to their OrthoFinder species ID (second column)
-names(interpro) <- spps
-names(supfam) <- spps
-names(prosite) <- spps
-names(hogenom) <- spps
-names(oma) <- spps
-names(orthodb) <- spps
 
 # And drop species for each that are missing the annotations
 interpro <- Filter(function(a) any(!is.na(a)), interpro)
@@ -173,6 +189,46 @@ orthodb <- Filter(function(a) any(!is.na(a)), orthodb)
 # Great, now we can pair these annotations with the orthogroups, assessing how
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
+
+# We will run all orthogroup assessments in parallel (six simulatenously) to 
+# speed things up. 
+# create lists of:
+# 1) orthogroup subsets
+# 2) annotations
+
+og_sets <- 
+    list(
+        interpro = orthogroups[which(orthogroups$Species %in% names(interpro)),],
+        supfam = orthogroups[which(orthogroups$Species %in% names(supfam)),],
+        prosite = orthogroups[which(orthogroups$Species %in% names(prosite)),],
+        hogenom = orthogroups[which(orthogroups$Species %in% names(hogenom)),],
+        oma = orthogroups[which(orthogroups$Species %in% names(oma)),],
+        orthodb = orthogroups[which(orthogroups$Species %in% names(orthodb)),]
+    )
+    
+annotations <- 
+    list(
+        interpro = interpro,
+        supfam = supfam, 
+        prosite = prosite, 
+        hogenom = hogenom,
+        oma = oma, 
+        orthodb = orthodb
+    )
+
+# Now run cogeqc on all 6 summary stats simultaneously 
+assess_orthogroups_parallel <- 
+    function(i){
+        assess_orthogroups(og_sets[[i]], annotations[[i]])
+    }
+
+# And get the cogeqc scores
+assessments <- 
+    mclapply(1:6, assess_orthogroups_parallel)
+names(assessments) <- 
+    c('interpro', 'supfam', 'prosite',
+    'hogenom', 'oma', 'orthodb')
+   
 interpro_assess <-
     assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(interpro)),],
                        interpro)
@@ -227,12 +283,12 @@ og_quality <-
         num_ogs_gt_4spp = length(which(og_freqs >= 4)),
         num_ogs_all_spp = length(which(og_freqs == max(og_freqs))),
         per_spp_4spp_og_counts = mean(per_spp_og_counts),
-        interpro_score = mean(interpro_assess$Mean_score),
-        supfam_score = mean(supfam_assess$Mean_score),
-        prosite_score = mean(prosite_assess$Mean_score),
-        hogenom_score = mean(hogenom_assess$Mean_score),
-        oma_score = mean(oma_assess$Mean_score),
-        orthodb_score = mean(orthodb_assess$Mean_score),
+        interpro_score = mean(assessments$interpro$Mean_score),
+        supfam_score = mean(assessments$supfam$Mean_score),
+        prosite_score = mean(assessments$prosite$Mean_score),
+        hogenom_score = mean(assessments$hogenom$Mean_score),
+        oma_score = mean(assessments$oma$Mean_score),
+        orthodb_score = mean(assessments$orthodb$Mean_score),
         perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
         total_num_ss_ogs = sum(ortho_stats$stats$n_ss_ogs),
         mean_num_ss_ogs = mean(ortho_stats$stats$n_ss_ogs),
