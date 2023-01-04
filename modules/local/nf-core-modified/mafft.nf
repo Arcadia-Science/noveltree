@@ -28,9 +28,6 @@ process MAFFT {
 
     mafft \\
         --thread ${task.cpus} \\
-        --localpair \\
-        --maxiterate 1000 \\
-        --anysymbol \\
         ${fasta} \\
         > \$prefix-mafft.fa
 
