@@ -27,28 +27,20 @@ if (params.mcl_inflation) {
 }
 
 // Set custom parameters to either user-specified or default values. 
-// Set the filtering parameters:
 // Try to use user-specified values, otherwise use defaults.
 if (params.min_num_spp_per_og) {
     ch_min_num_spp = Channel.of(params.min_num_spp_per_og)
-} else {
-    ch_min_num_spp = Channel.of('4')
-}
+} else { ch_min_num_spp = Channel.of('4') }
 if (params.min_num_grp_per_og) {
     ch_min_num_grp = Channel.of(params.min_num_grp_per_og)
-} else {
-    ch_min_num_grp = Channel.of('1')
-}
+} else { ch_min_num_grp = Channel.of('1') }
 if (params.max_copy_num_spp_tree) {
     ch_max_copy_num1 = Channel.of(params.max_copy_num_spp_tree)
-} else {
-    ch_max_copy_num1 = Channel.of('5')
-}
+} else { ch_max_copy_num1 = Channel.of('5') }
 if (params.max_copy_num_gene_trees) {
     ch_max_copy_num2 = Channel.of(params.max_copy_num_gene_trees)
-} else {
-    ch_max_copy_num2 = Channel.of('10')
-}
+} else { ch_max_copy_num2 = Channel.of('10') }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
