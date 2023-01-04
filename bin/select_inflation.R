@@ -44,9 +44,12 @@ for(i in 1:length(vars)){
   # As a safety, check if the values are constant for all inflation parameters:
   # If so, we'll ignore these
   invariant[i] <- var(res$variable == vars[i]) == 0
-
+  
+  # Get the results for this summary stat  
+  tmp.res <- res[which(res$variable == vars[i]),]
+  
+  # and plot
   if(i %in% c(4,8)){
-    tmp.res <- res[which(res$variable == vars[i]),]
     inflect <-
       elbow(tmp.res[,c(1,3)])$inflation_param_selected
     best[i] <- inflect
