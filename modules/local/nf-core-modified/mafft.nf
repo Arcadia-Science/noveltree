@@ -4,7 +4,7 @@
 process MAFFT {
     tag "$fasta"
     //label 'process_highthread' // Possible specification for full analysis
-    label 'process_medium' // Used for debugging
+    label 'process_high' // Used for debugging
 
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
