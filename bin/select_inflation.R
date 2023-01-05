@@ -52,7 +52,7 @@ for(i in 1:length(vars)){
   if(i %in% c(4,8)){
     inflect <-
       elbow(tmp.res[,c(1,3)])$inflation_param_selected
-    best[i] <- inflect
+    best <- c(best, inflect)
 
     plts[[i]] <-
       ggplot(data = tmp.res,
