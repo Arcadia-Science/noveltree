@@ -30,11 +30,19 @@ process ORTHOFINDER_MCL {
         mv \$f \$(echo \$f | sed "s/TestBlast/Blast/g")
     done
 
+    # Check if we're running an mcl test or not - this determines whether we
+    # write orthogroup sequence files or not. 
+    if [ "$output_directory" == "mcl_test_dataset" ]; then
+        out_flag="-og"
+    else
+        out_flag="-os"
+    fi
+    
     orthofinder \\
         -b ./ \\
         -n "Inflation_${inflation_param}" \\
         -I $inflation_param \\
-        -M msa -X -os -z \\
+        -M msa -X -z \$out_flag \\
         -a ${task.cpus} \\
         $args
 
