@@ -79,7 +79,7 @@ og_summs <-
             plts[[9]], plts[[10]], plts[[11]],
             ncol = 4, nrow = 3)
 
-best_i <- mean(best[which(invariant == FALSE)])
+best_i <- mean(best)
 
 ggsave(og_summs, filename = 'inflation_summaries.pdf',
        height = 9, width = 12)
