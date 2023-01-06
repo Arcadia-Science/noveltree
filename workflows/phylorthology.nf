@@ -157,8 +157,7 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
         ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
         "txt",
-        "true",
-        []
+        "true"
     )
 
     // And for the full dataset, to be clustered into orthogroups using
@@ -168,8 +167,7 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.fastas.flatten(),
         ORTHOFINDER_PREP.out.diamonds.flatten(),
         "txt",
-        "false",
-        []
+        "false"
     )
     ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 

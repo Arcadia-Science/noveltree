@@ -14,7 +14,6 @@ process DIAMOND_BLASTP {
     each path(db)
     val output_extension
     val mcl_test
-    val blast_columns
 
     output:
     path('*.blast*') , optional: true, emit: blast
@@ -32,7 +31,6 @@ process DIAMOND_BLASTP {
     script:
     def args = task.ext.args ?: ''
     def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
-    def columns = blast_columns ? "${blast_columns}" : ''
     switch ( output_extension ) {
         case "blast": outfmt = 0; break
         case "xml": outfmt = 5; break
