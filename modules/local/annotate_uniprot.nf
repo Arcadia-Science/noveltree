@@ -12,8 +12,9 @@ process ANNOTATE_UNIPROT {
     )
 
     input:
-    tuple val(annots_to_download), val(meta), path(fasta)
-
+    tuple val(meta), path(fasta)
+    val annots_to_download
+    
     output:
     path "*accessions.txt"  , emit: accessions
     path "*" , emit: all_annotations

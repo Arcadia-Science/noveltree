@@ -43,6 +43,12 @@ if (params.max_copy_num_gene_trees) {
 if (params.download_annots) {
     ch_download_annots = Channel.of(params.download_annots)
 } else { ch_download_annots = Channel.of('none') }
+if (params.tree_model) {
+    ch_tree_model = Channel.of(params.tree_model)
+} else { ch_tree_model = Channel.of('TEST') }
+if (params.tree_model_pmsf) {
+    ch_tree_model_pmsf = Channel.of(params.tree_model_pmsf)
+} else { ch_tree_model_pmsf = Channel.of('none') }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,8 +143,8 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: Annotate UniProt Proteins
     //
-    ch_all_data_ann = ch_download_annots.combine(ch_all_data.complete_prots)
-    ANNOTATE_UNIPROT(ch_all_data_ann)
+    //ch_all_data_ann = ch_download_annots.combine(ch_all_data.complete_prots)
+    ANNOTATE_UNIPROT(ch_all_data.complete_prots, params.download_annots)
         .cogeqc_annotations
         .collect()
         .set { ch_annotations }
@@ -264,9 +270,22 @@ workflow PHYLORTHOLOGY {
     // MODULE: IQTREE
     // Infer gene-family trees from the trimmed MSAs
     //
-    ch_core_gene_trees = IQTREE(ch_core_trimmed_msas, []).phylogeny
-
-    ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
+    IQTREE(
+        ch_core_trimmed_msas, 
+        params.tree_model, 
+        params.tree_model_pmsf
+    )
+        .phylogeny
+        .set { ch_core_gene_trees } 
+        
+    IQTREE_REMAINING(
+        ch_rem_trimmed_msas, 
+        params.tree_model, 
+        params.tree_model_pmsf
+    )
+        .phylogeny
+        .set { ch_rem_gene_trees }
+        
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
 
