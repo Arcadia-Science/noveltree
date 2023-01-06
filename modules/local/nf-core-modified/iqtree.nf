@@ -9,7 +9,7 @@ process IQTREE {
         'quay.io/biocontainers/iqtree:2.1.4_beta--hdcc8f71_0' }"
 
     input:
-    tuple path(alignment)
+    path(alignment)
     val model
     val pmsf_model
 
