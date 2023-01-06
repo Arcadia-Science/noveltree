@@ -26,30 +26,6 @@ if (params.mcl_inflation) {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
 
-// Set custom parameters to either user-specified or default values. 
-// Try to use user-specified values, otherwise use defaults.
-if (params.min_num_spp_per_og) {
-    ch_min_num_spp = Channel.of(params.min_num_spp_per_og)
-} else { ch_min_num_spp = Channel.of('4') }
-if (params.min_num_grp_per_og) {
-    ch_min_num_grp = Channel.of(params.min_num_grp_per_og)
-} else { ch_min_num_grp = Channel.of('1') }
-if (params.max_copy_num_spp_tree) {
-    ch_max_copy_num1 = Channel.of(params.max_copy_num_spp_tree)
-} else { ch_max_copy_num1 = Channel.of('5') }
-if (params.max_copy_num_gene_trees) {
-    ch_max_copy_num2 = Channel.of(params.max_copy_num_gene_trees)
-} else { ch_max_copy_num2 = Channel.of('10') }
-if (params.download_annots) {
-    ch_download_annots = Channel.of(params.download_annots)
-} else { ch_download_annots = Channel.of('none') }
-if (params.tree_model) {
-    ch_tree_model = Channel.of(params.tree_model)
-} else { ch_tree_model = Channel.of('TEST') }
-if (params.tree_model_pmsf) {
-    ch_tree_model_pmsf = Channel.of(params.tree_model_pmsf)
-} else { ch_tree_model_pmsf = Channel.of('none') }
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -239,10 +215,10 @@ workflow PHYLORTHOLOGY {
     FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
-        ch_min_num_spp,
-        ch_min_num_grp,
-        ch_max_copy_num1,
-        ch_max_copy_num2
+        params.min_num_spp_per_og,
+        params.min_num_grp_per_og,
+        params.max_copy_num_spp_tree,
+        params.max_copy_num_gene_trees
     )
 
     //
@@ -276,6 +252,7 @@ workflow PHYLORTHOLOGY {
         params.tree_model_pmsf
     )
         .phylogeny
+        .collect()
         .set { ch_core_gene_trees } 
         
     IQTREE_REMAINING(
@@ -284,6 +261,7 @@ workflow PHYLORTHOLOGY {
         params.tree_model_pmsf
     )
         .phylogeny
+        .collect()
         .set { ch_rem_gene_trees }
         
     ch_versions = ch_versions.mix(IQTREE.out.versions)
@@ -298,7 +276,7 @@ workflow PHYLORTHOLOGY {
     // All outputs are needed for species tree inference, but not for the
     // remainder.
     SPECIES_TREE_PREP(
-        ch_core_gene_trees.collect(),
+        ch_core_gene_trees,
         ch_core_trimmed_msas.collect()
     )
         .set { ch_core_spptree_prep }
@@ -309,7 +287,7 @@ workflow PHYLORTHOLOGY {
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
     GENE_TREE_PREP(
-        ch_rem_gene_trees.collect(),
+        ch_rem_gene_trees,
         ch_rem_trimmed_msas.collect()
     )
         .set { ch_rem_genetree_prep }
