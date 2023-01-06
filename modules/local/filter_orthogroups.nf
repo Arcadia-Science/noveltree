@@ -34,11 +34,6 @@ process FILTER_ORTHOGROUPS {
 
     script:
     def args = task.ext.args ?: ''
-    def num_spp = min_num_spp ? "${min_num_spp}" : '4'
-    def num_grp = min_num_groups ? "${min_num_groups}" : '2'
-    def copy_num1 = max_copy_num_filt1 ? "${max_copy_num_filt1}" : '5'
-    def copy_num2 = max_copy_num_filt2 ? "${max_copy_num_filt2}" : '10'
-
     """
     # The below summarizes the distribution of orthogroups across
     # species and across taxonomic groups, filtering them for
@@ -48,7 +43,7 @@ process FILTER_ORTHOGROUPS {
     ogSppCounts=${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
 
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
-    og-tax-summary.R \$ogSppCounts $samplesheet $num_spp $num_grp $copy_num1 $copy_num2
+    og-tax-summary.R \$ogSppCounts $samplesheet $min_num_spp $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
 
     # Add a column of filepaths to these
     msaDir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
