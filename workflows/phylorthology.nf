@@ -40,6 +40,9 @@ if (params.max_copy_num_spp_tree) {
 if (params.max_copy_num_gene_trees) {
     ch_max_copy_num2 = Channel.of(params.max_copy_num_gene_trees)
 } else { ch_max_copy_num2 = Channel.of('10') }
+if (params.download_annots) {
+    ch_download_annots = Channel.of(params.download_annots)
+} else { ch_download_annots = Channel.of('none') }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,9 +137,10 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: Annotate UniProt Proteins
     //
-    ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
+    ANNOTATE_UNIPROT(ch_all_data.complete_prots, ch_download_annots)
         .cogeqc_annotations
         .collect()
+        .set { ch_annotations }
     ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
