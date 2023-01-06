@@ -59,7 +59,7 @@ process DIAMOND_BLASTP {
     diamond \\
         blastp \\
         --out \$outName \\
-        --outfmt ${outfmt} ${columns} \\
+        --outfmt ${outfmt} \\
         --threads ${task.cpus} \\
         --query $fasta \\
         --compress 1 \\
