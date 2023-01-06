@@ -126,18 +126,19 @@ workflow PHYLORTHOLOGY {
         []
     )
 
-    // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD (
-        ch_all_data.complete_prots,
-        "broad",
-        [],
-        []
-    )
+    // // Broad taxonomic scale (Eukaryotes)
+    // BUSCO_BROAD (
+    //     ch_all_data.complete_prots,
+    //     "broad",
+    //     [],
+    //     []
+    // )
 
     //
     // MODULE: Annotate UniProt Proteins
     //
-    ANNOTATE_UNIPROT(ch_all_data.complete_prots, ch_download_annots)
+    ch_all_data_ann = ch_download_annots.combine(ch_all_data.complete_prots)
+    ANNOTATE_UNIPROT(ch_all_data_ann)
         .cogeqc_annotations
         .collect()
         .set { ch_annotations }
