@@ -134,6 +134,33 @@ An extensive list of references for the tools used by the pipeline can be found 
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
+## Parameter specification
+TODO: This is a work in progress
+We have set sensible parameter choices as default for each module, however several modules have parameters that are best-suited to user specification on a per-analysis basis. The section below describes, for each module, how these specifications are to be made as well as what some common specifications may be. Where necessary, refer to the documentation of each respective software for a more complete list of possible parameter choices.
+
+### Module:
+#### ANNOTATE_UNIPROT:
+ i) "download_annots": Specified in the parameter file. Parameter may be specified as one of three things: 
+  a) "all" - download all 15 possible sets of protein annotations from UniProt where possible. 
+  b) "none" - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments
+  c) A quoted, comma separated string of numbers 1-5: example "1,2,4,7,10". Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
+   1: Minimal set of protein annotations/metadata required for COGEQC orthogroup inference. Include protein external IDs for InterPro, SupFam, ProSite, HOGENOM, OMA, and OrthoDB
+   2: General protein metadata, including protein name, length, mass, information from mass spec experiments, host organisms (for viral proteins), which organelle (if relevant) encoding the protein, and any AA variants due to RNA editing.
+   3: Gene ontologies - biological process, cellular component, molecular function, ontology ID
+   4: Function: Multiple annotations pertaining to the molecular function of the protein
+   5: Interactions
+   6: Protein-protein interactions (external database reference IDs)
+   7: Pathology & biotech
+   8: Subcellular location
+   9: Post-translation modification (PTM) / processsing
+   10: PTM databases 
+   11: Protein family & domains
+   12: Protein family/group databases
+   13: Sequence databases
+   14: 3D structure databases
+   15: Enzyme and pathway databases
+   16: Phylogenomic databases
+
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
