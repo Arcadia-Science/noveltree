@@ -93,20 +93,19 @@ seq_xortho <-
     'xref_eggnog')
 
 annotations <- list(
-    seq_cogeqc, seq_meta, seq_funcs, seq_inter,
+    seq_cogeqc, seq_meta, seq_gos, seq_funcs, seq_inter,
     seq_interdbs, seq_biotech, seq_localize, seq_ptm,
     seq_xptmdb, seq_domains, seq_xfamdom, seq_xseqdbs,
     seq_x3ddbs, seq_xenzpath, seq_xortho
     )
 
 annot_names <-
-    c('-cogeqc-annotations.tsv', '-prot-metadat.tsv', '-prot-functions.tsv',
-    '-prot-interactions.tsv', '-prot-interactions-xref.tsv',
-    '-prot-biotech-annots.tsv', '-prot-localization.tsv',
-    '-prot-post-trans-mods.tsv', '-prot-post-trans-mods-xref.tsv',
-    '-prot-fams-domains.tsv', '-prot-fams-domains-xref.tsv',
-    '-prot-seq-dbs-xref.tsv', '-prot-3d-dbs-xref.tsv',
-    '-prot-enzyme-paths-xref.tsv', '-prot-orthology-dbs.tsv')
+    c('-cogeqc-annotations.tsv', '-prot-metadat.tsv', '-prot-gene-ontologies.tsv', 
+    '-prot-functions.tsv', '-prot-interactions.tsv', '-prot-interactions-xref.tsv',
+    '-prot-biotech-annots.tsv', '-prot-localization.tsv', '-prot-post-trans-mods.tsv', 
+    '-prot-post-trans-mods-xref.tsv', '-prot-fams-domains.tsv', '-prot-fams-domains-xref.tsv',
+    '-prot-seq-dbs-xref.tsv', '-prot-3d-dbs-xref.tsv', '-prot-enzyme-paths-xref.tsv', 
+    '-prot-orthology-dbs.tsv')
 
 # get the list of accessions for this species.
 accessions <- read.table(ids, sep = '\t')$V1
@@ -121,7 +120,7 @@ up <- UniProt.ws::UniProt.ws(tax_id)
 # We now use the annots_to_download user variable to determine which we are
 # downloading. 
 if (annots_to_download == "all") {
-    anns <- 1:15
+    anns <- 1:16
 } else if (annots_to_download == "none") {
     anns <- 1
 } else {
