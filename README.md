@@ -141,9 +141,9 @@ We have set sensible parameter choices as default for each module, however sever
 ### Module:
 #### ANNOTATE_UNIPROT:
  i) "download_annots": Specified in the parameter file. Parameter may be specified as one of three things: 
-  a) "all" - download all 15 possible sets of protein annotations from UniProt where possible. 
+  a) "all" - download all 16 possible sets of protein annotations from UniProt where possible. 
   b) "none" - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments
-  c) A quoted, comma separated string of numbers 1-5: example "1,2,4,7,10". Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
+  c) A quoted, comma separated string of select numbers 1-16: example "1,2,4,7,10". Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
    1: Minimal set of protein annotations/metadata required for COGEQC orthogroup inference. Include protein external IDs for InterPro, SupFam, ProSite, HOGENOM, OMA, and OrthoDB
    2: General protein metadata, including protein name, length, mass, information from mass spec experiments, host organisms (for viral proteins), which organelle (if relevant) encoding the protein, and any AA variants due to RNA editing.
    3: Gene ontologies - biological process, cellular component, molecular function, ontology ID
