@@ -29,23 +29,22 @@ process ORTHOFINDER_MCL {
     do
         mv \$f \$(echo \$f | sed "s/TestBlast/Blast/g")
     done
-
-    # Check if we're running an mcl test or not - this determines whether we
-    # write orthogroup sequence files or not. 
-    if [ "$output_directory" == "mcl_test_dataset" ]; then
-        out_flag="-og"
-    else
-        out_flag="-os"
-    fi
     
     orthofinder \\
         -b ./ \\
         -n "Inflation_${inflation_param}" \\
         -I $inflation_param \\
-        -M msa -X -z \$out_flag \\
+        -M msa -X -z -os \\
         -a ${task.cpus} \\
         $args
 
+    # Check if we're running an mcl test or not:
+    # if so, delete the sequence files, which we will not be using and take up
+    # significant, unnecessary space. 
+    if [ "$output_directory" == "mcl_test_dataset" ]; then
+        rm -r Orthogroup_Sequences/
+    fi
+    
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
     mv OrthoFinder ${output_directory}
     """
