@@ -27,7 +27,7 @@ process MAFFT {
     prefix=\$(basename "${fasta}" .fa)
 
     mafft \\
-        --thread ${task.cpus} \\
+        --thread -1 \\
         ${args} ${fasta} > \$prefix-mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
