@@ -38,6 +38,13 @@ process ORTHOFINDER_MCL {
         -a ${task.cpus} \\
         $args
 
+    # Check if we're running an mcl test or not:
+    # if so, delete the sequence files, which we will not be using and take up
+    # significant, unnecessary space. 
+    if [ "$output_directory" == "mcl_test_dataset" ]; then
+        rm -r Orthogroup_Sequences/
+    fi
+    
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
     mv OrthoFinder ${output_directory}
     """
