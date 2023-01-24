@@ -93,6 +93,7 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
     mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
+    uniprot_prots_list = ch_all_data.uniprot_prots.collect { it[1] }
 
     //
     // MODULE: Run BUSCO
@@ -119,8 +120,7 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: Annotate UniProt Proteins
     //
-    //ch_all_data_ann = ch_download_annots.combine(ch_all_data.complete_prots)
-    ANNOTATE_UNIPROT(ch_all_data.complete_prots, params.download_annots)
+    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots, params.download_annots)
         .cogeqc_annotations
         .collect()
         .set { ch_annotations }
