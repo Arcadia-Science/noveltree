@@ -22,7 +22,6 @@ process ORTHOFINDER_MCL {
 
     script:
     def args = task.ext.args ?: ''
-    def inflation_param = mcl_inflation ? "${mcl_inflation}" : '1.5'
 
     """
     for f in \$(ls TestBlast*)
@@ -32,8 +31,8 @@ process ORTHOFINDER_MCL {
 
     orthofinder \\
         -b ./ \\
-        -n "Inflation_${inflation_param}" \\
-        -I $inflation_param \\
+        -n "Inflation_${mcl_inflation}" \\
+        -I $mcl_inflation \\
         -M msa -X -os -z \\
         -a ${task.cpus} \\
         $args
