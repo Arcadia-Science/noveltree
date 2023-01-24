@@ -173,24 +173,44 @@ orthodb <- Filter(function(a) any(!is.na(a)), orthodb)
 # Great, now we can pair these annotations with the orthogroups, assessing how
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
-interpro_assess <-
-    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(interpro)),],
-                       interpro)
-supfam_assess <-
-    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(supfam)),],
-                       supfam)
-prosite_assess <-
-    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(prosite)),],
-                       prosite)
-hogenom_assess <-
-    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(hogenom)),],
-                       hogenom)
-oma_assess <-
-    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(oma)),],
-                       oma)
-orthodb_assess <-
-    assess_orthogroups(orthogroups[which(orthogroups$Species %in% names(orthodb)),],
-                       orthodb)
+# Count the number of species for which we have each summary statistic - we can
+# only calculate these if there is >= 2 species. 
+og_assess_list <- list(
+    list(
+        og_set = orthogroups[which(orthogroups$Species %in% names(interpro)),], 
+        ann_set = interpro, spp_count = length(names(interpro))),
+    list(
+        og_set = orthogroups[which(orthogroups$Species %in% names(supfam)),], 
+        ann_set = supfam, spp_count = length(names(supfam))),
+    list(
+        og_set = orthogroups[which(orthogroups$Species %in% names(prosite)),], 
+        ann_set = prosite, spp_count = length(names(prosite))),
+    list(
+        og_set = orthogroups[which(orthogroups$Species %in% names(hogenom)),], 
+        ann_set = hogenom, spp_count = length(names(hogenom))),
+    list(
+        og_set = orthogroups[which(orthogroups$Species %in% names(oma)),], 
+        ann_set = oma, spp_count = length(names(oma))),
+    list(
+        og_set = orthogroups[which(orthogroups$Species %in% names(orthodb)),], 
+        ann_set = orthodb, spp_count = length(names(orthodb)))
+)
+
+# A quick function to run the assessment in parallel, checking that there are
+# enough species
+get_assessments <- 
+    function(i){
+        if(og_assess_list[[i]]$spp_count > 1){
+            assess <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
+            assess <- mean(assess$Mean_score)
+        }else{
+            assess <- NA
+        }
+        return(assess)
+    }
+
+# Now, run each assessment simultaneously to save time
+assessment_res <- mclapply(1:6, get_assessments, mc.cores = 6)
 
 # Read in the orthofinder orthogroup statistics
 ortho_stats <- get_orthofinder_stats(og_stats_dir = og_stat_dir, species = spps[which(spps %in% species)])
@@ -227,12 +247,12 @@ og_quality <-
         num_ogs_gt_4spp = length(which(og_freqs >= 4)),
         num_ogs_all_spp = length(which(og_freqs == max(og_freqs))),
         per_spp_4spp_og_counts = mean(per_spp_og_counts),
-        interpro_score = mean(interpro_assess$Mean_score),
-        supfam_score = mean(supfam_assess$Mean_score),
-        prosite_score = mean(prosite_assess$Mean_score),
-        hogenom_score = mean(hogenom_assess$Mean_score),
-        oma_score = mean(oma_assess$Mean_score),
-        orthodb_score = mean(orthodb_assess$Mean_score),
+        interpro_score = assessment_res[[1]],
+        supfam_score = assessment_res[[2]],
+        prosite_score = assessment_res[[3]],
+        hogenom_score = assessment_res[[4]],
+        oma_score = assessment_res[[5]],
+        orthodb_score = assessment_res[[6]],
         perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
         total_num_ss_ogs = sum(ortho_stats$stats$n_ss_ogs),
         mean_num_ss_ogs = mean(ortho_stats$stats$n_ss_ogs),
