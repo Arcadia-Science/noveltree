@@ -10,7 +10,11 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "mcl_inflation", "outdir"],
+            "required": [
+                "input",
+                "mcl_inflation",
+                "outdir"
+            ],
             "properties": {
                 "input": {
                     "type": "string",
@@ -95,7 +99,14 @@
                     "description": "Method used to save pipeline results to output directory.",
                     "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
                     "fa_icon": "fas fa-copy",
-                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "move"
+                    ],
                     "hidden": true
                 },
                 "email_on_fail": {
@@ -165,5 +176,47 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "busco_lineages_path": {
+            "type": "string",
+            "default": "None",
+            "description": "Optional path to where BUSCO lineage datasets are stored remotely (e.g. on S3)."
+        },
+        "download_annots": {
+            "type": "string",
+            "default": "none",
+            "description": "Option specifying the protein annotations the user would like to download. See README for a description of options."
+        },
+        "min_num_spp_per_og": {
+            "type": "integer",
+            "default": 4,
+            "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
+        },
+        "min_num_grp_per_og": {
+            "type": "integer",
+            "default": 1,
+            "description": "Minimum number of higher-level taxonomic groups included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
+        },
+        "max_copy_num_spp_tree": {
+            "type": "integer",
+            "default": 5,
+            "description": "Maximum mean per-species orthogroup gene copy allowed for species tree inference."
+        },
+        "max_copy_num_gene_trees": {
+            "type": "integer",
+            "default": 10,
+            "description": "Maximum mean per-species orthogroup gene copy allowed for gene family tree / species tree reconciliation."
+        },
+        "tree_model": {
+            "type": "string",
+            "default": "TEST",
+            "description": "AA/nucleotide substitution model used by IQ-TREE for gene family tree inference. Determined automatically by default."
+        },
+        "tree_model_pmsf": {
+            "type": "string",
+            "default": "none",
+            "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
+        }
+    }
 }
