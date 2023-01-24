@@ -217,6 +217,30 @@
             "type": "string",
             "default": "none",
             "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
+        },
+        "custom_config_version": {
+            "type": "string",
+            "default": "master"
+        },
+        "custom_config_base": {
+            "type": "string",
+            "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+        },
+        "config_profile_description": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_contact": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_url": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_name": {
+            "type": "string",
+            "default": null
         }
     }
 }
