@@ -6,12 +6,7 @@ library(cowplot)
 library(elbow)
 
 # Read in summaries of MCL Inflation parameter performance.
-fpaths <- list.files(pattern = 'summary.tsv')
-fs <- list()
-for(i in 1:length(fpaths)){
-  fs[[i]] <- read.delim(fpaths[[i]])
-}
-res <- do.call(rbind, fs)
+res <- read.delim('cogeqc-results.tsv')
 
 # Subset to the columns we're using
 res <- res[,c(1:3,5:12,15)]
