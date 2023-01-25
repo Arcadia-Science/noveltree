@@ -27,8 +27,8 @@ process FILTER_ORTHOGROUPS {
     path "all_ogs_counts.csv"           , emit: all_ogs
     path "spptree_core_ogs_counts.csv"  , emit: spptree_core_ogs
     path "genetree_core_ogs_counts.csv" , emit: genetree_core_ogs
-    path "SpeciesTreeFastas/*.fa"      , emit: spptree_fas
-    path "GeneTreeFastas/*.fa"         , emit: genetree_fas
+    path "SpeciesTreeFastas/*.fa"       , emit: spptree_fas
+    path "GeneTreeFastas/*.fa"          , emit: genetree_fas
 
     when:
     task.ext.when == null || task.ext.when
