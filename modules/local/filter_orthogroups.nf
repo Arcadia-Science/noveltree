@@ -59,12 +59,15 @@ process FILTER_ORTHOGROUPS {
     while IFS= read -r line
     do
         # Copy the file to the destination directory
-        cp "\$line" SpeciesTreeFastas/
+        cp "\$line" species_tree_og_msas/
     done < spptree_core_og_fpaths.txt
     while IFS= read -r line
     do
         # Copy the file to the destination directory
-        cp "\$line" GeneTreeFastas/
+        cp "\$line" gene_tree_og_msas/
     done < genetree_core_og_fpaths.txt
+    
+    # Remove these intermediate files
+    rm *fpaths.txt
     """
 }
