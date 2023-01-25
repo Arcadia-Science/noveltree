@@ -9,7 +9,7 @@ process FILTER_ORTHOGROUPS {
         'austinhpatton123/cogeqc-1.2.0_r-4.2.2': '' }"
 
     publishDir(
-        path: "${params.outdir}/orthofinder/full_analysis",
+        path: "${params.outdir}/filtered_orthogroups",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -23,11 +23,12 @@ process FILTER_ORTHOGROUPS {
     val max_copy_num_filt2  // Max copy number for all other gene family tree inference
 
     output:
+    path "*"                            , emit: filtered_ogs
     path "all_ogs_counts.csv"           , emit: all_ogs
     path "spptree_core_ogs_counts.csv"  , emit: spptree_core_ogs
     path "genetree_core_ogs_counts.csv" , emit: genetree_core_ogs
-    path "SpeciesTreeFastas/*.fa"       , emit: spptree_fas
-    path "GeneTreeFastas/*.fa"          , emit: genetree_fas
+    path "SpeciesTreeFastas/*.fa"      , emit: spptree_fas
+    path "GeneTreeFastas/*.fa"         , emit: genetree_fas
 
     when:
     task.ext.when == null || task.ext.when
