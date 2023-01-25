@@ -15,7 +15,7 @@ process ORTHOFINDER_MCL {
     val output_directory
 
     output:
-    path("*/Results_Inflation*"), emit: inflation_dir
+    path("Results_Inflation*"), emit: inflation_dir
 
     when:
     task.ext.when == null || task.ext.when
@@ -45,6 +45,6 @@ process ORTHOFINDER_MCL {
     fi
     
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    mv OrthoFinder ${output_directory}
+    mv OrthoFinder/* ${output_directory}
     """
 }
