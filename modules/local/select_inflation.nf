@@ -6,7 +6,7 @@ process SELECT_INFLATION {
         'austinhpatton123/select_mcl_inflation_r-4.2.2_elbow_tidy_reshape_cowplot': '' }"
 
     publishDir(
-        path: "${params.outdir}/orthogroup-summaries",
+        path: "${params.outdir}/orthogroup_summaries",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -26,7 +26,12 @@ process SELECT_INFLATION {
     """
     # Pull in the summaries produced by each MCL inflation parameter and
     # identify the parameter value that produces the best quality results.
-
+    # Combine the per-inflation-parameter tables into a single table 
+    awk 'FNR==1 && NR!=1{next;}{print}' *.tsv > cogeqc-results.tsv
+    
+    #Clean up
+    rm *-cogeqc-summary.tsv
+    
     # Run the script to summarize and produce a figure of these results.
     select_inflation.R
 
