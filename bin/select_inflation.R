@@ -43,33 +43,42 @@ for(i in 1:length(vars)){
   # As a safety, check if the values are constant for all inflation parameters:
   # If so, we'll ignore these
   invariant[i] <- var(res$variable == vars[i]) == 0
-
-  if(i %in% c(1:3, 10:11)){
-    tmp.res <- res[which(res$variable == vars[i]),]
-    inflect <-
-      elbow(tmp.res[,c(1,3)])$inflation_param_selected
-    best[i] <- inflect
-
-    plts[[i]] <-
-      ggplot(data = tmp.res,
-             aes(x = inflation_param, y = value)) +
-      theme_classic() +
-      geom_vline(xintercept = inflect) +
-      geom_point(size = 3) +
-      geom_line() +
-      ylab(ylabs[i])
+  
+  # Get the results for this summary stat  
+  tmp.res <- res[which(res$variable == vars[i]),]
+  # A check to make sure that we are not dealing with missing values only
+  if(sum(is.na(tmp.res$value)) != length(tmp.res$value)){
+    if(i %in% c(4,8)){
+      # A check to make sure that we are not dealing with missing values only
+      inflect <-
+        elbow(tmp.res[,c(1,3)])$inflation_param_selected
+      best <- c(best, inflect)
+    
+      plts[[i]] <-
+        ggplot(data = tmp.res,
+               aes(x = inflation_param, y = value)) +
+        theme_classic() +
+        geom_vline(xintercept = inflect) +
+        geom_point(size = 3) +
+        geom_line() +
+        ylab(ylabs[i])
+    }else{      
+      plts[[i]] <-
+        ggplot(data = tmp.res,
+               aes(x = inflation_param, y = value)) +
+        geom_point(size = 3) +
+        geom_line() +
+        ylab(ylabs[i]) +
+        theme_classic()
+    }
   }else{
-    tmp.res <- res[which(res$variable == vars[i]),]
-    best[i] <- tmp.res$inflation_param[which(tmp.res$value == max(tmp.res$value))]
-
-    plts[[i]] <-
-      ggplot(data = tmp.res,
-             aes(x = inflation_param, y = value)) +
-      geom_vline(xintercept = best[i]) +
-      geom_point(size = 3) +
-      geom_line() +
-      ylab(ylabs[i]) +
-      theme_classic()
+      plts[[i]] <-
+        ggplot(data = tmp.res,
+               aes(x = inflation_param, y = value)) +
+        theme_classic() +
+        geom_point(size = 3) +
+        geom_line() +
+        ylab(ylabs[i])
   }
 }
 
@@ -79,7 +88,7 @@ og_summs <-
             plts[[9]], plts[[10]], plts[[11]],
             ncol = 4, nrow = 3)
 
-best_i <- mean(best[which(invariant == FALSE)])
+best_i <- mean(best)
 
 ggsave(og_summs, filename = 'inflation_summaries.pdf',
        height = 9, width = 12)

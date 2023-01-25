@@ -6,14 +6,15 @@ process ANNOTATE_UNIPROT {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/protein-annotations",
+        path: "${params.outdir}/protein_annotations",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input:
     tuple val(meta), path(fasta)
-
+    val annots_to_download
+    
     output:
     path "*accessions.txt"  , emit: accessions
     path "*" , emit: all_annotations
@@ -40,7 +41,7 @@ process ANNOTATE_UNIPROT {
         # This R script uses the UniProt.ws bioconducter package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
 
-        UniProt-Protein-Annotation-NF.R $spp ${spp}-protein-accessions.txt
+        UniProt-Protein-Annotation-NF.R $annots_to_download $spp ${spp}-protein-accessions.txt
     fi
 
     cat <<-END_VERSIONS > versions.yml
