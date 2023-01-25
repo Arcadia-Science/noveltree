@@ -15,7 +15,8 @@ process SELECT_INFLATION {
     path og_summaries // Files with summaries of orthogroups inferred using a specific inflation parameter
 
     output:
-    path "best-inflation-param.txt", emit: best_inflation
+    path "cogeqc_results.tsv" , emit: cogeqc_summary
+    path "best_inflation_param.txt", emit: best_inflation
     path "inflation_summaries.pdf",  emit: summary_plot
     path "versions.yml" ,            emit: versions
 
@@ -27,17 +28,17 @@ process SELECT_INFLATION {
     # Pull in the summaries produced by each MCL inflation parameter and
     # identify the parameter value that produces the best quality results.
     # Combine the per-inflation-parameter tables into a single table 
-    awk 'FNR==1 && NR!=1{next;}{print}' *.tsv > cogeqc-results.tsv
+    awk 'FNR==1 && NR!=1{next;}{print}' *.tsv > cogeqc_results.tsv
     
     #Clean up
-    rm *-cogeqc-summary.tsv
+    rm *_cogeqc_summary.tsv
     
     # Run the script to summarize and produce a figure of these results.
     select_inflation.R
 
     # And spit out the value of the selected inflation parameter to be
     # captured into a channel from stdout
-    sed -i "s/\\[1] //g" best-inflation-param.txt
+    sed -i "s/\\[1] //g" best_inflation_param.txt
 
     cat <<- END_VERSIONS > versions.yml
     "${task.process}":
