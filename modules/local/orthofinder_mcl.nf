@@ -15,7 +15,7 @@ process ORTHOFINDER_MCL {
     val output_directory
 
     output:
-    path("Results_Inflation*"), emit: inflation_dir
+    path("*/Results_Inflation*"), emit: inflation_dir
 
     when:
     task.ext.when == null || task.ext.when
