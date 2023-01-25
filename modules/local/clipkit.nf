@@ -15,7 +15,7 @@ process CLIPKIT {
     path(fasta)   // Filepaths to the MSAs
 
     output:
-    path("*-clipkit.fa")                  , emit: trimmed_msas
+    path("*_clipkit.fa")                  , emit: trimmed_msas
     path "versions.yml"                   , emit: versions
 
     when:
@@ -25,10 +25,10 @@ process CLIPKIT {
     script:
     def args = task.ext.args ?: ''
     """
-    prefix=\$(basename "${fasta}" -mafft.fa)
+    prefix=\$(basename "${fasta}" _mafft.fa)
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
-    clipkit ${fasta} -o \$prefix-clipkit.fa $args
+    clipkit ${fasta} -o \${prefix}_clipkit.fa $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

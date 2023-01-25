@@ -43,7 +43,7 @@ process FILTER_ORTHOGROUPS {
     ogSppCounts=${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
 
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
-    og-tax-summary.R \$ogSppCounts $samplesheet $min_num_spp $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
+    og_tax_summary.R \$ogSppCounts $samplesheet $min_num_spp $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
 
     # Add a column of filepaths to these
     msaDir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
