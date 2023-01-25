@@ -14,11 +14,6 @@ spp <- args[2]
 # Also specified from the commandline.
 ids <- args[3]
 
-# Because this is going to be a fair bit of information,
-# let's make a new directory to house these outputs/gene ontologies,
-# one for each species.
-dir.create(file.path(spp), showWarnings = FALSE)
-
 # Specify the fields that we would like to download.
 common_cols <- c('organism_name', 'organism_id')
 seq_cogeqc <-
@@ -126,6 +121,13 @@ if (annots_to_download == "all") {
 } else {
     anns <- annots_to_download
 }
+
+# If pulling specific annotations, create a new directory to house them, as
+# this could be quite a bit of information. 
+if (annots_to_download != "none") {
+    dir.create(file.path(spp), showWarnings = FALSE)
+}
+
 for(i in anns){
     annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
     to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
