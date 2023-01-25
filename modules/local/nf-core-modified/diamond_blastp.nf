@@ -53,7 +53,6 @@ process DIAMOND_BLASTP {
     if [ "$testing_mcl" == "true" ]; then
         outName="TestBlast\${sppQuery}_\${sbbDB}.${output_extension}"
     else
-        rm TestBlast* # Clean up old blast results from mcl testing
         outName="Blast\${sppQuery}_\${sbbDB}.${output_extension}"
     fi
 
