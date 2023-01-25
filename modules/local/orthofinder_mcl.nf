@@ -45,7 +45,8 @@ process ORTHOFINDER_MCL {
     fi
     
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    mv OrthoFinder/Results_Inflation*/ ${output_directory}
+    mkdir ${output_directory}
+    mv OrthoFinder/Results_Inflation_${mcl_inflation}/ ${output_directory}/
     rm -r OrthoFinder/
     """
 }
