@@ -63,7 +63,7 @@ process BUSCO {
     busco \\
         --cpu ${task.cpus} \\
         --in "\$INPUT_SEQS" \\
-        --out ${prefix}-busco \\
+        --out ${prefix}_busco \\
         --mode ${meta.mode} \\
         $busco_lineage \\
         $busco_lineage_dir \\
@@ -74,8 +74,8 @@ process BUSCO {
     rm -rf "\$INPUT_SEQS"
 
     # Move files to avoid staging/publishing issues
-    mv ${prefix}-busco/batch_summary.txt ${prefix}-busco.batch_summary.txt
-    mv ${prefix}-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+    mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
+    mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

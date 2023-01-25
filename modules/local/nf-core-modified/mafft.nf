@@ -15,7 +15,7 @@ process MAFFT {
     path(fasta)
 
     output:
-    path("*-mafft.fa") , emit: msas
+    path("*_mafft.fa") , emit: msas
     path "versions.yml"           , emit: versions
 
     when:
@@ -28,7 +28,7 @@ process MAFFT {
 
     mafft \\
         --thread -1 \\
-        ${args} ${fasta} > \$prefix-mafft.fa
+        ${args} ${fasta} > \${prefix}_mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
