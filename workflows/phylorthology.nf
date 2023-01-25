@@ -93,6 +93,7 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
     mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
+    uniprot_prots_list = ch_all_data.uniprot_prots.collect { it[1] }
 
     //
     // MODULE: Run BUSCO
@@ -119,9 +120,10 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: Annotate UniProt Proteins
     //
-    ch_annotations = ANNOTATE_UNIPROT(ch_all_data.complete_prots)
+    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots, params.download_annots)
         .cogeqc_annotations
         .collect()
+        .set { ch_annotations }
     ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
@@ -142,8 +144,7 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
         ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
         "txt",
-        "true",
-        []
+        "true"
     )
 
     // And for the full dataset, to be clustered into orthogroups using
@@ -153,8 +154,7 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.fastas.flatten(),
         ORTHOFINDER_PREP.out.diamonds.flatten(),
         "txt",
-        "false",
-        []
+        "false"
     )
     ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
 
@@ -212,14 +212,13 @@ workflow PHYLORTHOLOGY {
     // across species and taxonomic group.
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
-    // TODO: parametrize the variables here
     FILTER_ORTHOGROUPS (
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
-        "4",
-        "4",
-        "1",
-        "2"
+        params.min_num_spp_per_og,
+        params.min_num_grp_per_og,
+        params.max_copy_num_spp_tree,
+        params.max_copy_num_gene_trees
     )
 
     //
@@ -247,9 +246,24 @@ workflow PHYLORTHOLOGY {
     // MODULE: IQTREE
     // Infer gene-family trees from the trimmed MSAs
     //
-    ch_core_gene_trees = IQTREE(ch_core_trimmed_msas, []).phylogeny
-
-    ch_rem_gene_trees = IQTREE_REMAINING(ch_rem_trimmed_msas, []).phylogeny
+    IQTREE(
+        ch_core_trimmed_msas, 
+        params.tree_model, 
+        params.tree_model_pmsf
+    )
+        .phylogeny
+        .collect()
+        .set { ch_core_gene_trees } 
+        
+    IQTREE_REMAINING(
+        ch_rem_trimmed_msas, 
+        params.tree_model, 
+        params.tree_model_pmsf
+    )
+        .phylogeny
+        .collect()
+        .set { ch_rem_gene_trees }
+        
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
 
@@ -262,7 +276,7 @@ workflow PHYLORTHOLOGY {
     // All outputs are needed for species tree inference, but not for the
     // remainder.
     SPECIES_TREE_PREP(
-        ch_core_gene_trees.collect(),
+        ch_core_gene_trees,
         ch_core_trimmed_msas.collect()
     )
         .set { ch_core_spptree_prep }
@@ -273,7 +287,7 @@ workflow PHYLORTHOLOGY {
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
     GENE_TREE_PREP(
-        ch_rem_gene_trees.collect(),
+        ch_rem_gene_trees,
         ch_rem_trimmed_msas.collect()
     )
         .set { ch_rem_genetree_prep }

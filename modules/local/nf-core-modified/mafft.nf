@@ -27,12 +27,8 @@ process MAFFT {
     prefix=\$(basename "${fasta}" .fa)
 
     mafft \\
-        --thread ${task.cpus} \\
-        --localpair \\
-        --maxiterate 1000 \\
-        --anysymbol \\
-        ${fasta} \\
-        > \$prefix-mafft.fa
+        --thread -1 \\
+        ${args} ${fasta} > \$prefix-mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

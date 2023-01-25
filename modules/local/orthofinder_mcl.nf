@@ -22,7 +22,6 @@ process ORTHOFINDER_MCL {
 
     script:
     def args = task.ext.args ?: ''
-    def inflation_param = mcl_inflation ? "${mcl_inflation}" : '1.5'
 
     """
     for f in \$(ls TestBlast*)
@@ -32,12 +31,19 @@ process ORTHOFINDER_MCL {
 
     orthofinder \\
         -b ./ \\
-        -n "Inflation_${inflation_param}" \\
-        -I $inflation_param \\
+        -n "Inflation_${mcl_inflation}" \\
+        -I $mcl_inflation \\
         -M msa -X -os -z \\
         -a ${task.cpus} \\
         $args
-
+    
+    # Check if we're running an mcl test or not:
+    # if so, delete the sequence files, which we will not be using and take up
+    # significant, unnecessary space. 
+    if [ "$output_directory" == "mcl_test_dataset" ]; then
+        rm -r OrthoFinder/*/Orthogroup_Sequences/
+    fi
+    
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
     mv OrthoFinder ${output_directory}
     """
