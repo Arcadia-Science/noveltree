@@ -4,12 +4,15 @@ library(UniProt.ws)
 
 args = commandArgs(trailingOnly=TRUE)
 
+# Pull the string specifying annotations to download
+annots_to_download <- args[1]
+
 # Pull out the species names - this is to be specified from the commandline
-spp <- args[1]
+spp <- args[2]
 
 # Get the filepath to the protein accessions we'll be mapping.
 # Also specified from the commandline.
-ids <- args[2]
+ids <- args[3]
 
 # Because this is going to be a fair bit of information,
 # let's make a new directory to house these outputs/gene ontologies,
@@ -90,20 +93,19 @@ seq_xortho <-
     'xref_eggnog')
 
 annotations <- list(
-    seq_cogeqc, seq_meta, seq_funcs, seq_inter,
+    seq_cogeqc, seq_meta, seq_gos, seq_funcs, seq_inter,
     seq_interdbs, seq_biotech, seq_localize, seq_ptm,
     seq_xptmdb, seq_domains, seq_xfamdom, seq_xseqdbs,
     seq_x3ddbs, seq_xenzpath, seq_xortho
     )
 
 annot_names <-
-    c('-cogeqc-annotations.tsv', '-prot-metadat.tsv', '-prot-functions.tsv',
-    '-prot-interactions.tsv', '-prot-interactions-xref.tsv',
-    '-prot-biotech-annots.tsv', '-prot-localization.tsv',
-    '-prot-post-trans-mods.tsv', '-prot-post-trans-mods-xref.tsv',
-    '-prot-fams-domains.tsv', '-prot-fams-domains-xref.tsv',
-    '-prot-seq-dbs-xref.tsv', '-prot-3d-dbs-xref.tsv',
-    '-prot-enzyme-paths-xref.tsv', '-prot-orthology-dbs.tsv')
+    c('-cogeqc-annotations.tsv', '-prot-metadat.tsv', '-prot-gene-ontologies.tsv', 
+    '-prot-functions.tsv', '-prot-interactions.tsv', '-prot-interactions-xref.tsv',
+    '-prot-biotech-annots.tsv', '-prot-localization.tsv', '-prot-post-trans-mods.tsv', 
+    '-prot-post-trans-mods-xref.tsv', '-prot-fams-domains.tsv', '-prot-fams-domains-xref.tsv',
+    '-prot-seq-dbs-xref.tsv', '-prot-3d-dbs-xref.tsv', '-prot-enzyme-paths-xref.tsv', 
+    '-prot-orthology-dbs.tsv')
 
 # get the list of accessions for this species.
 accessions <- read.table(ids, sep = '\t')$V1
@@ -115,7 +117,16 @@ tax_id <- UniProt.ws::queryUniProt(paste0("accession:", accessions[1]),
 up <- UniProt.ws::UniProt.ws(tax_id)
 
 # And pull down annotations, removing rows for proteins without any annotations.
-for(i in 1:15){
+# We now use the annots_to_download user variable to determine which we are
+# downloading. 
+if (annots_to_download == "all") {
+    anns <- 1:16
+} else if (annots_to_download == "none") {
+    anns <- 1
+} else {
+    anns <- annots_to_download
+}
+for(i in anns){
     annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
     to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
 

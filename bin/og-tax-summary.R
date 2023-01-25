@@ -38,6 +38,9 @@ numspp <- rowSums(ogs[-1], na.rm = T)
 for(i in 2:ncol(ogs)){
     # Identify the species
     spp <- colnames(ogs)[i]
+    
+    # Strip the EukProt ID (if relevant)
+    spp <- sub("EP0.*?_", "", spp)
 
     # And the taxonomic group for this species
     grp <- unique(as.character(samples$taxonomy[which(samples$species == spp)]))
