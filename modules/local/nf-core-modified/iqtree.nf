@@ -10,7 +10,8 @@ process IQTREE {
 
     input:
     path(alignment)
-    val constant_sites
+    val model
+    val pmsf_model
 
     output:
     path("*.treefile")                  , emit: phylogeny
@@ -22,7 +23,6 @@ process IQTREE {
 
     script:
     def args = task.ext.args ?: ''
-    def fconst_args = constant_sites ? "-fconst $constant_sites" : ''
     def memory      = task.memory.toString().replaceAll(' ', '')
 
     """
@@ -39,29 +39,31 @@ process IQTREE {
         -nt AUTO \\
         -ntmax ${task.cpus} \\
         -mem \$memory \\
-        -m LG+F+G4 \\
-        $args \\
-        $fconst_args
+        -m $model \\
+        $args
 
-    # Identify the best number of threads
-    nt=\$(grep "BEST NUMBER" *.log | sed "s/.*: //g")
-
-    # Rename it and clean up
-    mv *.treefile guidetree.treefile
-    rm *fa.*
-
-    iqtree \\
-        -s $alignment \\
-        -nt \$nt \\
-        -mem \$memory \\
-        -m LG+C40+F+G4 \\
-        -ft guidetree.treefile \\
-        $args \\
-        $fconst_args
-
-    # Clean up
-    rm ./guidetree.treefile
-
+    # check if we're running a PMSF approximation - if so, do the following,
+    # treating the tree inferred above as a guide tree
+    if [ "$pmsf_model" != "none" ]; then
+        # Identify the best number of threads
+        nt=\$(grep "BEST NUMBER" *.log | sed "s/.*: //g")
+    
+        # Rename it and clean up
+        mv *.treefile guidetree.treefile
+        rm *fa.*
+    
+        iqtree \\
+            -s $alignment \\
+            -nt \$nt \\
+            -mem \$memory \\
+            -m $pmsf_model \\
+            -ft guidetree.treefile \\
+            $args
+            
+        # Clean up
+        rm ./guidetree.treefile
+    fi
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         iqtree: \$(echo \$(iqtree -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')

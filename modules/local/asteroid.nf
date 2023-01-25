@@ -33,7 +33,8 @@ process ASTEROID {
     asteroid \
     -i $treefile \
     -m $asteroid_map \
-    -p asteroid
+    -p asteroid \
+    $args
 
     # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml

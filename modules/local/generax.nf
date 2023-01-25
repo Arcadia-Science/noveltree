@@ -37,11 +37,8 @@ process GENERAX {
     generax \
     --species-tree $init_species_tree \
     --families $families \
-    --rec-model UndatedDTL \
-    --prune-species-tree \
-    --per-family-rates \
-    --strategy SPR \
-    --prefix GeneRax
+    --prefix GeneRax \
+    $args
     
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     for og in \$(ls GeneRax/results/)

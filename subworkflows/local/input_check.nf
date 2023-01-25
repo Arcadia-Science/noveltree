@@ -20,10 +20,15 @@ workflow INPUT_CHECK {
     complete_prots.filter {
         it[0].mcl_test == 'true'
     }.set { mcl_test_prots }
+    
+    complete_prots.filter {
+        it[0].uniprot == 'true'
+    }.set { uniprot_prots }
 
     emit:
     complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
     mcl_test_prots                            // channel: [ val(meta), [ mcl_test_prots ] ]
+    uniprot_prots                             // channel: [ val(meta), [ uniprot_prots ] ]
     complete_samplesheet = SAMPLESHEET_CHECK.out.csv
     versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
