@@ -86,8 +86,8 @@ species <- unique(orthogroups$Species)
 orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
 
 # Read in the annotations.
-annots <- list.files('./', pattern = "cogeqc-annotations.tsv")
-spps <- gsub("-cogeqc-annotations.tsv", "", annots)
+annots <- list.files('./', pattern = "cogeqc_annotations.tsv")
+spps <- gsub("_cogeqc_annotations.tsv", "", annots)
 
 # Reduce down to the species included in the MCL test dataset
 spps <- spps[which(spps %in% species)]
@@ -104,7 +104,7 @@ for(i in 1:length(spps)){
     spp <- spps[i] # So we can name the entry
 
     # read in their annotations
-    annotations <- read.delim(paste0('./', spp, '-cogeqc-annotations.tsv'), sep = "\t", header = T)
+    annotations <- read.delim(paste0('./', spp, '_cogeqc_annotations.tsv'), sep = "\t", header = T)
 
     # Identify which we have annotations for this species.
     non_missing <-
@@ -260,7 +260,7 @@ og_quality <-
     )
 
 # Write out to a tsv.
-write.table(og_quality, file = paste0('MCL-Inflation-', inflation, '-cogeqc-summary.tsv'), col.names = T, row.names = F, sep = '\t', quote = F)
+write.table(og_quality, file = paste0('MCL_Inflation_', inflation, '_cogeqc_summary.tsv'), col.names = T, row.names = F, sep = '\t', quote = F)
 
 sink("version.txt")
 packageVersion("cogeqc")
