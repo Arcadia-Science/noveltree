@@ -47,29 +47,29 @@ if (params.mcl_inflation) {
 //
 // SUBWORKFLOW
 //
-include { INPUT_CHECK                               } from '../subworkflows/local/input_check'
+include { INPUT_CHECK                               } from './subworkflows/local/input_check'
 
 //
 // MODULE
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { ORTHOFINDER_PREP                          } from '../modules/local/orthofinder_prep'
-include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
-include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
-include { ORTHOFINDER_MCL                           } from '../modules/local/orthofinder_mcl'
-include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
-include { COGEQC                                    } from '../modules/local/cogeqc'
-include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
-include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
-include { CLIPKIT                                   } from '../modules/local/clipkit'
-include { CLIPKIT as CLIPKIT_REMAINING              } from '../modules/local/clipkit'
-include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
-include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/species_tree_prep'
-include { ASTEROID                                  } from '../modules/local/asteroid'
-include { SPECIESRAX                                } from '../modules/local/speciesrax'
-include { GENERAX                                   } from '../modules/local/generax'
-include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
+include { ORTHOFINDER_PREP                          } from './modules/local/orthofinder_prep'
+include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from './modules/local/orthofinder_prep'
+include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from './modules/local/orthofinder_mcl'
+include { ORTHOFINDER_MCL                           } from './modules/local/orthofinder_mcl'
+include { ANNOTATE_UNIPROT                          } from './modules/local/annotate_uniprot'
+include { COGEQC                                    } from './modules/local/cogeqc'
+include { SELECT_INFLATION                          } from './modules/local/select_inflation'
+include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
+include { CLIPKIT                                   } from './modules/local/clipkit'
+include { CLIPKIT as CLIPKIT_REMAINING              } from './modules/local/clipkit'
+include { SPECIES_TREE_PREP                         } from './modules/local/species_tree_prep'
+include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from './modules/local/species_tree_prep'
+include { ASTEROID                                  } from './modules/local/asteroid'
+include { SPECIESRAX                                } from './modules/local/speciesrax'
+include { GENERAX                                   } from './modules/local/generax'
+include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,14 +82,14 @@ include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/ort
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { BUSCO as BUSCO_SHALLOW                    } from '../modules/nf-core-modified/busco'
-include { BUSCO as BUSCO_BROAD                      } from '../modules/nf-core-modified/busco'
-include { DIAMOND_BLASTP                            } from '../modules/nf-core-modified/diamond_blastp'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
-include { IQTREE                                    } from '../modules/nf-core-modified/iqtree'
-include { IQTREE as IQTREE_REMAINING                } from '../modules/nf-core-modified/iqtree'
-include { MAFFT                                     } from '../modules/nf-core-modified/mafft'
-include { MAFFT as MAFFT_REMAINING                  } from '../modules/nf-core-modified/mafft'
+include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-modified/busco'
+include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
+include { DIAMOND_BLASTP                            } from './modules/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
+include { IQTREE                                    } from './modules/nf-core-modified/iqtree'
+include { IQTREE as IQTREE_REMAINING                } from './modules/nf-core-modified/iqtree'
+include { MAFFT                                     } from './modules/nf-core-modified/mafft'
+include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-modified/mafft'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -126,7 +126,7 @@ workflow ARCADIASCIENCE_PHYLORTHOLOGY {
     // simultaneously
     //
     // Shallow taxonomic scale:
-    BUSCO_SHALLOW (
+    BUSCO_SHALLOW(
         ch_all_data.complete_prots,
         "shallow",
         [],
@@ -134,7 +134,7 @@ workflow ARCADIASCIENCE_PHYLORTHOLOGY {
     )
 
     // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD (
+    BUSCO_BROAD(
         ch_all_data.complete_prots,
         "broad",
         [],
@@ -236,7 +236,7 @@ workflow ARCADIASCIENCE_PHYLORTHOLOGY {
     // across species and taxonomic group.
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
-    FILTER_ORTHOGROUPS (
+    FILTER_ORTHOGROUPS(
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
         params.min_num_spp_per_og,
@@ -385,7 +385,7 @@ workflow ARCADIASCIENCE_PHYLORTHOLOGY {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    ARCADIASCIENCE_PHYLORTHOLOGY ()
+    ARCADIASCIENCE_PHYLORTHOLOGY()
 }
 
 /*
