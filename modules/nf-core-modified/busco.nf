@@ -1,6 +1,3 @@
-// TODO: things to document for all these modules:
-// nf-core module name, git_sha and branch, along with what was changed
-
 process BUSCO {
     tag "$meta.id"
     label 'process_medium'

@@ -1,6 +1,3 @@
-// TODO: things to document for all these modules:
-// nf-core module name, git_sha and branch, along with what was changed
-
 // This process is originally from nf-core but is modified to remove the
 // meta input
 
