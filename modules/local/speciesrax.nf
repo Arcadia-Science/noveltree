@@ -48,11 +48,6 @@ process SPECIESRAX {
     rm -r SpeciesRax
     rm tmp_*
     
-    # Copy the final starting tree to the current working directory -
-    # this will be used as the starting tree for generax application to the
-    # remaining gene families.
-    cp species_trees/inferred_species_tree.newick ./speciesrax_final_species_tree.newick
-    
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     for og in \$(ls results/)
     do
