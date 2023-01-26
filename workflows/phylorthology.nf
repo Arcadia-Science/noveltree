@@ -41,12 +41,12 @@ include { INPUT_CHECK                       } from '../subworkflows/local/input_
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { BUSCO as BUSCO_SHALLOW                    } from '../modules/local/nf-core-modified/busco'
-include { BUSCO as BUSCO_BROAD                      } from '../modules/local/nf-core-modified/busco'
+include { BUSCO as BUSCO_SHALLOW                    } from '../modules/nf-core-modified/busco'
+include { BUSCO as BUSCO_BROAD                      } from '../modules/nf-core-modified/busco'
 include { ORTHOFINDER_PREP                          } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
-include { DIAMOND_BLASTP                            } from '../modules/local/nf-core-modified/diamond_blastp'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/local/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP                            } from '../modules/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
 include { ORTHOFINDER_MCL                           } from '../modules/local/orthofinder_mcl'
 include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
@@ -55,15 +55,15 @@ include { SELECT_INFLATION                          } from '../modules/local/sel
 include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { CLIPKIT                                   } from '../modules/local/clipkit'
 include { CLIPKIT as CLIPKIT_REMAINING              } from '../modules/local/clipkit'
-include { IQTREE                                    } from '../modules/local/nf-core-modified/iqtree'
-include { IQTREE as IQTREE_REMAINING                } from '../modules/local/nf-core-modified/iqtree'
+include { IQTREE                                    } from '../modules/nf-core-modified/iqtree'
+include { IQTREE as IQTREE_REMAINING                } from '../modules/nf-core-modified/iqtree'
 include { SPECIES_TREE_PREP                         } from '../modules/local/species_tree_prep'
 include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from '../modules/local/species_tree_prep'
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
 include { GENERAX                                   } from '../modules/local/generax'
-include { MAFFT                                     } from '../modules/local/nf-core-modified/mafft'
-include { MAFFT as MAFFT_REMAINING                  } from '../modules/local/nf-core-modified/mafft'
+include { MAFFT                                     } from '../modules/nf-core-modified/mafft'
+include { MAFFT as MAFFT_REMAINING                  } from '../modules/nf-core-modified/mafft'
 include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
 
 /*
@@ -247,23 +247,23 @@ workflow PHYLORTHOLOGY {
     // Infer gene-family trees from the trimmed MSAs
     //
     IQTREE(
-        ch_core_trimmed_msas, 
-        params.tree_model, 
+        ch_core_trimmed_msas,
+        params.tree_model,
         params.tree_model_pmsf
     )
         .phylogeny
         .collect()
-        .set { ch_core_gene_trees } 
-        
+        .set { ch_core_gene_trees }
+
     IQTREE_REMAINING(
-        ch_rem_trimmed_msas, 
-        params.tree_model, 
+        ch_rem_trimmed_msas,
+        params.tree_model,
         params.tree_model_pmsf
     )
         .phylogeny
         .collect()
         .set { ch_rem_gene_trees }
-        
+
     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
 
@@ -337,12 +337,12 @@ workflow PHYLORTHOLOGY {
         ch_rem_trimmed_msas.collect(),
         ch_rem_families
     )
-    
+
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS
     // Now using the reconciled gene family trees and rooted species tree,
     // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
-    // to identify orthologs and output orthogroup-level summary stats. 
+    // to identify orthologs and output orthogroup-level summary stats.
     //
     ORTHOFINDER_PHYLOHOGS(
         ch_speciesrax,
