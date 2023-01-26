@@ -110,6 +110,47 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
    ```bash
    nextflow run . -profile docker -params-file <PARAMS.JSON>
    ```
+   
+## Outputs
+Below is a description of outputs, namely directory structure and their contents, produced from an end-to-end run of the workflow. This description will be updated as development progresses. 
+
+1) busco/: Contains output of all BUSCO analyses. Primary directory includes:
+    - short summary results for each species, to each lineage dataset (shallow or broad) in text and json formats
+    - batch summary results for each species, to each lineage dataset
+    - directory for each species' busco analysis with more detailed output. 
+2) protein\_annotations/: protein annotations obtained per each species for which uniprot accessions (i.e. those corresponding to RefSeq protein accessions) are available. 
+    - Which annotations are included here depends on how the "download_annots" parameter was specified.
+3) diamond/: contains the results of all pairwise comparisons of sequence similarity, between and within species using diamond BLASTP
+    - TODO - would like you delete the TestBlast outputs at the conclusion of the workflow (or at least after their use/when running the complete mcl clustering.). - need to figure this out still. 
+    - Can't be solved with the symlink, since it depends on whether we're MCL testing or not. 
+4) OrthoFinder/: contains all results from orthofinder runs, including the MCL testing stage ("mcl\_test\_dataset") and the full analysis using the best-performing inflation parameter (complete_dataset).
+    - mcl\_test\_dataset/: Contains one directory per tested inflation parameter. Directory structure follows OrthoFinder convention - orthogroup sequences are not retained to save space. 
+        - TODO - delete persistent "OrthoFinder" directory. fixed with "publish as symlink"? Would be great if these links could just be ephemeral
+    - complete_dataset/: Contains OrthoFinder output for the best-performing inflation parameter following standard convention (using OrthoFinder's -os flag)
+5) orthogroup_summaries/: Results from cogeqc
+    - A table reporting all calculated summary statistics for the orthogroups inferred for each inflation parameter
+    - A text file that lists the best-performing inflation parameter
+    - A PDF plotting the summary statistics as a function of inflation parameter value
+6) filtered_orthogroups/: final orthogroups used for gene-family tree and species tree inference that passed user-specifed filters.
+    - species\_tree\_og\_msas/: trimmed multiple sequence alignments for gene families used in species tree inference
+    - gene\_tree\_og\_msas/: trimmed multiple sequence alignments for gene families used only in gene-family tree / species tree reconciliation
+    - all\_ogs\_counts.csv: comma-separated csv listing, for all orthogroups (including those fro which msa/gene family trees are not inferred), the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included. 
+    - (gene)speciestree\_core\_ogs\_counts.csv: the same as above, but for only the two respects subsets of gene families.
+7) mafft/: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number)
+8) trimmed_msas/: Multiple sequence alignments inferred using mafft, trimmed for phylogenetic inference with ClipKit
+9) iqtree/: gene family trees (and corresponding log files) for all gene families for which (trimmed) multiple sequence alignments were estimates
+10) species\_tree\_prep/: set of files used by asteroid and Gene/SpeciesRax to correspond gene-family protein sequences to species IDs, etc. 
+11) asteroid/: starting, unrooted species tree inferred using all gene family trees with asteroid. Includes:
+    - asteroid.bestTree.newick: Single species tree with the greatest likelihood among set of inferred trees (for instance if multiple random starting trees are used)
+    - asteroid.allTrees.newick: All inferred species trees (=1 if default of 1 random starting tree is used)
+    - asteroid.scores.txt: likelihood scores for all inferred trees
+12) speciesrax/: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:
+    - species_trees/: contains inferred rooted species trees, species tree likihoods, and specires trees with internal nodels labeled according to their support values
+    - reconciliations/: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species. 
+    - results/: one directory per-gene-family containing reconciled gene trees and inferred rates of gene family duplication, transfer and loss. 
+    
+13) generax/: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github.
+    - Directory structure here is the same as for SpeciesRax, but there is no directory for species trees, as this step was conducted during the SpeciesRax module. 
 
 ## Credits
 
