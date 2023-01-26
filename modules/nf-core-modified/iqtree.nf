@@ -1,3 +1,6 @@
+// TODO: things to document for all these modules:
+// nf-core module name, git_sha and branch, along with what was changed
+
 process IQTREE {
     tag "$alignment"
     //label 'process_highthread' // Possible specification for full analysis
@@ -47,11 +50,11 @@ process IQTREE {
     if [ "$pmsf_model" != "none" ]; then
         # Identify the best number of threads
         nt=\$(grep "BEST NUMBER" *.log | sed "s/.*: //g")
-    
+
         # Rename it and clean up
         mv *.treefile guidetree.treefile
         rm *fa.*
-    
+
         iqtree \\
             -s $alignment \\
             -nt \$nt \\
@@ -59,11 +62,11 @@ process IQTREE {
             -m $pmsf_model \\
             -ft guidetree.treefile \\
             $args
-            
+
         # Clean up
         rm ./guidetree.treefile
     fi
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         iqtree: \$(echo \$(iqtree -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')
