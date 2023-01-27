@@ -75,24 +75,24 @@ Description of Columns:
 4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below, followed by a description of parameters:
 ```
 {
-  "input": "https://github.com/Arcadia-Science/test-datasets/blob/ap/phylorthology-tsar-test/phylorthology/tsar/downsampled_proteomes/tsar_test_samplesheet.csv",
-  "outdir": "results-test",
+  "input": "/full/path/to/samplesheet.csv",
+  "outdir": "results",
   "mcl_inflation": "1.0,2.0,3.0,4.0,5.0",
-  "min_num_spp_per_og": 6,
-  "min_num_grp_per_og": 3,
-  "max_copy_num_spp_tree": 2,
-  "max_copy_num_gene_trees": 3,
+  "min_num_spp_per_og": 4,
+  "min_num_grp_per_og": 2,
+  "max_copy_num_spp_tree": 5,
+  "max_copy_num_gene_trees": 10,
   "download_annots": "none",
   "tree_model": "LG+F+G4",
   "tree_model_pmsf": "LG+C40+F+G4"
 }
 ```
 `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (e.g. on S3 - provide comple URI). 
-`mcl_inflation`: Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. 
+`mcl_inflation`: Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.  
 `min_num_spp_per_og`: Minimum \# of species an orthogroup must contain for phylogenetic inference. 
 `min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference. 
 `max_copy_num_spp_tree`: Maximum \# of per-species gene copy number an orthogroup may contain for species-tree inference. 
-`max_copy_num_gene_trees`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax. 
+`max_copy_num_gene_trees`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.  
 `download_annots`: Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.   
 `tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.  
 `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference. If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
@@ -100,10 +100,11 @@ Description of Columns:
 
 Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology).
 
-5. Ensure that proteins are named following the following convention.  
-`Species_genus:GeneID`. 
-Example:  
-`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`  
+5. Ensure that proteins are named following the following convention: `Species_genus:GeneID`  
+```
+# Example:  
+>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1
+```
 - Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins.
 
 6. Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
