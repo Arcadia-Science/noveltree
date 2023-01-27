@@ -26,6 +26,10 @@ process MAFFT {
     """
     prefix=\$(basename "${fasta}" .fa)
 
+    # Recode any stop codons "*" as an unknown amino acid to prevent any 
+    # downstream consequences
+    sed -i "s/*/-/g" *clipkit.fa
+    
     mafft \\
         --thread -1 \\
         ${args} ${fasta} > \${prefix}_mafft.fa
