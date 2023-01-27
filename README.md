@@ -62,15 +62,15 @@ NOTE: the "mode" column for busco can be incorporated into params file
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
 ```
-Description of Columns:
-`species`: species name to use
-`file`: complete path to fasta file, whether local or remote (e.g. on S3 - provide S3 URI)
-`taxonomy`: higher-level taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.
-`shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota)
-`broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota)
-`mode`: specification of busco analysis mode
-`uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
-`mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).
+Description of Columns:  
+`species`: species name to use. 
+`file`: complete path to fasta file, whether local or remote (e.g. on S3 - provide S3 URI). 
+`taxonomy`: higher-level taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.  
+`shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota). 
+`broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota). 
+`mode`: specification of busco analysis mode. 
+`uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate). 
+`mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
 
 4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below, followed by a description of parameters:
 ```
@@ -87,23 +87,23 @@ Description of Columns:
   "tree_model_pmsf": "LG+C40+F+G4"
 }
 ```
-`input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (e.g. on S3 - provide comple URI)
-`mcl_inflation`: Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder
-`min_num_spp_per_og`: Minimum \# of species an orthogroup must contain for phylogenetic inference
-`min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference
-`max_copy_num_spp_tree`: Maximum \# of per-species gene copy number an orthogroup may contain for species-tree inference
-`max_copy_num_gene_trees`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax
-`download_annots`: Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options. 
-`tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree. 
-`tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference. If not specified (i.e. excluded from parameter file), only `tree_model` will be used. 
+`input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (e.g. on S3 - provide comple URI). 
+`mcl_inflation`: Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. 
+`min_num_spp_per_og`: Minimum \# of species an orthogroup must contain for phylogenetic inference. 
+`min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference. 
+`max_copy_num_spp_tree`: Maximum \# of per-species gene copy number an orthogroup may contain for species-tree inference. 
+`max_copy_num_gene_trees`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax. 
+`download_annots`: Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.   
+`tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.  
+`tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference. If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
 
 
 Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology).
 
-5. Ensure that proteins are named following the following convention.
-`Species_genus:GeneID`
-Example:
-`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`
+5. Ensure that proteins are named following the following convention.  
+`Species_genus:GeneID`. 
+Example:  
+`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`  
 - Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins.
 
 6. Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
