@@ -385,7 +385,7 @@ workflow ARCADIASCIENCE_PHYLORTHOLOGY {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    ARCADIASCIENCE_PHYLORTHOLOGY()
+    PHYLORTHOLOGY()
 }
 
 /*
