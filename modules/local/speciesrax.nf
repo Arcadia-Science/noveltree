@@ -35,6 +35,10 @@ process SPECIESRAX {
     def args = task.ext.args ?: ''
 
     """
+    # GeneRax cannot handle "*" to indicate stop codons. Recode as "-" 
+    # prior to running
+    sed -i "s/*/-/g" *clipkit.fa
+    
     mpiexec -np ${task.cpus} --allow-run-as-root --use-hwthread-cpus \
     generax \
     --species-tree $init_species_tree \
