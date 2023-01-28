@@ -140,8 +140,8 @@ We have set sensible parameter choices as default for each module, however sever
 
 ### Module:
 #### ANNOTATE_UNIPROT:
- i) "download_annots": Specified in the parameter file. Parameter may be specified as one of three things: 
-  a) "all" - download all 16 possible sets of protein annotations from UniProt where possible. 
+ i) "download_annots": Specified in the parameter file. Parameter may be specified as one of three things:
+  a) "all" - download all 16 possible sets of protein annotations from UniProt where possible.
   b) "none" - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments
   c) A quoted, comma separated string of select numbers 1-16: example "1,2,4,7,10". Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
    1: Minimal set of protein annotations/metadata required for COGEQC orthogroup inference. Include protein external IDs for InterPro, SupFam, ProSite, HOGENOM, OMA, and OrthoDB
@@ -153,7 +153,7 @@ We have set sensible parameter choices as default for each module, however sever
    7: Pathology & biotech
    8: Subcellular location
    9: Post-translation modification (PTM) / processsing
-   10: PTM databases 
+   10: PTM databases
    11: Protein family & domains
    12: Protein family/group databases
    13: Sequence databases
@@ -166,3 +166,9 @@ We have set sensible parameter choices as default for each module, however sever
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+
+## TODOs before v0.0.1
+
+- [ ] For each module in `nf-core-modified` document, git-sha, branch and repo of the module, along with what was adapted and why.
+- [ ] Make sure the CONTRIBUTING doc is accurate and move it to the root of the repo
+- [ ] Add a CODE_OF_CONDUCT doc
