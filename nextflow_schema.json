@@ -13,7 +13,12 @@
             "required": [
                 "input",
                 "mcl_inflation",
-                "outdir"
+                "outdir",
+                "min_num_spp_per_og",
+                "min_num_grp_per_og",
+                "max_copy_num_spp_tree",
+                "max_copy_num_gene_trees",
+                "tree_model"
             ],
             "properties": {
                 "input": {
@@ -35,6 +40,46 @@
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. Use absolute paths when specifying S3 URIs. No trailing / please.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "busco_lineages_path": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional path to where BUSCO lineage datasets are stored remotely (e.g. on S3).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "download_annots": {
+                    "type": "string",
+                    "default": "none",
+                    "description": "Option specifying the protein annotations the user would like to download. See README for a description of options."
+                },
+                "min_num_spp_per_og": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
+                },
+                "min_num_grp_per_og": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Minimum number of higher-level taxonomic groups included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
+                },
+                "max_copy_num_spp_tree": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Maximum mean per-species orthogroup gene copy allowed for species tree inference."
+                },
+                "max_copy_num_gene_trees": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Maximum mean per-species orthogroup gene copy allowed for gene family tree / species tree reconciliation."
+                },
+                "tree_model": {
+                    "type": "string",
+                    "default": "TEST",
+                    "description": "AA/nucleotide substitution model used by IQ-TREE for gene family tree inference. Determined automatically by default."
+                },
+                "tree_model_pmsf": {
+                    "type": "string",
+                    "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
                 },
                 "email": {
                     "type": "string",
@@ -176,71 +221,5 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ],
-    "properties": {
-        "busco_lineages_path": {
-            "type": "string",
-            "default": "None",
-            "description": "Optional path to where BUSCO lineage datasets are stored remotely (e.g. on S3)."
-        },
-        "download_annots": {
-            "type": "string",
-            "default": "none",
-            "description": "Option specifying the protein annotations the user would like to download. See README for a description of options."
-        },
-        "min_num_spp_per_og": {
-            "type": "integer",
-            "default": 4,
-            "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
-        },
-        "min_num_grp_per_og": {
-            "type": "integer",
-            "default": 1,
-            "description": "Minimum number of higher-level taxonomic groups included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
-        },
-        "max_copy_num_spp_tree": {
-            "type": "integer",
-            "default": 5,
-            "description": "Maximum mean per-species orthogroup gene copy allowed for species tree inference."
-        },
-        "max_copy_num_gene_trees": {
-            "type": "integer",
-            "default": 10,
-            "description": "Maximum mean per-species orthogroup gene copy allowed for gene family tree / species tree reconciliation."
-        },
-        "tree_model": {
-            "type": "string",
-            "default": "TEST",
-            "description": "AA/nucleotide substitution model used by IQ-TREE for gene family tree inference. Determined automatically by default."
-        },
-        "tree_model_pmsf": {
-            "type": "string",
-            "default": "none",
-            "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
-        },
-        "custom_config_version": {
-            "type": "string",
-            "default": "master"
-        },
-        "custom_config_base": {
-            "type": "string",
-            "default": "https://raw.githubusercontent.com/nf-core/configs/master"
-        },
-        "config_profile_description": {
-            "type": "string",
-            "default": null
-        },
-        "config_profile_contact": {
-            "type": "string",
-            "default": null
-        },
-        "config_profile_url": {
-            "type": "string",
-            "default": null
-        },
-        "config_profile_name": {
-            "type": "string",
-            "default": null
-        }
-    }
+    ]
 }
