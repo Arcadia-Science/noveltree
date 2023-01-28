@@ -35,7 +35,7 @@ class NfcoreTemplate {
     //
     // Construct and send completion email
     //
-    public static void email(workflow, params, summary_params, projectDir, log, multiqc_report=[]) {
+    public static void email(workflow, params, summary_params, projectDir, log) {
         // Set up the e-mail variables
         def subject = "[$workflow.manifest.name] Successful: $workflow.runName"
         if (!workflow.success) {
