@@ -28,7 +28,7 @@ process MAFFT {
 
     # Recode any stop codons "*" as an unknown amino acid to prevent any 
     # downstream consequences
-    sed -i "s/*/-/g" *clipkit.fa
+    sed -i "s/*/-/g" *.fa
     
     mafft \\
         --thread -1 \\
