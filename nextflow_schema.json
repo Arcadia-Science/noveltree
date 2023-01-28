@@ -74,11 +74,12 @@
                 },
                 "tree_model": {
                     "type": "string",
-                    "default": "TEST",
+                    "default": "LG+F+G4",
                     "description": "AA/nucleotide substitution model used by IQ-TREE for gene family tree inference. Determined automatically by default."
                 },
                 "tree_model_pmsf": {
                     "type": "string",
+                    "default": "none",
                     "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
                 },
                 "email": {
