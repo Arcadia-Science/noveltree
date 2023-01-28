@@ -106,7 +106,7 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
 //
 // WORKFLOW: Run main Arcadia-Science/phylorthology analysis pipeline
 //
-workflow ARCADIASCIENCE_PHYLORTHOLOGY {
+workflow PHYLORTHOLOGY {
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
 
