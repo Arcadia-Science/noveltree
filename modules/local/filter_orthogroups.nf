@@ -9,7 +9,7 @@ process FILTER_ORTHOGROUPS {
         'austinhpatton123/cogeqc-1.2.0_r-4.2.2': '' }"
 
     publishDir(
-        path: "${params.outdir}/orthofinder/full_analysis",
+        path: "${params.outdir}/filtered_orthogroups",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -23,11 +23,12 @@ process FILTER_ORTHOGROUPS {
     val max_copy_num_filt2  // Max copy number for all other gene family tree inference
 
     output:
+    path "*"                            , emit: filtered_ogs
     path "all_ogs_counts.csv"           , emit: all_ogs
     path "spptree_core_ogs_counts.csv"  , emit: spptree_core_ogs
     path "genetree_core_ogs_counts.csv" , emit: genetree_core_ogs
-    path "SpeciesTreeFastas/*.fa"       , emit: spptree_fas
-    path "GeneTreeFastas/*.fa"          , emit: genetree_fas
+    path "species_tree_og_msas/*.fa"       , emit: spptree_fas
+    path "gene_tree_og_msas/*.fa"          , emit: genetree_fas
 
     when:
     task.ext.when == null || task.ext.when
@@ -43,7 +44,7 @@ process FILTER_ORTHOGROUPS {
     ogSppCounts=${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
 
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
-    og-tax-summary.R \$ogSppCounts $samplesheet $min_num_spp $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
+    og_tax_summary.R \$ogSppCounts $samplesheet $min_num_spp $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
 
     # Add a column of filepaths to these
     msaDir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
@@ -52,18 +53,21 @@ process FILTER_ORTHOGROUPS {
     tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" > spptree_core_og_fpaths.txt
     tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msaDir}/&.fa|g" > genetree_core_og_fpaths.txt
 
-    mkdir SpeciesTreeFastas
-    mkdir GeneTreeFastas
+    mkdir species_tree_og_msas
+    mkdir gene_tree_og_msas
 
     while IFS= read -r line
     do
         # Copy the file to the destination directory
-        cp "\$line" SpeciesTreeFastas/
+        cp "\$line" species_tree_og_msas/
     done < spptree_core_og_fpaths.txt
     while IFS= read -r line
     do
         # Copy the file to the destination directory
-        cp "\$line" GeneTreeFastas/
+        cp "\$line" gene_tree_og_msas/
     done < genetree_core_og_fpaths.txt
+    
+    # Remove these intermediate files
+    rm *fpaths.txt
     """
 }

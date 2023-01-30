@@ -6,7 +6,7 @@ process COGEQC {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/orthogroup-summaries",
+        path: "${params.outdir}/orthogroup_summaries",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -16,7 +16,7 @@ process COGEQC {
     path prot_annotations // Base filepath to where protein annotations are stored
 
     output:
-    path "*-cogeqc-summary.tsv" , emit: cogeqc_summary
+    path "*_cogeqc_summary.tsv" , emit: cogeqc_summary
     path "versions.yml"         , emit: versions
 
     when:
@@ -29,7 +29,7 @@ process COGEQC {
     # how well they group proteins with the same domains together, as well as
     # other summary stats like number of ogs with >= 4 species, per-species
     # gene count per-og, etc.
-    cogeqc-summarize-ogs.R ${orthofinder_outdir}
+    cogeqc_summarize_ogs.R ${orthofinder_outdir}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
