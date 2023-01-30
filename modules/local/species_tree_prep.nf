@@ -15,10 +15,10 @@ process SPECIES_TREE_PREP {
     path alignments // Output from ClipKit: filepaths to trimmed alignments with metadata
 
     output:
-    path "gene-family-trees.txt" ,       emit: treefile
-    path "*generax-map.link" ,           emit: generax_map
-    path "asteroid-map.link" ,           emit: asteroid_map
-    path "generax-orthogroup.families" , emit: families
+    path "gene_family_trees.txt" ,       emit: treefile
+    path "*generax_map.link" ,           emit: generax_map
+    path "asteroid_map.link" ,           emit: asteroid_map
+    path "generax_orthogroup.families" , emit: families
 
     when:
     task.ext.when == null || task.ext.when
@@ -44,15 +44,15 @@ process SPECIES_TREE_PREP {
     #    sequence alignment, and species-gene map.
 
     # Begin by creating the gene-tree file. Very simple.
-    cat ./*treefile > gene-family-trees.txt
+    cat ./*treefile > gene_family_trees.txt
 
     # Now, create the GeneRax mapping files, and concatenate for Asteroid.
     # We will concurrently populate the families file.
-    echo "[FAMILIES]" > generax-orthogroup.families
+    echo "[FAMILIES]" > generax_orthogroup.families
     for msa in \$(ls ./*fa)
     do
         # Get the OG name
-        og=\$(echo \$msa | sed "s/-clipkit.fa//g")
+        og=\$(echo \$msa | sed "s/_clipkit.fa//g")
         tree=\$(ls \${og}*.treefile)
 
         # Now pull out the sequences, and split into a TreeRecs format mapping
@@ -60,22 +60,22 @@ process SPECIES_TREE_PREP {
         # and then the protein
         grep ">" \${og}* | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > \${og}-generax-map.link
+        paste prot spp > \${og}_generax_map.link
         rm prot && rm spp
 
         # Populate the families file for this gene family
         # We will be using LG+G4+F for all gene families
-        echo "- \${og}" >> generax-orthogroup.families
-        echo "starting_gene_tree = \${tree}" >> generax-orthogroup.families
-        echo "mapping = \${og}-generax-map.link" >> generax-orthogroup.families
-        echo "alignment = \$msa" >> generax-orthogroup.families
-        echo "subst_model = LG+G4+F" >> generax-orthogroup.families
+        echo "- \${og}" >> generax_orthogroup.families
+        echo "starting_gene_tree = \${tree}" >> generax_orthogroup.families
+        echo "mapping = \${og}_generax_map.link" >> generax_orthogroup.families
+        echo "alignment = \$msa" >> generax_orthogroup.families
+        echo "subst_model = LG+G4+F" >> generax_orthogroup.families
     done
 
     # clean up the families file a bit
-    sed -i 's|\\./||g' generax-orthogroup.families
+    sed -i 's|\\./||g' generax_orthogroup.families
 
     # Now concatenate the maps for input to Asteroid
-    cat *generax-map.link > asteroid-map.link
+    cat *generax_map.link > asteroid_map.link
     """
 }

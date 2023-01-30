@@ -40,10 +40,15 @@ process GENERAX {
     --prefix GeneRax \
     $args
     
+    # Remove the redundant result directory, moving everything into the
+    # working directory
+    mv GeneRax/* .
+    rm -r GeneRax
+
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
-    for og in \$(ls GeneRax/results/)
+    for og in \$(ls results/)
     do
-        mv GeneRax/results/\$og/*.newick GeneRax/results/\$og/\${og}_reconciled_gft.newick
+        mv results/\$og/*.newick results/\$og/\${og}_reconciled_gft.newick
     done
     """
 }

@@ -14,10 +14,10 @@ process BUSCO {
     path config_file                      // Optional:    busco configuration file
 
     output:
-    tuple val(meta), path("*-busco.batch_summary.txt"), emit: batch_summary
+    tuple val(meta), path("*_busco.batch_summary.txt"), emit: batch_summary
     tuple val(meta), path("short_summary.*.txt")      , emit: short_summaries_txt, optional: true
     tuple val(meta), path("short_summary.*.json")     , emit: short_summaries_json, optional: true
-    tuple val(meta), path("*-busco")                  , emit: busco_dir
+    tuple val(meta), path("*_busco")                  , emit: busco_dir
     path "versions.yml"                               , emit: versions
 
     when:
@@ -25,7 +25,7 @@ process BUSCO {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = lineage_scale.equals('shallow') ? "${meta.id}-${meta.shallow}" : "${meta.id}-${meta.broad}"
+    def prefix = lineage_scale.equals('shallow') ? "${meta.id}_${meta.shallow}" : "${meta.id}_${meta.broad}"
     def busco_config = config_file ? "--config $config_file" : ''
     def busco_lineage = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow}" : "--lineage_dataset ${meta.broad}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
@@ -63,7 +63,7 @@ process BUSCO {
     busco \\
         --cpu ${task.cpus} \\
         --in "\$INPUT_SEQS" \\
-        --out ${prefix}-busco \\
+        --out ${prefix}_busco \\
         --mode ${meta.mode} \\
         $busco_lineage \\
         $busco_lineage_dir \\
@@ -74,8 +74,8 @@ process BUSCO {
     rm -rf "\$INPUT_SEQS"
 
     # Move files to avoid staging/publishing issues
-    mv ${prefix}-busco/batch_summary.txt ${prefix}-busco.batch_summary.txt
-    mv ${prefix}-busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+    mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
+    mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -14,11 +14,6 @@ spp <- args[2]
 # Also specified from the commandline.
 ids <- args[3]
 
-# Because this is going to be a fair bit of information,
-# let's make a new directory to house these outputs/gene ontologies,
-# one for each species.
-dir.create(file.path(spp), showWarnings = FALSE)
-
 # Specify the fields that we would like to download.
 common_cols <- c('organism_name', 'organism_id')
 seq_cogeqc <-
@@ -100,12 +95,12 @@ annotations <- list(
     )
 
 annot_names <-
-    c('-cogeqc-annotations.tsv', '-prot-metadat.tsv', '-prot-gene-ontologies.tsv', 
-    '-prot-functions.tsv', '-prot-interactions.tsv', '-prot-interactions-xref.tsv',
-    '-prot-biotech-annots.tsv', '-prot-localization.tsv', '-prot-post-trans-mods.tsv', 
-    '-prot-post-trans-mods-xref.tsv', '-prot-fams-domains.tsv', '-prot-fams-domains-xref.tsv',
-    '-prot-seq-dbs-xref.tsv', '-prot-3d-dbs-xref.tsv', '-prot-enzyme-paths-xref.tsv', 
-    '-prot-orthology-dbs.tsv')
+    c('_cogeqc_annotations.tsv', '_prot_metadat.tsv', '_prot_gene_ontologies.tsv', 
+    '_prot_functions.tsv', '_prot_interactions.tsv', '_prot_interactions_xref.tsv',
+    '_prot_biotech_annots.tsv', '_prot_localization.tsv', '_prot_post_trans_mods.tsv', 
+    '_prot_post_trans_mods_xref.tsv', '_prot_fams_domains.tsv', '_prot_fams_domains_xref.tsv',
+    '_prot_seq_dbs_xref.tsv', '_prot_3d_dbs_xref.tsv', '_prot_enzyme_paths_xref.tsv', 
+    '_prot_orthology_dbs.tsv')
 
 # get the list of accessions for this species.
 accessions <- read.table(ids, sep = '\t')$V1
@@ -126,6 +121,13 @@ if (annots_to_download == "all") {
 } else {
     anns <- annots_to_download
 }
+
+# If pulling specific annotations, create a new directory to house them, as
+# this could be quite a bit of information. 
+if (annots_to_download != "none") {
+    dir.create(file.path(spp), showWarnings = FALSE)
+}
+
 for(i in anns){
     annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
     to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))

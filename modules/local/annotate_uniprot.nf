@@ -18,7 +18,7 @@ process ANNOTATE_UNIPROT {
     output:
     path "*accessions.txt"  , emit: accessions
     path "*" , emit: all_annotations
-    path "*cogeqc-annotations.tsv" , emit: cogeqc_annotations
+    path "*cogeqc_annotations.tsv" , emit: cogeqc_annotations
     path "versions.yml" , emit: versions
 
     when:
@@ -35,13 +35,13 @@ process ANNOTATE_UNIPROT {
     # Check below - if from uniprot, go ahead and annotate, otherwise skip the species.
     if [ "$is_uniprot" == "true" ]; then
         # Pull out the sequence names, strip trailing info, and remove spp name.
-        grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > $spp-protein-accessions.txt
+        grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > ${spp}_protein_accessions.txt
 
         # Now run the script to pull down annotations for the protein accessions in this species.
         # This R script uses the UniProt.ws bioconducter package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
 
-        UniProt-Protein-Annotation-NF.R $annots_to_download $spp ${spp}-protein-accessions.txt
+        protein_annotation.R $annots_to_download $spp ${spp}_protein_accessions.txt
     fi
 
     cat <<-END_VERSIONS > versions.yml

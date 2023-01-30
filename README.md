@@ -62,24 +62,49 @@ NOTE: the "mode" column for busco can be incorporated into params file
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
 ```
-- "uniprot" column is a true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate)
-- mcl_test is a specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).
+Description of Columns:  
+`species`: species name to use. 
+`file`: complete path to fasta file, whether local or remote (e.g. on S3 - provide S3 URI). 
+`taxonomy`: higher-level taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.  
+`shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota). 
+`broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota). 
+`mode`: specification of busco analysis mode. 
+`uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate). 
+`mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
 
-4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below:
+4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below, followed by a description of parameters:
 ```
 {
-  "input": "<FILE_PATH_TO_YOUR_SAMPLESHEET>",
+  "input": "/full/path/to/samplesheet.csv",
   "outdir": "results",
-  "mcl_inflation": "1.0,2.0,3.0,4.0,5.0"
+  "mcl_inflation": "1.0,2.0,3.0,4.0,5.0",
+  "min_num_spp_per_og": 4,
+  "min_num_grp_per_og": 2,
+  "max_copy_num_spp_tree": 5,
+  "max_copy_num_gene_trees": 10,
+  "download_annots": "none",
+  "tree_model": "LG+F+G4",
+  "tree_model_pmsf": "LG+C40+F+G4"
 }
 ```
+`input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (e.g. on S3 - provide comple URI). 
+`mcl_inflation`: Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.  
+`min_num_spp_per_og`: Minimum \# of species an orthogroup must contain for phylogenetic inference. 
+`min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference. 
+`max_copy_num_spp_tree`: Maximum \# of per-species gene copy number an orthogroup may contain for species-tree inference. 
+`max_copy_num_gene_trees`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.  
+`download_annots`: Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.   
+`tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.  
+`tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference. If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
+
 
 Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology).
 
-5. Ensure that proteins are named following the following convention.
-- Species_genus:GeneID
-- Example:
-`>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1`
+5. Ensure that proteins are named following the following convention: `Species_genus:GeneID`  
+```
+# Example:  
+>Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative OS=Entamoeba histolytica HM-1:IMSS OX=294381 GN=EHI_161860 PE=3 SV=1
+```
 - Everything prior to the colon (:) is a constant (and unique to that species/lineage) identifier and can be whatever you would like, but must not include a colon. Everything that follows the colon is what must be a protein/gene identifier unique to that sequence. Additional sequence info may be included following a space. If the proteome comes from UniProt, this must be the UniProt protein accession. We use the string that follows the colon to extract the uniprot accession and annotate proteins.
 
 6. Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
@@ -110,6 +135,45 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
    ```bash
    nextflow run . -profile docker -params-file <PARAMS.JSON>
    ```
+   
+## Outputs
+Below is a description of outputs, namely directory structure and their contents, produced from an end-to-end run of the workflow. This description will be updated as development progresses.  
+1. `busco/`: Contains output of all BUSCO analyses. Primary directory includes:   
+    - short summary results for each species, to each lineage dataset (shallow or broad) in text and json formats.  
+    - batch summary results for each species, to each lineage dataset.  
+    - directory for each species' busco analysis with more detailed output.  
+2. `protein_annotations/`: protein annotations obtained per each species for which uniprot accessions (i.e. those corresponding to RefSeq protein accessions) are available.  
+    - Which annotations are included here depends on how the "download_annots" parameter was specified.  
+3. `diamond/`: contains the results of all pairwise comparisons of sequence similarity, between and within species using diamond BLASTP.  
+    - TODO - would like you delete the TestBlast outputs at the conclusion of the workflow (or at least after their use/when running the complete mcl clustering.). - need to figure this out still.   
+    - Can't be solved with the symlink, since it depends on whether we're MCL testing or not.  
+4. `OrthoFinder/`: contains all results from orthofinder runs, including the MCL testing stage (`mcl_test_dataset`) and the full analysis using the best-performing inflation parameter (complete_dataset).  
+    - `mcl_test_dataset/`: Contains one directory per tested inflation parameter. Directory structure follows OrthoFinder convention - orthogroup sequences are not retained to save space.  
+        - TODO - delete persistent "OrthoFinder" directory. fixed with "publish as symlink"? Would be great if these links could just be ephemeral.  
+    - `complete_dataset/`: Contains OrthoFinder output for the best-performing inflation parameter following standard convention (using OrthoFinder's -os flag).  
+5. `orthogroup_summaries/`: Results from cogeqc.  
+    - A table reporting all calculated summary statistics for the orthogroups inferred for each inflation parameter.  
+    - A text file that lists the best-performing inflation parameter.  
+    - A PDF plotting the summary statistics as a function of inflation parameter value.  
+6. `filtered_orthogroups/`: final orthogroups used for gene-family tree and species tree inference that passed user-specifed filters.  
+    - `species_tree_og_msas/`: trimmed multiple sequence alignments for gene families used in species tree inference.  
+    - `gene_tree_og_msas/`: trimmed multiple sequence alignments for gene families used only in gene-family tree / species tree reconciliation.  
+    - `all_ogs_counts.csv`: comma-separated csv listing, for all orthogroups (including those fro which msa/gene family trees are not inferred), the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included.  
+    - `(gene)speciestree_core_ogs_counts.csv`: the same as above, but for only the two respects subsets of gene families.  
+7. `mafft/`: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number).  
+8. `trimmed_msas/`: Multiple sequence alignments inferred using mafft, trimmed for phylogenetic inference with ClipKit.  
+9. `iqtree/`: gene family trees (and corresponding log files) for all gene families for which (trimmed) multiple sequence alignments were estimates.  
+10. `species_tree_prep/`: set of files used by asteroid and Gene/SpeciesRax to correspond gene-family protein sequences to species IDs, etc.  
+11. `asteroid/`: starting, unrooted species tree inferred using all gene family trees with asteroid. Includes:  
+    - asteroid.bestTree.newick: Single species tree with the greatest likelihood among set of inferred trees (for instance if multiple random starting trees are used).  
+    - asteroid.allTrees.newick: All inferred species trees (=1 if default of 1 random starting tree is used).  
+    - asteroid.scores.txt: likelihood scores for all inferred trees.  
+12. `speciesrax/`: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:  
+    - `species_trees/`: contains inferred rooted species trees, species tree likihoods, and species trees with internal nodels labeled according to their support values.  
+    - `reconciliations/`: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species.  
+    - `results/`: one directory per-gene-family containing reconciled gene trees and inferred rates of gene family duplication, transfer and loss.  
+13. `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github.  
+    - Directory structure here is the same as for SpeciesRax, but there is no directory for species trees, as this step was conducted during the SpeciesRax module.  
 
 ## Credits
 
@@ -140,26 +204,26 @@ We have set sensible parameter choices as default for each module, however sever
 
 ### Module:
 #### ANNOTATE_UNIPROT:
- i) "download_annots": Specified in the parameter file. Parameter may be specified as one of three things:
-  a) "all" - download all 16 possible sets of protein annotations from UniProt where possible.
-  b) "none" - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments
-  c) A quoted, comma separated string of select numbers 1-16: example "1,2,4,7,10". Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
-   1: Minimal set of protein annotations/metadata required for COGEQC orthogroup inference. Include protein external IDs for InterPro, SupFam, ProSite, HOGENOM, OMA, and OrthoDB
-   2: General protein metadata, including protein name, length, mass, information from mass spec experiments, host organisms (for viral proteins), which organelle (if relevant) encoding the protein, and any AA variants due to RNA editing.
-   3: Gene ontologies - biological process, cellular component, molecular function, ontology ID
-   4: Function: Multiple annotations pertaining to the molecular function of the protein
-   5: Interactions
-   6: Protein-protein interactions (external database reference IDs)
-   7: Pathology & biotech
-   8: Subcellular location
-   9: Post-translation modification (PTM) / processsing
-   10: PTM databases
-   11: Protein family & domains
-   12: Protein family/group databases
-   13: Sequence databases
-   14: 3D structure databases
-   15: Enzyme and pathway databases
-   16: Phylogenomic databases
+1. `download_annots`: Specified in the parameter file. Parameter may be specified as one of three things:  
+    i. `all` - download all 16 possible sets of protein annotations from UniProt where possible.  
+    ii. `none` - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments.  
+    iii. A quoted, comma separated string of select numbers 1-16: example `"1,2,4,7,10"`. Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.  
+        `1`. Minimal set of protein annotations/metadata required for COGEQC orthogroup inference: protein external IDs for InterPro, SupFam, ProSite, HOGENOM, OMA, and OrthoDB  
+        `2`. General protein metadata: protein name, length, mass, information from mass spec experiments, host organisms (for viral proteins), which organelle (if relevant) encoding the protein, any AA variants due to RNA editing  
+        `3`. Gene ontologies - biological process, cellular component, molecular function, ontology ID  
+        `4`. Function: Multiple annotations pertaining to the molecular function of the protein  
+        `5`. Interactions  
+        `6`. Protein-protein interactions (external database reference IDs)  
+        `7`. Pathology & biotech  
+        `8`. Subcellular location  
+        `9`. Post-translation modification (PTM) / processsing  
+        `10`. PTM databases  
+        `11`. Protein family & domains  
+        `12`. Protein family/group databases  
+        `13`. Sequence databases  
+        `14`. 3D structure databases  
+        `15`. Enzyme and pathway databases  
+        `16`. Phylogenomic databases  
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >
