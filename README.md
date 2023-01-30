@@ -52,10 +52,10 @@ Using this improved species tree, we then use GeneRax for both subsets of gene f
 
 
 ## Quick Start
-**1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`)**
-**2. Install [`Docker`](https://docs.docker.com/engine/installation/).**
+**1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`)
+**2.** Install [`Docker`](https://docs.docker.com/engine/installation/).
 
-**3. Prepare a samplesheet following the required format:**
+**3.** Prepare a samplesheet following the required format:
 ```
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
 Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
@@ -70,7 +70,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 > `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate).  
 > `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
 
-**4. Create a parameter file that includes all necessary input, output, and parameter specifications - example below, followed by a description of parameters.**
+**4.** Create a parameter file that includes all necessary input, output, and parameter specifications - example below, followed by a description of parameters.
 ```
 {
   "input": "/full/path/to/samplesheet.csv",
@@ -96,7 +96,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 > `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
 > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology).
 
-**5. Ensure that proteins are named following the following convention: `Species_genus:GeneID`**
+**5.** Ensure that proteins are named following the following convention: `Species_genus:GeneID`
 ```
 # Example:  
 >Entamoeba_histolytica:C4M6M9 tr|C4M6M9|C4M6M9_ENTHI NGG1-interacting factor 3, putative 
@@ -111,7 +111,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 # string that follows the colon to extract the uniprot accession and annotate proteins.
 ```
 
-**6. Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:**
+**6.** Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
 
    ```bash
    # If you're using your own test data
@@ -129,7 +129,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 
    > - The pipeline comes with multiple config profiles, however for the workflow to work properly, you must use `-profile docker`  
 
-**7. Start running your own analysis!**
+**7.** Start running your own analysis!
 
    <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
