@@ -15,7 +15,7 @@ process MAFFT {
     path(fasta)
 
     output:
-    path("*-mafft.fa") , emit: msas
+    path("*_mafft.fa") , emit: msas
     path "versions.yml"           , emit: versions
 
     when:
@@ -26,9 +26,13 @@ process MAFFT {
     """
     prefix=\$(basename "${fasta}" .fa)
 
+    # Recode any stop codons "*" as an unknown amino acid to prevent any 
+    # downstream consequences
+    sed -i "s/*/-/g" *.fa
+    
     mafft \\
         --thread -1 \\
-        ${args} ${fasta} > \$prefix-mafft.fa
+        ${args} ${fasta} > \${prefix}_mafft.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
