@@ -22,18 +22,16 @@ process SPECIESRAX {
     path families          // Filepath to the families file
 
     output:
-    path "*"                                    , emit: results
+    path "*"                                          , emit: results
     path "species_trees/inferred_species_tree.newick" , emit: speciesrax_tree
-    path "**_reconciled_gft.newick"             , emit: speciesrax_gfts
-    path "versions.yml"                         , emit: versions
+    path "**_reconciled_gft.newick"                   , emit: speciesrax_gfts
+    path "versions.yml"                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
-    // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
-
     """
     mpiexec \\
         -np ${task.cpus} \\

@@ -15,10 +15,10 @@ process SELECT_INFLATION {
     path og_summaries // Files with summaries of orthogroups inferred using a specific inflation parameter
 
     output:
-    path "cogeqc_results.tsv" , emit: cogeqc_summary
-    path "best_inflation_param.txt", emit: best_inflation
-    path "inflation_summaries.pdf",  emit: summary_plot
-    path "versions.yml" ,            emit: versions
+    path "cogeqc_results.tsv"       , emit: cogeqc_summary
+    path "best_inflation_param.txt" , emit: best_inflation
+    path "inflation_summaries.pdf"  ,  emit: summary_plot
+    path "versions.yml"             ,            emit: versions
 
     when:
     task.ext.when == null || task.ext.when

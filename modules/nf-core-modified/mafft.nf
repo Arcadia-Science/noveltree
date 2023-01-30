@@ -15,8 +15,8 @@ process MAFFT {
     path(fasta)
 
     output:
-    path("*_mafft.fa") , emit: msas
-    path "versions.yml"           , emit: versions
+    path("*_mafft.fa")  , emit: msas
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

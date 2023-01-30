@@ -14,20 +14,20 @@ process BUSCO {
     path config_file                      // Optional:    busco configuration file
 
     output:
-    tuple val(meta), path("*_busco.batch_summary.txt"), emit: batch_summary
-    tuple val(meta), path("short_summary.*.txt")      , emit: short_summaries_txt, optional: true
-    tuple val(meta), path("short_summary.*.json")     , emit: short_summaries_json, optional: true
-    tuple val(meta), path("*_busco")                  , emit: busco_dir
-    path "versions.yml"                               , emit: versions
+    tuple val(meta), path("*_busco.batch_summary.txt") , emit: batch_summary
+    tuple val(meta), path("short_summary.*.txt")       , emit: short_summaries_txt, optional: true
+    tuple val(meta), path("short_summary.*.json")      , emit: short_summaries_json, optional: true
+    tuple val(meta), path("*_busco")                   , emit: busco_dir
+    path "versions.yml"                                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = lineage_scale.equals('shallow') ? "${meta.id}_${meta.shallow}" : "${meta.id}_${meta.broad}"
-    def busco_config = config_file ? "--config $config_file" : ''
-    def busco_lineage = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow}" : "--lineage_dataset ${meta.broad}"
+    def args              = task.ext.args ?: ''
+    def prefix            = lineage_scale.equals('shallow') ? "${meta.id}_${meta.shallow}" : "${meta.id}_${meta.broad}"
+    def busco_config      = config_file ? "--config $config_file" : ''
+    def busco_lineage     = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow}" : "--lineage_dataset ${meta.broad}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
