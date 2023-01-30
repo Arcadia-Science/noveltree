@@ -35,12 +35,15 @@ process SPECIESRAX {
     def args = task.ext.args ?: ''
 
     """
-    mpiexec -np ${task.cpus} --allow-run-as-root --use-hwthread-cpus \
-    generax \
-    --species-tree $init_species_tree \
-    --families $families \
-    --prefix SpeciesRax \
-    $args
+    mpiexec \\
+        -np ${task.cpus} \\
+        --allow-run-as-root \\
+        --use-hwthread-cpus \\
+        generax \\
+        --species-tree $init_species_tree \\
+        --families $families \\
+        --prefix SpeciesRax \\
+        $args
 
     # Remove the redundant result directory, moving everything into the
     # working directory
