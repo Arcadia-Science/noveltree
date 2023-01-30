@@ -11,13 +11,13 @@ process SPECIES_TREE_PREP {
     )
 
     input:
-    path genetrees   // Output from IQ-tree: filepaths to gene family trees with metadata
+    path genetrees  // Output from IQ-tree: filepaths to gene family trees with metadata
     path alignments // Output from ClipKit: filepaths to trimmed alignments with metadata
 
     output:
-    path "gene_family_trees.txt" ,       emit: treefile
-    path "*generax_map.link" ,           emit: generax_map
-    path "asteroid_map.link" ,           emit: asteroid_map
+    path "gene_family_trees.txt"       , emit: treefile
+    path "*generax_map.link"           , emit: generax_map
+    path "asteroid_map.link"           , emit: asteroid_map
     path "generax_orthogroup.families" , emit: families
 
     when:

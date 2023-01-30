@@ -16,20 +16,20 @@ process DIAMOND_BLASTP {
     val mcl_test
 
     output:
-    path('*.blast*') , optional: true, emit: blast
-    path('*.xml*')   , optional: true, emit: xml
-    path('*.txt*')   , optional: true, emit: txt
-    path('*.daa*')   , optional: true, emit: daa
-    path('*.sam*')   , optional: true, emit: sam
-    path('*.tsv*')   , optional: true, emit: tsv
-    path('*.paf*')   , optional: true, emit: paf
-    path "versions.yml"              , emit: versions
+    path('*.blast*')    , optional: true, emit: blast
+    path('*.xml*')      , optional: true, emit: xml
+    path('*.txt*')      , optional: true, emit: txt
+    path('*.daa*')      , optional: true, emit: daa
+    path('*.sam*')      , optional: true, emit: sam
+    path('*.tsv*')      , optional: true, emit: tsv
+    path('*.paf*')      , optional: true, emit: paf
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
+    def args        = task.ext.args ?: ''
     def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
     switch ( output_extension ) {
         case "blast": outfmt = 0; break
