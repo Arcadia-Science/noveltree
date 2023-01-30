@@ -40,7 +40,6 @@ process ANNOTATE_UNIPROT {
         # Now run the script to pull down annotations for the protein accessions in this species.
         # This R script uses the UniProt.ws bioconducter package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
-
         protein_annotation.R $annots_to_download $spp ${spp}_protein_accessions.txt
     fi
 
