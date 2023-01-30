@@ -11,42 +11,48 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
 
 ## Pipeline summary
-At its core, PhylOrthology used the OrthoFinder algorithm to normalize pairwise protein similarity scores to account for evolutionary divergence prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, PhylOrthology automates the identification of the inflation parameter that returns the most biologically sensible and tractable set of orthogroups.
+At its core, `PhylOrthology` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. **The method automates all steps of the process, from calculating reciprocal sequence similary to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics.** 
 
-Thus, two rounds of protein clustering takes place - an initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and a second round on the complete dataset. Because Nextflow can automate the parallelization of tasks that are independent of each other, PhylOrthology will begin the all-v-all protein comparisons for both rounds simultaneously across available compute resources. Once the first round of MCL clustering has completed, we summarize orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein domain annotation score calculated with COGEQC, which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups.
+Because `PhylOrthology` is built in [Nextflow](https://www.nextflow.io), the workflow distributes tasks in a highly parallel and asynchronous manner across available computational resources. The workflow is currently optimized for a single computational environment but is continually being developed for deployment across AWS spot-instances with Nextflow Tower, and may also be configured to run in a highly parallel manner on SLURM schedulers ([see here for documentation](https://www.nextflow.io/docs/latest/executor.html)).
 
-With orthogroups/gene families inferred, we will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 200 species and mean copy # of 20) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
+To account for the confounding effects of sequence length (and thus evolutionary) divergence on sequence similarity scores, `PhylOrthology` leverages [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) to normalize these similarity scores prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, `PhylOrthology` automates the identification of the inflation parameter that returns the most biologically sensible set of orthogroups.
 
-We then distribute these two subsets of orthogroups into two, independent channels to ba anlyzed in parallel. Simultanously for both subsets, we infer multiple sequences alignments (using MAFFT), trim these alignments for gappy/uninformative regions (using ClipKit), and infer gene-family trees using IQ-TREE under a approximated mixture model of amino acid substitution (LG+C40+F+G) using the posterior mean site frequency model (PMSF).
+Thus, two rounds of protein clustering takes place: 
+    1. An initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and 
+    2. A second round on the complete dataset. 
+    
+Once the first round of MCL clustering has completed, we summarize orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs. 
 
-Using the first, conservative subset of gene family trees, we infer a starting, unrooted species tree using Asteroid. This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to SpeciesRax, which roots the species tree and improves the topology under a model of gene duplication, loss and transfer.
+With orthogroups/gene families inferred, we will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
-Using this improved species tree, we then use GeneRax for both subsets of gene families, reconciling them with the species tree and inferring rates of gene duplication, transfer and loss on a per-family and (TBD) per-species basis.
+For both subsets, we subsequently infer multiple sequences alignments (using [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)), trim these alignments for gappy/uninformative regions (using [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)), and infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) under a specified model of amino acid substitution (e.g. LG+F+G4).
+
+Using the first conservatively sized subset of gene family trees, we infer a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
+
+Using this improved species tree, we then use [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family.
+
+With the rooted species tree inferred, `PhylOrthology` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups. 
+
+TODO: Final module to summarize all results into set of user-friendly tables and maybe figures?
 
 ### The workflow thus proceeds as follows:
-1. Proteomes are downloaded from S3
-2. Each proteome is summarized using [`BUSCO`](https://busco.ezlab.org/) completeness using both Eukaryota and the taxon-specific level
-3. Proteomes originating from UniProt (with UniProt protein accessions) are annotated using UniProt.ws
-4. Proteomes are staged/reformated for analysis with OrthoFinder
-5. Determine All-v-All sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
-6. Cluster UniProt sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
-7. Summarization and quantification of orthogroup inference performance using a set of summary statistics, including the functional protein domain score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html)
-8. Repeat step five (5: MCL clustering into orthogroups) for all species under the optimal inflation parameter
-9. Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
-10. Infer multiple sequence alignments for each focal gene family with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
-11. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
-12. Infer gene family trees using [`IQ-TREE`](http://www.iqtree.org/)
-13. Infer a starting species tree using Asteroid [`Asteroid`](https://github.com/BenoitMorel/Asteroid)
-14. Root the species tree, improving its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax)
-15. Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
-16. Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
-
-#### Upon initiation, several things happen in parallel.
-1. First, proteomes are summarized with BUSCO at (currently) two user-defined scales: one that is taxonomically shallow (as close to each species as possible), and one that is taxonomically broad (e.g. Eukaryotes).
-   - The goal here is to quantify input proteome quality and completeness - comparison at the broad-scale (e.g. across eukaryotes) may facilitate more direct biological comparisons across species, but for understudied groups may provide misleadingly poor summaries of proteome completeness as compared to analysis at the shallower taxonomic scale.
-   - Results of these analyses are independent of everything downstream and so each may be done in parallel of all other steps (i.e. will not prevent subsequent analyses from beginning).
-2. Second, we prepare proteomes for the highly parallized distribution of all-v-all protein comparisons with Diamond BlastP using Nextflow and subsequent MCL clustering with OrthoFinder. This involves calling orthofinder, and formatting data in a manner that the software is built to deal with. This is largely a technicality.
-3. Third, we begin running the all-v-all protein comparisons in parallel for both the MCL inflation parameter testing dataset and complete dataset, distributing jobs across AWS spot instances. Doing so in this way, we limit the extent to which the MCL inflation parameter test slows progress on analyzing the complete dataset, and takes advantage of the wealth of compute resources provided by AWS, all while saving up to 90% on costs by using spot instances.
+1. Proteomes are staged locally (including downloaded from S3 if necessary)
+2. Each proteome is summarized using [`BUSCO`](https://busco.ezlab.org/) completeness at both user-specified shallow (e.g. Eukaryota) and taxon-specific scales
+3. Proteomes originating from [`UniProt`](https://www.uniprot.org/) (with UniProt protein accessions) are annotated using UniProt.ws
+4. Proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+5. Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
+6. Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
+7. Summarization and quantification of orthogroup inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs. 
+8. Based on the above summaries, select the inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
+9. Repeat step six (6: MCL clustering into orthogroups) for all species under the optimal inflation parameter
+10. Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
+11. Infer multiple sequence alignments for each focal gene family with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
+12. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
+13. Infer gene family trees using [`IQ-TREE`](http://www.iqtree.org/)
+14. Infer a starting species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid)
+15. Root the species tree, improving its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax)
+16. Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
+17. Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
