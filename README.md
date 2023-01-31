@@ -11,15 +11,15 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
 
 ## Pipeline summary
-At its core, `PhylOrthology` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. **The method automates all steps of the process, from calculating reciprocal sequence similary to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics.** 
+At its core, `PhylOrthology` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. ***The method automates all steps of the process, from calculating reciprocal sequence similary to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics.*** 
 
 Because `PhylOrthology` is built in [Nextflow](https://www.nextflow.io), the workflow distributes tasks in a highly parallel and asynchronous manner across available computational resources. The workflow is currently optimized for a single computational environment but is continually being developed for deployment across AWS spot-instances with Nextflow Tower, and may also be configured to run in a highly parallel manner on SLURM schedulers ([see here for documentation](https://www.nextflow.io/docs/latest/executor.html)).
 
 To account for the confounding effects of sequence length (and thus evolutionary) divergence on sequence similarity scores, `PhylOrthology` leverages [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) to normalize these similarity scores prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, `PhylOrthology` automates the identification of the inflation parameter that returns the most biologically sensible set of orthogroups.
 
-Thus, two rounds of protein clustering takes place:  
-    1. An initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and  
-    2. A second round on the complete dataset.  
+**Thus, two rounds of protein clustering takes place:**  
+    **1.** An initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and  
+    **2.** A second round on the complete dataset.  
     
 Once the first round of MCL clustering has completed, we summarize orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs. 
 
