@@ -8,7 +8,7 @@
 
 > Di Tommaso P, Chatzou M, Floden EW, Barja PP, Palumbo E, Notredame C. Nextflow enables reproducible computational workflows. Nat Biotechnol. 2017 Apr 11;35(4):316-319. doi: 10.1038/nbt.3820. PubMed PMID: 28398311.
 
-## Pipeline tools
+## Pipeline tools - Software and Packages
 
 - [BUSCO](https://doi.org/10.1002/cpz1.323)
   > Manni M, Berkeley MR, Seppey M, Zdobnov EM (2021). BUSCO: Assessing genomic data quality and beyond. Current Protocols, 1, e323. doi: 10.1002/cpz1.323
@@ -55,9 +55,17 @@
 - [SpeciesRax](https://doi.org/10.1093/molbev/msab365)
   > Morel B, Schade P, Lutteropp S, Williams TA, Szöllősi GJ, Stamatakis A (2022). SpeciesRax: a tool for maximum likelihood species tree inference from gene family trees under duplication, transfer, and loss. Molecular biology and evolution, 39(2), msab365.
 
+- [tidyverse](https://doi.org/10.21105/joss.01686)
+  > Wickham H, Averick M, Bryan J, Chang W, McGowan LDA, François R, ... & Yutani H (2019). Welcome to the Tidyverse. Journal of open source software, 4(43), 1686.
 
-8. [`SELECT_INFLATION`]: Based on the above summaries, select the inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
+- [reshape](https://doi.org/10.18637/jss.v021.i12)
+  > Wickham H (2007). Reshaping data with the reshape package. Journal of Statistical Software, 21(12).
 
+- [cowplot](https://CRAN.R-project.org/package=cowplot)
+  > Wilke C (2020). cowplot: Streamlined plot theme and plot annotations for 'ggplot2'. R package version 1.1.1.
+
+- [elbow](https://github.com/ahasverus/elbow)
+  > Casajus N (2022). elbow: Detect inflection point of a concave curve. R package version 0.0.0.9000.
 
 ## Software packaging/containerisation tools
 
