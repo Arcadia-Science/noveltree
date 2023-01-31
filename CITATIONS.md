@@ -10,10 +10,54 @@
 
 ## Pipeline tools
 
-- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [BUSCO](https://doi.org/10.1002/cpz1.323)
+  > Manni M, Berkeley MR, Seppey M, Zdobnov EM (2021). BUSCO: Assessing genomic data quality and beyond. Current Protocols, 1, e323. doi: 10.1002/cpz1.323
 
-- [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
-  > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+- [UniProt](https://doi.org/10.1093/nar/gkac1052)
+  > The UniProt Consortium (2023). UniProt: the Universal Protein Knowledgebase in 2023
+
+- [UniProt.ws](https://doi.org/doi:10.18129/B9.bioc.UniProt.ws)
+  > Carlson M, Ramos M (2022). UniProt.ws: R Interface to UniProt Web Services. R package version 2.38.1.
+
+- [OrthoFinder](https://doi.org/10.1186/s13059-015-0721-2)
+  > Emms DM, Kelly S (2015). OrthoFinder: solving fundamental biases in whole genome comparisons dramatically improves orthogroup inference accuracy. Genome Biology 16:157
+
+- [OrthoFinder2](https://doi.org/10.1186/s13059-019-1832-y)
+  > Emms DM, Kelly S (2019). OrthoFinder: phylogenetic orthology inference for comparative genomics. Genome Biology 20:238
+
+- [DIAMOND](https://doi.org/10.1038/s41592-021-01101-x)
+  > Buchfink B, Reuter K, Drost HG (2021). Sensitive protein alignments at tree-of-life scale using DIAMOND. Nature Methods 18, 366–368. doi:10.1038/s41592-021-01101-x
+
+- [cogeqc](https://github.com/almeidasilvaf/cogeqc)
+  > Almeida-Silva F, Van de Peer Y (2022). cogeqc: Systematic quality checks on comparative genomics analyses. R package version 1.3.0.
+
+- [InterPro](https://doi.org/10.1093/nar/gkac993)
+  > Paysan-Lafosse T, Blum M, Chuguransky S, Grego T, Pinto BL, Salazar GA, Bileschi ML, Bork P, Bridge A, Colwell L, Gough, J (2023). InterPro in 2022. Nucleic Acids Research, 51(D1), pp.D418-D427.
+
+- [UniProt](https://doi.org/10.1093/nar/gkac1052)
+  > The UniProt Consortium (2023). UniProt: the Universal Protein Knowledgebase in 2023
+
+- [MAFFT](https://doi.org/10.1093/bioinformatics/bty121)
+  > Nakamura, T, Yamada, KD, Tomii, K, & Katoh, K (2018). Parallelization of MAFFT for large-scale multiple sequence alignments. Bioinformatics, 34(14), 2490-2492.
+
+- [ClipKIT](https://doi.org/10.1371/journal.pbio.3001007)
+  > Steenwyk, J. L., Buida III, T. J., Li, Y., Shen, X. X., & Rokas, A. (2020). ClipKIT: a multiple sequence alignment trimming software for accurate phylogenomic inference. PLoS biology, 18(12), e3001007.
+
+- [IQ-TREE](https://doi.org/10.1093/molbev/msaa015)
+  > Minh, BQ, Schmidt, HA, Chernomor, O, Schrempf, D, Woodhams, MD, Von Haeseler, A, Lanfear, R (2020). IQ-TREE 2: new models and efficient methods for phylogenetic inference in the genomic era. Molecular biology and evolution, 37(5), 1530-1534.
+
+- [Asteroid](https://doi.org/10.1093/bioinformatics/btac832)
+  > Morel B, Williams, TA, Stamatakis, A (2023). Asteroid: a new algorithm to infer species trees from gene trees under high proportions of missing data. Bioinformatics, 39(1), btac832.
+
+- [GeneRax](https://doi.org/10.1093/molbev/msaa141)
+  > Morel B, Kozlov AM, Stamatakis A, Szöllősi GJ (2020). GeneRax: a tool for species-tree-aware maximum likelihood-based gene family tree inference under gene duplication, transfer, and loss. Molecular biology and evolution, 37(9), 2763-2774.
+
+- [SpeciesRax](https://doi.org/10.1093/molbev/msab365)
+  > Morel B, Schade P, Lutteropp S, Williams TA, Szöllősi GJ, Stamatakis A (2022). SpeciesRax: a tool for maximum likelihood species tree inference from gene family trees under duplication, transfer, and loss. Molecular biology and evolution, 39(2), msab365.
+
+
+8. [`SELECT_INFLATION`]: Based on the above summaries, select the inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
+
 
 ## Software packaging/containerisation tools
 
