@@ -25,9 +25,9 @@ Once the first round of MCL clustering has completed, we summarize orthogroups b
 
 With orthogroups/gene families inferred, we will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
-For both subsets, we subsequently infer multiple sequences alignments (using [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)), trim these alignments for gappy/uninformative regions (using [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)), and infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) under a specified model of amino acid substitution (e.g. LG+F+G4).
+For both subsets, we subsequently infer multiple sequences alignments (using [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)), trim these alignments for gappy/uninformative regions (using [`ClipKIT`](https://jlsteenwyk.com/ClipKIT/)), and infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) under a specified model of amino acid substitution (e.g. LG+F+G4).
 
-Using the first conservatively sized subset of gene family trees, we infer a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
+Using the first conservatively sized subset of gene family trees, we infer a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
 
 Using this improved species tree, we then use [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family.
 
@@ -36,23 +36,23 @@ With the rooted species tree inferred, `PhylOrthology` uses [`OrthoFinder`](http
 TODO: Final module to summarize all results into set of user-friendly tables and maybe figures?
 
 ### The workflow thus proceeds as follows:
-1. Proteomes are staged locally (including downloaded from S3 if necessary)
-2. Each proteome is summarized using [`BUSCO`](https://busco.ezlab.org/) completeness at both user-specified shallow (e.g. Eukaryota) and taxon-specific scales
-3. Proteomes originating from [`UniProt`](https://www.uniprot.org/) (with UniProt protein accessions) are annotated using UniProt.ws
-4. Proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
-5. Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
-6. Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
-7. Summarization and quantification of orthogroup inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs. 
-8. Based on the above summaries, select the inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
-9. Repeat step six (6: MCL clustering into orthogroups) for all species under the optimal inflation parameter
-10. Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
-11. Infer multiple sequence alignments for each focal gene family with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
-12. Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://github.com/JLSteenwyk/ClipKIT)
-13. Infer gene family trees using [`IQ-TREE`](http://www.iqtree.org/)
-14. Infer a starting species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid)
-15. Root the species tree, improving its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax)
-16. Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
-17. Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+1. [`INPUT_CHECK`]: Proteomes are staged locally (including downloaded from S3 if necessary)
+2. [`BUSCO`]: Each proteome is summarized using [`BUSCO`](https://busco.ezlab.org/) completeness at both user-specified shallow (e.g. Eukaryota) and taxon-specific scales
+3. [`PROTEIN_ANNOTATION`]: Proteomes originating from [`UniProt`](https://www.uniprot.org/) (with UniProt protein accessions) are annotated using [`UniProt.ws`](https://bioconductor.org/packages/release/bioc/html/UniProt.ws.html)
+4. [`ORTHOFINDER_PREP`]: Proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+5. [`DIAMOND_BLASTP`]: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
+6. [`ORTHOFINDER_MCL`]: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
+7. [`COGEQC`]: Summarization and quantification of orthogroup inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs. 
+8. [`SELECT_INFLATION`]: Based on the above summaries, select the inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
+9. [`ORTHOFINDER_MCL`]: Repeat step six (6: MCL clustering into orthogroups) for all species under the optimal inflation parameter
+10. [`FILTER_ORTHOGROUPS`]: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
+11. [`MAFFT`]: Infer multiple sequence alignments for each focal gene family with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
+12. [`CLIPKIT`]: Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
+13. [`IQTREE`]: Infer gene family trees using [`IQ-TREE`](http://www.iqtree.org/)
+14. [`ASTEROID`]: Infer a starting species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid)
+15. [`SPECIESRAX`]: Root the species tree, improving its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax)
+16. [`GENERAX`]: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
+17. [`ORTHOFINDER_PHYLOHOGS`]: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
@@ -100,6 +100,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 > `download_annots`: Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.   
 > `tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.  
 > `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
+>
 > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology).
 
 **5.** Ensure that proteins are named following the following convention: `Species_genus:GeneID`
@@ -169,7 +170,7 @@ Below is a description of outputs, namely directory structure and their contents
 >     - `all_ogs_counts.csv`: comma-separated csv listing, for all orthogroups (including those fro which msa/gene family trees are not inferred), the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included.  
 >     - `(gene)speciestree_core_ogs_counts.csv`: the same as above, but for only the two respects subsets of gene families.  
 > 7. `mafft/`: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number).  
-> 8. `trimmed_msas/`: Multiple sequence alignments inferred using mafft, trimmed for phylogenetic inference with ClipKit.  
+> 8. `trimmed_msas/`: Multiple sequence alignments inferred using mafft, trimmed for phylogenetic inference with ClipKIT.  
 > 9. `iqtree/`: gene family trees (and corresponding log files) for all gene families for which (trimmed) multiple sequence alignments were estimates.  
 > 10. `species_tree_prep/`: set of files used by asteroid and Gene/SpeciesRax to correspond gene-family protein sequences to species IDs, etc.  
 > 11. `asteroid/`: starting, unrooted species tree inferred using all gene family trees with asteroid. Includes:  
@@ -206,13 +207,31 @@ An extensive list of references for the tools used by the pipeline can be found 
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
+---
 ## Parameter specification
-TODO: This is a work in progress
-We have set sensible parameter choices as default for each module, however several modules have parameters that are best-suited to user specification on a per-analysis basis. The section below describes, for each module, how these specifications are to be made as well as what some common specifications may be. Where necessary, refer to the documentation of each respective software for a more complete list of possible parameter choices.
+We have set sensible parameter choices as default for each module, however several modules have parameters that are best-suited to user specification on a per-analysis basis. The section below describes, for each module, fixed parameter names, or what default parameters specifications may be. Where necessary, refer to the documentation of each respective software for a more complete list of possible parameter choices.
+
+Certain modules have parameters/flags that are specified in `conf/modules.config`; these are indicated as necessary. It is up to the user to determine whether default specifications are sensible for any given dataset/analysis. Custom specifications may be made following the same convention (example below, [documented here](https://nf-co.re/developers/modules#general)) as used for these modules. 
+```
+process {
+    withName: 'MAFFT' {
+        ext.args = [
+            '--localpair',
+            '--maxiterate 1000',
+            '--anysymbol'
+        ].join(' ') 
+    }  
+}
+```
 
 ### Module:
-#### ANNOTATE_UNIPROT:
-1. `download_annots`: Specified in the parameter file. **Parameter may be specified as one of three things:**  
+#### 1. [`BUSCO`](https://busco.ezlab.org/busco_userguide.html): 
+- `config_file`: Optional config file used used by BUSCO. [See here for description](https://busco.ezlab.org/busco_userguide.html#manage-run-parameters-in-config-files)  
+- `busco_lineages_path`: Optional path to locally stored BUSCO lineage datasets  
+
+#### 2. ANNOTATE_UNIPROT:
+- `download_annots`: Specified in the parameter file. 
+- **Parameter may be specified as one of three things:**  
     i. `all` - download all 16 possible sets of protein annotations from UniProt where possible.  
     ii. `none` - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments.  
     iii. A quoted, comma separated string of select numbers 1-16: example `"1,2,4,7,10"`. Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.  
@@ -238,6 +257,56 @@ We have set sensible parameter choices as default for each module, however sever
     15. Enzyme and pathway databases  
     16. Phylogenomic databases  
     ```
+
+#### 3. [`DIAMOND_BLASTP`](https://github.com/bbuchfink/diamond):  
+- `--ultra-sensitive`: Specified in `conf/modules.config`. By default, sequence similarity is assessed using the most sensitive (albeit slowest) method.  
+
+#### 4. [`ORTHOFINDER_MCL`](https://github.com/davidemms/OrthoFinder):  
+- `mcl_inflation`: Comma-separated list of inflation parameter values to be used in testing. Currently testing is mandatory - optional use is a work in progress.  
+
+#### 5. `FILTER_ORTHOGROUPS`: 
+- Parameters specified in parameter json file or via commandline when running workflow. 
+- `min_num_spp`: Minimum \# of species an orthogroup must contain for phylogenetic inference.  
+- `min_num_groups`: Minimum \# of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.  
+- `max_copy_num_filt1`: Maximum \# of per-species gene copy number an orthogroup may contain for species-tree inference.  
+- `max_copy_num_filt2`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.  
+
+#### 6. [`MAFFT`](https://mafft.cbrc.jp/alignment/software/):  
+- Parameters specified in `conf/modules.config`. See MAFFT documentation for detailed description of options.  
+- `--localpair --maxiterate 1000 --anysymbol`: Runs MAFFT L-INS-i. Iterative refinement method incorporating local pairwise alignment information. Highly accurate, but slower.  
+
+#### 7. [`CLIPKIT`](https://jlsteenwyk.com/ClipKIT/):  
+- Defaults used. See [documentation](https://jlsteenwyk.com/ClipKIT/) for list of options. Custom parameters should be specified in `conf/modules.config`.  
+
+#### 8. [`IQTREE`](http://www.iqtree.org/):  
+- `tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree. Specified in parameter-file.    
+- `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used. Specified in parameter-file.  
+- All other custom parameters should be specified in `conf/modules.config`.  
+
+#### 9. [`ASTEROID`](https://github.com/BenoitMorel/Asteroid):
+- Parameters should be specified in `conf/modules.config`.  
+- `--random-starting-trees 10`: Number of random starting trees used in species tree inference.
+- See [documentation](https://github.com/BenoitMorel/Asteroid) for list of other parameter options.
+
+#### 10. [`SPECIESRAX`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax):
+- **PLEASE** read the [documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax) to GeneRax and SpeciesRax for a mode detailed explanation, both of these options as well as other possible parameter specifications.
+- Parameters should be specified in `conf/modules.config`.  
+- `--per-family-rates`: Estimate duplication-transfer-loss rates per gene family.  
+- `--rec-model UndatedDTL`: Use the undated duplication-transfer-loss likelihood.  
+- `--prune-species-tree`: Remove species not observed in gene family trees when conducting gene family tree - species tree reconciliation.  
+- `--si-strategy HYBRID`: Both optimize and re-root the starting tree inferred from `Asteroid`.  
+- `--si-quartet-support`: Estimate paralogy-aware quartet uncertainty score interpretation (topological uncertainty - see [here](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax)).  
+- `--si-estimate-bl`: Estimate species tree branch-lengths (in substitutions-per-site).  
+- `--strategy SPR`: Use the method of subtree pruning and re-grafting to perform tree search/improve topology under DTL model when performing gene family tree - species tree reconciliation.  
+
+#### 11. [`GENERAX`](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax):
+- Parameters should be specified in `conf/modules.config`.  
+- `--rec-model UndatedDTL`: Same as in `SpeciesRax`.  
+- `--prune-species-tree`: Same as in `SpeciesRax`.  
+- `--per-family-rates`: Same as in `SpeciesRax`.  
+- `--strategy SPR`: Same as in `SpeciesRax`.  
+
+---
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >
