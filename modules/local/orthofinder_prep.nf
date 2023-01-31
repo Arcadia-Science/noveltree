@@ -16,11 +16,11 @@ process ORTHOFINDER_PREP {
     val output_directory
 
     output:
-    path "**.dmnd", emit: diamonds
-    path "**.fa", emit: fastas
-    path "**SequenceIDs.txt", emit: seqIDs
-    path "**SpeciesIDs.txt", emit: sppIDs
-    path "versions.yml" , emit: versions
+    path "**.dmnd"           , emit: diamonds
+    path "**.fa"             , emit: fastas
+    path "**SequenceIDs.txt" , emit: seqIDs
+    path "**SpeciesIDs.txt"  , emit: sppIDs
+    path "versions.yml"      , emit: versions
 
     script:
     """

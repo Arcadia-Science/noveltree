@@ -14,16 +14,16 @@ process IQTREE {
     val pmsf_model
 
     output:
-    path("*.treefile")                  , emit: phylogeny
-    path "*.log"                        , emit: iqtree_log
-    path "versions.yml"                 , emit: versions
+    path("*.treefile")  , emit: phylogeny
+    path "*.log"        , emit: iqtree_log
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def memory      = task.memory.toString().replaceAll(' ', '')
+    def args   = task.ext.args ?: ''
+    def memory = task.memory.toString().replaceAll(' ', '')
 
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
