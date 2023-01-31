@@ -15,16 +15,13 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// WorkflowMain.initialise(workflow, params, log)
+// Validate input parameters
+WorkflowMain.initialize(workflow, params, log)
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
-// Validate input parameters
-//WorkflowPhylorthology.initialise(params, log)
-
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-//def checkPathParamList = [ params.input, params.fasta ]
-//for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
+def checkPathParamList = [params.input]
+for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) {
@@ -393,16 +390,12 @@ workflow {
     COMPLETION EMAIL AND SUMMARY
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// TODO: UNCOMMENT AND CHECK THAT THIS WORKS WHEN RUNNING
-//workflow.onComplete {
-//    if (params.email || params.email_on_fail) {
-//        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
-//    }
-//    NfcoreTemplate.summary(workflow, params, log)
-//    if (params.hook_url) {
-//       NfcoreTemplate.adaptivecard(workflow, params, summary_params, projectDir, log)
-//    }
-//}
+workflow.onComplete {
+    if (params.email || params.email_on_fail) {
+        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log)
+    }
+    NfcoreTemplate.summary(workflow, params, log)
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
