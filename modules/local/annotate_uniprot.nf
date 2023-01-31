@@ -16,18 +16,17 @@ process ANNOTATE_UNIPROT {
     val annots_to_download
     
     output:
-    path "*accessions.txt"  , emit: accessions
-    path "*" , emit: all_annotations
+    path "*accessions.txt"         , emit: accessions
+    path "*"                       , emit: all_annotations
     path "*cogeqc_annotations.tsv" , emit: cogeqc_annotations
-    path "versions.yml" , emit: versions
+    path "versions.yml"            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
-    // always gets set as the file itself, excluding the path
     script:
-    def args = task.ext.args ?: ''
-    def spp = "${meta.id}"
+    def args       = task.ext.args ?: ''
+    def spp        = "${meta.id}"
     def is_uniprot = "${meta.uniprot}"
     """
     # Only annotate species for which protein IDs are found in UniProt (i.e.
@@ -40,7 +39,6 @@ process ANNOTATE_UNIPROT {
         # Now run the script to pull down annotations for the protein accessions in this species.
         # This R script uses the UniProt.ws bioconducter package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
-
         protein_annotation.R $annots_to_download $spp ${spp}_protein_accessions.txt
     fi
 

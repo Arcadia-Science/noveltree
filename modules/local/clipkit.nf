@@ -15,8 +15,8 @@ process CLIPKIT {
     path(fasta)   // Filepaths to the MSAs
 
     output:
-    path("*_clipkit.fa")                  , emit: trimmed_msas
-    path "versions.yml"                   , emit: versions
+    path("*_clipkit.fa") , emit: trimmed_msas
+    path "versions.yml"  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

@@ -16,20 +16,20 @@ process DIAMOND_BLASTP {
     val mcl_test
 
     output:
-    path('*.blast*') , optional: true, emit: blast
-    path('*.xml*')   , optional: true, emit: xml
-    path('*.txt*')   , optional: true, emit: txt
-    path('*.daa*')   , optional: true, emit: daa
-    path('*.sam*')   , optional: true, emit: sam
-    path('*.tsv*')   , optional: true, emit: tsv
-    path('*.paf*')   , optional: true, emit: paf
-    path "versions.yml"              , emit: versions
+    path('*.blast*')    , optional: true, emit: blast
+    path('*.xml*')      , optional: true, emit: xml
+    path('*.txt*')      , optional: true, emit: txt
+    path('*.daa*')      , optional: true, emit: daa
+    path('*.sam*')      , optional: true, emit: sam
+    path('*.tsv*')      , optional: true, emit: tsv
+    path('*.paf*')      , optional: true, emit: paf
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
+    def args        = task.ext.args ?: ''
     def testing_mcl = mcl_test.equals('true') ? "${mcl_test}" : "false"
     switch ( output_extension ) {
         case "blast": outfmt = 0; break
@@ -47,18 +47,18 @@ process DIAMOND_BLASTP {
     }
     """
     # Get the species name against which we're querying
-    sppQuery=\$(echo $fasta | sed "s/Species//g" | sed 's/.fa//g' | sed 's|.*/||g')
-    sbbDB=\$(echo $db | sed "s/diamondDBSpecies//g" | sed 's/.dmnd//g' | sed 's|.*/||g')
+    spp_query=\$(echo $fasta | sed "s/Species//g" | sed 's/.fa//g' | sed 's|.*/||g')
+    sbb_db=\$(echo $db | sed "s/diamondDBSpecies//g" | sed 's/.dmnd//g' | sed 's|.*/||g')
 
     if [ "$testing_mcl" == "true" ]; then
-        outName="TestBlast\${sppQuery}_\${sbbDB}.${output_extension}"
+        out_name="TestBlast\${spp_query}_\${sbb_db}.${output_extension}"
     else
-        outName="Blast\${sppQuery}_\${sbbDB}.${output_extension}"
+        out_name="Blast\${spp_query}_\${sbb_db}.${output_extension}"
     fi
 
     diamond \\
         blastp \\
-        --out \$outName \\
+        --out \$out_name \\
         --outfmt ${outfmt} \\
         --threads ${task.cpus} \\
         --query $fasta \\

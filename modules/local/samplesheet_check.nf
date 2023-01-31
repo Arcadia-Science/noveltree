@@ -10,14 +10,13 @@ process SAMPLESHEET_CHECK {
     path complete_samplesheet // Samplesheet formatted as described in the README
 
     output:
-    path '*.csv'       , emit: csv
+    path '*.csv'        , emit: csv
     path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script: // This python script is bundled with the pipeline, in phylorthology/bin/
-
     """
     check_samplesheet.py \\
         $complete_samplesheet \\
