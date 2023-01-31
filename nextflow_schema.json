@@ -75,7 +75,7 @@
                 "tree_model": {
                     "type": "string",
                     "default": "LG+F+G4",
-                    "description": "AA/nucleotide substitution model used by IQ-TREE for gene family tree inference. Determined automatically by default."
+                    "description": "AA substitution model used by IQ-TREE for gene family tree inference. Default model is generally applicable, but may be specified by the user."
                 },
                 "tree_model_pmsf": {
                     "type": "string",
