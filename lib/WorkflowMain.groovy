@@ -46,7 +46,7 @@ class WorkflowMain {
     //
     // Validate parameters and print summary to screen
     //
-    public static void initialise(workflow, params, log) {
+    public static void initialize(workflow, params, log) {
         // Print help to screen if required
         if (params.help) {
             log.info help(workflow, params, log)

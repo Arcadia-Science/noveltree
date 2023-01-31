@@ -15,27 +15,11 @@ If you'd like to write some code for Arcadia-Science/phylorthology, the standard
 
 1. Check that there isn't already an issue about your idea in the [Arcadia-Science/phylorthology issues](https://github.com/Arcadia-Science/phylorthology/issues) to avoid duplicating work. If there isn't one already, please create one so that others know you're working on this
 2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [Arcadia-Science/phylorthology repository](https://github.com/Arcadia-Science/phylorthology) to your GitHub account
-3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
+3. Make the necessary changes / additions within your forked repository.
 4. Use `nf-core schema build` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 1.10).
 5. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
 
 If you're not used to this workflow with git, you can start with some [docs from GitHub](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests) or even their [excellent `git` resources](https://try.github.io/).
-
-## Tests
-
-When you create a pull request with changes, [GitHub Actions](https://github.com/features/actions) will run automatic tests.
-Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
-
-There are typically two types of tests that run:
-
-### Lint tests
-
-`nf-core` has a [set of guidelines](https://nf-co.re/developers/guidelines) which all pipelines must adhere to.
-To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
-
-If any failures or warnings are encountered, please follow the listed URL for more documentation.
-
-### Pipeline tests
 
 Each `nf-core` pipeline should be set up with a minimal set of test-data.
 `GitHub Actions` then runs the pipeline on this data to ensure that it exits successfully.
@@ -65,9 +49,6 @@ If you wish to contribute a new step, please use the following coding standards:
 5. Add any new parameters to `nextflow_schema.json` with help text (via the `nf-core schema build` tool).
 6. Add sanity checks and validation for all relevant parameters.
 7. Perform local tests to validate that the new code works as expected.
-8. If applicable, add a new test command in `.github/workflow/ci.yml`.
-9. Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name clean up and module plots are in the appropriate order. If applicable, add a [MultiQC](https://https://multiqc.info/) module.
-10. Add a description of the output files and if relevant any appropriate images from the MultiQC report to `docs/output.md`.
 
 ### Default values
 
