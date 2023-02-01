@@ -21,15 +21,15 @@ To account for the confounding effects of sequence length (and thus evolutionary
     **1.** An initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and  
     **2.** A second round on the complete dataset.  
     
-Once the first round of MCL clustering has completed, we summarize orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs. 
+Once the first round of MCL clustering has completed, `PhylOrthology` summarizes orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs. 
 
-With orthogroups/gene families inferred, we will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
+With orthogroups/gene families inferred, `PhylOrthology` will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it's best to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference  (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
-For both subsets, we subsequently infer multiple sequences alignments (using [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)), trim these alignments for gappy/uninformative regions (using [`ClipKIT`](https://jlsteenwyk.com/ClipKIT/)), and infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) under a specified model of amino acid substitution (e.g. LG+F+G4).
+For both subsets, `PhylOrthology` subsequently infers multiple sequences alignments (using [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)), trim these alignments for gappy/uninformative regions (using [`ClipKIT`](https://jlsteenwyk.com/ClipKIT/)), and infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) under a specified model of amino acid substitution (e.g. LG+F+G4).
 
-Using the first conservatively sized subset of gene family trees, we infer a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
+Using the first conservatively sized subset of gene family trees, `PhylOrthology` infers a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
 
-Using this improved species tree, we then use [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family.
+Using this improved species tree, `PhylOrthology` then uses [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family.
 
 With the rooted species tree inferred, `PhylOrthology` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups. 
 
@@ -73,7 +73,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 > `shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota).  
 > `broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota).  
 > `mode`: specification of busco analysis mode.  
-> `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that we can use to annotate).  
+> `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that `PhylOrthology` can use to annotate).  
 > `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
 
 **4.** Create a parameter file that includes all necessary input, output, and parameter specifications - example below, followed by a description of parameters.
@@ -114,8 +114,9 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 # Everything that follows the colon is what must be a protein/gene identifier unique to that 
 # sequence. Additional sequence info may be included following a space. 
 
-# If the proteome comes from UniProt, this must be the UniProt protein accession. We use the 
-# string that follows the colon to extract the uniprot accession and annotate proteins.
+# If the proteome comes from UniProt, this must be the UniProt protein accession. 
+# PhylOrthology uses the string that follows the colon to extract the uniprot accession and 
+# annotate proteins.
 ```
 
 **6.** Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
