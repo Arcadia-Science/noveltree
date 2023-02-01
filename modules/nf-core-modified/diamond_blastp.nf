@@ -1,6 +1,7 @@
 process DIAMOND_BLASTP {
+    // Modified from nf-core to flexibly handle application to both complete and mcl-test datasets
+
     tag "$meta.id"
-    //label 'process_highthread'
     label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::diamond=2.0.15" : null)
