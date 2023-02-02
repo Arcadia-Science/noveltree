@@ -60,23 +60,27 @@ process BUSCO {
     done
     cd ..
 
-    busco \\
-        --cpu ${task.cpus} \\
-        --in "\$INPUT_SEQS" \\
-        --out ${prefix}_busco \\
-        --mode ${meta.mode} \\
-        $busco_lineage \\
-        $busco_lineage_dir \\
-        $busco_config \\
-        $args
-
-    # clean up
-    rm -rf "\$INPUT_SEQS"
-
-    # Move files to avoid staging/publishing issues
-    mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
-    mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
-
+    # Only run at shallow scale if an appropriate lineage dataset is available
+    # (AKA the shallow dataset != NA) - always run for broad scale.
+    if [ "${meta.shallow}" != "NA" ]; then
+        busco \\
+            --cpu ${task.cpus} \\
+            --in "\$INPUT_SEQS" \\
+            --out ${prefix}_busco \\
+            --mode ${meta.mode} \\
+            $busco_lineage \\
+            $busco_lineage_dir \\
+            $busco_config \\
+            $args
+    
+        # clean up
+        rm -rf "\$INPUT_SEQS"
+    
+        # Move files to avoid staging/publishing issues
+        mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
+        mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+    fi
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         busco: \$( busco --version 2>&1 | sed 's/^BUSCO //' )
