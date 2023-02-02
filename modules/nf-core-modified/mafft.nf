@@ -1,10 +1,8 @@
-// This process is originally from nf-core but is modified to remove the
-// meta input
-
 process MAFFT {
     // Modified from nf-core to:
     // 1) remove unnecessary meta input
     // 2) use MAFFTs built in automatic thread scaling to improve memory efficiency
+    // 3) wait for MSAs of species tree gene families to finish prior to running on remainder
     tag "$fasta"
     label 'process_medium'
 
