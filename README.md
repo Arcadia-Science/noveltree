@@ -8,6 +8,102 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
 
+---
+
+## Quick Start
+**1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`).  
+
+**2.** Install [`Docker`](https://docs.docker.com/engine/installation/).  
+  
+**3.** Prepare a samplesheet following the required format:
+```
+species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
+Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
+```
+
+> #### Description of Columns:  
+> `species`: species name to use.  
+> `file`: complete path to fasta file, whether local or remote (e.g. provide S3 URI, or hyperlink to other cloud storage).  
+> `taxonomy`: higher-rank taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.  
+> `shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota).  
+> `broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota).  
+> `mode`: specification of busco analysis mode.  
+> `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that `PhylOrthology` can use to annotate).  
+> `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
+  
+**4.** Create a parameter file that includes all necessary input, output, and parameter specifications: example below.
+```
+{
+  "input": "/full/path/to/samplesheet.csv",
+  "outdir": "results",
+  "mcl_inflation": "1.0,2.0,3.0",
+  "min_num_spp_per_og": 4,
+  "min_num_grp_per_og": 1,
+  "max_copy_num_spp_tree": 5,
+  "max_copy_num_gene_trees": 10,
+  "download_annots": "none",
+  "tree_model": "LG+F+G4"
+}
+```
+> #### Parameter descriptions:
+> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).  
+> `mcl_inflation`: DEFAULT "1.0,2.0,3.0". Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.  
+> `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species an orthogroup must contain for phylogenetic inference.   
+> `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.  
+> `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number an orthogroup may contain for species-tree inference.   
+> `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.   
+> `download_annots`: DEFAULT: "minimal". Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.   
+> `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.   
+> `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
+>
+> Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology/tsar).
+  
+**5.** Ensure that proteins are named following the following convention: `Species_genus:GeneID`
+```
+# Example:  
+>Entamoeba_histolytica:C4M6M9 NGG1-interacting factor 3 
+
+# Everything prior to the colon (:) is a constant identifier unique to that species/lineage
+# and can be whatever you would like, but must not include a colon. 
+
+# Everything that follows the colon is what must be a unique protein/gene identifier 
+# Additional sequence info may be included following a space. 
+
+# If you intend to download annotations for a proteome, the sequence identifier must 
+# be the UniProt protein accession. PhylOrthology uses the string that follows the colon 
+# to extract the uniprot accession and annotate proteins.
+
+# Future versions will include a utility to automate sequence naming, and the ability 
+# to automatically correspond other standard sequence identifiers (e.g. NCBI RefSeq) 
+# with UniProt accessions to facilitate this annotation process.
+```
+  
+**6.** Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
+  
+```bash
+# If you're using your own test data
+nextflow run . -profile docker -params-file parameters.json
+```
+
+OR
+
+```bash
+# If you're using Arcadia Science's test dataset
+nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/phylorthology/nextflow_parameters.json
+```
+
+Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
+
+> - The pipeline comes with multiple config profiles, however for the workflow to work properly, you must use `-profile docker`  
+
+**7.** Start running your own analysis! See [here](#parameter-specification) for in-depth parameter description.
+
+```bash
+nextflow run . -profile docker -params-file <PARAMS.JSON>
+```
+
+---
+
 ## Pipeline summary
 At its core, `PhylOrthology` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. ***The method automates all steps of the process, from calculating reciprocal sequence similary to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics.*** 
 
@@ -56,107 +152,6 @@ TODO: R-Markdown that summarize all results into set of user-friendly tables and
   16. `GENERAX`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
   17. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 
-</details>
-
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
-
-
-## Quick Start
-<details>
-  <summary>Expand for a brief description on how to run the workflow on test and user-specific datasets.</summary>
-  <br/>
-  
-  **1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`).  
-
-  **2.** Install [`Docker`](https://docs.docker.com/engine/installation/).  
-    
-  **3.** Prepare a samplesheet following the required format:
-  ```
-  species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
-  Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
-  ```
-  
-  > #### Description of Columns:  
-  > `species`: species name to use.  
-  > `file`: complete path to fasta file, whether local or remote (e.g. provide S3 URI, or hyperlink to other cloud storage).  
-  > `taxonomy`: higher-rank taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.  
-  > `shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota).  
-  > `broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota).  
-  > `mode`: specification of busco analysis mode.  
-  > `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that `PhylOrthology` can use to annotate).  
-  > `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
-    
-  **4.** Create a parameter file that includes all necessary input, output, and parameter specifications: example below.
-  ```
-  {
-    "input": "/full/path/to/samplesheet.csv",
-    "outdir": "results",
-    "mcl_inflation": "1.0,2.0,3.0",
-    "min_num_spp_per_og": 4,
-    "min_num_grp_per_og": 1,
-    "max_copy_num_spp_tree": 5,
-    "max_copy_num_gene_trees": 10,
-    "download_annots": "none",
-    "tree_model": "LG+F+G4"
-  }
-  ```
-  > #### Parameter descriptions:
-  > `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).  
-  > `mcl_inflation`: DEFAULT "1.0,2.0,3.0". Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.  
-  > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species an orthogroup must contain for phylogenetic inference.   
-  > `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.  
-  > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number an orthogroup may contain for species-tree inference.   
-  > `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.   
-  > `download_annots`: DEFAULT: "minimal". Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.   
-  > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.   
-  > `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
-  >
-  > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/phylorthology/tsar).
-    
-  **5.** Ensure that proteins are named following the following convention: `Species_genus:GeneID`
-  ```
-  # Example:  
-  >Entamoeba_histolytica:C4M6M9 NGG1-interacting factor 3 
-  
-  # Everything prior to the colon (:) is a constant identifier unique to that species/lineage
-  # and can be whatever you would like, but must not include a colon. 
-  
-  # Everything that follows the colon is what must be a unique protein/gene identifier 
-  # Additional sequence info may be included following a space. 
-  
-  # If you intend to download annotations for a proteome, the sequence identifier must 
-  # be the UniProt protein accession. PhylOrthology uses the string that follows the colon 
-  # to extract the uniprot accession and annotate proteins.
-  
-  # Future versions will include a utility to automate sequence naming, and the ability 
-  # to automatically correspond other standard sequence identifiers (e.g. NCBI RefSeq) 
-  # with UniProt accessions to facilitate this annotation process.
-  ```
-    
-  **6.** Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:
-  
-  ```bash
-  # If you're using your own test data
-  nextflow run . -profile docker -params-file parameters.json
-  ```
-  
-  OR
-  
-  ```bash
-  # If you're using Arcadia Science's test dataset
-  nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/phylorthology/nextflow_parameters.json
-  ```
-  
-  Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
-  
-  > - The pipeline comes with multiple config profiles, however for the workflow to work properly, you must use `-profile docker`  
-  
-  **7.** Start running your own analysis! See [here](#parameter-specification) for in-depth parameter description.
-  
-  ```bash
-  nextflow run . -profile docker -params-file <PARAMS.JSON>
-  ```
-     
 </details>
 
 ---
