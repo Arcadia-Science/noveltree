@@ -18,15 +18,15 @@ On release, automated continuous integration tests run the pipeline on a full-si
 **3.** Prepare a samplesheet following the required format:
 ```
 species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
-Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
+Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,eukaryota_odb10,proteins,true,true
 ```
 
 > #### Description of Columns:  
 > `species`: species name to use.  
 > `file`: complete path to fasta file, whether local or remote (e.g. provide complete local file path, or S3 URI/hyperlink to other cloud storage).  
 > `taxonomy`: higher-rank taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.  
-> `shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota).  
-> `broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota).  
+> `shallow_db`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota). If NA, will not run.  
+> `broad_db`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota). If NA, will not run.  
 > `mode`: specification of busco analysis mode.  
 > `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that `PhylOrthology` can use to annotate).  
 > `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).  
@@ -91,6 +91,8 @@ OR
 # If you're using Arcadia Science's test dataset
 nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/phylorthology/nextflow_parameters.json
 ```
+
+**NOTE: Currently the workflow only works using the docker profile.**
 
 Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
 
