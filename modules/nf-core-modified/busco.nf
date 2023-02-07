@@ -25,9 +25,9 @@ process BUSCO {
 
     script:
     def args              = task.ext.args ?: ''
-    def prefix            = lineage_scale.equals('shallow') ? "${meta.id}_${meta.shallow}" : "${meta.id}_${meta.broad}"
+    def prefix            = lineage_scale.equals('shallow_db') ? "${meta.id}_${meta.shallow_db}" : "${meta.id}_${meta.broad_db}"
     def busco_config      = config_file ? "--config $config_file" : ''
-    def busco_lineage     = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow}" : "--lineage_dataset ${meta.broad}"
+    def busco_lineage     = lineage_scale.equals('shallow_db') ? "--lineage_dataset ${meta.shallow_db}" : "--lineage_dataset ${meta.broad_db}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
@@ -60,9 +60,11 @@ process BUSCO {
     done
     cd ..
 
-    # Only run at shallow scale if an appropriate lineage dataset is available
-    # (AKA the shallow dataset != NA) - always run for broad scale.
-    if [ "${meta.shallow}" != "NA" ]; then
+    # Only run BUSCO (at either scale) if an appropriate lineage dataset is 
+    # indicated in the samplesheet. Specifying either as NA leads us to skip 
+    # this module/analysis. 
+    # Create a variable 
+    if [ "${busco_lineage}" != "--lineage_dataset NA" ]; then
         busco \\
             --cpu ${task.cpus} \\
             --in "\$INPUT_SEQS" \\
