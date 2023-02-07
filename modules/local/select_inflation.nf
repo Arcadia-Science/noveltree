@@ -13,12 +13,13 @@ process SELECT_INFLATION {
 
     input:
     path og_summaries // Files with summaries of orthogroups inferred using a specific inflation parameter
+    val min_spp       // Minimum number of species for orthogroup phylogenetic inference.
 
     output:
     path "cogeqc_results.tsv"       , emit: cogeqc_summary
     path "best_inflation_param.txt" , emit: best_inflation
-    path "inflation_summaries.pdf"  ,  emit: summary_plot
-    path "versions.yml"             ,            emit: versions
+    path "inflation_summaries.pdf"  , emit: summary_plot
+    path "versions.yml"             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -34,12 +35,10 @@ process SELECT_INFLATION {
     rm *_cogeqc_summary.tsv
     
     # Run the script to summarize and produce a figure of these results.
-    select_inflation.R
-
+    select_inflation.R ${min_spp}
     # And spit out the value of the selected inflation parameter to be
     # captured into a channel from stdout
     sed -i "s/\\[1] //g" best_inflation_param.txt
-
     cat <<- END_VERSIONS > versions.yml
     "${task.process}":
         tidyverse: \$( grep "tidyverse" version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
