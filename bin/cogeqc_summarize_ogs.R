@@ -57,6 +57,9 @@ args = commandArgs(trailingOnly=TRUE)
 # Again, specified from the commandline
 og_dir <- args[1]
 
+# And the minimum number of species for orthogroup phylogenetic inference
+min_spp <- args[2]
+
 # Pull out the inflation parameter from the filepath
 inflation <- gsub(".*_", "", og_dir)
 
@@ -94,11 +97,7 @@ spps <- spps[which(spps %in% species)]
 
 # Initialize
 interpro <- list()
-supfam <- list()
-prosite <- list()
-hogenom <- list()
 oma <- list()
-orthodb <- list()
 
 for(i in 1:length(spps)){
     spp <- spps[i] # So we can name the entry
@@ -109,11 +108,7 @@ for(i in 1:length(spps)){
     # Identify which we have annotations for this species.
     non_missing <-
         c(sum(is.na(annotations$InterPro)) == length(annotations$InterPro),
-        sum(is.na(annotations$SUPFAM)) == length(annotations$SUPFAM),
-        sum(is.na(annotations$PROSITE)) == length(annotations$PROSITE),
-        sum(is.na(annotations$HOGENOM)) == length(annotations$HOGENOM),
-        sum(is.na(annotations$OMA)) == length(annotations$OMA),
-        sum(is.na(annotations$OrthoDB)) == length(annotations$OrthoDB))
+        sum(is.na(annotations$OMA)) == length(annotations$OMA))
 
     # Pull out the InterPro annotations
     interpro[[i]] <-
@@ -122,53 +117,21 @@ for(i in 1:length(spps)){
         }else{
             interpro[[i]] <- NA
         }
-    supfam[[i]] <-
-        if(non_missing[2] == FALSE){
-            supfam[[i]] <- get_annots(spp, annotations$From, annotations$SUPFAM)
-        }else{
-            supfam[[i]] <- NA
-        }
-    prosite[[i]] <-
-        if(non_missing[3] == FALSE){
-            prosite[[i]] <- get_annots(spp, annotations$From, annotations$PROSITE)
-        }else{
-            prosite[[i]] <- NA
-        }
-    hogenom[[i]] <-
-        if(non_missing[4] == FALSE){
-            hogenom[[i]] <- get_annots(spp, annotations$From, annotations$HOGENOM)
-        }else{
-            hogenom[[i]] <- NA
-        }
     oma[[i]] <-
-        if(non_missing[5] == FALSE){
+        if(non_missing[2] == FALSE){
             oma[[i]] <- get_annots(spp, annotations$From, annotations$OMA)
         }else{
             oma[[i]] <- NA
-        }
-    orthodb[[i]] <-
-        if(non_missing[6] == FALSE){
-            orthodb[[i]] <- get_annots(spp, annotations$From, annotations$OrthoDB)
-        }else{
-            orthodb[[i]] <- NA
         }
 }
 
 # Now name all the entries according to their OrthoFinder species ID (second column)
 names(interpro) <- spps
-names(supfam) <- spps
-names(prosite) <- spps
-names(hogenom) <- spps
 names(oma) <- spps
-names(orthodb) <- spps
 
 # And drop species for each that are missing the annotations
 interpro <- Filter(function(a) any(!is.na(a)), interpro)
-supfam <- Filter(function(a) any(!is.na(a)), supfam)
-prosite <- Filter(function(a) any(!is.na(a)), prosite)
-hogenom <- Filter(function(a) any(!is.na(a)), hogenom)
 oma <- Filter(function(a) any(!is.na(a)), oma)
-orthodb <- Filter(function(a) any(!is.na(a)), orthodb)
 
 # Great, now we can pair these annotations with the orthogroups, assessing how
 # well each inflation parameter infers sensible orthogroups with respect to the
@@ -180,20 +143,8 @@ og_assess_list <- list(
         og_set = orthogroups[which(orthogroups$Species %in% names(interpro)),], 
         ann_set = interpro, spp_count = length(names(interpro))),
     list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(supfam)),], 
-        ann_set = supfam, spp_count = length(names(supfam))),
-    list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(prosite)),], 
-        ann_set = prosite, spp_count = length(names(prosite))),
-    list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(hogenom)),], 
-        ann_set = hogenom, spp_count = length(names(hogenom))),
-    list(
         og_set = orthogroups[which(orthogroups$Species %in% names(oma)),], 
-        ann_set = oma, spp_count = length(names(oma))),
-    list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(orthodb)),], 
-        ann_set = orthodb, spp_count = length(names(orthodb)))
+        ann_set = oma, spp_count = length(names(oma)))
 )
 
 # A quick function to run the assessment in parallel, checking that there are
@@ -210,53 +161,38 @@ get_assessments <-
     }
 
 # Now, run each assessment simultaneously to save time
-assessment_res <- mclapply(1:6, get_assessments, mc.cores = 6)
+assessment_res <- mclapply(1:2, get_assessments, mc.cores = 2)
 
 # Read in the orthofinder orthogroup statistics
 ortho_stats <- get_orthofinder_stats(og_stats_dir = og_stat_dir, species = spps[which(spps %in% species)])
 
 # Let's focus on a subset of particularly informative summary statistics
-# that can characterize the "quality" of our inferred orthogroups.
-# Namely, we'll look closely at:
-#   1) The number of orthogroups
-#   2) The proportion of orthogroups with >= 4 spp
-#   3) The proportion of OGs with all species
-#   4) The mean per-species gene count per orthogroup for OGs with >= 4 spp
-#   5) The mean OG composition score for InterPro protein domains
-#   6) The mean per-species percentage genes in orthogroups
-#   7) The mean per-species percentage of single-species orthogroups
-#   8) The mean pairwise species overlap of orthogroups
-
 # Determine how many species are in each orthogroup
 og_freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
 
 # Get the number of gene copies per species, per orthogroup
 per_spp_og_counts <- table(orthogroups[,1:2])
 
-# And from this, get the mean per-species count per orthogroup with at least 4 spp
-per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) >= 4,])
+# And from this, get the mean per-species count per orthogroup with at least 
+# the user-specified minimum number of species
+per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) >= min_spp,])
 
 # pull out proportional overlap between species
 overlap <- ortho_stats$og_overlap[,-1]/do.call(pmax, ortho_stats$og_overlap[,-1])
 overlap <- overlap[lower.tri(overlap)]
 
+num_ogs <- length(unique(orthogroups$Orthogroup))
 og_quality <-
     data.frame(
         inflation_param = inflation,
-        num_ogs = length(unique(orthogroups$Orthogroup)),
-        num_ogs_gt_4spp = length(which(og_freqs >= 4)),
-        num_ogs_all_spp = length(which(og_freqs == max(og_freqs))),
-        per_spp_4spp_og_counts = mean(per_spp_og_counts),
+        num_ogs = num_ogs,
+        perc_ogs_gt_min_spp = length(which(og_freqs >= min_spp)) / num_ogs,
+        per_spp_og_counts = mean(per_spp_og_counts),
         interpro_score = assessment_res[[1]],
-        supfam_score = assessment_res[[2]],
-        prosite_score = assessment_res[[3]],
-        hogenom_score = assessment_res[[4]],
-        oma_score = assessment_res[[5]],
-        orthodb_score = assessment_res[[6]],
+        oma_score = assessment_res[[2]],
         perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
-        total_num_ss_ogs = sum(ortho_stats$stats$n_ss_ogs),
         mean_num_ss_ogs = mean(ortho_stats$stats$n_ss_ogs),
-        pairwise_overlap = mean(overlap)
+        pairwise_overlap = mean(overlap) / 100
     )
 
 # Write out to a tsv.
