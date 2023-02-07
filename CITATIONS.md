@@ -64,7 +64,7 @@
 - [elbow](https://github.com/ahasverus/elbow)
   > Casajus N. (2022). elbow: Detect inflection point of a concave curve. R package version 0.0.0.9000. https://github.com/ahasverus/elbow
 
-## Software packaging/containerisation tools
+## Software packaging/containerization tools
 
 - [Anaconda](https://anaconda.com)
 
