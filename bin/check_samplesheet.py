@@ -36,7 +36,7 @@ def print_error(error, context="Line", context_str=""):
 def check_samplesheet(file_in, file_out):
     """
     This function checks that the samplesheet follows the following structure:
-    species,file,taxonomy,shallow,broad,mode,uniprot,mcl_test
+    species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test
     """
 
     species_mapping_dict = {}
@@ -44,7 +44,7 @@ def check_samplesheet(file_in, file_out):
 
         ## Check header
         MIN_COLS = 8
-        HEADER = ["species", "file", "taxonomy", "shallow", "broad", "mode", "uniprot", "mcl_test"]
+        HEADER = ["species", "file", "taxonomy", "shallow_db", "broad_db", "mode", "uniprot", "mcl_test"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
             print(f"ERROR: Please check samplesheet header -> {','.join(header)} != {','.join(HEADER)}")
@@ -72,7 +72,7 @@ def check_samplesheet(file_in, file_out):
                     )
 
                 ## Check sample name entries
-                species, file, taxonomy, shallow, broad, mode, uniprot, mcl_test = lspl[: len(HEADER)]
+                species, file, taxonomy, shallow_db, broad_db, mode, uniprot, mcl_test = lspl[: len(HEADER)]
                 if species.find(" ") != -1:
                     print(f"WARNING: Spaces have been replaced by underscores for sample: {species}")
                     species = species.replace(" ", "_")
@@ -92,9 +92,9 @@ def check_samplesheet(file_in, file_out):
                             )
 
                 ## populate sample data
-                species_info = [file, taxonomy, shallow, broad, mode, uniprot, mcl_test]  ## [file, taxonomy, shallow, broad, mode, uniprot, mcl_test]
+                species_info = [file, taxonomy, shallow_db, broad_db, mode, uniprot, mcl_test]  ## [file, taxonomy, shallow_db, broad_db, mode, uniprot, mcl_test]
 
-                ## Create species mapping dictionary = {species: [[ file, taxonomy, shallow, broad, mode, uniprot, mcl_test ]]}
+                ## Create species mapping dictionary = {species: [[ file, taxonomy, shallow_db, broad_db, mode, uniprot, mcl_test ]]}
                 if species not in species_mapping_dict:
                     species_mapping_dict[species] = [species_info]
                 else:
@@ -108,7 +108,7 @@ def check_samplesheet(file_in, file_out):
         out_dir = os.path.dirname(file_out)
         make_dir(out_dir)
         with open(file_out, "w") as fout:
-            fout.write(",".join(["species", "file", "taxonomy", "shallow", "broad", "mode", "uniprot", "mcl_test"]) + "\n")
+            fout.write(",".join(["species", "file", "taxonomy", "shallow_db", "broad_db", "mode", "uniprot", "mcl_test"]) + "\n")
             for species in sorted(species_mapping_dict.keys()):
                 for idx, val in enumerate(species_mapping_dict[species]):
                     fout.write(",".join([f"{species}"] + val) + "\n")
