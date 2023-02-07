@@ -23,7 +23,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 
 > #### Description of Columns:  
 > `species`: species name to use.  
-> `file`: complete path to fasta file, whether local or remote (e.g. provide S3 URI, or hyperlink to other cloud storage).  
+> `file`: complete path to fasta file, whether local or remote (e.g. provide complete local file path, or S3 URI/hyperlink to other cloud storage).  
 > `taxonomy`: higher-rank taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.  
 > `shallow`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota).  
 > `broad`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota).  
@@ -47,7 +47,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,eukary
 ```
 > #### Parameter descriptions:
 > `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).  
-> `mcl_inflation`: DEFAULT "1.0,2.0,3.0". Set of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.  
+> `mcl_inflation`: DEFAULT "1.0,2.0,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.  
 > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species an orthogroup must contain for phylogenetic inference.   
 > `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.  
 > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number an orthogroup may contain for species-tree inference.   
