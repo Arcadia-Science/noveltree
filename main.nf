@@ -204,13 +204,14 @@ workflow PHYLORTHOLOGY {
     //
     COGEQC(
         ORTHOFINDER_MCL_TEST.out.inflation_dir,
+        params.min_num_spp_per_og,
         ch_annotations
     )
     ch_cogeqc_summary = COGEQC.out.cogeqc_summary.collect()
     ch_versions = ch_versions.mix(COGEQC.out.versions)
 
     // Now, from these orthogroup summaries, select the best inflation parameter
-    SELECT_INFLATION(ch_cogeqc_summary)
+    SELECT_INFLATION(ch_cogeqc_summary, params.min_num_spp_per_og)
         .best_inflation.text.trim()
         .set { ch_best_inflation }
     ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
