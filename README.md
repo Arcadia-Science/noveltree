@@ -12,10 +12,14 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ## Pipeline summary
 <<<<<<< HEAD
+<<<<<<< HEAD
 At its core, `PhylOrthology` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. ***The method automates all steps of the process, from calculating reciprocal sequence similary to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics.*** 
 =======
 At its core, PhylOrthology used the OrthoFinder algorithm to normalize pairwise protein similarity scores to account for evolutionary divergence prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, PhylOrthology automates the identification of the inflation parameter that returns the most biologically sensible and tractable set of orthogroups.
 >>>>>>> b57a834d0721533a39a30e16d7d585fc4a30404c
+=======
+`PhylOrthology` facilitates user-customized phylogenomic inference from whole proteome amino acid sequence data. ***The workflow automates all steps of the process, from calculating reciprocal sequence similarity to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics.*** 
+>>>>>>> fbcf7c9212cf0c8953aae7bc7f27678b49264d6c
 
 Thus, two rounds of protein clustering takes place - an initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and a second round on the complete dataset. Because Nextflow can automate the parallelization of tasks that are independent of each other, PhylOrthology will begin the all-v-all protein comparisons for both rounds simultaneously across available compute resources. Once the first round of MCL clustering has completed, we summarize orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein domain annotation score calculated with COGEQC, which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups.
 
