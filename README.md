@@ -164,7 +164,7 @@ The sections below describe advanced usage of `PhylOrthology`, including per-mod
 ## Parameter specification
 
 <details>
-  <summary>Expand for description of parameter defaults and how to specify per-module custom settings.</summary>
+  <summary>Parameter defaults and specification of per-module custom settings.</summary>
   <br/>
   
   We have set sensible parameter choices as default for each module, however several modules have parameters that are best-suited to user specification on a per-analysis basis. This section describes, for each module, fixed parameter names, or what default parameters specifications may be. Where necessary, refer to the documentation of each respective software for a more complete list of possible parameter choices.
