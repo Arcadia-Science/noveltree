@@ -5,25 +5,22 @@ library(reshape)
 library(cowplot)
 library(elbow)
 
+# Get the minimum number of species for orthogroup inclusion
+# (used for plotting)
+args = commandArgs(trailingOnly=TRUE)
+min_spp <- args[1]
+
 # Read in summaries of MCL Inflation parameter performance.
 res <- read.delim('cogeqc_results.tsv')
-
-# Subset to the columns we're using
-res <- res[,c(1:3,5:12,15)]
-
-res$num_ogs_gt_4spp <- res$num_ogs_gt_4spp / res$num_ogs
-res$pairwise_overlap <- res$pairwise_overlap * 100
 
 res <- melt(res, id.vars = 'inflation_param')
 vars <- unique(res$variable)
 plts <- list()
 
 ylabs <-
-  c('Number of Orthogroups', '% Orthogroups with\n>= 4 Spp.',
-    'Mean Copy # Per Spp/Per OG',
-    'InterPro Score', 'SUPFAM Score', 'PROSITE Score',
-    'HOGENOM Score', 'OMA Score', 'OrthoDB Score',
-    '% Genes in ssOGs', 'Mean % Species Overlap')
+  c('Number of Orthogroups', paste0('% Orthogroups with\n>= ', min_spp, ' Species'),
+    'Mean Species Copy\nNumber Per-OG', 'InterPro Score', 'OMA Score', 
+    '% Genes in ssOGs', 'Mean Number of\nPer-Species ssOGs', 'Mean Pairwise\n% Species Overlap')
 
 # In some cases we want to identify the inflation parameter that is the best
 # or most representative "compromise" (e.g. % genes in ssOGs, which typically
@@ -43,7 +40,7 @@ for(i in 1:length(vars)){
   tmp.res <- res[which(res$variable == vars[i]),]
   # A check to make sure that we are not dealing with missing values only
   if(sum(is.na(tmp.res$value)) != length(tmp.res$value)){
-    if(i %in% c(4,8)){
+    if(i %in% c(4,5)){
       # A check to make sure that we are not dealing with missing values only
       inflect <-
         elbow(tmp.res[,c(1,3)])$inflation_param_selected
@@ -80,13 +77,12 @@ for(i in 1:length(vars)){
 og_summs <-
   plot_grid(plts[[1]], plts[[2]], plts[[3]], plts[[4]],
             plts[[5]], plts[[6]], plts[[7]], plts[[8]],
-            plts[[9]], plts[[10]], plts[[11]],
-            ncol = 4, nrow = 3)
+            ncol = 4, nrow = 2)
 
 best_i <- mean(best)
 
 ggsave(og_summs, filename = 'inflation_summaries.pdf',
-       height = 9, width = 12)
+       height = 6, width = 12)
 
 # And write out the inflation parameter we selected
 sink("best_inflation_param.txt")

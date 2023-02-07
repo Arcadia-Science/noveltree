@@ -13,7 +13,8 @@ process COGEQC {
 
     input:
     path orthofinder_outdir
-    path prot_annotations // Base filepath to where protein annotations are stored
+    val min_spp             // Minimum number of species for orthogroup retention
+    path prot_annotations   // Base filepath to where protein annotations are stored
 
     output:
     path "*_cogeqc_summary.tsv" , emit: cogeqc_summary
@@ -27,10 +28,9 @@ process COGEQC {
     """
     # Assess orthogroups inferred using each inflation parameter, summarizing
     # how well they group proteins with the same domains together, as well as
-    # other summary stats like number of ogs with >= 4 species, per-species
-    # gene count per-og, etc.
-    cogeqc_summarize_ogs.R ${orthofinder_outdir}
-
+    # other summary stats like number of ogs with >= the minimum # species, 
+    # per-species gene count per-og, etc.
+    cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         cogeqc: \$( cat version.txt | head -n1 | sed "s/\\[1] ‘//g" | sed "s/’//g" )
