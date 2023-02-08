@@ -39,8 +39,8 @@ def create_prots_channel(LinkedHashMap row) {
     def meta  = [:]
         meta.id   = row.species
         meta.taxon = row.taxonomy
-        meta.shallow = row.shallow
-        meta.broad = row.broad
+        meta.shallow_db = row.shallow_db
+        meta.broad_db = row.broad_db
         meta.mode = row.mode
         meta.uniprot = row.uniprot
         meta.mcl_test = row.mcl_test
