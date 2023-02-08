@@ -14,7 +14,12 @@ RUN apt-get update && \
     add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' && \
     apt-get update && \
     apt-get install -y \
-        r-base &&
+        r-base
+
+# Clean up
+RUN apt-get -y autoremove && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
