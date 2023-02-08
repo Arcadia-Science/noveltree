@@ -12,9 +12,10 @@
     - previously 'austinhpatton123/select\_mcl\_inflation\_r-4.2.2\_elbow\_tidy\_reshape\_cowplot'
 5) CLIPKIT : clipkit\_1.3.0  
     - previously 'austinhpatton123/clipkit'
-6) GENE/SPECIESRAX : generax\_2.0.4  
+6) GENE/SPECIESRAX : generax\_2.1.0  
     - previously 'quay.io/biocontainers/generax:2.0.4--h19e7193\_0'
     - this is the other AGPL-3 licensed software
+    - as you can see, there is a more recent version of generax than is available as a biocontainer - this is partly why i'd like to use our own image if possible. 
 7) FILTER_ORTHOGROUPS : r-4.2.2  
     - previously 'austinhpatton123/cogeqc-1.2.0\_r-4.2.2'
     - only used the cogeqc image since the plain r docker images didn't have procps installed and so didn't work with nextflow
