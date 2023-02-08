@@ -1,4 +1,7 @@
 process BUSCO {
+    // Modified from nf-core to:
+    // 1) specify required "mode" parameter 
+    // 2) allow scale-dependent (from meta) specification of lineage dataset
     tag "$meta.id"
     label 'process_medium'
 
