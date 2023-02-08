@@ -22,7 +22,8 @@ process BUSCO {
 
     when:
     task.ext.when == null || task.ext.when
-
+    (lineage_scale == "shallow" && meta.shallow_db != NA) || (lineage_scale == "broad" && meta.broad_db != NA)
+    
     script:
     def args              = task.ext.args ?: ''
     def prefix            = lineage_scale.equals('shallow_db') ? "${meta.id}_${meta.shallow_db}" : "${meta.id}_${meta.broad_db}"
@@ -60,28 +61,22 @@ process BUSCO {
     done
     cd ..
 
-    # Only run BUSCO (at either scale) if an appropriate lineage dataset is 
-    # indicated in the samplesheet. Specifying either as NA leads us to skip 
-    # this module/analysis. 
-    # Create a variable 
-    if [ "${busco_lineage}" != "--lineage_dataset NA" ]; then
-        busco \\
-            --cpu ${task.cpus} \\
-            --in "\$INPUT_SEQS" \\
-            --out ${prefix}_busco \\
-            --mode ${meta.mode} \\
-            $busco_lineage \\
-            $busco_lineage_dir \\
-            $busco_config \\
-            $args
+    busco \\
+        --cpu ${task.cpus} \\
+        --in "\$INPUT_SEQS" \\
+        --out ${prefix}_busco \\
+        --mode ${meta.mode} \\
+        $busco_lineage \\
+        $busco_lineage_dir \\
+        $busco_config \\
+        $args
     
-        # clean up
-        rm -rf "\$INPUT_SEQS"
+    # clean up
+    rm -rf "\$INPUT_SEQS"
     
-        # Move files to avoid staging/publishing issues
-        mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
-        mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
-    fi
+    # Move files to avoid staging/publishing issues
+    mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
+    mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
