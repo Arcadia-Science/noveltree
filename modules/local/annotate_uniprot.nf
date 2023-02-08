@@ -1,6 +1,6 @@
 process ANNOTATE_UNIPROT {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_low'
 
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/r-4.2.2_uniprot.ws:2.38.0':
         '' }"

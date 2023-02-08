@@ -116,7 +116,7 @@ up <- UniProt.ws::UniProt.ws(tax_id)
 # downloading. 
 if (annots_to_download == "all") {
     anns <- 1:16
-} else if (annots_to_download == "none") {
+} else if (annots_to_download == "minimal") {
     anns <- 1
 } else {
     anns <- annots_to_download
