@@ -4,26 +4,34 @@ FROM ubuntu:20.04
 # Prevent R from asking for your geographic area
 ENV DEBIAN_FRONTEND noninteractive
 
-# Install the required dependencies and R
+# Install the required dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests \
         bison \
-        flex \
+        build-essential \
         ca-certificates \
         cmake \
-        openmpi-bin \
-        openmpi-doc \
+        curl \
+        flex \
+        git \
         libopenmpi-dev \
-        build-essential \
         libcurl4-openssl-dev \
         libgmp3-dev \
         libssl-dev \
-        git
-        
+        openmpi-bin \
+        openmpi-doc
+
+# Clone the GeneRax repository and install with MPI
 RUN git clone --recursive https://github.com/BenoitMorel/GeneRax && \
     cd GeneRax/ && \
     bash ./install.sh
 
+# Clean up
+RUN apt-get -y autoremove && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+    
+# Add the GeneRax binary to path
 ENV PATH="/GeneRax/build/bin:$PATH"
 
 # Set the default command to launch an interactive Ubuntu shell
