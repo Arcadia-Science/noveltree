@@ -124,7 +124,7 @@ workflow PHYLORTHOLOGY {
     //
     // Shallow taxonomic scale:
     BUSCO_SHALLOW(
-        ch_all_data.complete_prots,
+        ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
         "shallow",
         [],
         []
@@ -132,7 +132,7 @@ workflow PHYLORTHOLOGY {
 
     // Broad taxonomic scale (Eukaryotes)
     BUSCO_BROAD(
-        ch_all_data.complete_prots,
+        ch_all_data.complete_prots.filter{ it[0].broad_db != "NA" },
         "broad",
         [],
         []
