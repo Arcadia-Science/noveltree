@@ -25,7 +25,6 @@ process BUSCO {
 
     when:
     task.ext.when == null || task.ext.when
-    (lineage_scale == "shallow" && meta.shallow_db != NA) || (lineage_scale == "broad" && meta.broad_db != NA)
     
     script:
     def args              = task.ext.args ?: ''
