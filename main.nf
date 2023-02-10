@@ -257,6 +257,8 @@ workflow PHYLORTHOLOGY {
 
     // And for the remaining orthogroups:
     // Only start once species tree MSAs have finished (to give them priority)
+    // We use the combination of collect().count() to hold off on running this 
+    // set of MSAs, while avoiding unnecessarily staging thousands of large files.
     MAFFT_REMAINING(
         FILTER_ORTHOGROUPS.out.genetree_fas.flatten(),
         ch_core_og_msas.collect().count()
