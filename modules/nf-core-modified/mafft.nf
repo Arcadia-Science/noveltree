@@ -13,6 +13,7 @@ process MAFFT {
 
     input:
     path(fasta)
+    val num_spp_tree_msas // Purely utilitarian: used to prioritize gene families used in species tree inference.
 
     output:
     path("*_mafft.fa")  , emit: msas
@@ -25,15 +26,9 @@ process MAFFT {
     def args = task.ext.args ?: ''
     """
     prefix=\$(basename "${fasta}" .fa)
-
-    # Recode any stop codons "*" as an unknown amino acid to prevent any 
-    # downstream consequences
-    sed -i "s/*/-/g" *.fa
-    
     mafft \\
         --thread -1 \\
         ${args} ${fasta} > \${prefix}_mafft.fa
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         mafft: \$(mafft --version 2>&1 | sed 's/^v//' | sed 's/ (.*)//')
