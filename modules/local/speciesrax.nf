@@ -3,10 +3,8 @@ process SPECIESRAX {
     //label 'process_highthread' // Possible specification for full analysis
     label 'process_medium' // Used for debugging
 
-    conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/generax:2.0.4--h19e7193_0':
-        'quay.io/biocontainers/generax:2.0.4--h19e7193_0' }"
+    container "${ workflow.containerEngine == 'docker' ?
+        'arcadiascience/generax:19604b7': '' }"
 
     publishDir(
         path: "${params.outdir}/speciesrax",
@@ -47,8 +45,7 @@ process SPECIESRAX {
     # working directory
     mv SpeciesRax/* .
     rm -r SpeciesRax
-    rm tmp_*
-    
+
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     for og in \$(ls results/)
     do
