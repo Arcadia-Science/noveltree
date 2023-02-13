@@ -23,7 +23,7 @@ RUN apt-get update && \
 
 RUN Rscript -e "install.packages('tidyverse', version = '1.3.2', repos='https://cloud.r-project.org/')"
 RUN Rscript -e "install.packages('cowplot', version = '1.1.1', repos='https://cloud.r-project.org/')"
-RUN Rscript -e "install.packages('rehsape', version = '0.8.9', repos='https://cloud.r-project.org/')"
+RUN Rscript -e "install.packages('reshape', version = '0.8.9', repos='https://cloud.r-project.org/')"
 RUN Rscript -e "install.packages('devtools', version = '2.4.5', repos='https://cloud.r-project.org/')"
 RUN Rscript -e "devtools::install_github('ahasverus/elbow@cf58784f3a5c17365a1743453a3212cc07a9f216')"
 

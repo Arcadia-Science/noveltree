@@ -46,7 +46,6 @@ process SPECIESRAX {
     # working directory
     mv SpeciesRax/* .
     rm -r SpeciesRax
-    rm tmp_*
 
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     for og in \$(ls results/)
