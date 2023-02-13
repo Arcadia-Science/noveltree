@@ -1,7 +1,5 @@
 # Use an Ubuntu base image
 FROM ubuntu:20.04
-
-# Prevent R from asking for your geographic area
 ENV DEBIAN_FRONTEND noninteractive
 
 # Install the required dependencies
