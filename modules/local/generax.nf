@@ -3,10 +3,8 @@ process GENERAX {
     //label 'process_highthread' // Possible specification for full analysis
     label 'process_medium' // Used for debugging
 
-    conda (params.enable_conda ? "bioconda::generax==2.0.4--h19e7193_0" : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/generax:2.0.4--h19e7193_0':
-        'quay.io/biocontainers/generax:2.0.4--h19e7193_0' }"
+    container "${ workflow.containerEngine == 'docker' ?
+        'arcadiascience/generax:19604b7': '' }"
 
     publishDir(
         path: "${params.outdir}/generax",
@@ -42,7 +40,7 @@ process GENERAX {
         --families $families \\
         --prefix GeneRax \\
         $args
-    
+
     # Remove the redundant result directory, moving everything into the
     # working directory
     mv GeneRax/* .

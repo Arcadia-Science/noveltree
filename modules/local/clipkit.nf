@@ -2,7 +2,7 @@ process CLIPKIT {
     tag "$fasta"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'docker.io/austinhpatton123/clipkit' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit:1.3.0' :
         '' }"
 
     publishDir(

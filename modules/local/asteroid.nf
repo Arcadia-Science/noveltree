@@ -3,7 +3,7 @@ process ASTEROID {
     //label 'process_highthread' // Possible specification for full analysis
     label 'process_medium' // Used for debugging
 
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid:1.0.0':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid:3aae117':
         '' }"
 
     publishDir(

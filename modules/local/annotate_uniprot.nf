@@ -2,7 +2,7 @@ process ANNOTATE_UNIPROT {
     tag "$meta.id"
     label 'process_low'
 
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/r-4.2.2_uniprot.ws:2.38.0':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/uniprotws:2.38.1':
         '' }"
 
     publishDir(
@@ -14,7 +14,7 @@ process ANNOTATE_UNIPROT {
     input:
     tuple val(meta), path(fasta)
     val annots_to_download
-    
+
     output:
     path "*accessions.txt"         , emit: accessions
     path "*"                       , emit: all_annotations

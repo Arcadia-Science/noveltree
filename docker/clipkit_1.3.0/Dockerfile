@@ -13,7 +13,7 @@ RUN apt-get update && \
         python3 \
         python3-pip \
         wget && \
-    pip3 install clipkit
+    pip3 install clipkit==1.3.0
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
