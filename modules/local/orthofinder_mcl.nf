@@ -2,7 +2,7 @@ process ORTHOFINDER_MCL {
     tag "MCL clustering"
     // label 'process_highthread'
     label 'process_medium'
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/orthofinder-2.5.4_r-4.2.2' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder:2.5.4' :
         '' }"
 
     input:
@@ -36,14 +36,14 @@ process ORTHOFINDER_MCL {
         -M msa -X -os -z \\
         -a ${task.cpus} \\
         $args
-    
+
     # Check if we're running an mcl test or not:
     # if so, delete the sequence files, which we will not be using and take up
-    # significant, unnecessary space. 
+    # significant, unnecessary space.
     if [ "$output_directory" == "mcl_test_dataset" ]; then
         rm -r OrthoFinder/*/Orthogroup_Sequences/
     fi
-    
+
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
     mkdir ${output_directory}
     mv OrthoFinder/Results_Inflation_${mcl_inflation}/ ${output_directory}/

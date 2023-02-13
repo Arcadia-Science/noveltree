@@ -3,7 +3,7 @@ process SELECT_INFLATION {
     label 'process_single'
 
     container "${ workflow.containerEngine == 'docker' ?
-        'austinhpatton123/select_mcl_inflation_r-4.2.2_elbow_tidy_reshape_cowplot': '' }"
+        'arcadiascience/select_mcl_inflation_params:0.0.1': '' }"
 
     publishDir(
         path: "${params.outdir}/orthogroup_summaries",
@@ -28,12 +28,12 @@ process SELECT_INFLATION {
     """
     # Pull in the summaries produced by each MCL inflation parameter and
     # identify the parameter value that produces the best quality results.
-    # Combine the per-inflation-parameter tables into a single table 
+    # Combine the per-inflation-parameter tables into a single table
     awk 'FNR==1 && NR!=1{next;}{print}' *.tsv > cogeqc_results.tsv
-    
+
     #Clean up
     rm *_cogeqc_summary.tsv
-    
+
     # Run the script to summarize and produce a figure of these results.
     select_inflation.R ${min_spp}
     # And spit out the value of the selected inflation parameter to be
