@@ -1,10 +1,9 @@
 process ORTHOFINDER_PREP {
     tag "Prepping data for OrthoFinder"
     label 'process_medium'
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/orthofinder:2.5.4--hdfd78af_0' :
-        'quay.io/biocontainers/orthofinder:2.5.4--hdfd78af_0' }"
-        
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder:2.5.4' :
+        '' }"
+
     publishDir(
         path: "${params.outdir}/orthofinder",
         mode: 'symlink',

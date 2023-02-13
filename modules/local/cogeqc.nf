@@ -2,7 +2,7 @@ process COGEQC {
     tag "Orthogroup Summary"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/cogeqc-1.2.0_r-4.2.2':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cogeqc:1.2.1':
         '' }"
 
     publishDir(
@@ -28,7 +28,7 @@ process COGEQC {
     """
     # Assess orthogroups inferred using each inflation parameter, summarizing
     # how well they group proteins with the same domains together, as well as
-    # other summary stats like number of ogs with >= the minimum # species, 
+    # other summary stats like number of ogs with >= the minimum # species,
     # per-species gene count per-og, etc.
     cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp}
     cat <<-END_VERSIONS > versions.yml
