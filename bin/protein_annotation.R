@@ -17,8 +17,7 @@ ids <- args[3]
 # Specify the fields that we would like to download.
 common_cols <- c('organism_name', 'organism_id')
 seq_cogeqc <-
-    c('xref_interpro', 'xref_supfam', 'xref_prosite', 'xref_hogenom',
-    'xref_oma', 'xref_orthodb')
+    c('xref_interpro', 'xref_oma')
 
 seq_meta <-
     c('protein_name', 'length', 'mass', 'cc_mass_spectrometry',
