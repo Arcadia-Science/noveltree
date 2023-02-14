@@ -77,9 +77,6 @@ og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 # Go ahead and read in the orthogroups file
 orthogroups <- read_orthogroups(og_file)
 
-# And clean up species names if we're running on the downsampled test dataset
-orthogroups$Species <- gsub("_downsamp", "", orthogroups$Species)
-
 # Get the complete list of species included here
 all_species <- unique(orthogroups$Species)
 
