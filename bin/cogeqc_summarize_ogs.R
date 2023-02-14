@@ -60,6 +60,10 @@ og_dir <- args[1]
 # And the minimum number of species for orthogroup phylogenetic inference
 min_spp <- args[2]
 
+# Read in the annotations.
+annots <- list.files('./', pattern = "cogeqc_annotations.tsv")
+spps <- gsub("_cogeqc_annotations.tsv", "", annots)
+
 # Pull out the inflation parameter from the filepath
 inflation <- gsub(".*_", "", og_dir)
 
@@ -72,6 +76,12 @@ og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 
 # Go ahead and read in the orthogroups file
 orthogroups <- read_orthogroups(og_file)
+
+# Get the complete list of species included here
+all_species <- unique(orthogroups$Species)
+
+# Remove any orthogroup members for which we do not have annotations
+orthogroups <- orthogroups[which(orthogroups$Species %in% spps),]
 
 # Strip trailing text from species name - may not need in full implementation.
 # Names are determined in orthofinder using the file name, so just include
@@ -87,13 +97,6 @@ species <- unique(orthogroups$Species)
 # and remove the Species name from the gene name - this will create issues when
 # pairing with the annotations.
 orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
-
-# Read in the annotations.
-annots <- list.files('./', pattern = "cogeqc_annotations.tsv")
-spps <- gsub("_cogeqc_annotations.tsv", "", annots)
-
-# Reduce down to the species included in the MCL test dataset
-spps <- spps[which(spps %in% species)]
 
 # Initialize
 interpro <- list()
@@ -133,6 +136,10 @@ names(oma) <- spps
 interpro <- Filter(function(a) any(!is.na(a)), interpro)
 oma <- Filter(function(a) any(!is.na(a)), oma)
 
+# And lastly intersect these with the species used for MCL-testing
+interpro <- interpro[which(names(interpro) %in% species)]
+oma <- oma[which(names(oma) %in% species)]
+
 # Great, now we can pair these annotations with the orthogroups, assessing how
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
@@ -160,11 +167,18 @@ get_assessments <-
         return(assess)
     }
 
-# Now, run each assessment simultaneously to save time
-assessment_res <- mclapply(1:2, get_assessments, mc.cores = 2)
+# First identify for which we have enough species
+target_anns <- which(c(length(interpro), length(oma)) > 1)
+
+# Now, run each assessment (if relevant) simultaneously to save time
+if(length(target_anns) >= 1){
+    assessment_res <- mclapply(target_anns, get_assessments, mc.cores = 2)
+}else{
+    stop(paste0("No orthogroups include >= 2 species with annotations! Reconsider sampling!"))
+}
 
 # Read in the orthofinder orthogroup statistics
-ortho_stats <- get_orthofinder_stats(og_stats_dir = og_stat_dir, species = spps[which(spps %in% species)])
+ortho_stats <- get_orthofinder_stats(og_stats_dir = og_stat_dir, species = all_species)
 
 # Let's focus on a subset of particularly informative summary statistics
 # Determine how many species are in each orthogroup
@@ -188,8 +202,8 @@ og_quality <-
         num_ogs = num_ogs,
         perc_ogs_gt_min_spp = length(which(og_freqs >= min_spp)) / num_ogs,
         per_spp_og_counts = mean(per_spp_og_counts),
-        interpro_score = assessment_res[[1]],
-        oma_score = assessment_res[[2]],
+        interpro_score = tryCatch(assessment_res[[1]], error = function(e) return(NA)),
+        oma_score = tryCatch(assessment_res[[2]], error = function(e) return(NA)),
         perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
         mean_num_ss_ogs = mean(ortho_stats$stats$n_ss_ogs),
         pairwise_overlap = mean(overlap) / 100
