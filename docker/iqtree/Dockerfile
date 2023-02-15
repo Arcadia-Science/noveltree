@@ -1,25 +1,30 @@
 # Use an Ubuntu base image
 FROM ubuntu:20.04
 
+# Prevent interactive querying of geographic area during build
+ENV DEBIAN_FRONTEND noninteractive
+
 # Install the required dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests \
         build-essential \
         ca-certificates \
+        clang-tidy \
         cmake \
+        git \
         wget \
+        libboost-all-dev \
         libcurl4-openssl-dev \
         libeigen3-dev \
         libssl-dev
+        
 
 # Clone the GeneRax repository and install with MPI
-RUN wget https://github.com/iqtree/iqtree2/archive/refs/tags/v2.2.0.5.tar.gz \
-    tar -xvf v2.2.0.5.tar.gz && \
-    rm v2.2.0.5.tar.gz && \
-    cd iqtree2-2.2.0.5/ && \
+RUN git clone https://github.com/iqtree/iqtree2.git --branch v2.2.0.5 && \
+    cd iqtree2 && \
     mkdir build && \
     cd build && \
-    cmake .. && \
+    cmake -DUSE_LSD2=OFF .. && \
     make && \
     make install
 
