@@ -38,6 +38,9 @@ process SPECIESRAX {
     # to be excluded from analyses. 
     sed -E -i '/>/!s/U/-/g' *.fa 
     
+    # Do the same for Pyrrolysine
+    sed -E -i '/>/!s/O/-/g' *.fa 
+
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
