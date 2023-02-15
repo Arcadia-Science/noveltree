@@ -123,7 +123,7 @@ if (annots_to_download == "all") {
 
 # If pulling specific annotations, create a new directory to house them, as
 # this could be quite a bit of information. 
-if (annots_to_download != "none") {
+if (annots_to_download != "minimal") {
     dir.create(file.path(spp), showWarnings = FALSE)
 }
 
