@@ -313,17 +313,19 @@ workflow PHYLORTHOLOGY {
     SPECIES_TREE_PREP(
         ch_core_gene_trees,
         ch_core_trimmed_msas.collect()
+        "speciesrax"
     )
         .set { ch_core_spptree_prep }
 
     ch_core_treefile = ch_core_spptree_prep.treefile
     ch_core_families = ch_core_spptree_prep.families
-    ch_core_generax_map = ch_core_spptree_prep.generax_map
+    ch_core_speciesrax_map = ch_core_spptree_prep.speciesrax_map
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
     GENE_TREE_PREP(
         ch_rem_gene_trees,
         ch_rem_trimmed_msas.collect()
+        "generax"
     )
         .set { ch_rem_genetree_prep }
 
@@ -353,7 +355,7 @@ workflow PHYLORTHOLOGY {
     //
     SPECIESRAX(
         ch_asteroid,
-        ch_core_generax_map,
+        ch_core_speciesrax_map,
         ch_core_gene_trees.collect(),
         ch_core_trimmed_msas.collect(),
         ch_core_families
