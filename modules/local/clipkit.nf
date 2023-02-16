@@ -1,6 +1,6 @@
 process CLIPKIT {
     tag "$fasta"
-    label 'process_medium'
+    label 'process_lowcpu'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit:1.3.0' :
         '' }"
