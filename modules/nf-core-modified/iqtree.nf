@@ -5,7 +5,7 @@ process IQTREE {
     // 3) optionally infer trees using PMSF approximation which requires initial tree inference
     // 4) correctly handle "task.memory" specification for memory handling by iqtree
     tag "$alignment"
-    label 'process_medium'
+    label 'process_iqtree'
 
     conda (params.enable_conda ? 'bioconda::iqtree=2.1.4_beta' : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
