@@ -3,7 +3,7 @@ process BUSCO {
     // 1) specify required "mode" parameter 
     // 2) allow scale-dependent (from meta) specification of lineage dataset
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_lowcpu'
 
     conda (params.enable_conda ? "bioconda::busco=5.4.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
