@@ -1,6 +1,6 @@
 process SELECT_INFLATION {
     tag "Selecting best MCL Inflation"
-    label 'process_single'
+    label 'process_low'
 
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/select_mcl_inflation_params:0.0.1': '' }"

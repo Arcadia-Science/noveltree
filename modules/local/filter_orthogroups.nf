@@ -1,6 +1,6 @@
 process FILTER_ORTHOGROUPS {
     tag "Summarize OG taxon distribution"
-    label 'process_single'
+    label 'process_low'
 
     // Dockerhubs r-base container doesn't have ps (procps)
     // installed, which is required by nextflow to monitor
