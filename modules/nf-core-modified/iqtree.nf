@@ -7,7 +7,7 @@ process IQTREE {
     tag "$alignment"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree:2.2.0.5':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree2:2.2.0.5':
         '' }"
 
     input:
@@ -36,7 +36,7 @@ process IQTREE {
     # skip the analyses, otherwise run iqtree as normal.
 
     # Infer the guide tree for PMSF approximation
-    iqtree \\
+    iqtree2 \\
         -s $alignment \\
         -nt AUTO \\
         -ntmax ${task.cpus} \\
@@ -54,7 +54,7 @@ process IQTREE {
         mv *.treefile guidetree.treefile
         rm *fa.*
 
-        iqtree \\
+        iqtree2 \\
             -s $alignment \\
             -nt \$nt \\
             -mem \$memory \\
