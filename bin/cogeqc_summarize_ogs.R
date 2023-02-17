@@ -77,16 +77,16 @@ og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 # Go ahead and read in the orthogroups file
 orthogroups <- read_orthogroups(og_file)
 
+# Strip trailing text from species name - may not need in full implementation.
+# Names are determined in orthofinder using the file name, so just include
+# the species here.
+orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
+
 # Get the complete list of species included here
 all_species <- unique(orthogroups$Species)
 
 # Remove any orthogroup members for which we do not have annotations
 orthogroups <- orthogroups[which(orthogroups$Species %in% spps),]
-
-# Strip trailing text from species name - may not need in full implementation.
-# Names are determined in orthofinder using the file name, so just include
-# the species here.
-orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
 
 # Pull out the list of species - we are only running this script on a
 # on a subset of species, so we want to be sure that we're not reading in

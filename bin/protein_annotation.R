@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 # Library to get annotations using the uniprot web service
 library(UniProt.ws)
+library(parallel)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -123,35 +124,47 @@ if (annots_to_download == "all") {
 
 # If pulling specific annotations, create a new directory to house them, as
 # this could be quite a bit of information. 
-if (annots_to_download != "none") {
+if (annots_to_download != "minimal") {
     dir.create(file.path(spp), showWarnings = FALSE)
 }
 
-for(i in anns){
-    annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
-    to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
-
-    if(length(to_drop) < nrow(annots)){
-        if(length(to_drop) > 0){
-            annots <- annots[-to_drop,]
-        }
-
-        colnames(annots) <-
-        gsub("[.][.]", "_", colnames(annots)) |>
-            gsub(pattern = "[.]", replacement = "_") |>
-            sub(pattern = "_$", replacement = "")
-
-        # Write out to a tsv assuming we haven't removed every protein
-        # Put the cogeqc annotations in its own directory
-        if(i == 1){
-            write.table(annots, file = paste0(spp, annot_names[i]),
-                        col.names = T, row.names = F, sep = '\t', quote = F)
-        }else{
-            write.table(annots, file = paste0(spp, '/', spp, annot_names[i]),
-                        col.names = T, row.names = F, sep = '\t', quote = F)
+# A function that performs the steps of downloading and writing out to file all 
+# target annotations - used so that we may perform this step in parallel
+get_annotations <- 
+    function(i){
+        annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
+        to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
+    
+        if(length(to_drop) < nrow(annots)){
+            if(length(to_drop) > 0){
+                annots <- annots[-to_drop,]
+            }
+    
+            colnames(annots) <-
+            gsub("[.][.]", "_", colnames(annots)) |>
+                gsub(pattern = "[.]", replacement = "_") |>
+                sub(pattern = "_$", replacement = "")
+    
+            # Write out to a tsv assuming we haven't removed every protein
+            # Put the cogeqc annotations in its own directory
+            if(i == 1){
+                write.table(annots, file = paste0(spp, annot_names[i]),
+                            col.names = T, row.names = F, sep = '\t', quote = F)
+            }else{
+                write.table(annots, file = paste0(spp, '/', spp, annot_names[i]),
+                            col.names = T, row.names = F, sep = '\t', quote = F)
+            }
         }
     }
-}
+
+# Make sure the number of parallel processes is equal to the minimum of either the 
+# number of cores availalble, or the number of annotations being downloaded
+nparallel <- min(length(anns), detectCores())
+
+# Great, now go ahead and download everything! 
+# Note: "res" is just an empty list, since mclapply is just being used to write 
+# annotations out to file. 
+res <- mclapply(anns, get_annotations, mc.cores = nparallel)
 
 sink("version.txt")
 packageVersion("UniProt.ws")
