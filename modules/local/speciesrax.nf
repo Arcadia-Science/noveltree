@@ -1,7 +1,6 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    //label 'process_highthread' // Possible specification for full analysis
-    label 'process_medium' // Used for debugging
+    label 'process_highcpu'
 
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/generax:19604b7': '' }"

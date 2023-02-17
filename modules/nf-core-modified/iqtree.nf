@@ -5,7 +5,7 @@ process IQTREE {
     // 3) optionally infer trees using PMSF approximation which requires initial tree inference
     // 4) correctly handle "task.memory" specification for memory handling by iqtree
     tag "$alignment"
-    label 'process_medium'
+    label 'process_iqtree'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree2:2.2.0.5':
         '' }"
