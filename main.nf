@@ -352,7 +352,6 @@ workflow PHYLORTHOLOGY {
     // rates of gene-family duplication, transfer, and loss
     //
     SPECIESRAX(
-        ch_asteroid,
         ch_core_generax_map,
         ch_core_gene_trees.collect(),
         ch_core_trimmed_msas.collect(),
