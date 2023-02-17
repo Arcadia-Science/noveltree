@@ -13,7 +13,7 @@ process SPECIESRAX {
 
     input:
     path init_species_tree // Filepath to the starting species tree
-    path generax_map       // Filepath to the generax gene-species map file
+    path speciesrax_map    // Filepath to the generax gene-species map file
     path gene_trees        // Filepaths to the starting gene trees
     path alignments        // Filepaths to the gene family alignments
     path families          // Filepath to the families file
