@@ -16,11 +16,11 @@ process SPECIES_TREE_PREP {
     val family_set  // String indicating whether these are gene families intended for SpeciesRax or GeneRax
     
     output:
-    path "gene_family_trees.txt" , emit: treefile
-    path "*speciesrax_map.link"  , emit: speciesrax_map, optional: true
-    path "*generax_map.link"     , emit: generax_map, optional: true
-    path "asteroid_map.link"     , emit: asteroid_map, optional: true
-    path "*orthogroup.families"  , emit: families
+    path "*gene_family_trees.txt" , emit: treefile
+    path "*speciesrax_map.link"   , emit: speciesrax_map, optional: true
+    path "*generax_map.link"      , emit: generax_map, optional: true
+    path "asteroid_map.link"      , emit: asteroid_map, optional: true
+    path "*orthogroup.families"   , emit: families
 
     when:
     task.ext.when == null || task.ext.when
