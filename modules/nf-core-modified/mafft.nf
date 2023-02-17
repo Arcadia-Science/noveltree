@@ -4,7 +4,7 @@ process MAFFT {
     // 2) use MAFFTs built in automatic thread scaling to improve memory efficiency
     // 3) wait for MSAs of species tree gene families to finish prior to running on remainder
     tag "$fasta"
-    label 'process_medium'
+    label 'process_mafft'
 
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -27,7 +27,7 @@ process MAFFT {
     """
     prefix=\$(basename "${fasta}" .fa)
     mafft \\
-        --thread -1 \\
+        --thread ${task.cpus} \\
         ${args} ${fasta} > \${prefix}_mafft.fa
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
