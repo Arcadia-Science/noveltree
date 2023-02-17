@@ -132,6 +132,9 @@ if (annots_to_download != "minimal") {
 # target annotations - used so that we may perform this step in parallel
 get_annotations <- 
     function(i){
+        # add in a little sleep function so we don't start making too many
+        # queries to UniProt Simulaneously
+        Sys.sleep(i+sample(seq(0,2,0.25), 1))
         annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
         to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
     
