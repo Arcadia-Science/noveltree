@@ -1,6 +1,6 @@
 process ANNOTATE_UNIPROT {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/uniprotws:2.38.1':
         '' }"

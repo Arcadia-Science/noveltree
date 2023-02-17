@@ -5,12 +5,10 @@ process IQTREE {
     // 3) optionally infer trees using PMSF approximation which requires initial tree inference
     // 4) correctly handle "task.memory" specification for memory handling by iqtree
     tag "$alignment"
-    label 'process_medium'
+    label 'process_iqtree'
 
-    conda (params.enable_conda ? 'bioconda::iqtree=2.1.4_beta' : null)
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/iqtree:2.1.4_beta--hdcc8f71_0' :
-        'quay.io/biocontainers/iqtree:2.1.4_beta--hdcc8f71_0' }"
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree2:2.2.0.5':
+        '' }"
 
     input:
     path(alignment)
@@ -38,7 +36,7 @@ process IQTREE {
     # skip the analyses, otherwise run iqtree as normal.
 
     # Infer the guide tree for PMSF approximation
-    iqtree \\
+    iqtree2 \\
         -s $alignment \\
         -nt AUTO \\
         -ntmax ${task.cpus} \\
@@ -56,7 +54,7 @@ process IQTREE {
         mv *.treefile guidetree.treefile
         rm *fa.*
 
-        iqtree \\
+        iqtree2 \\
             -s $alignment \\
             -nt \$nt \\
             -mem \$memory \\

@@ -1,7 +1,6 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    //label 'process_highthread' // Possible specification for full analysis
-    label 'process_medium' // Used for debugging
+    label 'process_highcpu'
 
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/generax:19604b7': '' }"
@@ -31,6 +30,16 @@ process SPECIESRAX {
     script:
     def args = task.ext.args ?: ''
     """
+    # Recode selenocysteine as a gap character:
+    # RAxML-NG (used under the hood by SpeciesRax and 
+    # GeneRax) cannot handle these. Even if rare, 
+    # their inclusion leads a number of gene families 
+    # to be excluded from analyses. 
+    sed -E -i '/>/!s/U/-/g' *.fa 
+    
+    # Do the same for Pyrrolysine
+    sed -E -i '/>/!s/O/-/g' *.fa 
+
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
