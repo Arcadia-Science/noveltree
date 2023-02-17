@@ -49,7 +49,7 @@
                 },
                 "download_annots": {
                     "type": "string",
-                    "default": "none",
+                    "default": "minimal",
                     "description": "Option specifying the protein annotations the user would like to download. See README for a description of options."
                 },
                 "min_num_spp_per_og": {
