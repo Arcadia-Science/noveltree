@@ -1,6 +1,9 @@
 # Use an Ubuntu base image
 FROM ubuntu:20.04
 
+# Prevent interactive querying of geographic area during build
+ENV DEBIAN_FRONTEND noninteractive
+
 # Install the required dependencies and R
 RUN apt-get update && \
     apt-get install -y \

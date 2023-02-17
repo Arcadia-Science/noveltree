@@ -1,7 +1,6 @@
 process ORTHOFINDER_MCL {
     tag "MCL clustering"
-    // label 'process_highthread'
-    label 'process_medium'
+    label 'process_lowcpu'
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder:2.5.4' :
         '' }"
 
