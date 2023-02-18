@@ -130,25 +130,24 @@ if (annots_to_download != "minimal") {
 
 # The following function catches a common error when querying uniprot 
 # retries if there are communication errors for whatever reason
-retryUniProtSelect <- function(i){
+uniProtSelectWithRetry <- function(i){
     res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
     counter <- 1
-    max_tries <- 10 
-    while(inherits(res, "error") & counter < max_tries){ 
-        res <- tryCatch({ UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB') }, 
-        error = function(e) e)
+    max_tries <- 5 
+    while(inherits(res, "error") & counter <= max_tries){ 
+        res <- tryCatch({
+            UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
+        }, error = function(e) e)
         counter <- counter + 1
-        Sys.sleep(2*counter)
+        Sys.sleep(2 ^ counter)
     }
     return(res)
 }
-# keep retring when there is a random error
+
 # A function that performs the steps of downloading and writing out to file all 
 # target annotations - used so that we may perform this step in parallel
 get_annotations <- 
     function(i){
-        # add in a little sleep function so we don't start making too many
-        # queries to UniProt Simulaneously
         annots <- retryUniProtSelect(i)
         to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
     
