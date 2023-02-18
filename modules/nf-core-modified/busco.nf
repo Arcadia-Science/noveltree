@@ -28,9 +28,9 @@ process BUSCO {
     
     script:
     def args              = task.ext.args ?: ''
-    def prefix            = lineage_scale.equals('shallow_db') ? "${meta.id}_${meta.shallow_db}" : "${meta.id}_${meta.broad_db}"
+    def prefix            = lineage_scale.equals('shallow') ? "${meta.id}_${meta.shallow_db}" : "${meta.id}_${meta.broad_db}"
     def busco_config      = config_file ? "--config $config_file" : ''
-    def busco_lineage     = lineage_scale.equals('shallow_db') ? "--lineage_dataset ${meta.shallow_db}" : "--lineage_dataset ${meta.broad_db}"
+    def busco_lineage     = lineage_scale.equals('shallow') ? "--lineage_dataset ${meta.shallow_db}" : "--lineage_dataset ${meta.broad_db}"
     def busco_lineage_dir = busco_lineages_path ? "--offline --download_path ${busco_lineages_path}" : ''
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
