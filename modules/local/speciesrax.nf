@@ -12,10 +12,10 @@ process SPECIESRAX {
     )
 
     input:
-    path generax_map // Filepath to the generax gene-species map file
-    path gene_trees  // Filepaths to the starting gene trees
-    path alignments  // Filepaths to the gene family alignments
-    path families    // Filepath to the families file
+    path speciesrax_map // Filepath to the generax gene-species map file
+    path gene_trees     // Filepaths to the starting gene trees
+    path alignments     // Filepaths to the gene family alignments
+    path families       // Filepath to the families file
 
     output:
     path "*"                                          , emit: results
