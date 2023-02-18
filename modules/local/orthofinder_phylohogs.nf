@@ -1,7 +1,7 @@
 process ORTHOFINDER_PHYLOHOGS {
     // label 'process_highthread'
     label 'process_medium'
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder:2.5.4' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
     stageInMode = "copy"
     publishDir(

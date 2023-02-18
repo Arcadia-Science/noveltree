@@ -2,7 +2,7 @@ process ASTEROID {
     tag "Asteroid"
     label 'process_highcpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid:3aae117':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117:0.0.1':
         '' }"
 
     publishDir(

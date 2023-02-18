@@ -6,7 +6,7 @@ process FILTER_ORTHOGROUPS {
     // installed, which is required by nextflow to monitor
     // processes. So, we use the cogeqc module here for simplicity.
     container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/rbase:4.2.2': '' }"
+        'arcadiascience/rbase_4.2.2:0.0.1': '' }"
 
     publishDir(
         path: "${params.outdir}/filtered_orthogroups",
