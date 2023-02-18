@@ -13,7 +13,7 @@ num_grp_filt <- as.numeric(args[4])
 copy_num_filt1 <- as.numeric(args[5])
 copy_num_filt2 <- as.numeric(args[6])
 
-ogs <- read.delim(ogcounts)
+ogs <- read.delim(ogcounts, check.names = FALSE)
 samples <- read.delim(samples, sep = ",")
 
 colnames(ogs) <- gsub("\\..*", "", colnames(ogs))
