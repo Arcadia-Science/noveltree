@@ -2,7 +2,7 @@ process CLIPKIT {
     tag "$fasta"
     label 'process_lowcpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit:1.3.0' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_1.3.0:0.0.1' :
         '' }"
 
     publishDir(
