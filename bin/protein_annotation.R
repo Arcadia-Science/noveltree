@@ -128,15 +128,30 @@ if (annots_to_download != "minimal") {
     dir.create(file.path(spp), showWarnings = FALSE)
 }
 
+# The following function catches a common error when querying uniprot 
+# retries if there are communication errors for whatever reason
+uniprotSelectWithRetry <- function(i){
+    res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
+    counter <- 1
+    max_tries <- 5 
+    while(inherits(res, "error") & counter <= max_tries){ 
+        res <- tryCatch({
+            UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
+        }, error = function(e) e)
+        counter <- counter + 1
+        Sys.sleep(2 ^ counter)
+    }
+    if (inherits(res, "error")) {
+        print("Error: ", conditionMessage(res))
+    }
+    return(res)
+}
+
 # A function that performs the steps of downloading and writing out to file all 
 # target annotations - used so that we may perform this step in parallel
 get_annotations <- 
     function(i){
-        # add in a little sleep function so we don't start making too many
-        # queries to UniProt simultaneously
-        # TODO: Look into this later
-        Sys.sleep(i+sample(seq(0,2,0.25), 1))
-        annots <- UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
+        annots <- uniprotSelectWithRetry(i)
         to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
     
         if(length(to_drop) < nrow(annots)){
@@ -145,9 +160,9 @@ get_annotations <-
             }
     
             colnames(annots) <-
-            gsub("[.][.]", "_", colnames(annots)) |>
-                gsub(pattern = "[.]", replacement = "_") |>
-                sub(pattern = "_$", replacement = "")
+                gsub("[.][.]", "_", colnames(annots)) |>
+                    gsub(pattern = "[.]", replacement = "_") |>
+                    sub(pattern = "_$", replacement = "")
     
             # Write out to a tsv assuming we haven't removed every protein
             # Put the cogeqc annotations in its own directory
