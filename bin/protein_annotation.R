@@ -130,7 +130,7 @@ if (annots_to_download != "minimal") {
 
 # The following function catches a common error when querying uniprot 
 # retries if there are communication errors for whatever reason
-uniProtSelectWithRetry <- function(i){
+uniprotSelectWithRetry <- function(i){
     res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
     counter <- 1
     max_tries <- 5 
@@ -141,6 +141,9 @@ uniProtSelectWithRetry <- function(i){
         counter <- counter + 1
         Sys.sleep(2 ^ counter)
     }
+    if(class(res)[1] == c("simpleError")){
+        print("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
+    }
     return(res)
 }
 
@@ -148,7 +151,7 @@ uniProtSelectWithRetry <- function(i){
 # target annotations - used so that we may perform this step in parallel
 get_annotations <- 
     function(i){
-        annots <- retryUniProtSelect(i)
+        annots <- uniprotSelectWithRetry(i)
         to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
     
         if(length(to_drop) < nrow(annots)){
