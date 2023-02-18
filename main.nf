@@ -318,7 +318,7 @@ workflow PHYLORTHOLOGY {
 
     ch_core_treefile = ch_core_spptree_prep.treefile
     ch_core_families = ch_core_spptree_prep.families
-    ch_core_generax_map = ch_core_spptree_prep.generax_map
+    ch_core_speciesrax_map = ch_core_spptree_prep.generax_map
     ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
     GENE_TREE_PREP(
@@ -352,7 +352,7 @@ workflow PHYLORTHOLOGY {
     // rates of gene-family duplication, transfer, and loss
     //
     SPECIESRAX(
-        ch_core_generax_map,
+        ch_core_speciesrax_map,
         ch_core_gene_trees.collect(),
         ch_core_trimmed_msas.collect(),
         ch_core_families
