@@ -141,8 +141,8 @@ uniprotSelectWithRetry <- function(i){
         counter <- counter + 1
         Sys.sleep(2 ^ counter)
     }
-    if(class(res)[1] == c("simpleError")){
-        print("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
+    if (inherits(res, "error")) {
+        print("Error: ", conditionMessage(res))
     }
     return(res)
 }
