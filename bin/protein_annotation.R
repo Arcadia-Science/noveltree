@@ -130,26 +130,6 @@ if (annots_to_download != "minimal") {
 
 # The following function catches a common error when querying uniprot 
 # retries if there are communication errors for whatever reason
-retry_with_backoff <- 
-    function(func, max_retries = 5, base_delay = 1, 
-             error_message = "Error in .checkResponse(.getResponse(jobId)) : Resource not found"){
-        for (n in 1:max_retries){
-            tryCatch({
-              result <- func()
-              return(result)
-            }, error = function(e){
-                if (grepl(error_message, e$message)){
-                    delay <- base_delay * 2^(n-1)
-                    message(paste0("Error occurred, retrying in ", delay, " seconds..."))
-                    Sys.sleep(delay)
-                }else{
-                    stop(e)
-                }
-            })
-        }
-        stop(paste0("Function failed after ", max_retries, " attempts."))
-    }
-
 retryUniProtSelect <- function(i){
     res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
     counter <- 1
