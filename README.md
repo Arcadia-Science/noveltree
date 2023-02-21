@@ -127,9 +127,9 @@ Using this improved species tree, `PhylOrthology` then uses [`GeneRax`](https://
 
 With the rooted species tree inferred, `PhylOrthology` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups. 
 
-TODO: R-Markdown that summarize all results into set of user-friendly tables and figures - referenced here to walk through results?
-
 ## The workflow thus proceeds as follows:
+![Workflow Figure](https://github.com/Arcadia-Science/phylorthology/blob/ap/workflow_fig_readme/PhylOrthology_WorkflowGraphic.png)
+
 <details>
   <summary>Expand for step-by-step description:</summary>
   <br/>
