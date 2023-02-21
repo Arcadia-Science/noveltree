@@ -1,6 +1,6 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    label 'process_highcpu'
+    label 'process_generax'
 
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/generax_19604b7:0.0.1': '' }"
