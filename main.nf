@@ -68,6 +68,13 @@ include { SPECIESRAX                                } from './modules/local/spec
 include { GENERAX                                   } from './modules/local/generax'
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 
+if (params.msa_trimmer == "cialign") {
+    include { TRIM_MSAS                             } from './modules/local/cialign'
+    include { TRIM_REMAINING_MSAS                   } from './modules/local/cialign'
+} else if (params.msa_trimmer == "clipkit") {
+    include { TRIM_MSAS                             } from './modules/local/clipkit'
+    include { TRIM_REMAINING_MSAS                   } from './modules/local/clipkit'
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE-MODIFIED MODULES/SUBWORKFLOWS
@@ -269,13 +276,15 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(MAFFT.out.versions)
 
     //
-    //MODULE: CLIPKIT
-    // Trim gappy and phylogenetically uninformative sites from the MSAs
+    // MODULE: TRIM_MSAS
+    // Trim gappy regions, poorly aligned, or and phylogenetically 
+    // uninformative/problematic sites from the MSAs using either
+    // CIAlign or ClipKIT based on parameter specification.
     //
-    ch_core_trimmed_msas = CLIPKIT(ch_core_og_msas).trimmed_msas
+    ch_core_trimmed_msas = TRIM_MSAS(ch_core_og_msas).trimmed_msas
 
-    ch_rem_trimmed_msas = CLIPKIT_REMAINING(ch_rem_og_msas).trimmed_msas
-    ch_versions = ch_versions.mix(CLIPKIT.out.versions)
+    ch_rem_trimmed_msas = TRIM_REMIANING_MSAS(ch_rem_og_msas).trimmed_msas
+    ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
     // MODULE: IQTREE
