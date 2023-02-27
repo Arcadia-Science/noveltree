@@ -68,13 +68,6 @@ include { SPECIESRAX                                } from './modules/local/spec
 include { GENERAX                                   } from './modules/local/generax'
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 
-if (params.msa_trimmer == "cialign") {
-    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
-    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
-} else if (params.msa_trimmer == "clipkit") {
-    include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
-    include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
-}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE-MODIFIED MODULES/SUBWORKFLOWS
@@ -103,9 +96,23 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+if (params.msa_trimmer == "cialign") {
+    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
+    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
+} else if (params.msa_trimmer == "clipkit") {
+    include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
+    include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
 
 //
 // WORKFLOW: Run main Arcadia-Science/phylorthology analysis pipeline
