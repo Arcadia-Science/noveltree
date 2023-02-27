@@ -72,6 +72,11 @@
                     "default": 10,
                     "description": "Maximum mean per-species orthogroup gene copy allowed for gene family tree / species tree reconciliation."
                 },
+                "msa_trimmer": {
+                    "type": "string",
+                    "default": "cialign",
+                    "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign or ClipKIT. Additional params for either method should be provided in modules.config."
+                },
                 "tree_model": {
                     "type": "string",
                     "default": "LG+F+G4",
