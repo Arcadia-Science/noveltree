@@ -12,22 +12,26 @@ RUN apt-get update && \
         libssl-dev \
         python3.9 \
         python3-pip \
+        python-is-python3 \
         git
 
 RUN git clone https://github.com/KatyBrown/CIAlign.git && \
     cd CIAlign/ && \
-    sed "s/pandas==/pandas>=/g" requirements.txt
-
-RUN pip3 install Cython && \
-    python3.9 pip install -r requirements.txt
-
+    sed -i "s/pandas==/pandas>=/g" requirements.txt && \
+    pip3 install Cython && \
+    pip3 install -r requirements.txt && \
+    chmod u+x CIAlign
+    
 # Clean up
 RUN apt-get -y autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Add the CIAlign binary directory to path
-ENV PATH="CIAlign/:$PATH"
+# Rename the CIAlign dir
+RUN mv CIAlign CIAlign_1.1.0
+
+# Add the CIAlign binarycd directory to path
+ENV PATH="CIAlign_1.1.0/CIAlign/:$PATH"
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
