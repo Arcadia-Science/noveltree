@@ -17,9 +17,9 @@ process CIALIGN {
     path(fasta)   // Filepaths to the MSAs
 
     output:
-    path("*_cialign.fa")  , emit: trimmed_msas
-    path("*_removed.txt") , emit: removed_sites
-    path "versions.yml"   , emit: versions
+    path("*_cialign.fa") , emit: trimmed_msas
+    path "*"             , emit: results
+    path "versions.yml"  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -39,6 +39,15 @@ process CIALIGN {
     
     # Rename output so it is clear we trimmed with CIAlign
     mv \${prefix}_cleaned.fasta \${prefix}_cialign.fa
+    
+    # And move the "removed.txt" files indicating which sites were removed 
+    # from each MSA to a separate directory
+    mkdir removed_sites
+    mv *removed.txt removed_sites
+    
+    # And do the same for the log files
+    mkdir log_files
+    mv *log.txt log_files
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
