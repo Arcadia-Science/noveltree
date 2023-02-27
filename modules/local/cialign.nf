@@ -17,9 +17,9 @@ process CIALIGN {
     path(fasta)   // Filepaths to the MSAs
 
     output:
-    path("*_cialign.fa") , emit: trimmed_msas
-    path("*_removed.fa") , emit: removed_sites
-    path "versions.yml"  , emit: versions
+    path("*_cialign.fa")  , emit: trimmed_msas
+    path("*_removed.txt") , emit: removed_sites
+    path "versions.yml"   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
