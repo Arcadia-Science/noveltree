@@ -69,11 +69,11 @@ include { GENERAX                                   } from './modules/local/gene
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 
 if (params.msa_trimmer == "cialign") {
-    include { TRIM_MSAS                             } from './modules/local/cialign'
-    include { TRIM_REMAINING_MSAS                   } from './modules/local/cialign'
+    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
+    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
 } else if (params.msa_trimmer == "clipkit") {
-    include { TRIM_MSAS                             } from './modules/local/clipkit'
-    include { TRIM_REMAINING_MSAS                   } from './modules/local/clipkit'
+    include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
+    include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,7 +283,7 @@ workflow PHYLORTHOLOGY {
     //
     ch_core_trimmed_msas = TRIM_MSAS(ch_core_og_msas).trimmed_msas
 
-    ch_rem_trimmed_msas = TRIM_REMIANING_MSAS(ch_rem_og_msas).trimmed_msas
+    ch_rem_trimmed_msas = TRIM_REMAINING_MSAS(ch_rem_og_msas).trimmed_msas
     ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
