@@ -18,9 +18,7 @@ RUN apt-get update && \
 RUN git clone https://github.com/KatyBrown/CIAlign.git && \
     cd CIAlign/ && \
     sed -i "s/pandas==/pandas>=/g" requirements.txt && \
-    pip3 install Cython && \
-    pip3 install -r requirements.txt && \
-    chmod u+x CIAlign
+    pip3 install -r requirements.txt
     
 # Clean up
 RUN apt-get -y autoremove && \
