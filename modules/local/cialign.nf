@@ -27,7 +27,7 @@ process CIALIGN {
     script:
     def args = task.ext.args ?: ''
     """
-    prefix=\$(basename "${fasta}" _mafft.fa)
+    prefix=\$(basename "${fasta}" .fa)
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     CIAlign --infile ${fasta} \
