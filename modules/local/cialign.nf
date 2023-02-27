@@ -17,7 +17,7 @@ process CIALIGN {
     path(fasta)   // Filepaths to the MSAs
 
     output:
-    path("*_clipkit.fa") , emit: trimmed_msas
+    path("*_cialign.fa") , emit: trimmed_msas
     path "versions.yml"  , emit: versions
 
     when:
@@ -31,17 +31,8 @@ process CIALIGN {
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     CIAlign --infile ${fasta} \
-    --outfile_stem="\${prefix}"
-    --remove_divergent \
-    --remove_divergent_minperc=0.15 \
-    --crop_ends \
-    --crop_ends_mingap_perc=0.05 \
-    --remove_insertions \
-    --insertion_min_size=5 \
-    --insertion_max_size=200 \
-    --remove_short \
-    --remove_min_length=25 \
-    --keep_gaponly
+    --outfile_stem="\${prefix}" \
+    $args
     
     -o \${prefix}_cialign.fa $args
     cat <<-END_VERSIONS > versions.yml
