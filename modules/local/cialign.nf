@@ -2,9 +2,7 @@ process CIALIGN {
     tag "$fasta"
     label 'process_lowcpu'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
-    //     '' }"
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/cialign_1.1.0:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
         '' }"
 
     publishDir(
@@ -34,10 +32,9 @@ process CIALIGN {
     --outfile_stem="\${prefix}" \
     $args
     
-    -o \${prefix}_cialign.fa $args
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        cialign: \$( cialign --version | sed "s/cialign //g" )
+        CIAlign: \$( CIAlign --version )
     END_VERSIONS
     """
 }
