@@ -18,6 +18,7 @@ process CIALIGN {
 
     output:
     path("*_cialign.fa") , emit: trimmed_msas
+    path("*_removed.fa") , emit: removed_sites
     path "versions.yml"  , emit: versions
 
     when:
@@ -31,10 +32,13 @@ process CIALIGN {
     prefix=\$(echo ${fasta} | sed "s/_.*//g")
 
     # Clean up the MSAs for each orthogroup containing at least 4 species.
-    python CIAlign_1.1.0/CIAlign/CIAlign.py \
+    CIAlign \
         --infile ${fasta} \
         --outfile_stem="\${prefix}" \
         $args
+    
+    # Rename output so it is clear we trimmed with CIAlign
+    mv \${prefix}_cleaned.fasta \${prefix}_cialign.fa
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
