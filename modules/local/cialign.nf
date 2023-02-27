@@ -2,7 +2,9 @@ process CIALIGN {
     tag "$fasta"
     label 'process_lowcpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
+    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
+    //     '' }"
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/cialign_1.1.0:0.0.1' :
         '' }"
 
     publishDir(
@@ -25,12 +27,14 @@ process CIALIGN {
     script:
     def args = task.ext.args ?: ''
     """
-    prefix=\$(basename "${fasta}" .fa)
+    # Get the name of the orthogroup we are processing
+    prefix=\$(echo ${fasta} | sed "s/_.*//g")
 
-    # Trim the MSAs for each orthogroup containing at least 4 species.
-    CIAlign --infile ${fasta} \
-    --outfile_stem="\${prefix}" \
-    $args
+    # Clean up the MSAs for each orthogroup containing at least 4 species.
+    python CIAlign_1.1.0/CIAlign/CIAlign.py \
+        --infile ${fasta} \
+        --outfile_stem="\${prefix}" \
+        $args
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

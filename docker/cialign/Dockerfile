@@ -18,18 +18,17 @@ RUN apt-get update && \
 RUN git clone https://github.com/KatyBrown/CIAlign.git && \
     cd CIAlign/ && \
     sed -i "s/pandas==/pandas>=/g" requirements.txt && \
-    pip3 install -r requirements.txt
+    pip3 install -r requirements.txt && \
+    python setup.py build && \
+    python setup.py install 
     
 # Clean up
 RUN apt-get -y autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Rename the CIAlign dir
-RUN mv CIAlign CIAlign_1.1.0
-
 # Add the CIAlign binarycd directory to path
-ENV PATH="CIAlign_1.1.0/CIAlign/:$PATH"
+ENV PATH="CIAlign/build/scripts-3.8:$PATH"
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
