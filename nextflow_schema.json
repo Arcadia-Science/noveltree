@@ -75,7 +75,7 @@
                 "msa_trimmer": {
                     "type": "string",
                     "default": "cialign",
-                    "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign or ClipKIT. Additional params for either method should be provided in modules.config."
+                    "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign ('cialign') or ClipKIT ('clipkit'). Additional params for either method should be provided in modules.config."
                 },
                 "tree_model": {
                     "type": "string",
