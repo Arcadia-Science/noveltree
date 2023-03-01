@@ -279,7 +279,7 @@ workflow PHYLORTHOLOGY {
     )
         .msas
         .set { ch_rem_og_msas }
-    ch_versions = ch_versions.mix(MAFFT.out.versions)
+    ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
 
     //
     //MODULE: CLIPKIT
