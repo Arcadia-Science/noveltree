@@ -96,6 +96,19 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+if (params.aligner == "magus") {
+    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
+    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
+} else if (params.aligner == "mafft") {
+    include { MAFFT as ALIGN_SEQS                   } from './modules/local/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/local/mafft'
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -249,7 +262,7 @@ workflow PHYLORTHOLOGY {
     // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    MAFFT(
+    ALIGN_SEQS(
         FILTER_ORTHOGROUPS.out.spptree_fas.flatten(),
         []
     )
@@ -260,7 +273,7 @@ workflow PHYLORTHOLOGY {
     // Only start once species tree MSAs have finished (to give them priority)
     // We use the combination of collect().count() to hold off on running this 
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
-    MAFFT_REMAINING(
+    ALIGN_REMAINING_SEQS(
         FILTER_ORTHOGROUPS.out.genetree_fas.flatten(),
         ch_core_og_msas.collect().count()
     )
