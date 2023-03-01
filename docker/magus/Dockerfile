@@ -11,7 +11,7 @@ RUN apt-get update && \
         cmake \
         libcurl4-openssl-dev \
         libssl-dev \
-        python3 \
+        python3.8 \
         python3-pip \
         wget \
         git
