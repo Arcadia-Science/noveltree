@@ -24,7 +24,7 @@ process MAGUS {
     prefix=\$(basename "${fasta}" .fa)
     magus \\
         -i $fasta \\
-        -o ${prefix}_magus.fa \\
+        -o \${prefix}_magus.fa \\
         --numprocs ${task.cpus} \\
         -t veryfasttree
         
