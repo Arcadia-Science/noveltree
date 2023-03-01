@@ -11,18 +11,19 @@ RUN apt-get update && \
         cmake \
         libcurl4-openssl-dev \
         libssl-dev \
+        git \
+        pip \
         python3.8 \
-        python3-pip \
-        wget \
-        git
-
+        python-is-python3 \
+        wget
+        
 # Clone MAGUS and VeryFastTree github repos
 RUN git clone -b ap/add-vft https://github.com/Arcadia-Science/MAGUS-VFT
 
 # Build and install
 RUN cd MAGUS-VFT && \
-    python3 setup.py build && \
-    python3 setup.py install
+    python setup.py build && \
+    python setup.py install
     
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
