@@ -41,6 +41,7 @@ process CLIPKIT {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         clipkit: \$( clipkit --version | sed "s/clipkit //g" )
+        seqmagick: \$( seqmagick --version | cut -f2 -d" " )
     END_VERSIONS
     """
 }
