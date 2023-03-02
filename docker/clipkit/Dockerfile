@@ -10,10 +10,10 @@ RUN apt-get update && \
         build-essential \
         libcurl4-openssl-dev \
         libssl-dev \
-        python3 \
+        python3.9 \
         python3-pip \
         wget && \
-    pip3 install clipkit==1.3.0
+    pip3 install clipkit==1.3.0 biopython==1.79 seqmagick
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
