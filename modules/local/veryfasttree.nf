@@ -21,7 +21,7 @@ process VERYFASTTREE {
     script:
     def args   = task.ext.args ?: ''
     """
-    og=\$(echo $alignment | sed "s/_.*//g")
+    og=\${alignment%%_*}
  
     # Infer a... Very Fast Tree!
     VeryFastTree \\
