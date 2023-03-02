@@ -2,9 +2,8 @@ process IQTREE {
     // Modified from nf-core to:
     // 1) remove constant sites specification (not applicable to workflow)
     // 2) parameterize tree-model specification
-    // 3) optionally infer trees using PMSF approximation which requires initial tree inference
-    // 4) correctly handle "task.memory" specification for memory handling by iqtree
-    // 5) update the Docker container to use iqtree v2.2.0.5
+    // 3) correctly handle "task.memory" specification for memory handling by iqtree
+    // 4) update the Docker container to use iqtree v2.2.0.5
     tag "$alignment"
     label 'process_iqtree'
 
@@ -14,7 +13,6 @@ process IQTREE {
     input:
     path(alignment)
     val model
-    val pmsf_model
 
     output:
     path("*.treefile")  , emit: phylogeny
@@ -36,7 +34,7 @@ process IQTREE {
     # If the checkpoint file indicates the run finished, go ahead and
     # skip the analyses, otherwise run iqtree as normal.
 
-    # Infer the guide tree for PMSF approximation
+    # Infer the phylogeny
     iqtree2 \\
         -s $alignment \\
         -nt AUTO \\
@@ -44,28 +42,6 @@ process IQTREE {
         -mem \$memory \\
         -m $model \\
         $args
-
-    # check if we're running a PMSF approximation - if so, do the following,
-    # treating the tree inferred above as a guide tree
-    if [ "$pmsf_model" != "none" ]; then
-        # Identify the best number of threads
-        nt=\$(grep "BEST NUMBER" *.log | sed "s/.*: //g")
-
-        # Rename it and clean up
-        mv *.treefile guidetree.treefile
-        rm *fa.*
-
-        iqtree2 \\
-            -s $alignment \\
-            -nt \$nt \\
-            -mem \$memory \\
-            -m $pmsf_model \\
-            -ft guidetree.treefile \\
-            $args
-
-        # Clean up
-        rm ./guidetree.treefile
-    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
