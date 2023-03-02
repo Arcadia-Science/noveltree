@@ -10,14 +10,13 @@ RUN apt-get update && \
         build-essential \
         libcurl4-openssl-dev \
         libssl-dev \
-        python3.9 \
+        python3.8 \
         python3-pip \
         python-is-python3 \
         git
 
-RUN git clone https://github.com/KatyBrown/CIAlign.git && \
+RUN git clone -b v1.1.0 https://github.com/KatyBrown/CIAlign.git && \
     cd CIAlign/ && \
-    sed -i "s/pandas==/pandas>=/g" requirements.txt && \
     pip3 install -r requirements.txt && \
     python setup.py build && \
     python setup.py install 
