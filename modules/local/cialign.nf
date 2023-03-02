@@ -8,7 +8,7 @@ process CIALIGN {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/trimmed_msas",
+        path: "${params.outdir}/cialign_cleaned_msas",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -21,10 +21,6 @@ process CIALIGN {
     path "*"             , emit: results
     path "versions.yml"  , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
-    // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
     """
