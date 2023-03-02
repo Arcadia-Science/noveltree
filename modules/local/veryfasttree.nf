@@ -30,7 +30,7 @@ process VERYFASTTREE {
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        VeryFastTree: v3.2.1)
+        VeryFastTree: $(VeryFastTree | head -n1 | cut -f2 -d" ")
     END_VERSIONS
     """
 }
