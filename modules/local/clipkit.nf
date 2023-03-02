@@ -14,7 +14,8 @@ process CLIPKIT {
     )
 
     input:
-    path(fasta)   // Filepaths to the MSAs
+    path(fasta)         // Filepaths to the MSAs
+    min_ungapped_length // Minimum ungapped length of sequences after alignment trimming
 
     output:
     path("*_clipkit.fa") , emit: trimmed_msas
@@ -34,7 +35,7 @@ process CLIPKIT {
     
     # Remove sequences with a minimum non-gapped length of 25 AA.
     seqmagick convert \\
-        --min-ungapped-length 25 \\
+        --min-ungapped-length $min_ungapped_length \\
         \${prefix}_tmp.fa \\
         \${prefix}_clipkit.fa 
         
