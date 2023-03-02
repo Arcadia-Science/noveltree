@@ -97,6 +97,7 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
     IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// TODO: Build as a subworkflow
 if (params.tree_method == "iqtree") {
     include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
     include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
