@@ -11,21 +11,27 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y \
         build-essential \
+        cmake \
+        git \
         libcurl4-openssl-dev \
         libssl-dev \
-        python3 \
-        wget
+        make \
+        python3
 
-# Install miniconda
-ENV CONDA_DIR /opt/conda
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
-    bash miniconda.sh -b -p /opt/conda
+# Clone the VeryFastTree repo build, and install
+RUN git clone -b v3.2.1 https://github.com/citiususc/veryfasttree.git && \
+    cd veryfasttree && \
+    cmake . && \
+    make && \
+    make install
+    
+# Clean up
+RUN apt-get -y autoremove && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Put conda in path so we can use conda activate
-ENV PATH=$CONDA_DIR/bin:$PATH
-
-# Install veryfasttree
-RUN conda install --quiet -c bioconda veryfasttree
+# Add the VeryFastTree binary to path
+ENV PATH="/veryfasttree/:$PATH"
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
