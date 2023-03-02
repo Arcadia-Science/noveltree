@@ -99,12 +99,13 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
     IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-if (params.msa_trimmer == "cialign") {
-    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
-    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
-} else if (params.msa_trimmer == "clipkit") {
+// TODO: Build into a subworkflow
+if (params.msa_trimmer == "clipkit") {
     include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
     include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
+} else {
+    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
+    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
 }
 
 /*
