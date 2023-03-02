@@ -6,6 +6,8 @@ process MAGUS {
     //     '' }"
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/vft-magus_0.1.0:0.0.1' :
         '' }"
+    // TODO: address this issue (permission related errors) in future release
+    containerOptions = "--user root"
 
     input:
     path(fasta)
