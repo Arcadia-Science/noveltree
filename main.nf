@@ -97,12 +97,12 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
     IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-if (params.tree_method == "veryfasttree") {
-    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
-    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
-} else {
+if (params.tree_method == "iqtree") {
     include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
     include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
+} else {
+    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
+    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
 }
 
 /*
