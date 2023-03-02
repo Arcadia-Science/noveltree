@@ -30,8 +30,14 @@ process CLIPKIT {
     prefix=\$(basename "${fasta}" _mafft.fa)
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
-    clipkit ${fasta} -o \${prefix}_clipkit.fa $args
-
+    clipkit ${fasta} -o \${prefix}_tmp.fa $args
+    
+    # Remove sequences with a minimum non-gapped length of 25 AA.
+    seqmagick convert \\
+        --min-ungapped-length 25 \\
+        \${prefix}_tmp.fa \\
+        \${prefix}_clipkit.fa 
+        
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         clipkit: \$( clipkit --version | sed "s/clipkit //g" )
