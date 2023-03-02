@@ -83,8 +83,6 @@ include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-mo
 include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
 include { DIAMOND_BLASTP                            } from './modules/nf-core-modified/diamond_blastp'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
-include { IQTREE                                    } from './modules/nf-core-modified/iqtree'
-include { IQTREE as IQTREE_REMAINING                } from './modules/nf-core-modified/iqtree'
 include { MAFFT                                     } from './modules/nf-core-modified/mafft'
 include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-modified/mafft'
 
@@ -93,6 +91,19 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+if (params.tree_method == "veryfasttree") {
+    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
+    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
+} else {
+    include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -278,22 +289,21 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(CLIPKIT.out.versions)
 
     //
-    // MODULE: IQTREE
-    // Infer gene-family trees from the trimmed MSAs
+    // MODULE: INFER_TREES
+    // Infer gene-family trees from the trimmed MSAs using either 
+    // VeryFastTree or IQ-TREE. 
     //
-    IQTREE(
+    INFER_TREES(
         ch_core_trimmed_msas,
-        params.tree_model,
-        params.tree_model_pmsf
+        params.tree_model
     )
         .phylogeny
         .collect()
         .set { ch_core_gene_trees }
 
-    IQTREE_REMAINING(
+    INFER_TREES(
         ch_rem_trimmed_msas,
-        params.tree_model,
-        params.tree_model_pmsf
+        params.tree_model
     )
         .phylogeny
         .collect()
