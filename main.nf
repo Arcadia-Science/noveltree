@@ -83,6 +83,13 @@ include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-mo
 include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
 include { DIAMOND_BLASTP                            } from './modules/nf-core-modified/diamond_blastp'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
+<<<<<<< HEAD
+=======
+include { IQTREE as INFER_TREES                     } from './modules/nf-core-modified/iqtree'
+include { IQTREE as INFER_REMAINING_TREES           } from './modules/nf-core-modified/iqtree'
+include { IQTREE_PMSF                               } from './modules/nf-core-modified/iqtree_pmsf'
+include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
+>>>>>>> f0b2951dbca1796dc3db024590ff5f8c5a0e2787
 include { MAFFT                                     } from './modules/nf-core-modified/mafft'
 include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-modified/mafft'
 
@@ -97,6 +104,14 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
     IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// TODO: Build into a subworkflow
+if (params.msa_trimmer == "clipkit") {
+    include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
+    include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
+} else {
+    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
+    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
+}
 // TODO: Build as a subworkflow
 if (params.tree_method == "iqtree") {
     include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
@@ -111,6 +126,7 @@ if (params.tree_method == "iqtree") {
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
 
 //
 // WORKFLOW: Run main Arcadia-Science/phylorthology analysis pipeline
@@ -281,13 +297,14 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(MAFFT.out.versions)
 
     //
-    //MODULE: CLIPKIT
-    // Trim gappy and phylogenetically uninformative sites from the MSAs
+    // MODULE: TRIM_MSAS
+    // Trim gappy regions, poorly aligned, or and phylogenetically 
+    // uninformative/problematic sites from the MSAs using either
+    // CIAlign or ClipKIT based on parameter specification.
     //
-    ch_core_trimmed_msas = CLIPKIT(ch_core_og_msas).trimmed_msas
-
-    ch_rem_trimmed_msas = CLIPKIT_REMAINING(ch_rem_og_msas).trimmed_msas
-    ch_versions = ch_versions.mix(CLIPKIT.out.versions)
+    ch_core_trimmed_msas = TRIM_MSAS(ch_core_og_msas).trimmed_msas
+    ch_rem_trimmed_msas = TRIM_REMAINING_MSAS(ch_rem_og_msas).trimmed_msas
+    ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
     // MODULE: INFER_TREES
@@ -298,19 +315,46 @@ workflow PHYLORTHOLOGY {
         ch_core_trimmed_msas,
         params.tree_model
     )
-        .phylogeny
-        .collect()
-        .set { ch_core_gene_trees }
 
+<<<<<<< HEAD
     INFER_TREES(
+=======
+    INFER_REMAINING_TREES(
+>>>>>>> f0b2951dbca1796dc3db024590ff5f8c5a0e2787
         ch_rem_trimmed_msas,
         params.tree_model
     )
-        .phylogeny
-        .collect()
-        .set { ch_rem_gene_trees }
+    ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
-    ch_versions = ch_versions.mix(IQTREE.out.versions)
+    // Run IQ-TREE PMSF if model is specified, and subsequently collect final 
+    // phylogenies into a channel for downstram use
+    if (params.tree_model_pmsf != 'none') {
+        //
+        // MODULE: IQTREE_PMSF
+        // Infer gene-family trees from the trimmed MSAs and guide trees from the 
+        // previous tree inference module
+        //
+        IQTREE_PMSF(
+            ch_core_trimmed_msas,
+            INFER_TREES.out.phylogeny,
+            INFER_TREES.out.iqtree_log,
+            params.tree_model_pmsf
+        )
+    
+        IQTREE_PMSF_REMAINING(
+            ch_rem_trimmed_msas,
+            INFER_REMAINING_TREES.out.phylogeny,
+            INFER_REMAINING_TREES.out.iqtree_log,
+            params.tree_model_pmsf
+        )
+        ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
+        
+        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.collect()
+        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.collect()
+    } else {
+        ch_core_gene_trees = INFER_TREES.out.phylogeny.collect()
+        ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.collect()
+    }
 
 
     // Now, go ahead and prepare input files for initial unrooted species
