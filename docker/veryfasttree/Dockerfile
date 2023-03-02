@@ -22,8 +22,7 @@ RUN apt-get update && \
 RUN git clone -b v3.2.1 https://github.com/citiususc/veryfasttree.git && \
     cd veryfasttree && \
     cmake . && \
-    make && \
-    make install
+    make
     
 # Clean up
 RUN apt-get -y autoremove && \
