@@ -102,6 +102,14 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // TODO: Build into a subworkflow
+if (params.aligner == "magus") {
+    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
+    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
+} else if (params.aligner == "mafft") {
+    include { MAFFT as ALIGN_SEQS                   } from './modules/local/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/local/mafft'
+}
+// TODO: Build into a subworkflow
 if (params.msa_trimmer == "clipkit") {
     include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
     include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
@@ -109,13 +117,13 @@ if (params.msa_trimmer == "clipkit") {
     include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
     include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
 }
-// TODO: Build into a subworkflow
-if (params.aligner == "magus") {
-    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
-    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
-} else if (params.aligner == "mafft") {
-    include { MAFFT as ALIGN_SEQS                   } from './modules/local/mafft'
-    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/local/mafft'
+// TODO: Build as a subworkflow
+if (params.tree_method == "iqtree") {
+    include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
+} else {
+    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
+    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
 }
 
 /*
@@ -304,8 +312,9 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
-    // MODULE: IQTREE
-    // Infer gene-family trees from the trimmed MSAs
+    // MODULE: INFER_TREES
+    // Infer gene-family trees from the trimmed MSAs using either 
+    // VeryFastTree or IQ-TREE. 
     //
     INFER_TREES(
         ch_core_trimmed_msas,
