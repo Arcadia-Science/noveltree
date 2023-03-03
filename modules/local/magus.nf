@@ -24,10 +24,21 @@ process MAGUS {
     def args = task.ext.args ?: ''
     """
     prefix=\$(basename "${fasta}" .fa)
+    
+    # Hacky fix to prevent segfault of VeryFastTree when running on small datasets
+    nseqs=\$(grep ">" \$og | wc -l)
+    if [[ \${nseqs} -gt 14 ]]
+    then
+        nthreads=${task.cpus}
+    else
+        nthreads=1
+    fi
+    
     magus \\
         -i $fasta \\
         -o \${prefix}_magus.fa \\
         --numprocs ${task.cpus} \\
+        --numprocs_vft \${nthreads}
         -t veryfasttree
         
     cat <<-END_VERSIONS > versions.yml
