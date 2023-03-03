@@ -109,6 +109,14 @@ if (params.msa_trimmer == "clipkit") {
     include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
     include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
 }
+// TODO: Build as a subworkflow
+if (params.tree_method == "iqtree") {
+    include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
+} else {
+    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
+    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -296,8 +304,9 @@ workflow PHYLORTHOLOGY {
     ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
-    // MODULE: IQTREE
-    // Infer gene-family trees from the trimmed MSAs
+    // MODULE: INFER_TREES
+    // Infer gene-family trees from the trimmed MSAs using either 
+    // VeryFastTree or IQ-TREE. 
     //
     INFER_TREES(
         ch_core_trimmed_msas,
