@@ -32,7 +32,7 @@ process MAGUS {
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        magus-vft: 0.1.0
+        magus-vft: v\$(grep "version=" MAGUS-VFT/setup.py | cut -f2 -d'"')
     END_VERSIONS
     """
 }
