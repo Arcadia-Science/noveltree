@@ -77,7 +77,12 @@
                     "default": "cialign",
                     "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign ('cialign') or ClipKIT ('clipkit'). Additional params for either method should be provided in modules.config."
                 },
-                "min_ungapped_legnth": {
+                "tree_method": {
+                    "type": "string",
+                    "default": "veryfasttree",
+                    "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is veryfasttree, alternative is iqtree."
+                }
+                "min_ungapped_length": {
                     "type": "integer",
                     "default": 25,
                     "description": "Option specifying the minimum ungapped length of cleaned/trimmed multiple sequence alignments. Prevents ClipKIT from removing all non-gap characters. Specify as null (no quotes) if you do not want to remove short sequences with CIAlign. 
@@ -85,7 +90,7 @@
                 "tree_model": {
                     "type": "string",
                     "default": "LG+F+G4",
-                    "description": "AA substitution model used by IQ-TREE for gene family tree inference. Default model is generally applicable, but may be specified by the user."
+                    "description": "AA substitution model used by IQ-TREE for gene family tree inference. Default model is generally applicable, but may be specified by the user. Not used if running VeryFastTree."
                 },
                 "tree_model_pmsf": {
                     "type": "string",
