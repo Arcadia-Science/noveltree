@@ -26,7 +26,7 @@ process MAGUS {
     prefix=\$(basename "${fasta}" .fa)
     
     # Hacky fix to prevent segfault of VeryFastTree when running on small datasets
-    nseqs=\$(grep ">" \$og | wc -l)
+    nseqs=\$(grep ">" ${fasta} | wc -l)
     if [[ \${nseqs} -gt 14 ]]
     then
         nthreads=${task.cpus}
@@ -38,7 +38,7 @@ process MAGUS {
         -i $fasta \\
         -o \${prefix}_magus.fa \\
         --numprocs ${task.cpus} \\
-        --numprocs_vft \${nthreads}
+        --numprocs_vft \$nthreads \\
         -t veryfasttree
         
     cat <<-END_VERSIONS > versions.yml
