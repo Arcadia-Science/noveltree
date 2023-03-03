@@ -86,7 +86,7 @@
                     "type": "string",
                     "default": "veryfasttree",
                     "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is veryfasttree, alternative is iqtree."
-                }
+                },
                 "tree_model": {
                     "type": "string",
                     "default": "LG+F+G4",
