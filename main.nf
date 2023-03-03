@@ -83,13 +83,10 @@ include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-mo
 include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
 include { DIAMOND_BLASTP                            } from './modules/nf-core-modified/diamond_blastp'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
-<<<<<<< HEAD
-=======
 include { IQTREE as INFER_TREES                     } from './modules/nf-core-modified/iqtree'
 include { IQTREE as INFER_REMAINING_TREES           } from './modules/nf-core-modified/iqtree'
 include { IQTREE_PMSF                               } from './modules/nf-core-modified/iqtree_pmsf'
 include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
->>>>>>> f0b2951dbca1796dc3db024590ff5f8c5a0e2787
 include { MAFFT                                     } from './modules/nf-core-modified/mafft'
 include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-modified/mafft'
 
@@ -316,11 +313,7 @@ workflow PHYLORTHOLOGY {
         params.tree_model
     )
 
-<<<<<<< HEAD
-    INFER_TREES(
-=======
     INFER_REMAINING_TREES(
->>>>>>> f0b2951dbca1796dc3db024590ff5f8c5a0e2787
         ch_rem_trimmed_msas,
         params.tree_model
     )
