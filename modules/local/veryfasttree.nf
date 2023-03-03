@@ -2,9 +2,7 @@ process VERYFASTTREE {
     tag "$alignment"
     label 'process_iqtree'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/veryfasttree_3.2.1:0.0.1':
-    //     '' }"
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/veryfasttree_3.2.1:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'quay.io/biocontainers/veryfasttree:3.2.1--h9f5acd7_0':
         '' }"
 
     input:
@@ -22,10 +20,18 @@ process VERYFASTTREE {
     def args   = task.ext.args ?: ''
     """
     og=\${alignment%%_*}
- 
+    nseqs=\$(grep ">" \$og | wc -l)
+    if [[ \${nseqs} -gt 14 ]]
+    then
+        nthreads=${task.cpus}
+    else
+        nthreads=1
+    fi
+        
+    
     # Infer a... Very Fast Tree!
     VeryFastTree \\
-        -threads ${task.cpus} \\
+        -threads \${nthreads} \\
         $alignment > \${og}_vft.treefile
     
     cat <<-END_VERSIONS > versions.yml
