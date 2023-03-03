@@ -20,6 +20,8 @@ process VERYFASTTREE {
     def args   = task.ext.args ?: ''
     """
     og=\${alignment%%_*}
+    
+    # Hacky fix to prevent segfault of VeryFastTree when running on small datasets
     nseqs=\$(grep ">" \$og | wc -l)
     if [[ \${nseqs} -gt 14 ]]
     then
@@ -27,7 +29,6 @@ process VERYFASTTREE {
     else
         nthreads=1
     fi
-        
     
     # Infer a... Very Fast Tree!
     VeryFastTree \\

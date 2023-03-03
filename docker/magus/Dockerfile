@@ -22,7 +22,7 @@ RUN git clone https://github.com/Arcadia-Science/MAGUS-VFT.git
 
 # Build and install
 RUN cd MAGUS-VFT && \
-    git checkout 435d142cb196c9ffca01a937e9751ce3ab3417f7 && \
+    git checkout ap/magus-vft-segfault-fix && \
     python setup.py build && \
     python setup.py install
     
