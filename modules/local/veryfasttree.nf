@@ -22,7 +22,7 @@ process VERYFASTTREE {
     og=\${alignment%%_*}
     
     # Hacky fix to prevent segfault of VeryFastTree when running on small datasets
-    nseqs=\$(grep ">" \$og | wc -l)
+    nseqs=\$(grep ">" $alignment | wc -l)
     if [[ \${nseqs} -gt 14 ]]
     then
         nthreads=${task.cpus}
