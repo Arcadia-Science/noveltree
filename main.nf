@@ -343,9 +343,13 @@ workflow PHYLORTHOLOGY {
         
         ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.collect()
         ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.collect()
+        ch_core_trimmed_msas = IQTREE_PMSF.out.msa.collect()
+        ch_rem_trimmed_msas = IQTREE_PMSF_REMAINING.out.msa.collect()
     } else {
         ch_core_gene_trees = INFER_TREES.out.phylogeny.collect()
         ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.collect()
+        ch_core_trimmed_msas = INFER_TREES.out.msa.collect()
+        ch_rem_trimmed_msas = INFER_REMAINING_TREES.out.msa.collect()
     }
 
 
