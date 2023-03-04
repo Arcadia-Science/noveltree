@@ -28,11 +28,12 @@ process MAGUS {
     magus \\
         -i $fasta \\
         -o \${prefix}_magus.fa \\
-        --numprocs ${task.cpus}
+        --numprocs ${task.cpus} \\
+        $args
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        magus-vft: v\$(grep "version=" MAGUS-VFT/setup.py | cut -f2 -d'"')
+        magus: v\$(grep "version=" MAGUS/setup.py | cut -f2 -d'"')
     END_VERSIONS
     """
 }
