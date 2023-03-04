@@ -9,6 +9,12 @@ process MAGUS {
     // TODO: address this issue (permission related errors) in future release
     containerOptions = "--user root"
 
+    publishDir(
+        path: "${params.outdir}/magus_alignments",
+        mode: params.publish_dir_mode,
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    
     input:
     path(fasta)
     val num_spp_tree_msas // Purely utilitarian: used to prioritize gene families used in species tree inference.
