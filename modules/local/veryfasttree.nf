@@ -19,8 +19,8 @@ process VERYFASTTREE {
     script:
     def args   = task.ext.args ?: ''
     """
-    og=\${alignment%%_*}
-    
+    og=\$(echo $alignment | cut -f1 -d "_")
+
     # Hacky fix to prevent segfault of VeryFastTree when running on small datasets
     nseqs=\$(grep ">" $alignment | wc -l)
     if [[ \${nseqs} -gt 14 ]]
