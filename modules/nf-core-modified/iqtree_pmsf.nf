@@ -31,9 +31,6 @@ process IQTREE_PMSF {
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
 
-    # Rename things and clean up - iqtree will be unhappy otherwise
-    mv $guide_tree guidetree.treefile
-
     iqtree2 \\
         -s $alignment \\
         -nt ${task.cpus} \\
@@ -41,10 +38,7 @@ process IQTREE_PMSF {
         -m $pmsf_model \\
         -ft $guide_tree \\
         $args
-    
-    # Clean up
-    rm guidetree.treefile
-    
+
     # Rename the tree and log file to something more informative
     mv ${alignment}.treefile ${alignment}.pmsf.treefile
     mv ${alignment}.log ${alignment}.pmsf.log
