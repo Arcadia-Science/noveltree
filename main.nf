@@ -316,19 +316,8 @@ workflow PHYLORTHOLOGY {
     // Infer gene-family trees from the trimmed MSAs using either 
     // VeryFastTree or IQ-TREE. 
     //
-    INFER_TREES(
-        ch_core_trimmed_msas, 
-        params.tree_model
-    )
-        .phylogeny
-        .set{ch_core_trees}
-
-    INFER_REMAINING_TREES(
-        ch_rem_trimmed_msas,
-        params.tree_model
-    )
-        .phylogeny
-        .set{ch_rem_trees}
+    INFER_TREES(ch_core_trimmed_msas, params.tree_model)
+    INFER_REMAINING_TREES(ch_rem_trimmed_msas, params.tree_model)
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final 
@@ -340,14 +329,14 @@ workflow PHYLORTHOLOGY {
         // previous tree inference module
         //
         IQTREE_PMSF(
-            ch_core_trimmed_msas,
-            ch_core_trees,
+            INFER_TREES.out.msa,
+            INFER_TREES.out.phylogeny,
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
-            ch_rem_trimmed_msas,
-            ch_rem_trees,
+            INFER_REMAINING_TREES.out.msa,
+            INFER_REMAINING_TREES.out.phylogeny,
             params.tree_model_pmsf
         )
         ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
@@ -355,8 +344,8 @@ workflow PHYLORTHOLOGY {
         ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.collect()
         ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.collect()
     } else {
-        ch_core_gene_trees = ch_core_trees.collect()
-        ch_rem_gene_trees = ch_rem_trees.collect()
+        ch_core_gene_trees = INFER_TREES.out.phylogeny.collect()
+        ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.collect()
     }
 
 
