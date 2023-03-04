@@ -26,7 +26,7 @@ process MAGUS {
     prefix=\$(basename "${fasta}" .fa)
     
     magus \\
-        -i $fasta \\
+        -i ${fasta} \\
         -o \${prefix}_magus.fa \\
         --numprocs ${task.cpus} \\
         $args
