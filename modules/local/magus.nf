@@ -1,8 +1,8 @@
 process MAGUS {
     tag "$fasta"
-    label 'process_mafft'
+    label 'process_magus'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/vft-magus_0.1.0:0.0.1' :
+    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/magus_0.1.0:0.0.1' :
     //     '' }"
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/magus_0.1.0:0.0.1' :
         '' }"
