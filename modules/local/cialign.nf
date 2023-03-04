@@ -25,7 +25,7 @@ process CIALIGN {
     def args = task.ext.args ?: ''
     """
     # Get the name of the orthogroup we are processing
-    prefix=\${$fasta%%_*}
+    prefix=\$(echo $fasta | cut -f1 -d "_")
 
     # Clean up the MSAs for each orthogroup containing at least 4 species.
     CIAlign \
