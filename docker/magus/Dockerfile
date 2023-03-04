@@ -18,11 +18,10 @@ RUN apt-get update && \
         wget
         
 # Clone MAGUS and VeryFastTree github repos
-RUN git clone https://github.com/Arcadia-Science/MAGUS-VFT.git
+RUN git clone -b v0.1.0 https://github.com/vlasmirnov/MAGUS.git
 
 # Build and install
-RUN cd MAGUS-VFT && \
-    git checkout ap/magus-vft-segfault-fix && \
+RUN cd MAGUS && \
     python setup.py build && \
     python setup.py install
     
