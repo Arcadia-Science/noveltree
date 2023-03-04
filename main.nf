@@ -316,8 +316,8 @@ workflow PHYLORTHOLOGY {
     // Infer gene-family trees from the trimmed MSAs using either 
     // VeryFastTree or IQ-TREE. 
     //
-    INFER_TREES(ch_core_trimmed_msas, params.tree_model)
-    INFER_REMAINING_TREES(ch_rem_trimmed_msas, params.tree_model)
+    INFER_TREES(TRIM_MSAS.out.trimmed_msas, params.tree_model)
+    INFER_REMAINING_TREES(TRIM_REMAINING_MSAS.out.trimmed_msas, params.tree_model)
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final 
