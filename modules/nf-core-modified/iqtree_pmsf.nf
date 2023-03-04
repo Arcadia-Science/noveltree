@@ -14,7 +14,6 @@ process IQTREE_PMSF {
     input:
     path(alignment)
     path(guide_tree)
-    path(guide_tree_log)
     val pmsf_model
 
     output:
@@ -32,16 +31,13 @@ process IQTREE_PMSF {
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
 
-    # Identify the best number of threads
-    nt=\$(grep "BEST NUMBER" $guide_tree_log | sed "s/.*: //g")
-
     # Rename things and clean up - iqtree will be unhappy otherwise
     mv $guide_tree guidetree.treefile
     rm $guide_tree_log
 
     iqtree2 \\
         -s $alignment \\
-        -nt \$nt \\
+        -nt ${task.cpus} \\
         -mem \$memory \\
         -m $pmsf_model \\
         -ft $guide_tree \\
