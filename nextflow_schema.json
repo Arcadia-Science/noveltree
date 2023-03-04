@@ -82,6 +82,11 @@
                     "default": "cialign",
                     "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign ('cialign') or ClipKIT ('clipkit'). Additional params for either method should be provided in modules.config."
                 },
+                "min_ungapped_length": {
+                    "type": "integer",
+                    "default": 25,
+                    "description": "Option specifying the minimum ungapped length of cleaned/trimmed multiple sequence alignments. Prevents ClipKIT from removing all non-gap characters. Specify as null (no quotes) if you do not want to remove short sequences with CIAlign."
+                },
                 "tree_method": {
                     "type": "string",
                     "default": "veryfasttree",

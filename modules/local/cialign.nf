@@ -14,7 +14,8 @@ process CIALIGN {
     )
 
     input:
-    path(fasta)   // Filepaths to the MSAs
+    path(fasta)         // Filepaths to the MSAs
+    min_ungapped_length // Minimum ungapped length of sequences after alignment trimming
 
     output:
     path("*_cialign.fa") , emit: trimmed_msas
@@ -23,6 +24,7 @@ process CIALIGN {
 
     script:
     def args = task.ext.args ?: ''
+    def remove_short = min_ungapped_length ? "--remove_short --remove_min_length=${min_ungapped_length}" : ''
     """
     # Get the name of the orthogroup we are processing
     prefix=\$(echo $fasta | cut -f1 -d "_")
@@ -31,6 +33,7 @@ process CIALIGN {
     CIAlign \
         --infile ${fasta} \
         --outfile_stem="\${prefix}" \
+        ${remove_short} \
         $args
     
     # Rename output so it is clear we trimmed with CIAlign
