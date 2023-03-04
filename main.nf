@@ -299,8 +299,8 @@ workflow PHYLORTHOLOGY {
     // uninformative/problematic sites from the MSAs using either
     // CIAlign or ClipKIT based on parameter specification.
     //
-    ch_core_trimmed_msas = TRIM_MSAS(ch_core_og_msas).trimmed_msas
-    ch_rem_trimmed_msas = TRIM_REMAINING_MSAS(ch_rem_og_msas).trimmed_msas
+    TRIM_MSAS(ch_core_og_msas, min_ungapped_length)
+    TRIM_REMAINING_MSAS(ch_rem_og_msas, min_ungapped_length)
     ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
@@ -309,12 +309,12 @@ workflow PHYLORTHOLOGY {
     // VeryFastTree or IQ-TREE. 
     //
     INFER_TREES(
-        ch_core_trimmed_msas,
+        TRIM_MSAS.out.trimmed_msas,
         params.tree_model
     )
 
     INFER_REMAINING_TREES(
-        ch_rem_trimmed_msas,
+        TRIM_REMAINING_MSAS.out.trimmed_msas,
         params.tree_model
     )
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
@@ -328,14 +328,14 @@ workflow PHYLORTHOLOGY {
         // previous tree inference module
         //
         IQTREE_PMSF(
-            ch_core_trimmed_msas,
+            TRIM_MSAS.out.trimmed_msas,
             INFER_TREES.out.phylogeny,
             INFER_TREES.out.iqtree_log,
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
-            ch_rem_trimmed_msas,
+            TRIM_REMAINING_MSAS.out.trimmed_msas,
             INFER_REMAINING_TREES.out.phylogeny,
             INFER_REMAINING_TREES.out.iqtree_log,
             params.tree_model_pmsf
