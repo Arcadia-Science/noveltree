@@ -10,6 +10,12 @@ process IQTREE {
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:0.0.1':
         '' }"
 
+    publishDir(
+        path: "${params.outdir}/iqtree_gene_trees",
+        mode: params.publish_dir_mode,
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    
     input:
     path(alignment)
     val model

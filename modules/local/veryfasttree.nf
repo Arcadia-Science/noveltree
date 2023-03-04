@@ -7,6 +7,12 @@ process VERYFASTTREE {
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/veryfasttree_3.2.1:0.0.1':
         '' }"
 
+    publishDir(
+        path: "${params.outdir}/veryfasttree_gene_trees",
+        mode: params.publish_dir_mode,
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+
     input:
     path(alignment)
     val model // not used
