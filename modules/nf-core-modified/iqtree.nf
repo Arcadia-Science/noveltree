@@ -21,9 +21,10 @@ process IQTREE {
     val model
 
     output:
-    path("*.treefile")  , emit: phylogeny
-    path "*.log"        , emit: iqtree_log
-    path "versions.yml" , emit: versions
+    path("*pmsf.treefile") , emit: phylogeny
+    path(alignment)        , emit: msa
+    path "*.log"           , emit: iqtree_log
+    path "versions.yml"    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

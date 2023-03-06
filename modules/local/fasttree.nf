@@ -13,6 +13,7 @@ process FASTTREE {
 
     output:
     path("*.treefile")  , emit: phylogeny
+    path(alignment)     , emit: msa
     path "versions.yml" , emit: versions
 
     when:
