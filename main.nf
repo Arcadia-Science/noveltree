@@ -328,13 +328,13 @@ workflow PHYLORTHOLOGY {
         // previous tree inference module
         //
         IQTREE_PMSF(
-            TRIM_MSAS.out.trimmed_msas,
+            INFER_TREES.out.msa,
             INFER_TREES.out.phylogeny,
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
-            TRIM_REMAINING_MSAS.out.trimmed_msas,
+            INFER_REMAINING_TREES.out.msa,
             INFER_REMAINING_TREES.out.phylogeny,
             params.tree_model_pmsf
         )
