@@ -11,6 +11,12 @@ process MAFFT {
         'https://depot.galaxyproject.org/singularity/mafft:7.490--h779adbc_0':
         'quay.io/biocontainers/mafft:7.490--h779adbc_0' }"
 
+    publishDir(
+        path: "${params.outdir}/mafft_alignments",
+        mode: params.publish_dir_mode,
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    
     input:
     path(fasta)
     val num_spp_tree_msas // Purely utilitarian: used to prioritize gene families used in species tree inference.
