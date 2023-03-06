@@ -28,7 +28,7 @@ process CLIPKIT {
     script:
     def args = task.ext.args ?: ''
     """
-    prefix=\$(basename "${fasta}" _mafft.fa)
+    prefix=\$(echo ${fasta} | cut -f1 -d "_")
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     clipkit ${fasta} -o \${prefix}_tmp.fa $args
