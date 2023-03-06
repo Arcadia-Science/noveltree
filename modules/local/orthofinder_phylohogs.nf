@@ -5,7 +5,7 @@ process ORTHOFINDER_PHYLOHOGS {
         '' }"
     stageInMode = "copy"
     publishDir(
-        path: "${params.outdir}/orthofinder_phylohogs/",
+        path: "${params.outdir}/orthofinder/",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -56,7 +56,7 @@ process ORTHOFINDER_PHYLOHOGS {
 
     # Run orthofinder to sort into hierarchical orthogoups.
     orthofinder \
-    -n HOGs \
+    -n \$of_results_dir \
     -s $species_tree \
     -ft \$of_results_dir/ \
     -a ${task.cpus} \
