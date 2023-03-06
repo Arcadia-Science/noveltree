@@ -39,7 +39,6 @@ process IQTREE_PMSF {
     
     # Rename things and clean up - iqtree will be unhappy otherwise
     mv $guide_tree guidetree.treefile
-    rm $guide_tree_log
 
     iqtree2 \\
         -s $alignment \\
