@@ -1,6 +1,6 @@
 process FASTTREE {
     tag "$alignment"
-    label 'process_fasttree'
+    label 'process_iqtree'
 
     // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/magus_0.1.0:0.0.1':
     //     '' }"
