@@ -41,7 +41,7 @@ process CIALIGN {
     
     # And move the "removed.txt" files indicating which sites were removed 
     # from each MSA to a separate directory
-    mkdir removed_sites
+    mkdir -p removed_sites
     mv *removed.txt removed_sites
     
     # And do the same for the log files
