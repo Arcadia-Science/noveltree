@@ -50,6 +50,7 @@ process IQTREE_PMSF {
         -nt \$nt \\
         -mem \$memory \\
         -m $pmsf_model \\
+        -f $guide_tree \\
         -ft $guide_tree \\
         $args
     
