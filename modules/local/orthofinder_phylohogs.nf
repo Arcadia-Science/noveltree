@@ -56,10 +56,17 @@ process ORTHOFINDER_PHYLOHOGS {
 
     # Run orthofinder to sort into hierarchical orthogoups.
     orthofinder \
-    -n \$of_results_dir \
+    -n HOGs \
     -s $species_tree \
     -ft \$of_results_dir/ \
     -a ${task.cpus} \
     -y
+    
+    # And clean up,rename a few things so as not to have conflicting filenames in the resultant output
+    rm -r \$of_results_dir
+    mv Results_HOGs/ \$of_results_dir
+    mv \$of_results_dir/WorkingDirectory \$of_results_dir/WorkingDirectory_Hogs
+    rm \$of_results_dir/Citation.txt
+    mv \$of_results_dir/Log.txt \$of_results_dir/Hogs_Log.txt
     """
 }
