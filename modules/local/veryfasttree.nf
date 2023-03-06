@@ -2,7 +2,9 @@ process VERYFASTTREE {
     tag "$alignment"
     label 'process_iqtree'
 
-    container "${ workflow.containerEngine == 'docker' ? 'quay.io/biocontainers/veryfasttree:3.2.1--h9f5acd7_0':
+    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/veryfasttree_3.2.1:0.0.1':
+    //     '' }"
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/veryfasttree_3.2.1:0.0.1':
         '' }"
 
     input:
