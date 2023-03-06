@@ -299,8 +299,8 @@ workflow PHYLORTHOLOGY {
     // uninformative/problematic sites from the MSAs using either
     // CIAlign or ClipKIT based on parameter specification.
     //
-    TRIM_MSAS(ch_core_og_msas, min_ungapped_length)
-    TRIM_REMAINING_MSAS(ch_rem_og_msas, min_ungapped_length)
+    TRIM_MSAS(ch_core_og_msas, params.min_ungapped_length)
+    TRIM_REMAINING_MSAS(ch_rem_og_msas, params.min_ungapped_length)
     ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
