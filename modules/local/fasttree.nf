@@ -2,9 +2,7 @@ process FASTTREE {
     tag "$alignment"
     label 'process_iqtree'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/magus_0.1.0:0.0.1':
-    //     '' }"
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/magus_0.1.0:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'staphb/fasttree:2.1.11':
         '' }"
 
     publishDir(
