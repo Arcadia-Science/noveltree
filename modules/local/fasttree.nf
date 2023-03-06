@@ -7,6 +7,12 @@ process FASTTREE {
     container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/magus_0.1.0:0.0.1':
         '' }"
 
+    publishDir(
+        path: "${params.outdir}/fasttree_gene_trees",
+        mode: params.publish_dir_mode,
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    
     input:
     path(alignment)
     val model // not used
