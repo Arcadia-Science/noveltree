@@ -14,8 +14,8 @@ process CLIPKIT {
     )
 
     input:
-    path(fasta)         // Filepaths to the MSAs
-    min_ungapped_length // Minimum ungapped length of sequences after alignment trimming
+    path(fasta)              // Filepaths to the MSAs
+    val(min_ungapped_length) // Minimum ungapped length of sequences after alignment trimming
 
     output:
     path("*_clipkit.fa") , emit: trimmed_msas
