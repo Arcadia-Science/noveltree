@@ -114,8 +114,8 @@ if (params.tree_method == "iqtree") {
     include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
     include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
 } else {
-    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
-    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
+    include { FASTTREE as INFER_TREES           } from './modules/local/fasttree'
+    include { FASTTREE as INFER_REMAINING_TREES } from './modules/local/fasttree'
 }
 
 /*
