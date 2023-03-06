@@ -54,6 +54,13 @@ process SPECIESRAX {
     mv SpeciesRax/* .
     rm -r SpeciesRax
 
+    # Place all temporary gene optimization directories into a new directory
+    # and compress. 
+    mkdir interim_gene_optimizations 
+    mv gene_optimization_* interim_gene_optimizations
+    tar -czvf interim_gene_optimizations.tar.gz interim_gene_optimizations
+    rm -r interim_gene_optimizations
+
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     for og in \$(ls results/)
     do
