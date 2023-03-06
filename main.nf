@@ -330,14 +330,12 @@ workflow PHYLORTHOLOGY {
         IQTREE_PMSF(
             TRIM_MSAS.out.trimmed_msas,
             INFER_TREES.out.phylogeny,
-            INFER_TREES.out.iqtree_log,
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
             TRIM_REMAINING_MSAS.out.trimmed_msas,
             INFER_REMAINING_TREES.out.phylogeny,
-            INFER_REMAINING_TREES.out.iqtree_log,
             params.tree_model_pmsf
         )
         ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
