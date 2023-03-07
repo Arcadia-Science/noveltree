@@ -54,7 +54,7 @@ process SPECIES_TREE_PREP {
     for msa in \$(ls ./*fa)
     do
         # Get the OG name
-        og=\$(echo \$msa | sed "s/_clipkit.fa//g")
+        og=\$(echo \$msa | cut -f1 -d"_")
         tree=\$(ls \${og}*.treefile)
 
         # Now pull out the sequences, and split into a TreeRecs format mapping
