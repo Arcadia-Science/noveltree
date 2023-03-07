@@ -102,6 +102,14 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // TODO: Build into a subworkflow
+if (params.aligner == "magus") {
+    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
+    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
+} else {
+    include { MAFFT as ALIGN_SEQS                   } from './modules/local/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/local/mafft'
+}
+// TODO: Build into a subworkflow
 if (params.msa_trimmer == "clipkit") {
     include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
     include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
@@ -114,8 +122,8 @@ if (params.tree_method == "iqtree") {
     include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
     include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
 } else {
-    include { VERYFASTTREE as INFER_TREES           } from './modules/local/veryfasttree'
-    include { VERYFASTTREE as INFER_REMAINING_TREES } from './modules/local/veryfasttree'
+    include { FASTTREE as INFER_TREES           } from './modules/local/fasttree'
+    include { FASTTREE as INFER_REMAINING_TREES } from './modules/local/fasttree'
 }
 
 /*
@@ -275,7 +283,7 @@ workflow PHYLORTHOLOGY {
     // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    MAFFT(
+    ALIGN_SEQS(
         FILTER_ORTHOGROUPS.out.spptree_fas.flatten(),
         []
     )
@@ -286,13 +294,13 @@ workflow PHYLORTHOLOGY {
     // Only start once species tree MSAs have finished (to give them priority)
     // We use the combination of collect().count() to hold off on running this 
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
-    MAFFT_REMAINING(
+    ALIGN_REMAINING_SEQS(
         FILTER_ORTHOGROUPS.out.genetree_fas.flatten(),
         ch_core_og_msas.collect().count()
     )
         .msas
         .set { ch_rem_og_msas }
-    ch_versions = ch_versions.mix(MAFFT.out.versions)
+    ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
 
     //
     // MODULE: TRIM_MSAS
@@ -300,8 +308,8 @@ workflow PHYLORTHOLOGY {
     // uninformative/problematic sites from the MSAs using either
     // CIAlign or ClipKIT based on parameter specification.
     //
-    TRIM_MSAS(ch_core_og_msas, min_ungapped_length)
-    TRIM_REMAINING_MSAS(ch_rem_og_msas, min_ungapped_length)
+    TRIM_MSAS(ch_core_og_msas, params.min_ungapped_length)
+    TRIM_REMAINING_MSAS(ch_rem_og_msas, params.min_ungapped_length)
     ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
 
     //
@@ -309,15 +317,8 @@ workflow PHYLORTHOLOGY {
     // Infer gene-family trees from the trimmed MSAs using either 
     // VeryFastTree or IQ-TREE. 
     //
-    INFER_TREES(
-        TRIM_MSAS.out.trimmed_msas,
-        params.tree_model
-    )
-
-    INFER_REMAINING_TREES(
-        TRIM_REMAINING_MSAS.out.trimmed_msas,
-        params.tree_model
-    )
+    INFER_TREES(TRIM_MSAS.out.trimmed_msas, params.tree_model)
+    INFER_REMAINING_TREES(TRIM_REMAINING_MSAS.out.trimmed_msas, params.tree_model)
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final 
@@ -329,20 +330,20 @@ workflow PHYLORTHOLOGY {
         // previous tree inference module
         //
         IQTREE_PMSF(
-            TRIM_MSAS.out.trimmed_msas,
+            INFER_TREES.out.msa,
             INFER_TREES.out.phylogeny,
-            INFER_TREES.out.iqtree_log,
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
-            TRIM_REMAINING_MSAS.out.trimmed_msas,
+            INFER_REMAINING_TREES.out.msa,
             INFER_REMAINING_TREES.out.phylogeny,
-            INFER_REMAINING_TREES.out.iqtree_log,
             params.tree_model_pmsf
         )
         ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
         
+        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.collect()
+        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.collect()
         ch_core_trimmed_msas = IQTREE_PMSF.out.msa.collect()
         ch_rem_trimmed_msas = IQTREE_PMSF_REMAINING.out.msa.collect()
     } else {
