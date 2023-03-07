@@ -102,6 +102,14 @@ include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-mo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // TODO: Build into a subworkflow
+if (params.aligner == "magus") {
+    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
+    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
+} else {
+    include { MAFFT as ALIGN_SEQS                   } from './modules/local/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/local/mafft'
+}
+// TODO: Build into a subworkflow
 if (params.msa_trimmer == "clipkit") {
     include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
     include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
@@ -274,7 +282,7 @@ workflow PHYLORTHOLOGY {
     // families using MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    MAFFT(
+    ALIGN_SEQS(
         FILTER_ORTHOGROUPS.out.spptree_fas.flatten(),
         []
     )
@@ -285,13 +293,13 @@ workflow PHYLORTHOLOGY {
     // Only start once species tree MSAs have finished (to give them priority)
     // We use the combination of collect().count() to hold off on running this 
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
-    MAFFT_REMAINING(
+    ALIGN_REMAINING_SEQS(
         FILTER_ORTHOGROUPS.out.genetree_fas.flatten(),
         ch_core_og_msas.collect().count()
     )
         .msas
         .set { ch_rem_og_msas }
-    ch_versions = ch_versions.mix(MAFFT.out.versions)
+    ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
 
     //
     // MODULE: TRIM_MSAS
@@ -308,15 +316,8 @@ workflow PHYLORTHOLOGY {
     // Infer gene-family trees from the trimmed MSAs using either 
     // VeryFastTree or IQ-TREE. 
     //
-    INFER_TREES(
-        TRIM_MSAS.out.trimmed_msas,
-        params.tree_model
-    )
-
-    INFER_REMAINING_TREES(
-        TRIM_REMAINING_MSAS.out.trimmed_msas,
-        params.tree_model
-    )
+    INFER_TREES(TRIM_MSAS.out.trimmed_msas, params.tree_model)
+    INFER_REMAINING_TREES(TRIM_REMAINING_MSAS.out.trimmed_msas, params.tree_model)
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final 

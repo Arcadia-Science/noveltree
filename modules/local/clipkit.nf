@@ -28,7 +28,8 @@ process CLIPKIT {
     script:
     def args = task.ext.args ?: ''
     """
-    prefix=\$(echo ${fasta} | cut -f1 -d "_")
+    # Get the name of the orthogroup we are processing
+    prefix=\$(echo $fasta | cut -f1 -d "_")
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     clipkit ${fasta} -o \${prefix}_tmp.fa $args
