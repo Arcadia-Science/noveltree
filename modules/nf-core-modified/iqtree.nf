@@ -22,7 +22,6 @@ process IQTREE {
 
     output:
     path("*.treefile")  , emit: phylogeny
-    path(alignment)     , emit: msa
     path "*.log"        , emit: iqtree_log
     path "versions.yml" , emit: versions
 
