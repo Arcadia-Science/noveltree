@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+# TODO - BUILD IN OPTPARSE TO STREAMLINE THE FOLLOWING SECTION
 # Read in commandline arguments
 args = commandArgs(trailingOnly=TRUE)
 
