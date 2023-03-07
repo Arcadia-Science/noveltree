@@ -87,8 +87,6 @@ include { IQTREE as INFER_TREES                     } from './modules/nf-core-mo
 include { IQTREE as INFER_REMAINING_TREES           } from './modules/nf-core-modified/iqtree'
 include { IQTREE_PMSF                               } from './modules/nf-core-modified/iqtree_pmsf'
 include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
-include { MAFFT                                     } from './modules/nf-core-modified/mafft'
-include { MAFFT as MAFFT_REMAINING                  } from './modules/nf-core-modified/mafft'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,8 +104,8 @@ if (params.aligner == "magus") {
     include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
     include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
 } else {
-    include { MAFFT as ALIGN_SEQS                   } from './modules/local/mafft'
-    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/local/mafft'
+    include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
 }
 // TODO: Build into a subworkflow
 if (params.msa_trimmer == "clipkit") {
@@ -119,8 +117,8 @@ if (params.msa_trimmer == "clipkit") {
 }
 // TODO: Build as a subworkflow
 if (params.tree_method == "iqtree") {
-    include { IQTREE as INFER_TREES                 } from './modules/local/iqtree'
-    include { IQTREE as INFER_REMAINING_TREES       } from './modules/local/iqtree'
+    include { IQTREE as INFER_TREES                 } from './modules/nf-core-modified/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from './modules/nf-core-modified/iqtree'
 } else {
     include { FASTTREE as INFER_TREES           } from './modules/local/fasttree'
     include { FASTTREE as INFER_REMAINING_TREES } from './modules/local/fasttree'
@@ -329,29 +327,28 @@ workflow PHYLORTHOLOGY {
         // previous tree inference module
         //
         IQTREE_PMSF(
-            INFER_TREES.out.msa,
-            INFER_TREES.out.phylogeny,
+            TRIM_MSAS.out.trimmed_msas.toSortedList({it -> it.name}).flatten(),
+            INFER_TREES.out.phylogeny.toSortedList(it -> it.name).flatten(),
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
-            INFER_REMAINING_TREES.out.msa,
-            INFER_REMAINING_TREES.out.phylogeny,
+            TRIM_REMAINING_MSAS.out.trimmed_msas.toSortedList(it -> it.name).flatten(),
+            INFER_REMAINING_TREES.out.phylogeny.toSortedList(it -> it.name).flatten(),
             params.tree_model_pmsf
         )
         ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
         
-        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.collect()
-        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.collect()
-        ch_core_trimmed_msas = IQTREE_PMSF.out.msa.collect()
-        ch_rem_trimmed_msas = IQTREE_PMSF_REMAINING.out.msa.collect()
+        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.toSortedList(it -> it.name).collect()
+        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.toSortedList(it -> it.name).collect()
     } else {
-        ch_core_gene_trees = INFER_TREES.out.phylogeny.collect()
-        ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.collect()
-        ch_core_trimmed_msas = INFER_TREES.out.msa.collect()
-        ch_rem_trimmed_msas = INFER_REMAINING_TREES.out.msa.collect()
+        ch_core_gene_trees = INFER_TREES.out.phylogeny.toSortedList(it -> it.name).collect()
+        ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.toSortedList(it -> it.name).collect()
     }
 
+    // Generate channels of the trimmed MSAs
+    ch_core_trimmed_msas = TRIM_MSAS.out.trimmed_msas.toSortedList(it -> it.name).collect()
+    ch_rem_trimmed_msas = TRIM_REMAINING_MSAS.out.trimmed_msas.toSortedList(it -> it.name).collect()
 
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
@@ -363,7 +360,7 @@ workflow PHYLORTHOLOGY {
     // remainder.
     SPECIES_TREE_PREP(
         ch_core_gene_trees,
-        ch_core_trimmed_msas.collect(),
+        ch_core_trimmed_msas,
         "speciesrax"
     )
         .set { ch_core_spptree_prep }
@@ -375,7 +372,7 @@ workflow PHYLORTHOLOGY {
 
     GENE_TREE_PREP(
         ch_rem_gene_trees,
-        ch_rem_trimmed_msas.collect(),
+        ch_rem_trimmed_msas,
         "generax"
     )
         .set { ch_rem_genetree_prep }
@@ -406,8 +403,8 @@ workflow PHYLORTHOLOGY {
     //
     SPECIESRAX(
         ch_core_speciesrax_map,
-        ch_core_gene_trees.collect(),
-        ch_core_trimmed_msas.collect(),
+        ch_core_gene_trees,
+        ch_core_trimmed_msas,
         ch_core_families
     )
         .speciesrax_tree
@@ -420,8 +417,8 @@ workflow PHYLORTHOLOGY {
     GENERAX(
         ch_speciesrax,
         ch_rem_generax_map,
-        ch_rem_gene_trees.collect(),
-        ch_rem_trimmed_msas.collect(),
+        ch_rem_gene_trees,
+        ch_rem_trimmed_msas,
         ch_rem_families
     )
 
