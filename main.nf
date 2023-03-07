@@ -263,6 +263,7 @@ workflow PHYLORTHOLOGY {
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
         params.min_num_spp_per_og,
+        params.min_prop_spp_for_spptree,
         params.min_num_grp_per_og,
         params.max_copy_num_spp_tree,
         params.max_copy_num_gene_trees
@@ -422,7 +423,7 @@ workflow PHYLORTHOLOGY {
         ch_speciesrax,
         ch_all_generax_map,
         ch_all_gene_trees,
-        ch_all_trimmed_msas
+        ch_all_trimmed_msas,
         ch_all_families
     )
 
