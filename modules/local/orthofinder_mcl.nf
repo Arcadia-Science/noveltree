@@ -37,10 +37,13 @@ process ORTHOFINDER_MCL {
         $args
 
     # Check if we're running an mcl test or not:
-    # if so, delete the sequence files, which we will not be using and take up
-    # significant, unnecessary space.
+    # if so, delete the sequence files and other non-essential directories that
+    # we will not be using and take up significant, unnecessary space.
     if [ "$output_directory" == "mcl_test_dataset" ]; then
+        rm -r OrthoFinder/*/Single_Copy_Orthologue_Sequences/
         rm -r OrthoFinder/*/Orthogroup_Sequences/
+        rm -r OrthoFinder/*/WorkingDirectory/
+        rm -r OrthoFinder/*/Orthologues/
     fi
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
