@@ -43,6 +43,7 @@ process IQTREE_PMSF {
         -nt ${task.cpus} \\
         -mem \$memory \\
         -m $pmsf_model \\
+        -t $guide_tree \\
         -ft $guide_tree \\
         $args
 
