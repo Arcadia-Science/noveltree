@@ -59,7 +59,7 @@
                     "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
                 },
                 "min_prop_spp_for_spptree": {
-                    "type": "float",
+                    "type": "number",
                     "default": 0.25,
                     "description": "Minimum proportion of all species in orthogroup for inclusion in species tree inference."
                 },
