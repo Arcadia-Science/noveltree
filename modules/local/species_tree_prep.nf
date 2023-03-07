@@ -77,8 +77,8 @@ process SPECIES_TREE_PREP {
     # clean up the families file a bit
     sed -i 's|\\./||g' ${family_set}_orthogroup.families
 
-    # Now concatenate the SpeciesRax maps for input to Asteroid
-    if [[ ${family_set} == "speciesrax" ]]
+    # Now concatenate the GeneRax maps for input to Asteroid
+    if [[ ${family_set} == "generax" ]]
     then
       cat *${family_set}_map.link > asteroid_map.link
     fi

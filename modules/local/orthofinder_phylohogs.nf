@@ -16,8 +16,7 @@ process ORTHOFINDER_PHYLOHOGS {
     path orthofinder_fastas  // Orthofinder-formatted fasta files
     path orthofinder_seq_ids // Orthofinder sequence IDs
     path orthofinder_spp_ids // Orthofinder species IDs
-    path speciesrax_gfts     // Reconciled gene family trees used in species tree inference
-    path generax_gfts        // Remaining reconciled gene family trees
+    path generax_gfts        // Reconciled gene family trees from GeneRax
     path blast               // Blast similarity scores
 
     output:
