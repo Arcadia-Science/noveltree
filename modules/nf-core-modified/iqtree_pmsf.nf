@@ -20,11 +20,11 @@ process IQTREE_PMSF {
     input:
     path(alignment)
     path(guide_tree)
-    path(guide_tree_log)
     val pmsf_model
 
     output:
     path("*pmsf.treefile") , emit: phylogeny
+    path(alignment)        , emit: msa
     path "*.log"           , emit: iqtree_log
     path "versions.yml"    , emit: versions
 
@@ -38,24 +38,15 @@ process IQTREE_PMSF {
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
 
-    # Identify the best number of threads
-    nt=\$(grep "BEST NUMBER" $guide_tree_log | sed "s/.*: //g")
-
-    # Rename things and clean up - iqtree will be unhappy otherwise
-    mv $guide_tree guidetree.treefile
-    rm $guide_tree_log
-
     iqtree2 \\
         -s $alignment \\
-        -nt \$nt \\
+        -nt ${task.cpus} \\
         -mem \$memory \\
         -m $pmsf_model \\
+        -t $guide_tree \\
         -ft $guide_tree \\
         $args
-    
-    # Clean up
-    rm guidetree.treefile
-    
+
     # Rename the tree and log file to something more informative
     mv ${alignment}.treefile ${alignment}.pmsf.treefile
     mv ${alignment}.log ${alignment}.pmsf.log
