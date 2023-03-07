@@ -24,7 +24,6 @@ process IQTREE_PMSF {
 
     output:
     path("*pmsf.treefile") , emit: phylogeny
-    path(alignment)        , emit: msa
     path "*.log"           , emit: iqtree_log
     path "versions.yml"    , emit: versions
 

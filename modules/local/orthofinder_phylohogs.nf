@@ -5,8 +5,8 @@ process ORTHOFINDER_PHYLOHOGS {
         '' }"
     stageInMode = "copy"
     publishDir(
-        path: "${params.outdir}/orthofinder_phylohogs/",
-        mode: params.publish_dir_mode,
+        path: "${params.outdir}/orthofinder/complete_dataset/",
+        mode: params.publish_dir_mode, overwrite: false,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
@@ -20,7 +20,7 @@ process ORTHOFINDER_PHYLOHOGS {
     path blast               // Blast similarity scores
 
     output:
-    path "*" , emit: phylohogs
+    path "Results_HOGs/" , emit: phylohogs
 
     when:
     task.ext.when == null || task.ext.when
@@ -60,5 +60,11 @@ process ORTHOFINDER_PHYLOHOGS {
     -ft \$of_results_dir/ \
     -a ${task.cpus} \
     -y
+    
+    # And clean up,rename a few things so as not to have conflicting filenames in the resultant output
+    rm -r \$of_results_dir
+    mv Results_HOGs/WorkingDirectory Results_HOGs/WorkingDirectory_Hogs
+    rm Results_HOGs/Citation.txt
+    mv Results_HOGs/Log.txt Results_HOGs/Hogs_Log.txt
     """
 }
