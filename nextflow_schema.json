@@ -57,6 +57,11 @@
                     "default": 4,
                     "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
                 },
+                "min_prop_spp_for_spptree": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "Minimum proportion of all species in orthogroup for inclusion in species tree inference."
+                },
                 "min_num_grp_per_og": {
                     "type": "integer",
                     "default": 1,
@@ -86,7 +91,7 @@
                     "type": "string",
                     "default": "veryfasttree",
                     "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is veryfasttree, alternative is iqtree."
-                }
+                },
                 "tree_model": {
                     "type": "string",
                     "default": "LG+F+G4",
