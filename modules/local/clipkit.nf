@@ -14,8 +14,8 @@ process CLIPKIT {
     )
 
     input:
-    path(fasta)         // Filepaths to the MSAs
-    min_ungapped_length // Minimum ungapped length of sequences after alignment trimming
+    path(fasta)              // Filepaths to the MSAs
+    val(min_ungapped_length) // Minimum ungapped length of sequences after alignment trimming
 
     output:
     path("*_clipkit.fa") , emit: trimmed_msas
@@ -28,7 +28,8 @@ process CLIPKIT {
     script:
     def args = task.ext.args ?: ''
     """
-    prefix=\$(basename "${fasta}" _mafft.fa)
+    # Get the name of the orthogroup we are processing
+    prefix=\$(echo $fasta | cut -f1 -d "_")
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     clipkit ${fasta} -o \${prefix}_tmp.fa $args

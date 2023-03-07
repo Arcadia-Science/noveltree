@@ -19,6 +19,7 @@ process VERYFASTTREE {
 
     output:
     path("*.treefile")  , emit: phylogeny
+    path(alignment)     , emit: msa
     path "versions.yml" , emit: versions
 
     when:
@@ -27,16 +28,25 @@ process VERYFASTTREE {
     script:
     def args   = task.ext.args ?: ''
     """
-    og=\${alignment%%_*}
- 
+    og=\$(echo $alignment | cut -f1 -d "_")
+
+    # Hacky fix to prevent segfault of VeryFastTree when running on small datasets
+    nseqs=\$(grep ">" $alignment | wc -l)
+    if [[ \${nseqs} -gt 14 ]]
+    then
+        nthreads=${task.cpus}
+    else
+        nthreads=1
+    fi
+    
     # Infer a... Very Fast Tree!
     VeryFastTree \\
-        -threads ${task.cpus} \\
+        -threads \${nthreads} \\
         $alignment > \${og}_vft.treefile
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        VeryFastTree: $(VeryFastTree | head -n1 | cut -f2 -d" ")
+        VeryFastTree: \$(VeryFastTree | head -n1 | cut -f2 -d" ")
     END_VERSIONS
     """
 }

@@ -14,8 +14,8 @@ process CIALIGN {
     )
 
     input:
-    path(fasta)         // Filepaths to the MSAs
-    min_ungapped_length // Minimum ungapped length of sequences after alignment trimming
+    path(fasta)              // Filepaths to the MSAs
+    val(min_ungapped_length) // Minimum ungapped length of sequences after alignment trimming
 
     output:
     path("*_cialign.fa") , emit: trimmed_msas
@@ -27,7 +27,7 @@ process CIALIGN {
     def remove_short = min_ungapped_length ? "--remove_short --remove_min_length=${min_ungapped_length}" : ''
     """
     # Get the name of the orthogroup we are processing
-    prefix=\${fasta%%_*}
+    prefix=\$(echo $fasta | cut -f1 -d "_")
 
     # Clean up the MSAs for each orthogroup containing at least 4 species.
     CIAlign \
