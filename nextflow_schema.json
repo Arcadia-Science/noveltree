@@ -15,6 +15,7 @@
                 "mcl_inflation",
                 "outdir",
                 "min_num_spp_per_og",
+                "min_prop_spp_for_spptree",
                 "min_num_grp_per_og",
                 "max_copy_num_spp_tree",
                 "max_copy_num_gene_trees",
@@ -56,6 +57,11 @@
                     "type": "integer",
                     "default": 4,
                     "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
+                },
+                "min_prop_spp_for_spptree": {
+                    "type": "number",
+                    "default": 0.25,
+                    "description": "Minimum proportion of all species in orthogroup for inclusion in species tree inference."
                 },
                 "min_num_grp_per_og": {
                     "type": "integer",
