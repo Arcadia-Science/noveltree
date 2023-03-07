@@ -9,12 +9,16 @@ ogcounts <- args[1]
 samples <- args[2]
 
 num_spp_filt <- as.numeric(args[3])
-num_grp_filt <- as.numeric(args[4])
-copy_num_filt1 <- as.numeric(args[5])
-copy_num_filt2 <- as.numeric(args[6])
+prop_spp_spptree_filt <- as.numeric(args[4])
+num_grp_filt <- as.numeric(args[5])
+copy_num_filt1 <- as.numeric(args[6])
+copy_num_filt2 <- as.numeric(args[7])
 
 ogs <- read.delim(ogcounts, check.names = FALSE)
 samples <- read.delim(samples, sep = ",")
+
+# Convert the % species filter to the number of species required
+num_spp_spptree_filt <- round(nrow(samples), prop_spp_spptree_filt)
 
 colnames(ogs) <- gsub("\\..*", "", colnames(ogs))
 
@@ -70,6 +74,7 @@ res <-
 spptree_core <-
     res[which(res$mean_copy_num <= copy_num_filt1 &
               res$num_spp >= num_spp_filt &
+              res$num_spp >= num_spp_spptree_filt &
               res$num_tax_grps >= num_grp_filt),]
 genetree_core <-
     res[which(res$mean_copy_num <= copy_num_filt2 &
