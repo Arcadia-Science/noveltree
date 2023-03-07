@@ -69,11 +69,5 @@ process FILTER_ORTHOGROUPS {
 
     # Remove these intermediate files
     rm *fpaths.txt
-    
-    # Compress the directories containing these MSAs
-    tar -czvf species_tree_og_msas.tar.gz species_tree_og_msas
-    rm -r species_tree_og_msas
-    tar -czvf gene_tree_og_msas.tar.gz gene_tree_og_msas
-    rm -r gene_tree_og_msas
     """
 }
