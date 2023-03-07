@@ -271,6 +271,7 @@ workflow PHYLORTHOLOGY {
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
         params.min_num_spp_per_og,
+        params.min_prop_spp_for_spptree,
         params.min_num_grp_per_og,
         params.max_copy_num_spp_tree,
         params.max_copy_num_gene_trees
@@ -363,7 +364,7 @@ workflow PHYLORTHOLOGY {
     // remainder.
     SPECIES_TREE_PREP(
         ch_core_gene_trees,
-        ch_core_trimmed_msas.collect(),
+        ch_core_trimmed_msas,
         "speciesrax"
     )
         .set { ch_core_spptree_prep }
@@ -371,18 +372,20 @@ workflow PHYLORTHOLOGY {
     ch_core_treefile = ch_core_spptree_prep.treefile
     ch_core_families = ch_core_spptree_prep.families
     ch_core_speciesrax_map = ch_core_spptree_prep.speciesrax_map
-    ch_asteroid_map = ch_core_spptree_prep.asteroid_map
 
+    ch_all_gene_trees = ch_rem_gene_trees.merge( ch_core_gene_trees )
+    ch_all_trimmed_msas = ch_rem_trimmed_msas.merge( ch_core_trimmed_msas )
     GENE_TREE_PREP(
-        ch_rem_gene_trees,
-        ch_rem_trimmed_msas.collect(),
+        ch_all_gene_trees,
+        ch_all_trimmed_msas,
         "generax"
     )
-        .set { ch_rem_genetree_prep }
+        .set { ch_all_genetree_prep }
 
-    ch_rem_treefile = ch_rem_genetree_prep.treefile
-    ch_rem_families = ch_rem_genetree_prep.families
-    ch_rem_generax_map = ch_rem_genetree_prep.generax_map
+    ch_all_treefile = ch_all_genetree_prep.treefile
+    ch_all_families = ch_all_genetree_prep.families
+    ch_all_generax_map = ch_all_genetree_prep.generax_map
+    ch_asteroid_map = ch_all_genetree_prep.asteroid_map
 
     // The following two steps will just be done for the core set of
     // orthogroups that will be used to infer the species tree
@@ -391,7 +394,7 @@ workflow PHYLORTHOLOGY {
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
     ASTEROID(
-        ch_core_treefile,
+        ch_all_treefile,
         ch_asteroid_map
     )
         .spp_tree
@@ -406,8 +409,8 @@ workflow PHYLORTHOLOGY {
     //
     SPECIESRAX(
         ch_core_speciesrax_map,
-        ch_core_gene_trees.collect(),
-        ch_core_trimmed_msas.collect(),
+        ch_core_gene_trees,
+        ch_core_trimmed_msas,
         ch_core_families
     )
         .speciesrax_tree
@@ -419,10 +422,10 @@ workflow PHYLORTHOLOGY {
     // inferred from SpeciesRax for all remaining gene families
     GENERAX(
         ch_speciesrax,
-        ch_rem_generax_map,
-        ch_rem_gene_trees.collect(),
-        ch_rem_trimmed_msas.collect(),
-        ch_rem_families
+        ch_all_generax_map,
+        ch_all_gene_trees,
+        ch_all_trimmed_msas,
+        ch_all_families
     )
 
     //
@@ -437,7 +440,6 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.fastas,
         ORTHOFINDER_PREP.out.sppIDs,
         ORTHOFINDER_PREP.out.seqIDs,
-        SPECIESRAX.out.speciesrax_gfts,
         GENERAX.out.generax_gfts,
         DIAMOND_BLASTP.out.txt.collect()
     )
