@@ -19,7 +19,7 @@ ogs <- read.delim(ogcounts, check.names = FALSE)
 samples <- read.delim(samples, sep = ",")
 
 # Convert the % species filter to the number of species required
-num_spp_spptree_filt <- round(nrow(samples), prop_spp_spptree_filt)
+num_spp_spptree_filt <- round(nrow(samples) * prop_spp_spptree_filt)
 
 colnames(ogs) <- gsub("\\..*", "", colnames(ogs))
 
