@@ -39,18 +39,28 @@ process MAGUS {
         maxnumsubsets="--maxnumsubsets 20"
         graphbuildhmmextend="--graphbuildhmmextend true"
         mafftsize="-m 25"
+        mafftruns="-r 10"
     elif [ \$ntax -le 100 && \$ntax -ge 25 ]; then 
         decompskeletonsize="--decompskeletonsize 25"
         maxsubsetsize="--maxsubsetsize 10"
         maxnumsubsets="--maxnumsubsets 10"
         graphbuildhmmextend="--graphbuildhmmextend true"
         mafftsize="-m 10"
-    else [ \$ntax -le 24 && \$ntax -ge 10 ]
-        decompskeletonsize="--decompskeletonsize 24"
-        maxsubsetsize="--maxsubsetsize 25"
-        maxnumsubsets="--maxnumsubsets 1"
+        mafftruns="-r 5"
+    elif [ \$ntax -le 24 && \$ntax -ge 10 ]
+        decompskeletonsize="--decompskeletonsize 15"
+        maxsubsetsize="--maxsubsetsize 10"
+        maxnumsubsets="--maxnumsubsets 2"
         graphbuildhmmextend="--graphbuildhmmextend false"
-        mafftsize="-m \${ntax}"
+        mafftsize="-m 5"
+        mafftruns="-r 2"
+    elif [ \$ntax -le 9 ]
+        decompskeletonsize="--decompskeletonsize 9"
+        maxsubsetsize="--maxsubsetsize 5"
+        maxnumsubsets="--maxnumsubsets 2"
+        graphbuildhmmextend="--graphbuildhmmextend false"
+        mafftsize="-m 4"
+        mafftruns="-r 1"
     fi
         
     magus \\
@@ -61,7 +71,9 @@ process MAGUS {
         \${maxsubsetsize} \\
         \${maxnumsubsets} \\
         \${graphbuildhmmextend} \\
-        \${mafftsize} 
+        \${mafftsize} \\
+        \${mafftruns}
+        
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
