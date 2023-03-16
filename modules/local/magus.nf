@@ -31,11 +31,37 @@ process MAGUS {
     """
     prefix=\$(basename "${fasta}" .fa)
     
+    # Prevent needless excess subsetting by dynamically specifying here
+    ntax=\$(grep ">" ${fasta} | wc -l)
+    if [ \$ntax -ge 100 ]; then
+        decompskeletonsize="--decompskeletonsize 101"
+        maxsubsetsize="--maxsubsetsize 50"
+        maxnumsubsets="--maxnumsubsets 20"
+        graphbuildhmmextend="--graphbuildhmmextend true"
+        mafftsize="-m 25"
+    elif [ \$ntax -le 100 && \$ntax -ge 25 ]; then 
+        decompskeletonsize="--decompskeletonsize 25"
+        maxsubsetsize="--maxsubsetsize 10"
+        maxnumsubsets="--maxnumsubsets 10"
+        graphbuildhmmextend="--graphbuildhmmextend true"
+        mafftsize="-m 10"
+    else [ \$ntax -le 24 && \$ntax -ge 10 ]
+        decompskeletonsize="--decompskeletonsize 24"
+        maxsubsetsize="--maxsubsetsize 25"
+        maxnumsubsets="--maxnumsubsets 1"
+        graphbuildhmmextend="--graphbuildhmmextend false"
+        mafftsize="-m \${ntax}"
+    fi
+        
     magus \\
         -i ${fasta} \\
         -o \${prefix}_magus.fa \\
         --numprocs ${task.cpus} \\
-        $args
+        \${decompskeletonsize} \\
+        \${maxsubsetsize} \\
+        \${maxnumsubsets} \\
+        \${graphbuildhmmextend} \\
+        \${mafftsize} 
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
