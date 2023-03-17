@@ -33,21 +33,21 @@ process MAGUS {
     
     # Prevent needless excess subsetting by dynamically specifying here
     ntax=\$(grep ">" ${fasta} | wc -l)
-    if [ \$ntax -ge 101 ]; then
+    if [[ \$ntax -ge 101 ]]; then
         decompskeletonsize="--decompskeletonsize 101"
         maxsubsetsize="--maxsubsetsize 50"
         maxnumsubsets="--maxnumsubsets 20"
         graphbuildhmmextend="--graphbuildhmmextend true"
         mafftsize="-m 25"
         mafftruns="-r 10"
-    elif [ \$ntax -le 100 && \$ntax -ge 25 ]; then
+    elif [[ \$ntax -le 100 && \$ntax -ge 25 ]]; then
         decompskeletonsize="--decompskeletonsize 25"
         maxsubsetsize="--maxsubsetsize 10"
         maxnumsubsets="--maxnumsubsets 10"
         graphbuildhmmextend="--graphbuildhmmextend true"
         mafftsize="-m 10"
         mafftruns="-r 5"
-    elif [ \$ntax -le 24 && \$ntax -ge 10 ]; then
+    elif [[ \$ntax -le 24 && \$ntax -ge 10 ]]; then
         decompskeletonsize="--decompskeletonsize 15"
         maxsubsetsize="--maxsubsetsize 10"
         maxnumsubsets="--maxnumsubsets 2"
