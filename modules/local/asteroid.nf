@@ -1,6 +1,6 @@
 process ASTEROID {
     tag "Asteroid"
-    label 'process_highcpu'
+    label 'process_asteroid'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117:0.0.1':
         '' }"
