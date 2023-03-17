@@ -54,7 +54,7 @@ process MAGUS {
         graphbuildhmmextend="--graphbuildhmmextend false"
         mafftsize="-m 5"
         mafftruns="-r 2"
-    elif [ \$ntax -le 9 ]; then 
+    else
         decompskeletonsize="--decompskeletonsize 9"
         maxsubsetsize="--maxsubsetsize 5"
         maxnumsubsets="--maxnumsubsets 2"
