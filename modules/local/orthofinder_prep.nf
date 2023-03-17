@@ -6,7 +6,7 @@ process ORTHOFINDER_PREP {
 
     publishDir(
         path: "${params.outdir}/orthofinder",
-        mode: 'symlink',
+        mode: 'copy',
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
