@@ -130,19 +130,38 @@ if (annots_to_download != "minimal") {
 
 # The following function catches a common error when querying uniprot 
 # retries if there are communication errors for whatever reason
+# unipro.ws also inexplicably sometimes fails (runs forever) if you don't break 
+# up the annotations. 
 uniprotSelectWithRetry <- function(i){
     res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
+    res1 <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
+    res2 <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
     counter <- 1
     max_tries <- 5 
-    while(inherits(res, "error") & counter <= max_tries){ 
-        res <- tryCatch({
-            UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
+    accessions1 <- accessions[1:round(length(accessions)/2)]
+    accessions2 <- accessions[(round(length(accessions)/2)+1):length(accessions)]
+    while(inherits(res1, "error") & counter <= max_tries){ 
+        res1 <- tryCatch({
+            UniProt.ws::select(up, accessions1, c(common_cols, annotations[[i]]), 'UniProtKB')
         }, error = function(e) e)
         counter <- counter + 1
         Sys.sleep(2 ^ counter)
     }
-    if (inherits(res, "error")) {
-        print("Error: ", conditionMessage(res))
+    if (inherits(res1, "error")) {
+        print("Error: ", conditionMessage(res1))
+    }
+    while(inherits(res2, "error") & counter <= max_tries){ 
+        res2 <- tryCatch({
+            UniProt.ws::select(up, accessions2, c(common_cols, annotations[[i]]), 'UniProtKB')
+        }, error = function(e) e)
+        counter <- counter + 1
+        Sys.sleep(2 ^ counter)
+    }
+    if (inherits(res2, "error")) {
+        print("Error: ", conditionMessage(res2))
+    }
+    if(class(res1) == "data.frame" && class(res2) == "data.frame"){
+        res <- rbind(res1, res2)
     }
     return(res)
 }
@@ -178,7 +197,7 @@ get_annotations <-
 
 # Make sure the number of parallel processes is equal to the minimum of either the 
 # number of cores availalble, or the number of annotations being downloaded
-nparallel <- min(length(anns), min(1, detectCores()))
+nparallel <- min(length(anns), min(16, detectCores()))
 
 # Great, now go ahead and download everything! 
 # Note: "res" is just an empty list, since mclapply is just being used to write 
