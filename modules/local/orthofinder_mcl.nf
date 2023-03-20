@@ -44,6 +44,12 @@ process ORTHOFINDER_MCL {
         rm -r OrthoFinder/*/Orthogroup_Sequences/
         rm -r OrthoFinder/*/WorkingDirectory/
         rm -r OrthoFinder/*/Orthologues/
+    else
+        dir=\$(pwd)
+        cd \$(ls -d OrthoFinder/*/WorkingDirectory)
+        tar -czvf Sequences_ids.tar.gz Sequences_ids 
+        rm -r Sequences_ids
+        cd \$dir
     fi
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
