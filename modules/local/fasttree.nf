@@ -33,9 +33,21 @@ process FASTTREE {
     export OMP_NUM_THREADS=${task.cpus}
     
     # Efficiently infer a gene family tree using FastTree!
+    # Sometimes fasttree is unhappy with the input sequences, throwing the odd
+    # error that is solved by not doing any ML-NNIs - the chunch below 
+    # ignores the first error (if it occurs) and then if the output tree is
+    # empty, will set errors back on, rerunning with the new parameter. 
+    
+    set +e # Turn off error recognition
     /MAGUS/magus_tools/fasttree/FastTreeMP \\
         $args \\
         $alignment > \${og}_ft.treefile
+    if [[ ! -s \${og}_ft.treefile ]]; then
+        set -e # Turn back on - if this dies due to resource allocation then retry
+        /MAGUS/magus_tools/fasttree/FastTreeMP \\
+            $args -noml \\
+            $alignment > \${og}_ft.treefile
+    fi
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
