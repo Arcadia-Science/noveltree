@@ -25,9 +25,12 @@ process FASTTREE {
     task.ext.when == null || task.ext.when
 
     script:
-    def args   = task.ext.args ?: ''
+    def args = task.ext.args ?: ''
     """
     og=\$(echo $alignment | cut -f1 -d "_")
+    
+    # Make sure the number of threads are being specified properly 
+    export OMP_NUM_THREADS=${task.cpus}
     
     # Efficiently infer a gene family tree using FastTree!
     /MAGUS/magus_tools/fasttree/FastTreeMP \\
