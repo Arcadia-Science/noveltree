@@ -282,8 +282,7 @@ workflow PHYLORTHOLOGY {
     //
     // For the extreme core set to be used in species tree inference
     ALIGN_SEQS(
-        FILTER_ORTHOGROUPS.out.spptree_fas.flatten(),
-        []
+        FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
     )
         .msas
         .set{ ch_core_og_msas }
@@ -293,8 +292,7 @@ workflow PHYLORTHOLOGY {
     // We use the combination of collect().count() to hold off on running this 
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
     ALIGN_REMAINING_SEQS(
-        FILTER_ORTHOGROUPS.out.genetree_fas.flatten(),
-        ch_core_og_msas.collect().count()
+        FILTER_ORTHOGROUPS.out.genetree_fas.flatten()
     )
         .msas
         .set { ch_rem_og_msas }

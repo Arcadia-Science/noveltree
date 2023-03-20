@@ -17,7 +17,6 @@ process MAGUS {
     
     input:
     path(fasta)
-    val num_spp_tree_msas // Purely utilitarian: used to prioritize gene families used in species tree inference.
 
     output:
     path("*_magus.fa")  , emit: msas
