@@ -2,9 +2,7 @@ process MAGUS {
     tag "$fasta"
     label 'process_magus'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/magus_0.1.0:0.0.1' :
-    //     '' }"
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/magus_0.1.0:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/magus_0.1.0:0.0.1' :
         '' }"
     // TODO: address this issue (permission related errors) in future release
     containerOptions = "--user root"
@@ -14,7 +12,7 @@ process MAGUS {
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
-    
+
     input:
     path(fasta)
 
@@ -29,7 +27,7 @@ process MAGUS {
     def args = task.ext.args ?: ''
     """
     prefix=\$(basename "${fasta}" .fa)
-    
+
     # Prevent needless excess subsetting by dynamically specifying here
     ntax=\$(grep ">" ${fasta} | wc -l)
     if [[ \$ntax -ge 101 ]]; then
@@ -61,7 +59,7 @@ process MAGUS {
         mafftsize="-m 4"
         mafftruns="-r 1"
     fi
-        
+
     magus \\
         -i ${fasta} \\
         -o \${prefix}_magus.fa \\
@@ -72,8 +70,8 @@ process MAGUS {
         \${graphbuildhmmextend} \\
         \${mafftsize} \\
         \${mafftruns}
-        
-        
+
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         magus: v\$(grep "version=" /MAGUS/setup.py | cut -f2 -d'"')
