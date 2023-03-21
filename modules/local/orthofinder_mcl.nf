@@ -3,7 +3,7 @@ process ORTHOFINDER_MCL {
     label 'process_lowcpu'
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
-
+    stageInMode = "copy"
     input:
     each mcl_inflation
     path(blast)
@@ -47,7 +47,7 @@ process ORTHOFINDER_MCL {
     else
         dir=\$(pwd)
         cd \$(ls -d OrthoFinder/*/WorkingDirectory)
-        tar -czvf Sequences_ids.tar.gz Sequences_ids 
+        tar -czvf Sequences_ids.tar.gz Sequences_ids
         rm -r Sequences_ids
         cd \$dir
     fi
