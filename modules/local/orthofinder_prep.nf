@@ -4,6 +4,7 @@ process ORTHOFINDER_PREP {
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
 
+    stageInMode = "copy"
     publishDir(
         path: "${params.outdir}/orthofinder",
         mode: 'copy',
