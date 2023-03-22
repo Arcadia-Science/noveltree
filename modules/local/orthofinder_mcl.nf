@@ -6,7 +6,7 @@ process ORTHOFINDER_MCL {
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
 
-    stageInMode = "copy"
+    // stageInMode = "copy"
 
     input:
     each mcl_inflation
