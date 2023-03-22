@@ -132,36 +132,26 @@ if (annots_to_download != "minimal") {
 # retries if there are communication errors for whatever reason
 # unipro.ws also inexplicably sometimes fails (runs forever) if you don't break 
 # up the annotations. 
-uniprotSelectWithRetry <- function(i){
-    res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
-    res1 <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
-    res2 <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
-    counter <- 1
-    max_tries <- 5 
-    accessions1 <- accessions[1:round(length(accessions)/2)]
-    accessions2 <- accessions[(round(length(accessions)/2)+1):length(accessions)]
-    while(inherits(res1, "error") & counter <= max_tries){ 
-        res1 <- tryCatch({
-            UniProt.ws::select(up, accessions1, c(common_cols, annotations[[i]]), 'UniProtKB')
-        }, error = function(e) e)
-        counter <- counter + 1
-        Sys.sleep(2 ^ counter)
+uniprotSelectWithRetry <- function(x){
+    res <- list()
+    accession_list <- split(accessions, ceiling(seq(from = 1, to = length(accessions), by=999)))
+    for(i in 1:length(accession_list)){
+        res[[i]] <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
+        counter <- 1
+        max_tries <- 5 
+        while(inherits(res[[i]], "error") & counter <= max_tries){ 
+            res[[i]] <- tryCatch({
+                UniProt.ws::select(up, accession_list[[i]], c(common_cols, annotations[[x]]), 'UniProtKB')
+            }, error = function(e) e)
+            counter <- counter + 1
+            Sys.sleep(2 ^ counter)
+        }
+        if (inherits(res[[i]], "error")) {
+            print("Error: ", conditionMessage(res[[i]]))
+        }
     }
-    if (inherits(res1, "error")) {
-        print("Error: ", conditionMessage(res1))
-    }
-    while(inherits(res2, "error") & counter <= max_tries){ 
-        res2 <- tryCatch({
-            UniProt.ws::select(up, accessions2, c(common_cols, annotations[[i]]), 'UniProtKB')
-        }, error = function(e) e)
-        counter <- counter + 1
-        Sys.sleep(2 ^ counter)
-    }
-    if (inherits(res2, "error")) {
-        print("Error: ", conditionMessage(res2))
-    }
-    if(class(res1) == "data.frame" && class(res2) == "data.frame"){
-        res <- rbind(res1, res2)
+    if(all(sapply(res, class) == "data.frame")){
+        res <- do.call(rbind, res)
     }
     return(res)
 }
