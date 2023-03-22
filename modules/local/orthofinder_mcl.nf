@@ -1,9 +1,13 @@
 process ORTHOFINDER_MCL {
     tag "MCL clustering"
+
     label 'process_lowcpu'
+
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
+
     stageInMode = "copy"
+
     input:
     each mcl_inflation
     path(blast)
@@ -53,8 +57,8 @@ process ORTHOFINDER_MCL {
     fi
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    mkdir ${output_directory}
-    mv OrthoFinder/Results_Inflation_${mcl_inflation}/ ${output_directory}/
-    rm -r OrthoFinder/
+    #mkdir ${output_directory}
+    #mv OrthoFinder/Results_Inflation_${mcl_inflation}/ ${output_directory}/
+    #rm -r OrthoFinder/
     """
 }
