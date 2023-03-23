@@ -2,7 +2,7 @@ process ANNOTATE_UNIPROT {
     tag "$meta.id"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/uniprotws_2.38.1:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/uniprotws_2.38.1:0.0.1':
         '' }"
 
     publishDir(
