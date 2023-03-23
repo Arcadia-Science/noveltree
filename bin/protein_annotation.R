@@ -227,27 +227,27 @@ apply_get_annotations <- function(anns, spp, up, annotations, annot_names, commo
 # Now go ahead and start attempting to download the annotations, beginning with one large chunk and getting increasingly smaller. 
 result <- tryCatch(
   callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 2, 
-             nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 300),
+             nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 600),
   error = function(e) {return("failed")})
 
-if(result == "failed"){
+if(any(result == "failed")){
     result <- tryCatch(
       callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 3, 
-                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 400),
+                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 900),
       error = function(e) {return("failed")})
 }
 
-if(result == "failed"){
+if(any(result == "failed")){
     result <- tryCatch(
       callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 5, 
-                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 600),
+                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 1200),
       error = function(e) {return("failed")})
 }
 
-if(result == "failed"){
+if(any(result == "failed")){
     result <- tryCatch(
       callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 10, 
-                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 1200),
+                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 1800),
       error = function(e) {return("failed")})
 }
 
