@@ -9,6 +9,7 @@ RUN apt-get update && \
 
 RUN Rscript -e "install.packages('BiocManager', version = '3.16', repos='https://cloud.r-project.org/')"
 RUN Rscript -e "BiocManager::install('UniProt.ws')"
+RUN Rscript -e "install.packages('callr', version = '3.7.3', repos='https://cloud.r-project.org/')"
 
 RUN apt-get -y autoremove && \
     apt-get clean && \
