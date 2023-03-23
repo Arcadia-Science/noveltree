@@ -130,16 +130,13 @@ if (annots_to_download != "minimal") {
 
 # The following function catches a common error when querying uniprot 
 # retries if there are communication errors for whatever reason
-# unipro.ws also inexplicably sometimes fails (runs forever) if you don't break 
-# up the annotations. 
-# A function to do this in bulk (without breaking accessions into chunks)
-uniprotSelectWithRetry <- function(x, up, accessions, common_cols, annotations){
+uniprotSelectWithRetry <- function(i){
     res <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
     counter <- 1
     max_tries <- 5 
     while(inherits(res, "error") & counter <= max_tries){ 
         res <- tryCatch({
-            UniProt.ws::select(up, accessions, c(common_cols, annotations[[x]]), 'UniProtKB')
+            UniProt.ws::select(up, accessions, c(common_cols, annotations[[i]]), 'UniProtKB')
         }, error = function(e) e)
         counter <- counter + 1
         Sys.sleep(2 ^ counter)
@@ -150,40 +147,11 @@ uniprotSelectWithRetry <- function(x, up, accessions, common_cols, annotations){
     return(res)
 }
 
-# And one to do it in chunks
-uniprotSelectWithRetryChunks <- function(x, up, accessions, common_cols, annotations, nchunks){
-    res <- list()
-    accession_list <- split(accessions, cut(seq_along(accessions), nchunks, labels = FALSE))
-    for(i in 1:length(accession_list)){
-        res[[i]] <- simpleError("Error in .checkResponse(.getResponse(jobId)) : Resource not found")
-        counter <- 1
-        max_tries <- 5 
-        while(inherits(res[[i]], "error") & counter <= max_tries){ 
-            res[[i]] <- tryCatch({
-                UniProt.ws::select(up, accession_list[[i]], c(common_cols, annotations[[x]]), 'UniProtKB')
-            }, error = function(e) e)
-            counter <- counter + 1
-            Sys.sleep(2 ^ counter)
-        }
-        if (inherits(res[[i]], "error")) {
-            print("Error: ", conditionMessage(res[[i]]))
-        }
-    }
-    if(all(sapply(res, class) == "data.frame")){
-        res <- do.call(rbind, res)
-    }
-    return(res)
-}
-
 # A function that performs the steps of downloading and writing out to file all 
 # target annotations - used so that we may perform this step in parallel
 get_annotations <- 
-    function(anns, spp, up, annotations, annot_names, common_cols, accessions, nchunks, nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks){
-        if(nchunks == 1){
-            annots <- uniprotSelectWithRetry(anns, up, accessions, common_cols, annotations)
-        }else{
-            annots <- uniprotSelectWithRetryChunks(anns, up, accessions, common_cols, annotations, nchunks)
-        }
+    function(i){
+        annots <- uniprotSelectWithRetry(i)
         to_drop <- which(rowSums(is.na(annots[,-c(1:4)])) == ncol(annots[,-c(1:4)]))
     
         if(length(to_drop) < nrow(annots)){
@@ -198,58 +166,24 @@ get_annotations <-
     
             # Write out to a tsv assuming we haven't removed every protein
             # Put the cogeqc annotations in its own directory
-            if(anns == 1){
-                write.table(annots, file = paste0(spp, annot_names[anns]),
+            if(i == 1){
+                write.table(annots, file = paste0(spp, annot_names[i]),
                             col.names = T, row.names = F, sep = '\t', quote = F)
             }else{
-                write.table(annots, file = paste0(spp, '/', spp, annot_names[anns]),
+                write.table(annots, file = paste0(spp, '/', spp, annot_names[i]),
                             col.names = T, row.names = F, sep = '\t', quote = F)
             }
         }
-        return(nrow(annots))
     }
 
 # Make sure the number of parallel processes is equal to the minimum of either the 
-# number of cores availalble, or the number of annotations being downloaded
-nparallel <- min(length(anns), min(16, detectCores()))
+# number of cores availalble, or the half the total number of annotations
+nparallel <- min(length(anns), 8)
 
 # Great, now go ahead and download everything! 
 # Note: "res" is just an empty list, since mclapply is just being used to write 
 # annotations out to file. 
-
-# We're implementing some decently involved timout behavior here using the callr package, which necessitates that we pass all relevant variables to a wrapper function that will 
-# be called within its own separate R instance. 
-apply_get_annotations <- function(anns, spp, up, annotations, annot_names, common_cols, accessions, nchunks, nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks) {
-  library(parallel)
-  mclapply(anns, function(x) {get_annotations(x, spp, up, annotations, annot_names, common_cols, accessions, nchunks, nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks)}, mc.cores = nparallel)
-}
-
-# Now go ahead and start attempting to download the annotations, beginning with one large chunk and getting increasingly smaller. 
-result <- tryCatch(
-  callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 2, 
-             nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 600),
-  error = function(e) {return("failed")})
-
-if(any(result == "failed")){
-    result <- tryCatch(
-      callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 3, 
-                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 900),
-      error = function(e) {return("failed")})
-}
-
-if(any(result == "failed")){
-    result <- tryCatch(
-      callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 5, 
-                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 1200),
-      error = function(e) {return("failed")})
-}
-
-if(any(result == "failed")){
-    result <- tryCatch(
-      callr::r(apply_get_annotations, list(anns, spp, up, annotations, annot_names, common_cols, accessions, 10, 
-                 nparallel, get_annotations, uniprotSelectWithRetry, uniprotSelectWithRetryChunks), timeout = 1800),
-      error = function(e) {return("failed")})
-}
+res <- mclapply(anns, get_annotations, mc.cores = nparallel)
 
 sink("version.txt")
 packageVersion("UniProt.ws")
