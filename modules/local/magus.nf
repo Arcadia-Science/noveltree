@@ -86,37 +86,7 @@ process MAGUS {
         mafftruns="-r 3"
         graphbuildhmmextend="--graphbuildhmmextend false"
     fi
-
-    if [[ \$ntax -ge 101 ]]; then
-        decompskeletonsize="--decompskeletonsize 101"
-        maxsubsetsize="--maxsubsetsize 50"
-        maxnumsubsets="--maxnumsubsets 20"
-        graphbuildhmmextend="--graphbuildhmmextend true"
-        mafftsize="-m 25"
-        mafftruns="-r 10"
-    elif [[ \$ntax -le 100 && \$ntax -ge 25 ]]; then
-        decompskeletonsize="--decompskeletonsize 25"
-        maxsubsetsize="--maxsubsetsize 10"
-        maxnumsubsets="--maxnumsubsets 10"
-        graphbuildhmmextend="--graphbuildhmmextend true"
-        mafftsize="-m 10"
-        mafftruns="-r 5"
-    elif [[ \$ntax -le 24 && \$ntax -ge 10 ]]; then
-        decompskeletonsize="--decompskeletonsize 15"
-        maxsubsetsize="--maxsubsetsize 10"
-        maxnumsubsets="--maxnumsubsets 2"
-        graphbuildhmmextend="--graphbuildhmmextend false"
-        mafftsize="-m 5"
-        mafftruns="-r 3"
-    else
-        decompskeletonsize="--decompskeletonsize 9"
-        maxsubsetsize="--maxsubsetsize 5"
-        maxnumsubsets="--maxnumsubsets 2"
-        graphbuildhmmextend="--graphbuildhmmextend false"
-        mafftsize="-m 5"
-        mafftruns="-r 2"
-    fi
-
+    
     magus \\
         -i ${fasta} \\
         -o \${prefix}_magus.fa \\
