@@ -33,7 +33,7 @@ process MAGUS {
     
     if [[ \$ntax -ge 200 ]]; then
         # Skeleton size = 20% of taxa
-        skelsize=\$(printf "%.0f" \$(echo "scale=2;\$ntax*0.20" | bc))"
+        skelsize=\$(printf "%.0f" \$(echo "scale=2;\$ntax*0.20" | bc))
         decompskeletonsize="--decompskeletonsize \$skelsize"
         
         # Max subset size = 25% of skeleton size
