@@ -69,7 +69,7 @@ process MAGUS {
         mafftruns="-r 3"
         graphbuildhmmextend="--graphbuildhmmextend true"
     elif [[ \$ntax -le 19 && \$ntax -ge 10 ]]; then
-        skelsize=$(printf "%.0f" \$(echo "scale=2;\$ntax*0.65" | bc))
+        skelsize=\$(printf "%.0f" \$(echo "scale=2;\$ntax*0.65" | bc))
         decompskeletonsize="--decompskeletonsize \$skelsize"
         subsetsize=\$(printf "%.0f" \$(echo "scale=2;\$skelsize*0.50" | bc))
         maxsubsetsize="--maxsubsetsize \$subsetsize"
