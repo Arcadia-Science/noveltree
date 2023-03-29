@@ -3,7 +3,7 @@ process ORTHOFINDER_MCL {
     label 'process_lowcpu'
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
-    stageInMode = "copy"
+
     input:
     each mcl_inflation
     path(blast)
