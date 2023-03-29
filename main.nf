@@ -100,10 +100,13 @@ include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-mo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // TODO: Build into a subworkflow
-if (params.aligner == "magus") {
+if (params.aligner == "witch") {
+    include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
+    include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
+} else if (params.aligner = "magus") {
     include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
     include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
-} else {
+}
     include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
     include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
 }
@@ -111,10 +114,11 @@ if (params.aligner == "magus") {
 if (params.msa_trimmer == "clipkit") {
     include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
     include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
-} else {
+} else if (params.msa_trimmer != 'none') {
     include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
     include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
 }
+
 // TODO: Build as a subworkflow
 if (params.tree_method == "iqtree") {
     include { IQTREE as INFER_TREES                 } from './modules/nf-core-modified/iqtree'
@@ -304,9 +308,11 @@ workflow PHYLORTHOLOGY {
     // uninformative/problematic sites from the MSAs using either
     // CIAlign or ClipKIT based on parameter specification.
     //
-    TRIM_MSAS(ch_core_og_msas, params.min_ungapped_length)
-    TRIM_REMAINING_MSAS(ch_rem_og_msas, params.min_ungapped_length)
-    ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
+    if (params.msa_trimmer != 'none') {
+        TRIM_MSAS(ch_core_og_msas, params.min_ungapped_length)
+        TRIM_REMAINING_MSAS(ch_rem_og_msas, params.min_ungapped_length)
+        ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
+    }
 
     //
     // MODULE: INFER_TREES
