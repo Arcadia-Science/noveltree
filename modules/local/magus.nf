@@ -98,7 +98,6 @@ process MAGUS {
         \${mafftsize} \\
         \${mafftruns}
 
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         magus: v\$(grep "version=" /MAGUS/setup.py | cut -f2 -d'"')
