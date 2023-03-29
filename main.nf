@@ -107,10 +107,11 @@ if (params.aligner == "witch") {
 } else if (params.aligner = "magus") {
     include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
     include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
-} else
+} else {
     include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
     include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
 }
+
 // TODO: Build into a subworkflow
 if (params.msa_trimmer == "clipkit") {
     include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
