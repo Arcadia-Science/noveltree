@@ -299,7 +299,9 @@ workflow PHYLORTHOLOGY {
             FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
         )
             .cleaned_msas
-            .set{ ch_core_og_msas }
+            .toSortedList({it -> it.name})
+            .flatten()
+            .set{ ch_core_og_clean_msas }
         ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
     
@@ -319,7 +321,9 @@ workflow PHYLORTHOLOGY {
             FILTER_ORTHOGROUPS.out.genetree_fas.flatten()
         )
             .cleaned_msas
-            .set { ch_rem_og_msas }
+            .toSortedList({it -> it.name})
+            .flatten()
+            .set { ch_rem_og_clean_msas }
     }
 
 
@@ -330,8 +334,21 @@ workflow PHYLORTHOLOGY {
     // CIAlign or ClipKIT based on parameter specification.
     //
     if (params.msa_trimmer != 'none') {
-        TRIM_MSAS(ch_core_og_msas, params.min_ungapped_length)
-        TRIM_REMAINING_MSAS(ch_rem_og_msas, params.min_ungapped_length)
+        TRIM_MSAS(
+            ch_core_og_msas, params.min_ungapped_length
+        )
+        .trimmed_msas
+        .toSortedList({it -> it.name})
+        .flatten()
+        .set { ch_core_og_clean_msas }
+        
+        TRIM_REMAINING_MSAS(
+            ch_rem_og_msas, params.min_ungapped_length
+        )
+        .trimmed_msas
+        .toSortedList({it -> it.name})
+        .flatten()
+        .set { ch_rem_og_clean_msas }
         ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
     }
 
@@ -340,8 +357,8 @@ workflow PHYLORTHOLOGY {
     // Infer gene-family trees from the trimmed MSAs using either 
     // VeryFastTree or IQ-TREE. 
     //
-    INFER_TREES(TRIM_MSAS.out.trimmed_msas, params.tree_model)
-    INFER_REMAINING_TREES(TRIM_REMAINING_MSAS.out.trimmed_msas, params.tree_model)
+    INFER_TREES(ch_core_og_clean_msas, params.tree_model)
+    INFER_REMAINING_TREES(ch_rem_og_clean_msas, params.tree_model)
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final 
@@ -353,13 +370,13 @@ workflow PHYLORTHOLOGY {
         // previous tree inference module
         //
         IQTREE_PMSF(
-            TRIM_MSAS.out.trimmed_msas.toSortedList({it -> it.name}).flatten(),
+            ch_core_og_clean_msas,
             INFER_TREES.out.phylogeny.toSortedList(it -> it.name).flatten(),
             params.tree_model_pmsf
         )
     
         IQTREE_PMSF_REMAINING(
-            TRIM_REMAINING_MSAS.out.trimmed_msas.toSortedList(it -> it.name).flatten(),
+            ch_rem_og_clean_msas,
             INFER_REMAINING_TREES.out.phylogeny.toSortedList(it -> it.name).flatten(),
             params.tree_model_pmsf
         )
@@ -372,10 +389,6 @@ workflow PHYLORTHOLOGY {
         ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.toSortedList(it -> it.name).collect()
     }
 
-    // Generate channels of the trimmed MSAs
-    ch_core_trimmed_msas = TRIM_MSAS.out.trimmed_msas.toSortedList(it -> it.name).collect()
-    ch_rem_trimmed_msas = TRIM_REMAINING_MSAS.out.trimmed_msas.toSortedList(it -> it.name).collect()
-
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
     // SpeciesRax, and gene-tree species-tree reconciliation and estimation
@@ -386,7 +399,7 @@ workflow PHYLORTHOLOGY {
     // remainder.
     SPECIES_TREE_PREP(
         ch_core_gene_trees,
-        ch_core_trimmed_msas,
+        ch_core_og_clean_msas,
         "speciesrax"
     )
         .set { ch_core_spptree_prep }
@@ -396,10 +409,11 @@ workflow PHYLORTHOLOGY {
     ch_core_speciesrax_map = ch_core_spptree_prep.speciesrax_map
 
     ch_all_gene_trees = ch_rem_gene_trees.merge( ch_core_gene_trees )
-    ch_all_trimmed_msas = ch_rem_trimmed_msas.merge( ch_core_trimmed_msas )
+    ch_all_clean_msas = ch_rem_og_clean_msas.merge( ch_core_og_clean_msas )
+    
     GENE_TREE_PREP(
         ch_all_gene_trees,
-        ch_all_trimmed_msas,
+        ch_all_clean_msas,
         "generax"
     )
         .set { ch_all_genetree_prep }
@@ -432,7 +446,7 @@ workflow PHYLORTHOLOGY {
     SPECIESRAX(
         ch_core_speciesrax_map,
         ch_core_gene_trees,
-        ch_core_trimmed_msas,
+        ch_core_og_clean_msas,
         ch_core_families
     )
         .speciesrax_tree
@@ -446,7 +460,7 @@ workflow PHYLORTHOLOGY {
         ch_speciesrax,
         ch_all_generax_map,
         ch_all_gene_trees,
-        ch_all_trimmed_msas,
+        ch_all_clean_msas,
         ch_all_families
     )
 
