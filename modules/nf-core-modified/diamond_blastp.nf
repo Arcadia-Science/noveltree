@@ -2,7 +2,7 @@ process DIAMOND_BLASTP {
     // Modified from nf-core to flexibly handle application to both complete and mcl-test datasets
 
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_diamond'
 
     conda (params.enable_conda ? "bioconda::diamond=2.0.15" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

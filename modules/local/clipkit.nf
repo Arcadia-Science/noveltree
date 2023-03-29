@@ -2,9 +2,7 @@ process CLIPKIT {
     tag "$fasta"
     label 'process_lowcpu'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_1.3.0-seqmagick_0.8.4:0.0.1' :
-    //     '' }"
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/clipkit_1.3.0-seqmagick_0.8.4:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_1.3.0-seqmagick_0.8.4:0.0.1' :
         '' }"
 
     publishDir(
@@ -33,13 +31,13 @@ process CLIPKIT {
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     clipkit ${fasta} -o \${prefix}_tmp.fa $args
-    
+
     # Remove sequences with a minimum non-gapped length of 25 AA.
     seqmagick convert \\
         --min-ungapped-length $min_ungapped_length \\
         \${prefix}_tmp.fa \\
-        \${prefix}_clipkit.fa 
-        
+        \${prefix}_clipkit.fa
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         clipkit: \$( clipkit --version | sed "s/clipkit //g" )
