@@ -281,27 +281,46 @@ workflow PHYLORTHOLOGY {
     )
 
     //
-    // MODULE: MAFFT
+    // MODULE: ALIGN_SEQS
     // Infer multiple sequence alignments of orthogroups/gene
-    // families using MAFFT
+    // families using MAFFT, MAGUS, or WITCH
     //
     // For the extreme core set to be used in species tree inference
-    ALIGN_SEQS(
-        FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
-    )
-        .msas
-        .set{ ch_core_og_msas }
+    if (params.aligner != "witch") {
+        ALIGN_SEQS(
+            FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
+        )
+            .msas
+            .set{ ch_core_og_msas }
+        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)        
+    } else {
+        ALIGN_SEQS(
+            FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
+        )
+            .cleaned_msas
+            .set{ ch_core_og_msas }
+        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
+    }
+    
 
     // And for the remaining orthogroups:
     // Only start once species tree MSAs have finished (to give them priority)
     // We use the combination of collect().count() to hold off on running this 
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
-    ALIGN_REMAINING_SEQS(
-        FILTER_ORTHOGROUPS.out.genetree_fas.flatten()
-    )
-        .msas
-        .set { ch_rem_og_msas }
-    ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
+    if (params.aligner != "witch") {
+        ALIGN_REMAINING_SEQS(
+            FILTER_ORTHOGROUPS.out.genetree_fas.flatten()
+        )
+            .msas
+            .set { ch_rem_og_msas }
+    } else {
+        ALIGN_REMAINING_SEQS(
+            FILTER_ORTHOGROUPS.out.genetree_fas.flatten()
+        )
+            .cleaned_msas
+            .set { ch_rem_og_msas }
+    }
+
 
     //
     // MODULE: TRIM_MSAS
