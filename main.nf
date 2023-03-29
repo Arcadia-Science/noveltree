@@ -103,6 +103,7 @@ include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-mo
 if (params.aligner == "witch") {
     include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
     include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
+    params.msa_trimmer = 'none'
 } else if (params.aligner = "magus") {
     include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
     include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
