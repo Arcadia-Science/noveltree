@@ -30,7 +30,7 @@ process WITCH {
     """
     prefix=\$(basename "${fasta}" .fa)
 
-    python3 WITCH/witch.py \\
+    python3 /WITCH/witch.py \\
         -i \${prefix}.fa \\
         -d alignments \\
         --graphtraceoptimize true \\
@@ -42,6 +42,7 @@ process WITCH {
     mkdir cleaned_alignments
     mv alignments/merged.fasta original_alignments/\${prefix}_witch.fa
     mv alignments/merged.fasta.masked cleaned_alignments/\${prefix}_witch_cleaned.fa
+    rm -r alignments/
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
