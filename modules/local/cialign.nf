@@ -2,9 +2,7 @@ process CIALIGN {
     tag "$fasta"
     label 'process_lowcpu'
 
-    // container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
-    //     '' }"
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/cialign_1.1.0:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
         '' }"
 
     publishDir(
@@ -35,19 +33,19 @@ process CIALIGN {
         --outfile_stem="\${prefix}" \
         ${remove_short} \
         $args
-    
+
     # Rename output so it is clear we trimmed with CIAlign
     mv \${prefix}_cleaned.fasta \${prefix}_cialign.fa
-    
-    # And move the "removed.txt" files indicating which sites were removed 
+
+    # And move the "removed.txt" files indicating which sites were removed
     # from each MSA to a separate directory
     mkdir -p removed_sites
     mv *removed.txt removed_sites
-    
+
     # And do the same for the log files
     mkdir log_files
     mv *log.txt log_files
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         CIAlign: \$( CIAlign --version )
