@@ -67,7 +67,8 @@ process WITCH {
     set -e # Turn back on - if this dies due to the length threshold being too stringent then retry
     if [[ ! -s alignments/merged.fasta.masked ]]; then
         sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
-        skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.25}')
+        size=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.25}')
+        skelsize=$((size < 2 ? 2 : size))
         sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
         python3 /WITCH/witch.py \\
             -i ${fasta} \\
