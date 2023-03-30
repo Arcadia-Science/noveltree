@@ -61,6 +61,9 @@ process ORTHOFINDER_PHYLOHOGS {
     -a ${task.cpus} \
     -y
     
+    # Move the generax reconciled gene family trees within the the Orthofinder HOG directory
+    mv \$of_results_dir/Gene_Trees/ Results_HOGs/GeneRax_Reconciled_GFTs
+    
     # And clean up,rename a few things so as not to have conflicting filenames in the resultant output
     rm -r \$of_results_dir
     mv Results_HOGs/WorkingDirectory Results_HOGs/WorkingDirectory_Hogs
