@@ -6,7 +6,8 @@ process WITCH {
         '' }"
     // TODO: address this issue (permission related errors) in future release
     containerOptions = "--user root"
-
+    
+    stageInMode = 'copy'
     publishDir(
         path: "${params.outdir}/witch_alignments",
         mode: params.publish_dir_mode,
@@ -30,9 +31,28 @@ process WITCH {
     """
     prefix=\$(basename "${fasta}" .fa)
 
+    # WITCH does unfortunately need a little assistance for smaller alignments,
+    # where including too many sequences within the backbone alignment will 
+    # lead to situations where no sequences will be within 25% of the median
+    # length
+    
+    # So, we'll try to nudge this along with as little messing about as possible
+    # We need to change the config file to specify the backbone size and the 
+    # backbone size (at the time there is not a way to do so via a commandline argument)
+    ntax=\$(grep ">" ${fasta} | wc -l)
+    if [[ \$ntax -ge 11 ]]; then
+        size=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.75}')
+        skelsize=\$((ntax < 1000 ? ntax : 1000))
+    elif [[ \$ntax -le 10 ]]; then
+        skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.75}')
+        sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.50/g" /WITCH/gcmm/backbone.py
+    fi
+    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
+
     python3 /WITCH/witch.py \\
-        -i \${prefix}.fa \\
+        -i ${fasta} \\
         -d alignments \\
+        -t ${task.cpus} \\
         --graphtraceoptimize true \\
         --molecule amino \\
         $args
