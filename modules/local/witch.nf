@@ -41,12 +41,21 @@ process WITCH {
     # backbone size (at the time there is not a way to do so via a commandline argument)
     ntax=\$(grep ">" ${fasta} | wc -l)
 
-    if [[ \$ntax -le 20 ]]; then
-        skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
-        sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.50/g" /WITCH/gcmm/backbone.py
-        sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
-    fi
-
+    #if [[ \$ntax -le 30 ]]; then
+    #    skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
+    #    sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.50/g" /WITCH/gcmm/backbone.py
+    #    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
+    #elif [[ \$ntax -le 20 ]]; then
+    #    skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
+    #    sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
+    #    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
+    #elif [[ \$ntax -le 10 ]]; then
+    #    skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
+    #    sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
+    #    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
+    #fi
+    
+    set +e # Turn off error recognition
     python3 /WITCH/witch.py \\
         -i ${fasta} \\
         -d alignments \\
@@ -54,6 +63,18 @@ process WITCH {
         --graphtraceoptimize true \\
         --molecule amino \\
         $args
+    
+    if [[ ! -s alignments/merged.fasta.masked ]]; then
+        set -e # Turn back on - if this dies due to the length threshold being too stringent then retry
+        sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
+        python3 /WITCH/witch.py \\
+            -i ${fasta} \\
+            -d alignments \\
+            -t ${task.cpus} \\
+            --graphtraceoptimize true \\
+            --molecule amino \\
+            $args
+    fi
     
     # Reorganize results for publishing
     mkdir original_alignments
