@@ -389,6 +389,10 @@ workflow PHYLORTHOLOGY {
         ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny.toSortedList(it -> it.name).collect()
     }
 
+    // Create channels (one list each) for the sets of multiple sequence alignments
+    ch_core_og_clean_msas = ch_core_og_clean_msas.toSortedList(it -> it.name).collect()
+    ch_rem_og_clean_msas = ch_rem_og_clean_msas.toSortedList(it -> it.name).collect()
+        
     // Now, go ahead and prepare input files for initial unrooted species
     // tree inference with Asteroid, rooted species-tree inference with
     // SpeciesRax, and gene-tree species-tree reconciliation and estimation
