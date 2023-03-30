@@ -323,7 +323,8 @@ workflow PHYLORTHOLOGY {
             .cleaned_msas
             .toSortedList({it -> it.name})
             .flatten()
-            .set { ch_rem_og_clean_msas }
+            .set { ch_rem_og_msas }
+        ch_rem_og_clean_msas = ch_rem_og_msas
     }
 
 
