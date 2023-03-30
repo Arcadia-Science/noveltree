@@ -41,19 +41,10 @@ process WITCH {
     # backbone size (at the time there is not a way to do so via a commandline argument)
     ntax=\$(grep ">" ${fasta} | wc -l)
 
-    #if [[ \$ntax -le 30 ]]; then
-    #    skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
-    #    sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.50/g" /WITCH/gcmm/backbone.py
-    #    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
-    #elif [[ \$ntax -le 20 ]]; then
-    #    skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
-    #    sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
-    #    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
-    #elif [[ \$ntax -le 10 ]]; then
-    #    skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.5}')
-    #    sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
-    #    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
-    #fi
+    # Be sure to remove any non-standard amino acid codes in the input sequences, as this 
+    # can cause errors downstream and in parsing. 
+    sed -E -i '/>/!s/U/-/g' ${fasta} # selenocysteine
+    sed -E -i '/>/!s/O/-/g' ${fasta} # pyrrolysine
     
     set +e # Turn off error recognition
     python3 /WITCH/witch.py \\
