@@ -40,14 +40,12 @@ process WITCH {
     # We need to change the config file to specify the backbone size and the 
     # backbone size (at the time there is not a way to do so via a commandline argument)
     ntax=\$(grep ">" ${fasta} | wc -l)
-    if [[ \$ntax -ge 11 ]]; then
-        size=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.75}')
-        skelsize=\$((ntax < 1000 ? ntax : 1000))
-    elif [[ \$ntax -le 10 ]]; then
+
+    if [[ \$ntax -le 10 ]]; then
         skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.75}')
         sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.50/g" /WITCH/gcmm/backbone.py
+        sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
     fi
-    sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
 
     python3 /WITCH/witch.py \\
         -i ${fasta} \\
