@@ -63,9 +63,9 @@ process WITCH {
         --graphtraceoptimize true \\
         --molecule amino \\
         $args
-    
+        
+    set -e # Turn back on - if this dies due to the length threshold being too stringent then retry
     if [[ ! -s alignments/merged.fasta.masked ]]; then
-        set -e # Turn back on - if this dies due to the length threshold being too stringent then retry
         sed -i "s/backbone_threshold = 0.25/backbone_threshold = 0.75/g" /WITCH/gcmm/backbone.py
         skelsize=\$(echo "\$ntax" | awk '{printf "%.0f", \$0*0.25}')
         sed -i "s/backbone_size =/backbone_size = \${skelsize}/g" /WITCH/main.config
@@ -87,7 +87,7 @@ process WITCH {
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        witch: v\$(python3 WITCH/witch.py -v | cut -f2 -d " ")
+        witch: v\$(python3 /WITCH/witch.py -v | cut -f2 -d " ")
     END_VERSIONS
     """
 }
