@@ -90,15 +90,16 @@ class BackboneJob(object):
             query_names = [name for name in sequences
                            if len(sequences[name]) > max_length or 
                            len(sequences[name]) < min_length]
-                               
+            
             percentage = 0
-            while len(sequences) - len(query_names) < 2:
-                min_length = int(median_full_length * (1 - (self.backbone_threshold + percentage / 100)))
-                max_length = int(median_full_length * (1 + (self.backbone_threshold + percentage / 100)))
-                query_names = [name for name in sequences
-                               if len(sequences[name]) > max_length or 
-                               len(sequences[name]) < min_length]                
-                percentage += 5
+            if len(query_names) < 2:                
+                while len(sequences) - len(query_names) < max(2, int(0.25 * len(sequences))):
+                    min_length = int(median_full_length * (1 - (self.backbone_threshold + percentage / 100)))
+                    max_length = int(median_full_length * (1 + (self.backbone_threshold + percentage / 100)))
+                    query_names = [name for name in sequences
+                                   if len(sequences[name]) > max_length or 
+                                   len(sequences[name]) < min_length]                
+                    percentage += 5
             
             self.backbone_threshold = self.backbone_threshold + percentage / 100
             Configs.log('Final backbone threshold: ' 
