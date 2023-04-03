@@ -5,7 +5,6 @@ Modified on 3.31.2023 by Austin Patton
       min and max length of full-length sequences in increments of 5% of the 
       median length of sequences (originally set to 25%) until this is 
       accomplished
-
 Allow backbone alignment (by MAGUS) and backbone tree estimation (by FastTree2)
 '''
 
@@ -77,7 +76,7 @@ class BackboneJob(object):
             self.backbone_size = int(self.backbone_size)
         Configs.log('Backbone size set to: {}'.format(self.backbone_size))
         backbone_sequences, queries = MutableAlignment(), MutableAlignment()
-    
+
         if self.selection_strategy == 'median_length':
             l2 = int(lengths / 2)
             if lengths % 2 == 1 or l2 == lengths - 1:
@@ -90,20 +89,18 @@ class BackboneJob(object):
             query_names = [name for name in sequences
                            if len(sequences[name]) > max_length or 
                            len(sequences[name]) < min_length]
-            
-            percentage = 0
-            if len(query_names) < 2:                
+
+            if (len(sequences) - len(query_names)) < 2:                
                 while len(sequences) - len(query_names) < max(2, int(0.25 * len(sequences))):
-                    min_length = int(median_full_length * (1 - (self.backbone_threshold + percentage / 100)))
-                    max_length = int(median_full_length * (1 + (self.backbone_threshold + percentage / 100)))
+                    self.backbone_threshold = round(self.backbone_threshold + 0.05, 2)
+                    min_length = int(median_full_length * (1 - self.backbone_threshold))
+                    max_length = int(median_full_length * (1 + self.backbone_threshold))
                     query_names = [name for name in sequences
                                    if len(sequences[name]) > max_length or 
                                    len(sequences[name]) < min_length]                
-                    percentage += 5
-            
-            self.backbone_threshold = self.backbone_threshold + percentage / 100
+
             Configs.log('Final backbone threshold: ' 
-                    + '{}'.format(self.backbone_threshold + percentage / 100))
+                    + '{}'.format(self.backbone_threshold))
             Configs.log('Full length sequences set to be from '
                     + '{} to {} character long'.format(min_length, max_length))
 
@@ -113,7 +110,7 @@ class BackboneJob(object):
                         len(query_names)))
                 queries = sequences.get_hard_sub_alignment(query_names)
                 [sequences.pop(i) for i in list(queries.keys())]
-    
+
             if len(sequences) < self.backbone_size:
                 self.backbone_size = max(2, len(sequences))
                 Configs.log('Backbone resized to: {}'.format(self.backbone_size))
@@ -311,3 +308,4 @@ class BackboneJob(object):
         Configs.runtime('Time to estimate the backbone tree (s): {}'.format(
             time.time() - start))
         return self.backbone_tree_path
+        
