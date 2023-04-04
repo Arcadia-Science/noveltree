@@ -18,8 +18,8 @@ process IQTREE_PMSF {
     )
 
     input:
-    path(alignment)
-    path(guide_tree)
+    file(alignment)
+    file(guide_tree)
     val pmsf_model
 
     output:

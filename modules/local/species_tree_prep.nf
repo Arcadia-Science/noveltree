@@ -11,8 +11,8 @@ process SPECIES_TREE_PREP {
     )
 
     input:
-    path genetrees  // Output from IQ-tree: filepaths to gene family trees with metadata
-    path alignments // Output from ClipKit: filepaths to trimmed alignments with metadata
+    file genetrees  // Output from IQ-tree: filepaths to gene family trees with metadata
+    file alignments // Output from ClipKit: filepaths to trimmed alignments with metadata
     val family_set  // String indicating whether these are gene families intended for SpeciesRax or GeneRax
     
     output:

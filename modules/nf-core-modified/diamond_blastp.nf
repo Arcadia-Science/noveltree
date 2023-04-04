@@ -11,8 +11,8 @@ process DIAMOND_BLASTP {
 
     input:
     tuple val(meta), path("*")
-    path(fasta)
-    each path(db)
+    file(fasta)
+    each file(db)
     val output_extension
     val mcl_test
 

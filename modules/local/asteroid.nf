@@ -12,8 +12,8 @@ process ASTEROID {
     )
 
     input:
-    path treefile     // Filepath to the asteroid treefile (all newick gene trees)
-    path asteroid_map // Filepath to the asteroid gene-species map
+    file treefile     // Filepath to the asteroid treefile (all newick gene trees)
+    file asteroid_map // Filepath to the asteroid gene-species map
 
     output:
     path "*bestTree.newick" , emit: spp_tree

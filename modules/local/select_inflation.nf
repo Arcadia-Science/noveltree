@@ -12,7 +12,7 @@ process SELECT_INFLATION {
     )
 
     input:
-    path og_summaries // Files with summaries of orthogroups inferred using a specific inflation parameter
+    file og_summaries // Files with summaries of orthogroups inferred using a specific inflation parameter
     val min_spp       // Minimum number of species for orthogroup phylogenetic inference.
 
     output:

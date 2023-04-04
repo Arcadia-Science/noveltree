@@ -17,7 +17,7 @@ process IQTREE {
     )
     
     input:
-    path(alignment)
+    file(alignment)
     val model
 
     output:

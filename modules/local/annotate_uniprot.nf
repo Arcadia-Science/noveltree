@@ -12,7 +12,7 @@ process ANNOTATE_UNIPROT {
     )
 
     input:
-    tuple val(meta), path(fasta)
+    tuple val(meta), file(fasta)
     val annots_to_download
 
     output:

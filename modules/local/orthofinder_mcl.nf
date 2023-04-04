@@ -6,11 +6,11 @@ process ORTHOFINDER_MCL {
 
     input:
     each mcl_inflation
-    path(blast)
-    path(fasta)
-    path(db)
-    path(sppIDs)
-    path(seqIDs)
+    file(blast)
+    file(fasta)
+    file(db)
+    file(sppIDs)
+    file(seqIDs)
     val output_directory
 
     output:

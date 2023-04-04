@@ -11,7 +11,7 @@ process ORTHOFINDER_PREP {
     )
 
     input:
-    path(fasta)
+    file(fasta)
     val output_directory
 
     output:

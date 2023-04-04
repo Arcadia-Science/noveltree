@@ -14,7 +14,7 @@ process MAGUS {
     )
 
     input:
-    path(fasta)
+    file(fasta)
 
     output:
     path("*_magus.fa")  , emit: msas
