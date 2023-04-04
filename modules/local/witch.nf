@@ -44,8 +44,8 @@ process WITCH {
 
     # Be sure to remove any non-standard amino acid codes in the input sequences, as this 
     # can cause errors downstream and in parsing. 
-    sed -E -i '/>/!s/U/-/g' ${fasta} # selenocysteine
-    sed -E -i '/>/!s/O/-/g' ${fasta} # pyrrolysine
+    sed -E -i '/>/!s/U//g' ${fasta} # selenocysteine
+    sed -E -i '/>/!s/O//g' ${fasta} # pyrrolysine
     
     #set +e # Turn off error recognition
     python3 /WITCH/witch.py \\
