@@ -18,7 +18,7 @@ process MAFFT {
     )
     
     input:
-    path(fasta)
+    file(fasta)
 
     output:
     path("*_mafft.fa")  , emit: msas

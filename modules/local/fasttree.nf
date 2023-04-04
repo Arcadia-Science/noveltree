@@ -12,7 +12,7 @@ process FASTTREE {
     )
 
     input:
-    path(alignment)
+    file(alignment)
     val model // not used
 
     output:

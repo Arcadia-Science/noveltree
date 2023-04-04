@@ -12,9 +12,9 @@ process COGEQC {
     )
 
     input:
-    path orthofinder_outdir
+    file orthofinder_outdir
     val min_spp             // Minimum number of species for orthogroup retention
-    path prot_annotations   // Base filepath to where protein annotations are stored
+    file prot_annotations   // Base filepath to where protein annotations are stored
 
     output:
     path "*_cogeqc_summary.tsv" , emit: cogeqc_summary

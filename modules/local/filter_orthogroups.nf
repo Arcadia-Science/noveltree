@@ -15,8 +15,8 @@ process FILTER_ORTHOGROUPS {
     )
 
     input:
-    path samplesheet             // Path to samplesheet produced by input check containing sample metadata
-    path orthofinder_outdir      // Directory containing all the inflation params
+    file samplesheet             // Path to samplesheet produced by input check containing sample metadata
+    file orthofinder_outdir      // Directory containing all the inflation params
     val min_num_spp              // Minimum number of species to infer MSAs/trees for
     val min_prop_spp_for_spptree // Minimum % of species for inclusion in species tree inference
     val min_num_groups           // Minimum number of clades/taxonomic groups
