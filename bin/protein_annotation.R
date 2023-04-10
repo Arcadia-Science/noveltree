@@ -177,8 +177,8 @@ get_annotations <-
     }
 
 # Make sure the number of parallel processes is equal to the minimum of either the 
-# number of cores availalble, or the half the total number of annotations
-nparallel <- min(length(anns), 8)
+# number of focal annotations, or four at a time
+nparallel <- min(length(anns), 4)
 
 # Great, now go ahead and download everything! 
 # Note: "res" is just an empty list, since mclapply is just being used to write 
