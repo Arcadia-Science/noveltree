@@ -1,8 +1,8 @@
 process ANNOTATE_UNIPROT {
     tag "$meta.id"
-    label 'process_lowcpu'
+    label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/uniprotws_2.38.1:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/python3.9_bioservices_1.10.0:0.0.1':
         '' }"
 
     publishDir(
@@ -13,7 +13,6 @@ process ANNOTATE_UNIPROT {
 
     input:
     tuple val(meta), file(fasta)
-    val annots_to_download
 
     output:
     path "*accessions.txt"         , emit: accessions
@@ -25,9 +24,10 @@ process ANNOTATE_UNIPROT {
     task.ext.when == null || task.ext.when
 
     script:
-    def args       = task.ext.args ?: ''
-    def spp        = "${meta.id}"
-    def is_uniprot = "${meta.uniprot}"
+    def args        = task.ext.args ?: ''
+    def spp         = "${meta.id}"
+    def is_uniprot  = "${meta.uniprot}"
+    def project_dir = "${projectDir}"
     """
     # Only annotate species for which protein IDs are found in UniProt (i.e.
     # proteomes come from UniProt).
@@ -37,15 +37,24 @@ process ANNOTATE_UNIPROT {
         grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > ${spp}_protein_accessions.txt
 
         # Now run the script to pull down annotations for the protein accessions in this species.
-        # This R script uses the UniProt.ws bioconducter package to accomplish this.
+        # This R script uses the bioservices python package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
-        protein_annotation.R $annots_to_download $spp ${spp}_protein_accessions.txt
+        protein_annotation.py $spp ${spp}_protein_accessions.txt
+        
+        # Organize results so that the cogeqc annotations are in the current 
+        # directory, and all others are moved into a single directory for the
+        # species
+        mkdir $spp
+        for f in \$(ls *.tsv | grep -v "cogeqc")
+        do
+            mv \$f ${spp}/
+        done
     fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        R: \$( R --version | sed "s/R version //g" | sed "s/ (.*//g" )
-        UniProt.ws: \$( cat version.txt | sed "s/\\[1] ‘//g" | sed "s/’//g" )
+        Python: \$( python --version | sed "s/Python //g" | sed "s/ (.*//g" )
+        bioservices: \$(python -c "import pkg_resources; print(pkg_resources.get_distribution('bioservices').version)")
     END_VERSIONS
     """
 }
