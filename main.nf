@@ -178,7 +178,7 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: Annotate UniProt Proteins
     //
-    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots, params.download_annots)
+    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots)
         .cogeqc_annotations
         .collect()
         .set { ch_annotations }

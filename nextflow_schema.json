@@ -48,11 +48,6 @@
                     "description": "Optional path to where BUSCO lineage datasets are stored remotely (e.g. on S3).",
                     "fa_icon": "fas fa-file-csv"
                 },
-                "download_annots": {
-                    "type": "string",
-                    "default": "minimal",
-                    "description": "Option specifying the protein annotations the user would like to download. See README for a description of options."
-                },
                 "min_num_spp_per_og": {
                     "type": "integer",
                     "default": 4,
