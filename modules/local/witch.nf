@@ -32,22 +32,16 @@ process WITCH {
     """
     prefix=\$(basename "${fasta}" .fa)
 
-    # WITCH does unfortunately need a little assistance for smaller alignments,
-    # where including too many sequences within the backbone alignment will 
-    # lead to situations where no sequences will be within 25% of the median
-    # length
-    
-    # So, to do this, we'll use a slightly modified version of the backbone.py script
-    # that will automatically rescale the minimum and maximum length of sequences 
-    # that are considered "full length"
-    #ntax=\$(grep ">" ${fasta} | wc -l)
+    # If we are resuming a run, do some cleanup:
+    if [ -d "alignments/" ]; then
+        rm -rf alignments/
+    fi
 
     # Be sure to remove any non-standard amino acid codes in the input sequences, as this 
     # can cause errors downstream and in parsing. 
     sed -E -i '/>/!s/U//g' ${fasta} # selenocysteine
     sed -E -i '/>/!s/O//g' ${fasta} # pyrrolysine
     
-    #set +e # Turn off error recognition
     python3 /WITCH/witch.py \\
         -i ${fasta} \\
         -d alignments \\
@@ -61,8 +55,9 @@ process WITCH {
     # So, here we're using awk to remove sequences with fewer than params.min_ungapped_length
     # AA remaining once masked. 
     awk -v N=${min_len} -F "" \
-        '{ s=0; for (i=1; i<=NF; i++) if (\$i != "-") s++ } /^>/ { if (s >= N || NR == 1) print; \
-        if (s >= N) f=1; else f=0 } !/^>/ { if (f) print }' \
+        'BEGIN { getline; header=\$0 } { s=0; for (i=1; i<=NF; i++) if (\$i != "-") s++ } /^>/ { if (s >= N) \
+        { if (header != "") print header; print seq } header=\$0; seq=""; s=0 } !/^>/ { seq = seq \$0 } END \
+        { if (s >= N) { print header; print seq } }' \
         alignments/merged.fasta.masked > tmp.fasta
 
     # And remove any columns that are now comprised exclusively of gaps following the exclusion 
