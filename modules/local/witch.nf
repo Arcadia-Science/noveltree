@@ -63,8 +63,22 @@ process WITCH {
     awk -v N=${min_len} -F "" \
         '{ s=0; for (i=1; i<=NF; i++) if (\$i != "-") s++ } /^>/ { if (s >= N || NR == 1) print; \
         if (s >= N) f=1; else f=0 } !/^>/ { if (f) print }' \
-        alignments/merged.fasta.masked > final_masked.fasta
-        
+        alignments/merged.fasta.masked > tmp.fasta
+
+    # And remove any columns that are now comprised exclusively of gaps following the exclusion 
+    # of (if any) sequences in the above step. 
+    awk 'BEGIN {seq_count=0} \
+        /^>/ {seq_count++; headers[seq_count]=\$0; next} \
+        {sequences[seq_count]=sequences[seq_count]\$0} \
+        END {for(i=1;i<=length(sequences[1]);i++){ \
+            column=""; \
+            for(j=1;j<=seq_count;j++){column=column substr(sequences[j],i,1)} \
+            if(column!~/^-+\$/){ \
+              for(j=1;j<=seq_count;j++){new_sequences[j]=new_sequences[j] substr(sequences[j],i,1)}}\
+          } \
+          for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
+        }' tmp.fasta > final_masked.fasta
+    
     # Reorganize results for publishing
     mkdir original_alignments
     mkdir cleaned_alignments
