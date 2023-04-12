@@ -3,6 +3,7 @@ import argparse
 from bioservices import UniProt
 from bioservices import EUtils
 from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 import concurrent.futures
 import pandas as pd
 import os
@@ -10,7 +11,7 @@ import os
 def fetch_batch(batch_accessions, organism_name, columns):
     uniprot = UniProt()
     query = " OR ".join([f"accession:{acc}" for acc in batch_accessions])
-    result = uniprot.search(query, frmt="tsv", columns=",".join(columns))
+    result = uniprot.search(query, frmt="tsv", columns=",".join(columns), limit=None)
 
     annotations = []
     if result and isinstance(result, str):
@@ -27,8 +28,8 @@ def get_annotations(organism_name, input_file, columns, num_workers=None):
     with open(input_file, 'r') as file:
         accessions = file.read().splitlines()
 
-    # Split the accessions into batches of 1000
-    batch_size = 1000
+    # Split the accessions into batches of 100
+    batch_size = 100
     batches = [accessions[i:i + batch_size] for i in range(0, len(accessions), batch_size)]
     
     if num_workers is None:
@@ -37,15 +38,18 @@ def get_annotations(organism_name, input_file, columns, num_workers=None):
     # Print out some info:
     print(f"Pulling down annotations for {organism_name}")
     
+    # Create a lock for thread-safe list updates
+    annotations_lock = Lock()
+
     # Run the loop in parallel using ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         future_results = [executor.submit(fetch_batch, batch_accessions, organism_name, columns) for batch_accessions in batches]
-        
         for i, future in enumerate(concurrent.futures.as_completed(future_results)):
             batch_annotations = future.result()
-            annotations.extend(batch_annotations)
+            with annotations_lock:
+                annotations.extend(batch_annotations)
             print(f"Completed batch {i + 1} of {len(batches)}")
-    
+
     return annotations
 
 def main():
