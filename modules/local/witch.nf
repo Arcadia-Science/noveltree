@@ -87,7 +87,7 @@ process WITCH {
     # sequences, delete the output cleaned alignments to exclude them from
     # downstream phylogenetic analyses. 
     n_remain=\$(grep ">" cleaned_alignments/\${prefix}_witch_cleaned.fa | wc -l)
-    if [ $n_remain -lt 4 ]; then
+    if [ \$n_remain -lt 4 ]; then
         rm cleaned_alignments/${prefix}_witch_cleaned.fa
     fi
     
