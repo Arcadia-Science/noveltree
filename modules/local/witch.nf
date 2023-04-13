@@ -18,10 +18,10 @@ process WITCH {
     file(fasta)
 
     output:
-    path("**_witch.fa")          , emit: msas
-    path("**_witch_cleaned.fa")  , emit: cleaned_msas
-    path("*")                    , emit: results
-    path "versions.yml"          , emit: versions
+    path("**_witch.fa")         , emit: msas
+    path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
+    path("*")                   , emit: results
+    path "versions.yml"         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -55,9 +55,11 @@ process WITCH {
     # So, here we're using awk to remove sequences with fewer than params.min_ungapped_length
     # AA remaining once masked. 
     awk -v N=${min_len} -F "" \
-        'BEGIN { getline; header=\$0 } { s=0; for (i=1; i<=NF; i++) if (\$i != "-") s++ } /^>/ { if (s >= N) \
-        { if (header != "") print header; print seq } header=\$0; seq=""; s=0 } !/^>/ { seq = seq \$0 } END \
-        { if (s >= N) { print header; print seq } }' \
+        'BEGIN { getline; header=\$0; seq="" } \
+        !/^>/ { for (i=1; i<=NF; i++) if (\$i != "-") s++ } \
+        /^>/ { if (s >= N || seq == "") { if (header != "") print header; if (seq != "") print seq } header=\$0; seq=""; s=0 } \
+        !/^>/ { seq = seq \$0 } \
+        END { if (s >= N) { print header; print seq } }' \
         alignments/merged.fasta.masked > tmp.fasta
 
     # And remove any columns that are now comprised exclusively of gaps following the exclusion 
@@ -79,7 +81,15 @@ process WITCH {
     mkdir cleaned_alignments
     mv alignments/merged.fasta original_alignments/\${prefix}_witch.fa
     mv final_masked.fasta cleaned_alignments/\${prefix}_witch_cleaned.fa
-    rm -r alignments/
+    rm -r alignments/ && rm tmp.fasta
+    
+    # In the rare case that this filtering reduces sequences down to < 4 
+    # sequences, delete the output cleaned alignments to exclude them from
+    # downstream phylogenetic analyses. 
+    n_remain=\$(grep ">" cleaned_alignments/\${prefix}_witch_cleaned.fa | wc -l)
+    if [ $n_remain -lt 4 ]; then
+        rm cleaned_alignments/${prefix}_witch_cleaned.fa
+    fi
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
