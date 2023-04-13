@@ -88,7 +88,7 @@ process WITCH {
     # downstream phylogenetic analyses. 
     n_remain=\$(grep ">" cleaned_alignments/\${prefix}_witch_cleaned.fa | wc -l)
     if [ \$n_remain -lt 4 ]; then
-        rm cleaned_alignments/${prefix}_witch_cleaned.fa
+        rm cleaned_alignments/\${prefix}_witch_cleaned.fa
     fi
     
     cat <<-END_VERSIONS > versions.yml
