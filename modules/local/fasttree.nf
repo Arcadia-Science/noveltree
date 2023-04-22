@@ -2,7 +2,7 @@ process FASTTREE {
     tag "$alignment"
     label 'process_iqtree'
 
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/fasttree_2.1.11:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:0.0.1':
         '' }"
 
     publishDir(
@@ -35,6 +35,10 @@ process FASTTREE {
         $args \\
         $alignment > \${og}_ft.treefile
         
+    # prevent zero-length branches (sometimes inferred with fasttree)
+    resolve_polytomies.R \${og}_ft.treefile resolved.tree
+    mv resolved.tree \${og}_ft.treefile
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         FastTree: \$(FastTreeDblMP 2>&1 | head -n1 | cut -d" " -f5)
