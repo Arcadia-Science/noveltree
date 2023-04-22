@@ -21,6 +21,7 @@ process SPECIES_TREE_PREP {
     path "*generax_map.link"      , emit: generax_map, optional: true
     path "asteroid_map.link"      , emit: asteroid_map, optional: true
     path "*orthogroup.families"   , emit: families
+    path "*.family"               , emit: per_gene_family, optional: true
 
     when:
     task.ext.when == null || task.ext.when
@@ -64,16 +65,38 @@ process SPECIES_TREE_PREP {
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
         paste prot spp > \${og}_${family_set}_map.link
         rm prot && rm spp
-
-        # Populate the families file for this gene family
-        # We will be using LG+G4+F for all gene families
-        echo "- \${og}" >> ${family_set}_orthogroup.families
-        echo "starting_gene_tree = \${tree}" >> ${family_set}_orthogroup.families
-        echo "mapping = \${og}_${family_set}_map.link" >> ${family_set}_orthogroup.families
-        echo "alignment = \$msa" >> ${family_set}_orthogroup.families
-        echo "subst_model = LG+G4+F" >> ${family_set}_orthogroup.families
+        
+        if [[ ${family_set} == "generax" ]]; then
+            # We need one family file per gene family for the per-family generax analysis. 
+            # Make this.  
+            echo "[FAMILIES]" > \${og}.family
+            echo "- \${og}" >> \${og}.family
+            echo "starting_gene_tree = \${tree}" >> \${og}.family
+            echo "mapping = \${og}_${family_set}_map.link" >> \${og}.family
+            echo "alignment = \$msa" >> \${og}.family
+            echo "subst_model = LG+G4+F" >> \${og}.family
+            sed -i 's|\\./||g' \${og}.family
+            
+            # Populate the families file for this gene family for the 
+            # Per-species analysis with generax
+            # We will be using LG+G4+F for all gene families
+            echo "- \${og}" >> ${family_set}_orthogroup.families
+            echo "starting_gene_tree = \${og}_reconciled_gft.newick" >> ${family_set}_orthogroup.families
+            echo "mapping = \${og}_${family_set}_map.link" >> ${family_set}_orthogroup.families
+            echo "alignment = \$msa" >> ${family_set}_orthogroup.families
+            echo "subst_model = LG+G4+F" >> ${family_set}_orthogroup.families
+        else
+            # Populate the families file for this gene family for the 
+            # analysis with SpeciesRax
+            # We will be using LG+G4+F for all gene families
+            echo "- \${og}" >> ${family_set}_orthogroup.families
+            echo "starting_gene_tree = \${tree}" >> ${family_set}_orthogroup.families
+            echo "mapping = \${og}_${family_set}_map.link" >> ${family_set}_orthogroup.families
+            echo "alignment = \$msa" >> ${family_set}_orthogroup.families
+            echo "subst_model = LG+G4+F" >> ${family_set}_orthogroup.families        
+        fi
     done
-
+        
     # clean up the families file a bit
     sed -i 's|\\./||g' ${family_set}_orthogroup.families
 
