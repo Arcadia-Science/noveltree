@@ -35,6 +35,11 @@ if (params.mcl_inflation) {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
 
+// Define a function to extract the OG identifier from a file path
+def extract_og_id(file_path) {
+    return file_path.toString().find(/OG\d+/)
+}
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -65,7 +70,8 @@ include { SPECIES_TREE_PREP                         } from './modules/local/spec
 include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from './modules/local/species_tree_prep'
 include { ASTEROID                                  } from './modules/local/asteroid'
 include { SPECIESRAX                                } from './modules/local/speciesrax'
-include { GENERAX                                   } from './modules/local/generax'
+include { GENERAX_PER_FAMILY                        } from './modules/local/generax_per_family'
+include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 
 /*
@@ -426,6 +432,7 @@ workflow PHYLORTHOLOGY {
     ch_all_treefile = ch_all_genetree_prep.treefile
     ch_all_families = ch_all_genetree_prep.families
     ch_all_generax_map = ch_all_genetree_prep.generax_map
+    ch_all_per_family = ch_all_genetree_prep.per_gene_family
     ch_asteroid_map = ch_all_genetree_prep.asteroid_map
 
     // The following two steps will just be done for the core set of
@@ -461,10 +468,25 @@ workflow PHYLORTHOLOGY {
     // Run again, but this time only using the GeneRax component,
     // reconciling gene family trees with the rooted species tree
     // inferred from SpeciesRax for all remaining gene families
-    GENERAX(
+    // This will be done both for per-family and per-species rates
+    // Create the input channel for the per-family GeneRax analysis
+    ch_generax_per_fam = ch_all_generax_map.flatten().
+        merge(ch_all_gene_trees.flatten(), 
+        ch_all_clean_msas.flatten(), 
+        ch_all_per_family.flatten(),
+        ch_speciesrax)
+
+    GENERAX_PER_FAMILY(
+        ch_generax_per_fam
+    )
+        .generax_per_fam_gfts
+        .toSortedList(it -> it.name)
+        .set { ch_recon_gene_trees }
+        
+    GENERAX_PER_SPECIES(
         ch_speciesrax,
         ch_all_generax_map,
-        ch_all_gene_trees,
+        ch_recon_gene_trees,
         ch_all_clean_msas,
         ch_all_families
     )
@@ -481,7 +503,7 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.fastas,
         ORTHOFINDER_PREP.out.sppIDs,
         ORTHOFINDER_PREP.out.seqIDs,
-        GENERAX.out.generax_gfts,
+        ch_recon_gene_trees,
         DIAMOND_BLASTP.out.txt.collect()
     )
 }
