@@ -1,6 +1,6 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    label 'process_generax'
+    label 'process_generax_per_species'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems. 
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/generax_19604b7:0.0.1': '' }"
@@ -20,7 +20,6 @@ process SPECIESRAX {
     output:
     path "*"                                          , emit: results
     path "species_trees/inferred_species_tree.newick" , emit: speciesrax_tree
-    path "**_reconciled_gft.newick"                   , emit: speciesrax_gfts
     path "versions.yml"                               , emit: versions
 
     when:
@@ -47,26 +46,18 @@ process SPECIESRAX {
         --species-tree MiniNJ \\
         --families $families \\
         --prefix SpeciesRax \\
+        --strategy SKIP \\
+        --si-strategy HYBRID \\
+        --si-estimate-bl \\
+        --prune-species-tree \\
+        --per-species-rates \\
         $args
 
     # Remove the redundant result directory, moving everything into the
-    # working directory
+    # working directory and cleaning up
     mv SpeciesRax/* .
     rm -r SpeciesRax
-
-    # Place all temporary gene optimization directories into a new directory
-    # and compress. 
-    mkdir interim_gene_optimizations 
-    mv gene_optimization_* interim_gene_optimizations
-    tar -czvf interim_gene_optimizations.tar.gz interim_gene_optimizations
-    rm -r interim_gene_optimizations
-
-    # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
-    for og in \$(ls results/)
-    do
-        mv results/\$og/*.newick results/\$og/\${og}_reconciled_gft.newick
-    done
-
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         generax: \$( generax | head -n1 | sed "s/.*GeneRax //g" )
