@@ -419,8 +419,8 @@ workflow PHYLORTHOLOGY {
     ch_core_families = ch_core_spptree_prep.families
     ch_core_speciesrax_map = ch_core_spptree_prep.speciesrax_map
 
-    ch_all_gene_trees = ch_rem_gene_trees.merge( ch_core_gene_trees )
-    ch_all_clean_msas = ch_rem_og_clean_msas.merge( ch_core_og_clean_msas )
+    ch_all_gene_trees = ch_rem_gene_trees.merge( ch_core_gene_trees ).toSortedList(it -> it.name).collect()
+    ch_all_clean_msas = ch_rem_og_clean_msas.merge( ch_core_og_clean_msas ).toSortedList(it -> it.name).collect()
     
     GENE_TREE_PREP(
         ch_all_gene_trees,
@@ -430,9 +430,9 @@ workflow PHYLORTHOLOGY {
         .set { ch_all_genetree_prep }
 
     ch_all_treefile = ch_all_genetree_prep.treefile
-    ch_all_families = ch_all_genetree_prep.families
-    ch_all_generax_map = ch_all_genetree_prep.generax_map
-    ch_all_per_family = ch_all_genetree_prep.per_gene_family
+    ch_all_families = ch_all_genetree_prep.families.toSortedList(it -> it.name).collect()
+    ch_all_generax_map = ch_all_genetree_prep.generax_map.toSortedList(it -> it.name).collect()
+    ch_all_per_family = ch_all_genetree_prep.per_gene_family.toSortedList(it -> it.name).collect()
     ch_asteroid_map = ch_all_genetree_prep.asteroid_map
 
     // The following two steps will just be done for the core set of
@@ -480,7 +480,7 @@ workflow PHYLORTHOLOGY {
         ch_generax_per_fam
     )
         .generax_per_fam_gfts
-        .toSortedList(it -> it.name)
+        .toSortedList(it -> it.name).collect()
         .set { ch_recon_gene_trees }
         
     GENERAX_PER_SPECIES(
