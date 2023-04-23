@@ -1,6 +1,6 @@
 process SPECIES_TREE_PREP {
     tag "Preparing for species tree inference."
-    label 'process_low'
+    label 'process_high'
 
     container "ubuntu:20.04"
     
