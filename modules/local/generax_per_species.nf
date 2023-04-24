@@ -16,10 +16,9 @@ process GENERAX_PER_SPECIES {
     file generax_map       // Filepath to the generax gene-species map file
     file gene_trees        // Filepaths to the starting gene trees
     file alignments        // Filepaths to the gene family alignments
-    file families          // Filepath to the families file
 
     output:
-    path "*"                        , emit: results
+    path "*" , emit: results
 
     when:
     task.ext.when == null || task.ext.when
@@ -39,13 +38,29 @@ process GENERAX_PER_SPECIES {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
 
+    # Populate the family file for all gene families
+    echo "[FAMILIES]" > generax_orthogroup.families
+    for msa in \$(ls *fa)
+    do
+        # Get the OG name
+        og=\$(echo \$msa | cut -f1 -d"_")
+        tree=\$(ls \${og}*.newick)
+        
+        # We will be using LG+G4+F for all gene families
+        echo "- \${og}" >> generax_orthogroup.families
+        echo "starting_gene_tree = \${og}_reconciled_gft.newick" >> generax_orthogroup.families
+        echo "mapping = \${og}_map.link" >> generax_orthogroup.families
+        echo "alignment = \$msa" >> generax_orthogroup.families
+        echo "subst_model = LG+G4+F" >> generax_orthogroup.families
+    done
+    
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
         --use-hwthread-cpus \\
         generax \\
         --species-tree $species_tree \\
-        --families $families \\
+        --families generax_orthogroup.families \\
         --per-species-rates \\
         --prefix GeneRax \\
         $args
