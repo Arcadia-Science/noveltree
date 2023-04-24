@@ -39,7 +39,7 @@ process SPECIESRAX {
     
     # Construct the family files for each gene family
     echo "[FAMILIES]" > speciesrax_orthogroup.families
-    for msa in \$(ls ./*fa)
+    for msa in \$(ls *fa)
     do
         # Get the OG name
         og=\$(echo \$msa | cut -f1 -d"_")
@@ -50,7 +50,7 @@ process SPECIESRAX {
         # We will be using LG+G4+F for all gene families
         echo "- \${og}" >> speciesrax_orthogroup.families
         echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
-        echo "mapping = \${og}_speciesrax_map.link" >> speciesrax_orthogroup.families
+        echo "mapping = \${og}_map.link" >> speciesrax_orthogroup.families
         echo "alignment = \$msa" >> speciesrax_orthogroup.families
         echo "subst_model = LG+G4+F" >> speciesrax_orthogroup.families
     done
