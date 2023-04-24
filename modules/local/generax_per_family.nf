@@ -1,5 +1,5 @@
 process GENERAX_PER_FAMILY {
-    tag "GeneRax: Per-family rates"
+    tag "$meta.og"
     label 'process_generax_per_family'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems. 
     container "${ workflow.containerEngine == 'docker' ?
@@ -11,15 +11,12 @@ process GENERAX_PER_FAMILY {
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
-    input:
-    // The following tuple includes (for each gene family) the 
-    // gene-species map files, gene trees, family files, and the 
-    // species tree inferred from SpeciesRax
-    tuple file(generax_map), file(gene_tree), file(alignment), file(family), file(species_tree)
+    input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
+    tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
-    path "*"                        , emit: results
-    path "**_reconciled_gft.newick" , emit: generax_per_fam_gfts
+    path "*"                                       , emit: results
+    tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_fam_gfts
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,7 +24,7 @@ process GENERAX_PER_FAMILY {
     // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
-
+    def og      = "${meta.og}"
     """
     # Recode selenocysteine as a gap character:
     # RAxML-NG (used under the hood by SpeciesRax and
@@ -39,8 +36,15 @@ process GENERAX_PER_FAMILY {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
 
-    # Get the name of the focal gene family
-    og=\$(echo ${family} | sed "s/.family//g")
+    # Populate the family file for this gene family for the 
+    # analysis with GeneRax
+    # We will be using LG+G4+F for all gene families
+    echo "[FAMILIES]" > ${og}.family
+    echo "- ${og}" >> ${og}.family
+    echo "starting_gene_tree = ${gene_tree}" >> ${og}.family
+    echo "mapping = ${og}_map.link" >> ${og}.family
+    echo "alignment = $alignment" >> ${og}.family
+    echo "subst_model = LG+G4+F" >> ${og}.family
 
     mpiexec \\
         -np ${task.cpus} \\
@@ -48,15 +52,15 @@ process GENERAX_PER_FAMILY {
         --use-hwthread-cpus \\
         generax \\
         --species-tree $species_tree \\
-        --families $family \\
+        --families ${og}.family \\
         --per-family-rates \\
-        --prefix \$og \\
+        --prefix $og \\
         $args
 
     # Clean up
-    rm -r \$og/gene_optimization_*
+    rm -r $og/gene_optimization_*
 
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
-    mv \$og/results/\$og/geneTree.newick \$og/results/\$og/\${og}_reconciled_gft.newick
+    mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
     """
 }
