@@ -35,9 +35,22 @@ if (params.mcl_inflation) {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
 
-// Define a function to extract the OG identifier from a file path
-def extract_og_id(file_path) {
-    return file_path.toString().find(/OG\d+/)
+// Define a function to instantiate a meta.map to correspond gene family names
+// with all outputs we'll be producing
+// Function to get list of [meta, [file]]
+def create_og_channel(Object inputs) {
+    // If the input is a string, convert it to a list containing a single element
+    if (inputs instanceof String) {
+        inputs = [inputs]
+    }
+    // create list of maps
+    def metaList = []
+    inputs.each { input ->
+        def meta = [:]
+        meta.og = input
+        metaList.add(meta)
+    }
+    return metaList
 }
 
 /*
@@ -49,7 +62,7 @@ def extract_og_id(file_path) {
 //
 // SUBWORKFLOW
 //
-include { INPUT_CHECK                               } from './subworkflows/local/input_check'
+include { INPUT_CHECK                                   } from './subworkflows/local/input_check'
 
 //
 // MODULE
@@ -286,20 +299,36 @@ workflow PHYLORTHOLOGY {
         params.max_copy_num_spp_tree,
         params.max_copy_num_gene_trees
     )
-    
+
+    // Create meta maps for the two sets by just providing the simple name of each orthogroup:
+    spptree_og_names = FILTER_ORTHOGROUPS.out.spptree_fas.map { file -> file.simpleName }
+    spptree_og_map = spptree_og_names.map { create_og_channel(it) }.flatten()
+    genetree_og_names = FILTER_ORTHOGROUPS.out.genetree_fas.map { file -> file.simpleName }
+    genetree_og_map = genetree_og_names.map { create_og_channel(it) }.flatten()
+
+    // And now create the tuple of these output fastas paired with the meta map
+    ch_spptree_fas = spptree_og_map.merge(FILTER_ORTHOGROUPS.out.spptree_fas.flatten())
+    ch_genetree_fas = genetree_og_map.merge(FILTER_ORTHOGROUPS.out.genetree_fas.flatten())
+
     // Instantiate a meta map to correspond all gene family inputs (MSAs, 
     // GFTs, etc) with their orthogroup ID:
-    ch_spptree_fas = FILTER_ORTHOGROUPS.out.spptree_fas.flatten().map { file -> tuple(file.simpleName, file) }
-    ch_genetree_fas = FILTER_ORTHOGROUPS.out.genetree_fas.flatten().map { file -> tuple(file.simpleName, file) }
-    // ch_generax_per_fam = ch_all_generax_map.flatten().
-    //     merge(ch_all_gene_trees.flatten(), 
-    //     ch_all_clean_msas.flatten(), 
-    //     ch_all_per_family.flatten(),
-    //     ch_speciesrax)
-    // ch_spptree_fas = FILTER_ORTHOGROUPS.out.spptree_fas
-    //     .flatMap { files -> files.collect { file -> tuple(file.simpleName, file) } }
-    // ch_genetree_fas = FILTER_ORTHOGROUPS.out.genetree_fas
-    //     .flatMap { files -> files.collect { file -> tuple(file.simpleName, file) } }
+    // ch_spptree_fas.collect()
+    //     .map { create_og_channel(it) }
+    //     .view()
+    
+    // ch_spptree_fas.collect().each { item -> 
+    //     og = item[0]
+    //     unaligned_fa = item[1]
+    //     spptree_og_map[og] = unaligned_fa
+    // }
+    // ch_genetree_fas.collect().each { item -> 
+    //     og = item[0]
+    //     unaligned_fa = item[1]
+    //     genetree_og_map[og] = unaligned_fa
+    // }
+    // spptree_og_map.view()
+    // spptree_og_map.view()
+
 
     //
     // MODULE: ALIGN_SEQS
@@ -321,7 +350,6 @@ workflow PHYLORTHOLOGY {
         ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
     
-
     // And for the remaining orthogroups:
     // Only start once species tree MSAs have finished (to give them priority)
     // We use the combination of collect().count() to hold off on running this 
@@ -337,7 +365,6 @@ workflow PHYLORTHOLOGY {
         ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
         ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.cleaned_msas
     }
-
 
     //
     // MODULE: TRIM_MSAS
@@ -424,13 +451,6 @@ workflow PHYLORTHOLOGY {
     // ch_core_families = ch_core_spptree_prep.families
     // ch_core_speciesrax_map = ch_core_spptree_prep.speciesrax_map
 
-    // Merge the input gene tree and map link channels for Asteroid, 
-    // SpeciesRax and GeneRax per-species. 
-    ch_all_gene_trees = ch_core_gene_trees.collect { it[1] }
-        .merge(ch_rem_gene_trees.collect { it[1] })
-    ch_all_map_links = ch_core_og_maplinks.collect { it[1] }
-        .merge(ch_rem_og_maplinks.collect { it[1] })
-
     // GENE_TREE_PREP(
     //     ch_all_gene_trees,
     //     ch_all_clean_msas,
@@ -450,6 +470,14 @@ workflow PHYLORTHOLOGY {
     // MODULE: ASTEROID
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
+    // Merge the input gene tree and map link channels for Asteroid, 
+    // SpeciesRax and GeneRax per-species. 
+    
+    ch_all_gene_trees = ch_core_gene_trees.collect { it[1] }
+        .merge(ch_rem_gene_trees.collect { it[1] })
+    ch_all_map_links = ch_core_og_maplinks.collect { it[1] }
+        .merge(ch_rem_og_maplinks.collect { it[1] })
+        
     ASTEROID(
         ch_all_gene_trees,
         ch_all_map_links
@@ -473,47 +501,72 @@ workflow PHYLORTHOLOGY {
         .set { ch_speciesrax }
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
 
-    // // Run again, but this time only using the GeneRax component,
-    // // reconciling gene family trees with the rooted species tree
-    // // inferred from SpeciesRax for all remaining gene families
-    // // This will be done both for per-family and per-species rates
-    // // Create the input channel for the per-family GeneRax analysis
+    // Run again, but this time only using the GeneRax component,
+    // reconciling gene family trees with the rooted species tree
+    // inferred from SpeciesRax for all remaining gene families
+    // This will be done both for per-family and per-species rates
+    // Create the input channel for the per-family GeneRax analysis
+    
     // ch_generax_per_fam = ch_all_generax_map.flatten().
     //     merge(ch_all_gene_trees.flatten(), 
     //     ch_all_clean_msas.flatten(), 
     //     ch_all_per_family.flatten(),
     //     ch_speciesrax)
 
-    // GENERAX_PER_FAMILY(
-    //     ch_generax_per_fam
-    // )
-    //     .generax_per_fam_gfts
-    //     .toSortedList(it -> it.name).collect()
-    //     .set { ch_recon_gene_trees }
-        
-    // GENERAX_PER_SPECIES(
-    //     ch_speciesrax,
-    //     ch_all_generax_map,
-    //     ch_recon_gene_trees,
-    //     ch_all_clean_msas,
-    //     ch_all_families
-    // )
+    ch_all_map_links = ch_core_og_maplinks
+        .concat(ch_rem_og_maplinks)
+    ch_all_gene_trees = ch_core_gene_trees
+        .concat(ch_rem_gene_trees)
+    ch_all_og_clean_msas = ch_core_og_clean_msas
+        .concat(ch_rem_og_clean_msas)
 
-    // //
-    // // MODULE: ORTHOFINDER_PHYLOHOGS
-    // // Now using the reconciled gene family trees and rooted species tree,
-    // // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
-    // // to identify orthologs and output orthogroup-level summary stats.
-    // //
-    // ORTHOFINDER_PHYLOHOGS(
-    //     ch_speciesrax,
-    //     ORTHOFINDER_MCL.out.inflation_dir,
-    //     ORTHOFINDER_PREP.out.fastas,
-    //     ORTHOFINDER_PREP.out.sppIDs,
-    //     ORTHOFINDER_PREP.out.seqIDs,
-    //     ch_recon_gene_trees,
-    //     DIAMOND_BLASTP.out.txt.collect()
-    // )
+    // Join these so that each gene family may be dealt with asynchronously as soon 
+    // as possible, and include with them the species tree. 
+    ch_generax_input = ch_all_map_links
+        .join(ch_all_gene_trees)
+        .join(ch_all_og_clean_msas)
+        .combine(ch_speciesrax)
+    
+    GENERAX_PER_FAMILY(
+        ch_generax_input
+    )
+        .generax_per_fam_gfts
+        .collect { it[1] }
+        .set { ch_recon_gene_trees }
+        
+    // ch_all_gene_trees = ch_core_gene_trees.concat(ch_rem_gene_trees)
+    // ch_all_clean_msas = ch_core_og_clean_msas.concat(ch_rem_og_clean_msas)
+    // ch_all_map_links = ch_core_og_maplinks.concat(ch_rem_og_maplinks)
+
+    ch_all_gene_trees = ch_core_gene_trees.collect { it[1] }
+        .merge(ch_rem_gene_trees.collect { it[1] })
+    ch_all_map_links = ch_core_og_maplinks.collect { it[1] }
+        .merge(ch_rem_og_maplinks.collect { it[1] })
+    ch_all_clean_msas = ch_core_og_clean_msas.collect { it[1] }
+        .merge(ch_rem_og_clean_msas.collect { it[1] })
+        
+    GENERAX_PER_SPECIES(
+        ch_speciesrax,
+        ch_all_map_links,
+        ch_recon_gene_trees,
+        ch_all_clean_msas
+    )
+
+    //
+    // MODULE: ORTHOFINDER_PHYLOHOGS
+    // Now using the reconciled gene family trees and rooted species tree,
+    // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
+    // to identify orthologs and output orthogroup-level summary stats.
+    //
+    ORTHOFINDER_PHYLOHOGS(
+        ch_speciesrax,
+        ORTHOFINDER_MCL.out.inflation_dir,
+        ORTHOFINDER_PREP.out.fastas,
+        ORTHOFINDER_PREP.out.sppIDs,
+        ORTHOFINDER_PREP.out.seqIDs,
+        ch_recon_gene_trees,
+        DIAMOND_BLASTP.out.txt.collect()
+    )
 }
 
 //
