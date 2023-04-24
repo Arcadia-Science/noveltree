@@ -12,9 +12,9 @@ process ASTEROID {
     )
 
     input:
-    file treefile     // Filepath to the asteroid treefile (all newick gene trees)
-    file asteroid_map // Filepath to the asteroid gene-species map
-
+    file treefiles     // Filepath to the asteroid treefile (all newick gene trees)
+    file map_links     // Species-protein name map link files
+    
     output:
     path "*bestTree.newick" , emit: spp_tree
     path "*allTrees.newick" , emit: all_asteroid_trees
@@ -28,11 +28,18 @@ process ASTEROID {
     script:
     def args = task.ext.args ?: ''
     """
+    # Begin by creating the gene-tree file. Very simple.
+    cat *treefile > asteroid_gene_family_trees.txt
+
+    # Now concatenate the map files
+    cat *map.link > asteroid_map.link
+
+    
     # Run asteroid using the multithreaded mpi version
     mpiexec -np ${task.cpus} --allow-run-as-root --use-hwthread-cpus \
     asteroid \
-    -i $treefile \
-    -m $asteroid_map \
+    -i asteroid_gene_family_trees.txt \
+    -m asteroid_map.link \
     -p asteroid \
     $args
 
