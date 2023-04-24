@@ -79,8 +79,6 @@ include { SELECT_INFLATION                          } from './modules/local/sele
 include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
 include { CLIPKIT                                   } from './modules/local/clipkit'
 include { CLIPKIT as CLIPKIT_REMAINING              } from './modules/local/clipkit'
-include { SPECIES_TREE_PREP                         } from './modules/local/species_tree_prep'
-include { SPECIES_TREE_PREP as GENE_TREE_PREP       } from './modules/local/species_tree_prep'
 include { ASTEROID                                  } from './modules/local/asteroid'
 include { SPECIESRAX                                } from './modules/local/speciesrax'
 include { GENERAX_PER_FAMILY                        } from './modules/local/generax_per_family'
@@ -428,42 +426,6 @@ workflow PHYLORTHOLOGY {
         ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
     }
 
-    // // Create channels (one list each) for the sets of multiple sequence alignments
-    // ch_core_og_clean_msas = ch_core_og_clean_msas.toSortedList(it -> it.name).collect()
-    // ch_rem_og_clean_msas = ch_rem_og_clean_msas.toSortedList(it -> it.name).collect()
-        
-    // // Now, go ahead and prepare input files for initial unrooted species
-    // // tree inference with Asteroid, rooted species-tree inference with
-    // // SpeciesRax, and gene-tree species-tree reconciliation and estimation
-    // // of gene family duplication transfer and loss with GeneRax.
-
-    // // Do this for both the core and non-core gene families.
-    // // All outputs are needed for species tree inference, but not for the
-    // // remainder.
-    // SPECIES_TREE_PREP(
-    //     ch_core_gene_trees,
-    //     ch_core_og_clean_msas,
-    //     "speciesrax"
-    // )
-    //     .set { ch_core_spptree_prep }
-
-    // ch_core_treefile = ch_core_spptree_prep.treefile
-    // ch_core_families = ch_core_spptree_prep.families
-    // ch_core_speciesrax_map = ch_core_spptree_prep.speciesrax_map
-
-    // GENE_TREE_PREP(
-    //     ch_all_gene_trees,
-    //     ch_all_clean_msas,
-    //     "generax"
-    // )
-    //     .set { ch_all_genetree_prep }
-
-    // ch_all_treefile = ch_all_genetree_prep.treefile
-    // ch_all_families = ch_all_genetree_prep.families.toSortedList(it -> it.name).collect()
-    // ch_all_generax_map = ch_all_genetree_prep.generax_map.toSortedList(it -> it.name).collect()
-    // ch_all_per_family = ch_all_genetree_prep.per_gene_family.toSortedList(it -> it.name).collect()
-    // ch_asteroid_map = ch_all_genetree_prep.asteroid_map
-
     // The following two steps will just be done for the core set of
     // orthogroups that will be used to infer the species tree
     //
@@ -534,10 +496,6 @@ workflow PHYLORTHOLOGY {
         .collect { it[1] }
         .set { ch_recon_gene_trees }
         
-    // ch_all_gene_trees = ch_core_gene_trees.concat(ch_rem_gene_trees)
-    // ch_all_clean_msas = ch_core_og_clean_msas.concat(ch_rem_og_clean_msas)
-    // ch_all_map_links = ch_core_og_maplinks.concat(ch_rem_og_maplinks)
-
     ch_all_gene_trees = ch_core_gene_trees.collect { it[1] }
         .merge(ch_rem_gene_trees.collect { it[1] })
     ch_all_map_links = ch_core_og_maplinks.collect { it[1] }
