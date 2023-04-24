@@ -1,5 +1,5 @@
 process WITCH {
-    tag "$og"
+    tag "$meta.og"
     label 'process_magus'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/witch_0.3.0:0.0.1' :
@@ -15,20 +15,21 @@ process WITCH {
     )
 
     input:
-    tuple val(og), path(fasta)
+    tuple val(meta), path(fasta)
 
     output:
-    tuple val(og), path("**_witch.fa")         , emit: msas
-    tuple val(og), path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
-    tuple val(og), path("**_map.link")         , emit: map_link
-    path("*")                                  , emit: results
-    path "versions.yml"                        , emit: versions
+    tuple val(meta), path("**_witch.fa")         , emit: msas
+    tuple val(meta), path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
+    tuple val(meta), path("**_map.link")         , emit: map_link
+    path("*")                                    , emit: results
+    path "versions.yml"                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args    = task.ext.args ?: ''
+    def og      = "${meta.og}"
     def min_len = params.min_ungapped_length ?: '20'
     """
     # If we are resuming a run, do some cleanup:
