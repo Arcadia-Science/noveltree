@@ -1,5 +1,5 @@
 process WITCH {
-    tag "$fasta"
+    tag "$og"
     label 'process_magus'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/witch_0.3.0:0.0.1' :
@@ -15,13 +15,14 @@ process WITCH {
     )
 
     input:
-    file(fasta)
+    tuple val(og), path(fasta)
 
     output:
-    path("**_witch.fa")         , emit: msas
-    path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
-    path("*")                   , emit: results
-    path "versions.yml"         , emit: versions
+    tuple val(og), path("**_witch.fa")         , emit: msas
+    tuple val(og), path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
+    tuple val(og), path("**_map.link")         , emit: map_link
+    path("*")                                  , emit: results
+    path "versions.yml"                        , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,8 +31,6 @@ process WITCH {
     def args    = task.ext.args ?: ''
     def min_len = params.min_ungapped_length ?: '20'
     """
-    prefix=\$(basename "${fasta}" .fa)
-
     # If we are resuming a run, do some cleanup:
     if [ -d "alignments/" ]; then
         rm -rf alignments/
@@ -79,18 +78,27 @@ process WITCH {
     # Reorganize results for publishing
     mkdir original_alignments
     mkdir cleaned_alignments
-    mv alignments/merged.fasta original_alignments/\${prefix}_witch.fa
-    mv final_masked.fasta cleaned_alignments/\${prefix}_witch_cleaned.fa
+    mv alignments/merged.fasta original_alignments/${og}_witch.fa
+    mv final_masked.fasta cleaned_alignments/${og}_witch_cleaned.fa
     rm -r alignments/ && rm tmp.fasta
     
     # In the rare case that this filtering reduces sequences down to < 4 
     # sequences, delete the output cleaned alignments to exclude them from
     # downstream phylogenetic analyses. 
-    n_remain=\$(grep ">" cleaned_alignments/\${prefix}_witch_cleaned.fa | wc -l)
+    n_remain=\$(grep ">" cleaned_alignments/${og}_witch_cleaned.fa | wc -l)
     if [ \$n_remain -lt 4 ]; then
-        rm cleaned_alignments/\${prefix}_witch_cleaned.fa
+        rm cleaned_alignments/${og}_witch_cleaned.fa
     fi
     
+    # Now pull out the sequences, and split into a TreeRecs format mapping
+    # file, where each protein in the tree is a new line, listing species
+    # and then the protein
+    mkdir species_protein_maps
+    grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+    sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+    paste prot spp > species_protein_maps/${og}_map.link
+    rm prot && rm spp
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         witch: v\$(python3 /WITCH/witch.py -v | cut -f2 -d " ")
