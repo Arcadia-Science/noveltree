@@ -308,26 +308,6 @@ workflow PHYLORTHOLOGY {
     ch_spptree_fas = spptree_og_map.merge(FILTER_ORTHOGROUPS.out.spptree_fas.flatten())
     ch_genetree_fas = genetree_og_map.merge(FILTER_ORTHOGROUPS.out.genetree_fas.flatten())
 
-    // Instantiate a meta map to correspond all gene family inputs (MSAs, 
-    // GFTs, etc) with their orthogroup ID:
-    // ch_spptree_fas.collect()
-    //     .map { create_og_channel(it) }
-    //     .view()
-    
-    // ch_spptree_fas.collect().each { item -> 
-    //     og = item[0]
-    //     unaligned_fa = item[1]
-    //     spptree_og_map[og] = unaligned_fa
-    // }
-    // ch_genetree_fas.collect().each { item -> 
-    //     og = item[0]
-    //     unaligned_fa = item[1]
-    //     genetree_og_map[og] = unaligned_fa
-    // }
-    // spptree_og_map.view()
-    // spptree_og_map.view()
-
-
     //
     // MODULE: ALIGN_SEQS
     // Infer multiple sequence alignments of orthogroups/gene
