@@ -1,5 +1,5 @@
 process FASTTREE {
-    tag "$og"
+    tag "$meta.og"
     label 'process_fasttree'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:0.0.1':
@@ -12,18 +12,19 @@ process FASTTREE {
     )
 
     input:
-    tuple val(og), file(alignment)
+    tuple val(meta), file(alignment)
     val model // not used
 
     output:
-    tuple val(og), path("*.treefile") , emit: phylogeny
-    path "versions.yml"               , emit: versions
+    tuple val(meta), path("*.treefile") , emit: phylogeny
+    path "versions.yml"                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
+    def og      = "${meta.og}"
     """
     # Make sure the number of threads are being specified properly
     export OMP_NUM_THREADS=${task.cpus}
