@@ -20,7 +20,7 @@ process WITCH {
     output:
     tuple val(meta), path("**_witch.fa")         , emit: msas
     tuple val(meta), path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
-    tuple val(meta), path("**_map.link")         , emit: map_link
+    tuple val(meta), path("**_map.link")         , emit: map_link, optional: true
     path("*")                                    , emit: results
     path "versions.yml"                          , emit: versions
 
@@ -89,17 +89,17 @@ process WITCH {
     n_remain=\$(grep ">" cleaned_alignments/${og}_witch_cleaned.fa | wc -l)
     if [ \$n_remain -lt 4 ]; then
         rm cleaned_alignments/${og}_witch_cleaned.fa
+    else
+        # Now pull out the sequences, and split into a TreeRecs format mapping
+        # file, where each protein in the tree is a new line, listing species
+        # and then the protein
+        mkdir species_protein_maps
+        grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        paste prot spp > species_protein_maps/${og}_map.link
+        rm prot && rm spp
     fi
     
-    # Now pull out the sequences, and split into a TreeRecs format mapping
-    # file, where each protein in the tree is a new line, listing species
-    # and then the protein
-    mkdir species_protein_maps
-    grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-    sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-    paste prot spp > species_protein_maps/${og}_map.link
-    rm prot && rm spp
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         witch: v\$(python3 /WITCH/witch.py -v | cut -f2 -d " ")
