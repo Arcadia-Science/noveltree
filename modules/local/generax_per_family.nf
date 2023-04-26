@@ -55,6 +55,7 @@ process GENERAX_PER_FAMILY {
         --families ${og}.family \\
         --per-family-rates \\
         --prefix $og \\
+        --prune-species-tree \\
         $args
 
     # Clean up
