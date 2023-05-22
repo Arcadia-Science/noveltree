@@ -11,14 +11,12 @@ process GENERAX_PER_SPECIES {
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
-    input:
-    file species_tree      // Filepath to the SpeciesRax species tree
-    file generax_map       // Filepath to the generax gene-species map file
-    file gene_trees        // Filepaths to the starting gene trees
-    file alignments        // Filepaths to the gene family alignments
+    input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
+    tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
-    path "*" , emit: results
+    path "*"                                         , emit: results
+    tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_fam_gfts
 
     when:
     task.ext.when == null || task.ext.when
@@ -38,22 +36,16 @@ process GENERAX_PER_SPECIES {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
 
-    # Populate the family file for all gene families
-    echo "[FAMILIES]" > generax_orthogroup.families
-    for msa in \$(ls *fa)
-    do
-        # Get the OG name
-        og=\$(echo \$msa | cut -f1 -d"_")
-        tree=\$(ls \${og}*.newick)
-        
-        # We will be using LG+G4+F for all gene families
-        echo "- \${og}" >> generax_orthogroup.families
-        echo "starting_gene_tree = \${og}_reconciled_gft.newick" >> generax_orthogroup.families
-        echo "mapping = \${og}_map.link" >> generax_orthogroup.families
-        echo "alignment = \$msa" >> generax_orthogroup.families
-        echo "subst_model = LG+G4+F" >> generax_orthogroup.families
-    done
-    
+    # Populate the family file for this gene family for the 
+    # analysis with GeneRax
+    # We will be using LG+G4+F for all gene families
+    echo "[FAMILIES]" > ${og}.family
+    echo "- ${og}" >> ${og}.family
+    echo "starting_gene_tree = ${gene_tree}" >> ${og}.family
+    echo "mapping = ${og}_map.link" >> ${og}.family
+    echo "alignment = $alignment" >> ${og}.family
+    echo "subst_model = LG+G4+F" >> ${og}.family
+
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
