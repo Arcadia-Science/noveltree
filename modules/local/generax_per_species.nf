@@ -16,7 +16,7 @@ process GENERAX_PER_SPECIES {
 
     output:
     path "*"                                         , emit: results
-    tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_fam_gfts
+    tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_spp_gfts
 
     when:
     task.ext.when == null || task.ext.when
