@@ -52,9 +52,9 @@ process GENERAX_PER_SPECIES {
         --use-hwthread-cpus \\
         generax \\
         --species-tree $species_tree \\
-        --families generax_orthogroup.families \\
+        --families ${og}.family \\
         --per-species-rates \\
-        --prefix GeneRax \\
+        --prefix $og \\
         $args
 
     # And move the results into the current working directory
