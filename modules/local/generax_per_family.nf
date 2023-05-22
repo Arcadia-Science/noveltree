@@ -15,7 +15,7 @@ process GENERAX_PER_FAMILY {
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
-    path "*"                                       , emit: results
+    path "*"                                         , emit: results
     tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_fam_gfts
 
     when:
@@ -56,6 +56,7 @@ process GENERAX_PER_FAMILY {
         --per-family-rates \\
         --prefix $og \\
         --prune-species-tree \\
+        --reconciliation-samples 100 \\
         $args
 
     # Clean up
@@ -63,5 +64,10 @@ process GENERAX_PER_FAMILY {
 
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
+    
+    # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
+    mkdir $og/reconciliations/reconciliation_transfer_samples/
+    mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
+    tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
     """
 }
