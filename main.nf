@@ -474,21 +474,14 @@ workflow PHYLORTHOLOGY {
     )
         .generax_per_fam_gfts
         .collect { it[1] }
-        .set { ch_recon_gene_trees }
-        
-    ch_all_gene_trees = ch_core_gene_trees.collect { it[1] }
-        .merge(ch_rem_gene_trees.collect { it[1] })
-    ch_all_map_links = ch_core_og_maplinks.collect { it[1] }
-        .merge(ch_rem_og_maplinks.collect { it[1] })
-    ch_all_clean_msas = ch_core_og_clean_msas.collect { it[1] }
-        .merge(ch_rem_og_clean_msas.collect { it[1] })
-        
+        .set { ch_recon_perfam_gene_trees }
+    
     GENERAX_PER_SPECIES(
-        ch_speciesrax,
-        ch_all_map_links,
-        ch_recon_gene_trees,
-        ch_all_clean_msas
+        ch_generax_input
     )
+        .generax_per_spp_gfts
+        .collect { it[1] }
+        .set { ch_recon_perspp_gene_trees }
 
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS
@@ -502,7 +495,7 @@ workflow PHYLORTHOLOGY {
         ORTHOFINDER_PREP.out.fastas,
         ORTHOFINDER_PREP.out.sppIDs,
         ORTHOFINDER_PREP.out.seqIDs,
-        ch_recon_gene_trees,
+        ch_recon_perspp_gene_trees,
         DIAMOND_BLASTP.out.txt.collect()
     )
 }
