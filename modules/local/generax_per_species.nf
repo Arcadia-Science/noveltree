@@ -55,11 +55,18 @@ process GENERAX_PER_SPECIES {
         --families ${og}.family \\
         --per-species-rates \\
         --prefix $og \\
+        --reconciliation-samples 100 \\
         $args
 
-    # And move the results into the current working directory
-    mv GeneRax/* .
-    rm -r GeneRax
-    rm -r results
+    # Clean up
+    rm -r $og/gene_optimization_*
+
+    # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
+    mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
+    
+    # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
+    mkdir $og/reconciliations/reconciliation_transfer_samples/
+    mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
+    tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
     """
 }
