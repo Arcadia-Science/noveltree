@@ -50,6 +50,8 @@ process ORTHOFINDER_MCL {
         tar -czvf Sequences_ids.tar.gz Sequences_ids
         rm -r Sequences_ids
         cd \$dir
+        tar -czvf OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences.tar.gz OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences
+        rm -r OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/
     fi
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
