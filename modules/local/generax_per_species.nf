@@ -24,7 +24,7 @@ process GENERAX_PER_SPECIES {
     // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
-
+    def og   = "${meta.og}"
     """
     # Recode selenocysteine as a gap character:
     # RAxML-NG (used under the hood by SpeciesRax and
