@@ -69,6 +69,6 @@ process GENERAX_PER_FAMILY {
     mkdir $og/reconciliations/reconciliation_transfer_samples/
     mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
     tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
-    rm -r $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
+    rm -r $og/reconciliations/reconciliation_transfer_samples/
     """
 }
