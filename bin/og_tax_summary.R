@@ -67,7 +67,7 @@ res <-
     data.frame(
         orthogroup = ogs$Orthogroup,
         num_spp = numspp,
-        total_copy_num = totals,
+        total_copy_num = totals[,1],
         mean_copy_num = copynum,
         num_tax_grps = taxcount
     )
