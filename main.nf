@@ -291,6 +291,7 @@ workflow PHYLORTHOLOGY {
     FILTER_ORTHOGROUPS(
         INPUT_CHECK.out.complete_samplesheet,
         ORTHOFINDER_MCL.out.inflation_dir,
+        params.min_num_seq_per_og,
         params.min_num_spp_per_og,
         params.min_prop_spp_for_spptree,
         params.min_num_grp_per_og,
