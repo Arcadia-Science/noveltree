@@ -20,7 +20,7 @@ process BUSCO {
     tuple val(meta), path("*_busco.batch_summary.txt") , emit: batch_summary, optional: true
     tuple val(meta), path("short_summary.*.txt")       , emit: short_summaries_txt, optional: true
     tuple val(meta), path("short_summary.*.json")      , emit: short_summaries_json, optional: true
-    tuple val(meta), path("*_busco")                   , emit: busco_dir, optional: true
+    tuple val(meta), path("*_busco.tar.gz")                   , emit: busco_dir, optional: true
     path "versions.yml"                                , emit: versions
 
     when:
@@ -79,6 +79,10 @@ process BUSCO {
     # Move files to avoid staging/publishing issues
     mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
     mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
+    
+    # Compress and then remove the busco dir, as these contain many largely unnecessary files:
+    tar -czvf ${prefix}_busco.tar.gz ${prefix}_busco/
+    rm -r ${prefix}_busco/
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
