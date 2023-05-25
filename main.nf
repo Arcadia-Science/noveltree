@@ -177,20 +177,20 @@ workflow PHYLORTHOLOGY {
     // simultaneously
     //
     // Shallow taxonomic scale:
-    BUSCO_SHALLOW(
-        ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
-        "shallow",
-        [],
-        []
-    )
+    // BUSCO_SHALLOW(
+    //     ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
+    //     "shallow",
+    //     [],
+    //     []
+    // )
 
-    // Broad taxonomic scale (Eukaryotes)
-    BUSCO_BROAD(
-        ch_all_data.complete_prots.filter{ it[0].broad_db != "NA" },
-        "broad",
-        [],
-        []
-    )
+    // // Broad taxonomic scale (Eukaryotes)
+    // BUSCO_BROAD(
+    //     ch_all_data.complete_prots.filter{ it[0].broad_db != "NA" },
+    //     "broad",
+    //     [],
+    //     []
+    // )
 
     //
     // MODULE: Annotate UniProt Proteins
@@ -416,14 +416,9 @@ workflow PHYLORTHOLOGY {
     // Merge the input gene tree and map link channels for Asteroid, 
     // SpeciesRax and GeneRax per-species. 
     
-    ch_all_gene_trees = ch_core_gene_trees.collect { it[1] }
-        .merge(ch_rem_gene_trees.collect { it[1] })
-    ch_all_map_links = ch_core_og_maplinks.collect { it[1] }
-        .merge(ch_rem_og_maplinks.collect { it[1] })
-        
     ASTEROID(
-        ch_all_gene_trees,
-        ch_all_map_links
+        ch_all_data.complete_prots.collect { it[0].id },
+        ch_core_gene_trees.collect { it[1] }
     )
         .spp_tree
         .set { ch_asteroid }
