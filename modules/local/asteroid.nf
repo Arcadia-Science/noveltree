@@ -64,6 +64,14 @@ process ASTEROID {
     -p asteroid \
     $args
 
+    # Now revert the species names back to their original values in all treefiles:
+    while read spp
+    do
+        old=\$(echo \$spp | cut -f1 -d" ")
+        new=\$(echo \$spp | cut -f2 -d" ")
+        sed -i "s/\${new}/\${old}/g" *.newick
+    done < spp_rename.txt
+    
     # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
