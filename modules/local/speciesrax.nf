@@ -3,7 +3,7 @@ process SPECIESRAX {
     label 'process_generax_per_species'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems. 
     container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/generax_19604b7:0.0.1': '' }"
+        'austinhpatton123/generax_5d52c7_rbase_4.2.2:0.0.1': '' }"
 
     publishDir(
         path: "${params.outdir}/speciesrax",
@@ -15,6 +15,8 @@ process SPECIESRAX {
     file map_links      // Filepath to the generax gene-species map file
     file gene_trees     // Filepaths to the starting gene trees
     file alignments     // Filepaths to the gene family alignments
+    file asteroid_tree  // Filepath to the Asteroid species tree
+    val outgroups       // String of specified outgroups to root asteroid tree with, if provided
 
     output:
     path "*"                                          , emit: results
@@ -27,6 +29,13 @@ process SPECIESRAX {
     script:
     def args = task.ext.args ?: ''
     """
+    if [[ ! -z $outgroups ]]; then
+        reroot_speciestree.R $asteroid_tree $outgroups
+        starting_tree="asteroid_rooted.bestTree.newick"
+    else
+        starting_tree="MiniNJ"
+    fi
+    
     # Recode selenocysteine as a gap character:
     # RAxML-NG (used under the hood by SpeciesRax and
     # GeneRax) cannot handle these. Even if rare,
@@ -55,18 +64,18 @@ process SPECIESRAX {
         echo "subst_model = LG+G4+F" >> speciesrax_orthogroup.families
     done
 
+
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
         --use-hwthread-cpus \\
         generax \\
-        --species-tree MiniNJ \\
+        --species-tree \$starting_tree \\
         --families speciesrax_orthogroup.families \\
         --prefix SpeciesRax \\
         --strategy SKIP \\
         --si-strategy HYBRID \\
         --si-estimate-bl \\
-        --prune-species-tree \\
         --per-species-rates \\
         $args
 

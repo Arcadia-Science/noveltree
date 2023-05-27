@@ -1,5 +1,4 @@
-# Use an Ubuntu base image
-FROM ubuntu:20.04
+FROM arcadiascience/rbase_4.2.2:0.0.1
 
 # Prevent interactive querying of geographic area during build
 ENV DEBIAN_FRONTEND noninteractive
@@ -24,8 +23,12 @@ RUN apt-get update && \
 # Clone the GeneRax repository and install with MPI
 RUN git clone --recursive https://github.com/BenoitMorel/GeneRax && \
     cd GeneRax/ && \
-    git checkout 19604b7115c8ff6306f04d69572483de195600a8 && \
+    git checkout 5d52c7d08f8ad15f49b1d85507773602e46e93a8 && \
     bash ./install.sh
+
+# Install ape and phytools for species tree rooting
+RUN Rscript -e "install.packages('ape', version = '5.7.1', repos='https://cloud.r-project.org/')"
+RUN Rscript -e "install.packages('phytools', version = '1.5.1', repos='https://cloud.r-project.org/')"
 
 # Clean up
 RUN apt-get -y autoremove && \
