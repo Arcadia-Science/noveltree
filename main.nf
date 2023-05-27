@@ -433,7 +433,9 @@ workflow PHYLORTHOLOGY {
     SPECIESRAX(
         ch_core_og_maplinks.collect { it[1] },
         ch_core_gene_trees.collect { it[1] },
-        ch_core_og_clean_msas.collect { it[1] }
+        ch_core_og_clean_msas.collect { it[1] },
+        ch_asteroid,
+        params.outgroups
     )
         .speciesrax_tree
         .set { ch_speciesrax }
