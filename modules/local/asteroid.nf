@@ -2,7 +2,7 @@ process ASTEROID {
     tag "Asteroid"
     label 'process_asteroid'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117_disco_20e10c3:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid_3aae117_disco_20e10c3_rbase_4.2.2:0.0.1':
         '' }"
 
     publishDir(
@@ -14,14 +14,16 @@ process ASTEROID {
     input:
     val species_names  // Names of all species
     file treefiles     // Filepath to the asteroid treefile (all newick gene trees)
-
+    val outgroups      // String of specified outgroups to root species tree with, if provided
+    
     output:
-    path "*bestTree.newick" , emit: spp_tree
-    path "*allTrees.newick" , emit: all_asteroid_trees
-    path "*bsTrees.newick"  , emit: asteroid_bs_trees
-    path "*scores.txt"      , emit: asteroid_scores
-    path "disco*.newick"    , emit: disco_trees
-    path "versions.yml"     , emit: versions
+    path "asteroid.bestTree.newick"        , emit: spp_tree
+    path "asteroid_rooted.bestTree.newick" , emit: rooted_spp_tree, optional: true
+    path "*allTrees.newick"                , emit: all_asteroid_trees
+    path "*bsTrees.newick"                 , emit: asteroid_bs_trees
+    path "*scores.txt"                     , emit: asteroid_scores
+    path "disco*.newick"                   , emit: disco_trees
+    path "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -71,6 +73,11 @@ process ASTEROID {
         new=\$(echo \$spp | cut -f2 -d" ")
         sed -i "s/\${new}/\${old}/g" *.newick
     done < spp_rename.txt
+    
+    # Lastly, reroot the tree if user-specified outgroups are provided
+    if [[ $outgroups != "none" ]]; then
+        reroot_speciestree.R asteroid.bestTree.newick $outgroups
+    fi
     
     # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml
