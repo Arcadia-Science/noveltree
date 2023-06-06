@@ -177,20 +177,20 @@ workflow PHYLORTHOLOGY {
     // simultaneously
     //
     // Shallow taxonomic scale:
-    // BUSCO_SHALLOW(
-    //     ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
-    //     "shallow",
-    //     [],
-    //     []
-    // )
+    BUSCO_SHALLOW(
+        ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
+        "shallow",
+        [],
+        []
+    )
 
-    // // Broad taxonomic scale (Eukaryotes)
-    // BUSCO_BROAD(
-    //     ch_all_data.complete_prots.filter{ it[0].broad_db != "NA" },
-    //     "broad",
-    //     [],
-    //     []
-    // )
+    // Broad taxonomic scale (Eukaryotes)
+    BUSCO_BROAD(
+        ch_all_data.complete_prots.filter{ it[0].broad_db != "NA" },
+        "broad",
+        [],
+        []
+    )
 
     //
     // MODULE: Annotate UniProt Proteins
@@ -418,9 +418,10 @@ workflow PHYLORTHOLOGY {
     
     ASTEROID(
         ch_all_data.complete_prots.collect { it[0].id },
-        ch_core_gene_trees.collect { it[1] }
+        ch_core_gene_trees.collect { it[1] },
+        params.outgroups
     )
-        .spp_tree
+        .rooted_spp_tree
         .set { ch_asteroid }
     ch_versions = ch_versions.mix(ASTEROID.out.versions)
 
@@ -434,8 +435,7 @@ workflow PHYLORTHOLOGY {
         ch_core_og_maplinks.collect { it[1] },
         ch_core_gene_trees.collect { it[1] },
         ch_core_og_clean_msas.collect { it[1] },
-        ch_asteroid,
-        params.outgroups
+        ch_asteroid
     )
         .speciesrax_tree
         .set { ch_speciesrax }
