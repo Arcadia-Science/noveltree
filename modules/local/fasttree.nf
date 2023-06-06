@@ -24,7 +24,7 @@ process FASTTREE {
 
     script:
     def args = task.ext.args ?: ''
-    def og      = "${meta.og}"
+    def og   = "${meta.og}"
     """
     # Make sure the number of threads are being specified properly
     export OMP_NUM_THREADS=${task.cpus}
