@@ -1,5 +1,4 @@
-# Use an Ubuntu base image
-FROM ubuntu:20.04
+FROM arcadiascience/rbase_4.2.2:0.0.1
 
 # Prevent interactive querying of geographic area during build
 ENV DEBIAN_FRONTEND noninteractive
@@ -31,6 +30,10 @@ RUN git clone https://github.com/JSdoubleL/DISCO.git && \
     cd DISCO/ && \
     git checkout 20e10c33296a870a3f60c695afced69dcf36489b && \
     pip install treeswift
+
+# Install ape and phytools for species tree rooting
+RUN Rscript -e "install.packages('ape', version = '5.7.1', repos='https://cloud.r-project.org/')"
+RUN Rscript -e "install.packages('phytools', version = '1.5.1', repos='https://cloud.r-project.org/')"
 
 # Clean up
 RUN apt-get -y autoremove && \
