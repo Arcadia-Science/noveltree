@@ -1,9 +1,9 @@
 process SPECIESRAX {
     tag "SpeciesRax"
-    label 'process_generax_per_species'
+    label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems. 
     container "${ workflow.containerEngine == 'docker' ?
-        'austinhpatton123/generax_5d52c7_rbase_4.2.2:0.0.1': '' }"
+        'arcadiascience/generax_19604b7:0.0.1': '' }"
 
     publishDir(
         path: "${params.outdir}/speciesrax",
@@ -12,11 +12,10 @@ process SPECIESRAX {
     )
 
     input:
-    file map_links      // Filepath to the generax gene-species map file
-    file gene_trees     // Filepaths to the starting gene trees
-    file alignments     // Filepaths to the gene family alignments
-    file asteroid_tree  // Filepath to the Asteroid species tree
-    val outgroups       // String of specified outgroups to root asteroid tree with, if provided
+    file map_links       // Filepath to the generax gene-species map file
+    file gene_trees      // Filepaths to the starting gene trees
+    file alignments      // Filepaths to the gene family alignments
+    file rooted_spp_tree // Filepath to the rooted asteroid species tree
 
     output:
     path "*"                                          , emit: results
@@ -29,9 +28,8 @@ process SPECIESRAX {
     script:
     def args = task.ext.args ?: ''
     """
-    if [[ ! -z $outgroups ]]; then
-        reroot_speciestree.R $asteroid_tree $outgroups
-        starting_tree="asteroid_rooted.bestTree.newick"
+    if [[ $rooted_spp_tree != "none" ]]; then
+        starting_tree=$rooted_spp_tree
     else
         starting_tree="MiniNJ"
     fi
@@ -74,7 +72,6 @@ process SPECIESRAX {
         --families speciesrax_orthogroup.families \\
         --prefix SpeciesRax \\
         --strategy SKIP \\
-        --si-strategy HYBRID \\
         --si-estimate-bl \\
         --per-species-rates \\
         $args
