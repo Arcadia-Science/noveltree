@@ -37,7 +37,7 @@ process ANNOTATE_UNIPROT {
         grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > ${spp}_protein_accessions.txt
 
         # Now run the script to pull down annotations for the protein accessions in this species.
-        # This R script uses the bioservices python package to accomplish this.
+        # This Python script uses the bioservices python package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
         protein_annotation.py $spp ${spp}_protein_accessions.txt
         
