@@ -2,7 +2,7 @@ process ASTEROID {
     tag "Asteroid"
     label 'process_asteroid'
 
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/asteroid_3aae117_disco_20e10c3_rbase_4.2.2:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117_disco_20e10c3_rbase_4.2.2:0.0.1':
         '' }"
 
     publishDir(
