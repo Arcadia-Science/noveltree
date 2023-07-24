@@ -26,8 +26,10 @@ RUN cd WITCH && \
     python setup.py
     
 # Modify the backbone construction
-ADD https://raw.githubusercontent.com/Arcadia-Science/tsar-phylorthology/main/modified_witch_backbone.py .
+COPY ./modified_witch_backbone.py .
+# Retain the original script, with a slightly modified name
+RUN cp /WITCH/gcmm/backbone.py /WITCH/gcmm/backbone_original.py
 RUN mv modified_witch_backbone.py /WITCH/gcmm/backbone.py
-    
+
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
