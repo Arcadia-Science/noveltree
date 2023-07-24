@@ -5,7 +5,7 @@ library(phytools)
 
 reroot_tree <- function(asteroid_tree, outgroups){
     # Read in the newick tree file
-    tree <- phytools::unroot(ape::read.tree(asteroid_tree))
+    tree <- ape::unroot(ape::read.tree(asteroid_tree))
     
     # Reroot the tree
     if(length(outgroups) > 1){
