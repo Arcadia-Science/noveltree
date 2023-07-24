@@ -77,8 +77,10 @@ process SPECIESRAX {
         $args
 
     # Remove the redundant result directory, moving everything into the
-    # working directory and cleaning up
+    # working directory, deleiting the meaningless reconciliations 
+    # directory and cleaning up
     mv SpeciesRax/* .
+    rm -r reconciliations
     rm -r SpeciesRax
     
     cat <<-END_VERSIONS > versions.yml
