@@ -316,17 +316,17 @@ workflow PHYLORTHOLOGY {
     // families using MAFFT, MAGUS, or WITCH
     //
     // For the extreme core set to be used in species tree inference
-    if (params.aligner != "witch") {
+    if (params.aligner == "witch") {
+        ALIGN_SEQS(ch_spptree_fas)
+        ch_core_og_maplinks = ALIGN_SEQS.out.map_link
+        ch_core_og_clean_msas = ALIGN_SEQS.out.cleaned_msas
+        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
+    } else {
         ALIGN_SEQS(
             FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
         )
             .msas
             .set{ ch_core_og_msas }
-        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)        
-    } else {
-        ALIGN_SEQS(ch_spptree_fas)
-        ch_core_og_maplinks = ALIGN_SEQS.out.map_link
-        ch_core_og_clean_msas = ALIGN_SEQS.out.cleaned_msas
         ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
     
