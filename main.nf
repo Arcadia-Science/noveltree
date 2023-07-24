@@ -35,22 +35,41 @@ if (params.mcl_inflation) {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
 
-// Define a function to instantiate a meta.map to correspond gene family names
-// with all outputs we'll be producing
-// Function to get list of [meta, [file]]
-def create_og_channel(Object inputs) {
-    // If the input is a string, convert it to a list containing a single element
-    if (inputs instanceof String) {
-        inputs = [inputs]
-    }
-    // create list of maps
-    def metaList = []
-    inputs.each { input ->
-        def meta = [:]
-        meta.og = input
-        metaList.add(meta)
-    }
-    return metaList
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+// TODO: Build into subworkflows
+ch_aligner = params.aligner
+ch_msa_trimmer = params.msa_trimmer
+ch_tree_method = params.tree_method
+if ch_aligner == "witch" {
+    ch_msa_trimmer = 'none'
+}
+if (ch_aligner == "witch") {
+    include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
+    include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
+} else if (ch_aligner = "magus") {
+    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
+    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
+} else {
+    include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
+}
+if (ch_msa_trimmer == "clipkit") {
+    include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
+    include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
+} else if (ch_msa_trimmer == 'cialign') {
+    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
+    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
+}
+if (ch_tree_method == "iqtree") {
+    include { IQTREE as INFER_TREES                 } from './modules/nf-core-modified/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from './modules/nf-core-modified/iqtree'
+} else {
+    include { FASTTREE as INFER_TREES               } from './modules/local/fasttree'
+    include { FASTTREE as INFER_REMAINING_TREES     } from './modules/local/fasttree'
 }
 
 /*
@@ -62,7 +81,7 @@ def create_og_channel(Object inputs) {
 //
 // SUBWORKFLOW
 //
-include { INPUT_CHECK                                   } from './subworkflows/local/input_check'
+include { INPUT_CHECK                               } from './subworkflows/local/input_check'
 
 //
 // MODULE
@@ -111,40 +130,22 @@ include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-mo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-// TODO: Build into a subworkflow
-if (params.aligner == "witch") {
-    include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
-    include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
-    params.msa_trimmer = 'none'
-} else if (params.aligner = "magus") {
-    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
-    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
-} else {
-    include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
-    include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
-}
-
-// TODO: Build into a subworkflow
-if (params.msa_trimmer == "clipkit") {
-    include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
-    include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
-} else if (params.msa_trimmer != 'none') {
-    include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
-    include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
-}
-
-// TODO: Build as a subworkflow
-if (params.tree_method == "iqtree") {
-    include { IQTREE as INFER_TREES                 } from './modules/nf-core-modified/iqtree'
-    include { IQTREE as INFER_REMAINING_TREES       } from './modules/nf-core-modified/iqtree'
-} else {
-    include { FASTTREE as INFER_TREES           } from './modules/local/fasttree'
-    include { FASTTREE as INFER_REMAINING_TREES } from './modules/local/fasttree'
+// Define a function to instantiate a meta.map to correspond gene family names
+// with all outputs we'll be producing
+// Function to get list of [meta, [file]]
+def create_og_channel(Object inputs) {
+    // If the input is a string, convert it to a list containing a single element
+    if (inputs instanceof String) {
+        inputs = [inputs]
+    }
+    // create list of maps
+    def metaList = []
+    inputs.each { input ->
+        def meta = [:]
+        meta.og = input
+        metaList.add(meta)
+    }
+    return metaList
 }
 
 /*
