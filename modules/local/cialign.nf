@@ -12,17 +12,17 @@ process CIALIGN {
     )
 
     input:
-    path(fasta)              // Filepaths to the MSAs
-    val(min_ungapped_length) // Minimum ungapped length of sequences after alignment trimming
+    tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    path("*_cialign.fa") , emit: trimmed_msas
-    path "*"             , emit: results
-    path "versions.yml"  , emit: versions
+    tuple val(meta), path("**_cialign.fa") , emit: cleaned_msas, optional: true
+    tuple val(meta), path("**_map.link")   , emit: map_link, optional: true
+    path "*"                               , emit: results
+    path "versions.yml"                    , emit: versions
 
     script:
     def args = task.ext.args ?: ''
-    def remove_short = min_ungapped_length ? "--remove_short --remove_min_length=${min_ungapped_length}" : ''
+    def remove_short = params.min_ungapped_length ? "--remove_short --remove_min_length=${min_ungapped_length}" : ''
     """
     # Get the name of the orthogroup we are processing
     prefix=\$(echo ${fasta} | cut -f1 -d "_")
@@ -45,6 +45,21 @@ process CIALIGN {
     # And do the same for the log files
     mkdir log_files
     mv *log.txt log_files
+    
+    # Now, create a protein-species map-file, assuming that trimming didn't lead
+    # to the focal MSA being comprised of < 4 sequences. 
+    if [ \$n_remain -lt 4 ]; then
+        rm \${prefix}_cialign.fa
+    else
+        # Now pull out the sequences, and split into a TreeRecs format mapping
+        # file, where each protein in the tree is a new line, listing species
+        # and then the protein
+        mkdir species_protein_maps
+        grep ">" \${prefix}_cialign.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        paste prot spp > species_protein_maps/\${prefix}_map.link
+        rm prot && rm spp
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -313,20 +313,14 @@ workflow PHYLORTHOLOGY {
     //
     // MODULE: ALIGN_SEQS
     // Infer multiple sequence alignments of orthogroups/gene
-    // families using MAFFT, MAGUS, or WITCH
+    // families using WITCH (default) or MAFFT
     //
     // For the extreme core set to be used in species tree inference
-    if (params.aligner == "witch") {
+    if (ch_aligner == "witch") {
         ALIGN_SEQS(ch_spptree_fas)
-        ch_core_og_maplinks = ALIGN_SEQS.out.map_link
-        ch_core_og_clean_msas = ALIGN_SEQS.out.cleaned_msas
         ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     } else {
-        ALIGN_SEQS(
-            FILTER_ORTHOGROUPS.out.spptree_fas.flatten()
-        )
-            .msas
-            .set{ ch_core_og_msas }
+        ALIGN_SEQS(ch_spptree_fas)
         ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
     
@@ -334,16 +328,10 @@ workflow PHYLORTHOLOGY {
     // Only start once species tree MSAs have finished (to give them priority)
     // We use the combination of collect().count() to hold off on running this 
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
-    if (params.aligner != "witch") {
-        ALIGN_REMAINING_SEQS(
-            FILTER_ORTHOGROUPS.out.genetree_fas.flatten()
-        )
-            .msas
-            .set { ch_rem_og_msas }
+    if (ch_aligner == "witch") {
+        ALIGN_REMAINING_SEQS(ch_genetree_fas)
     } else {
         ALIGN_REMAINING_SEQS(ch_genetree_fas)
-        ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
-        ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.cleaned_msas
     }
 
     //
@@ -352,23 +340,36 @@ workflow PHYLORTHOLOGY {
     // uninformative/problematic sites from the MSAs using either
     // CIAlign or ClipKIT based on parameter specification.
     //
-    if (params.msa_trimmer != 'none') {
-        TRIM_MSAS(
-            ch_core_og_msas, params.min_ungapped_length
-        )
-        .trimmed_msas
-        .toSortedList({it -> it.name})
-        .flatten()
-        .set { ch_core_og_clean_msas }
-        
-        TRIM_REMAINING_MSAS(
-            ch_rem_og_msas, params.min_ungapped_length
-        )
-        .trimmed_msas
-        .toSortedList({it -> it.name})
-        .flatten()
-        .set { ch_rem_og_clean_msas }
-        ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
+    if (ch_msa_trimmer == 'none') {
+        if (ch_aligner == 'witch') {
+            ch_core_og_maplinks = ALIGN_SEQS.out.map_link
+            ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
+            ch_core_og_clean_msas = ALIGN_SEQS.out.cleaned_msas
+            ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.cleaned_msas
+        } else {
+            ch_core_og_maplinks = ALIGN_SEQS.out.map_link
+            ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
+            ch_core_og_clean_msas = ALIGN_SEQS.out.msas
+            ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.msas
+        }
+    } else {
+        if (ch_aligner == 'witch') {
+            TRIM_MSAS(ALIGN_SEQS.out.cleaned_msas)
+            TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.cleaned_msas)
+            ch_core_og_maplinks = TRIM_MSAS.out.map_link
+            ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
+            ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
+            ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
+            ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
+        } else {
+            TRIM_MSAS(ALIGN_SEQS.out.msas)
+            TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.msas)
+            ch_core_og_maplinks = TRIM_MSAS.out.map_link
+            ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
+            ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
+            ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
+            ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
+        }
     }
 
     //
