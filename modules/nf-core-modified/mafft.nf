@@ -39,7 +39,7 @@ process MAFFT {
         ${args} ${fasta} > \${prefix}_mafft.fa
         
     # Create protein-species map files if we are not doing any alignment cleaning
-    if [ \$aln_trimmer == "none" ]; then
+    if [ $aln_trimmer == "none" ]; then
         # Now pull out the sequences, and split into a TreeRecs format mapping
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
