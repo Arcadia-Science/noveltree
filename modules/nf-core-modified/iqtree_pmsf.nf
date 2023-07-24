@@ -5,6 +5,7 @@ process IQTREE_PMSF {
     // 3) optionally infer trees using PMSF approximation which requires initial tree inference
     // 4) correctly handle "task.memory" specification for memory handling by iqtree
     // 5) update the Docker container to use iqtree v2.2.0.5
+    // 6) input/output files in appropriate tuple format
     tag "$alignment"
     label 'process_iqtree'
 
@@ -18,15 +19,14 @@ process IQTREE_PMSF {
     )
 
     input:
-    file(alignment)
-    file(guide_tree)
-    val pmsf_model
+    tuple val(meta), file(alignment), file(guide_tree)
+    val pmsf_model 
 
     output:
-    path("*pmsf.treefile") , emit: phylogeny
-    path "*.log"           , emit: iqtree_log
-    path "versions.yml"    , emit: versions
-
+    tuple val(meta), path("*pmsf.treefile") , emit: phylogeny
+    tuple val(meta), path("*.log")      , emit: iqtree_log
+    path "versions.yml"                 , emit: versions
+    
     when:
     task.ext.when == null || task.ext.when
 

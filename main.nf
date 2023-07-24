@@ -386,21 +386,18 @@ workflow PHYLORTHOLOGY {
         // Infer gene-family trees from the trimmed MSAs and guide trees from the 
         // previous tree inference module
         //
-        IQTREE_PMSF(
-            ch_core_og_clean_msas,
-            INFER_TREES.out.phylogeny.toSortedList(it -> it.name).flatten(),
-            params.tree_model_pmsf
-        )
-    
-        IQTREE_PMSF_REMAINING(
-            ch_rem_og_clean_msas,
-            INFER_REMAINING_TREES.out.phylogeny.toSortedList(it -> it.name).flatten(),
-            params.tree_model_pmsf
-        )
+        // Be sure that both the MSAs and guide trees are sorted into the same
+        // order as before to prevent any hiccups - do so by temporarily
+        // joining the two channels.
+        ch_pmsf_input = ch_core_og_clean_msas.join(INFER_TREES.out.phylogeny)
+        ch_pmsf_input_remaining = ch_rem_og_clean_msas.join(INFER_REMAINING_TREES.out.phylogeny)
+        // Now run
+        IQTREE_PMSF(ch_pmsf_input, params.tree_model_pmsf)
+        IQTREE_PMSF_REMAINING(ch_pmsf_input_remaining, params.tree_model_pmsf)
         ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
         
-        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny.toSortedList(it -> it.name).collect()
-        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny.toSortedList(it -> it.name).collect()
+        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
+        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
     } else {
         ch_core_gene_trees = INFER_TREES.out.phylogeny
         ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
