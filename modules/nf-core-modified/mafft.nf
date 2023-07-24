@@ -44,9 +44,9 @@ process MAFFT {
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
         mkdir species_protein_maps
-        grep ">" ${og}_mafft.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        grep ">" \${prefix}_mafft.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/${og}_map.link
+        paste prot spp > species_protein_maps/\${prefix}_map.link
         rm prot && rm spp
     fi
     
