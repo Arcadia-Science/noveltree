@@ -44,15 +44,12 @@ if (params.mcl_inflation) {
 ch_aligner = params.aligner
 ch_msa_trimmer = params.msa_trimmer
 ch_tree_method = params.tree_method
-if ch_aligner == "witch" {
+if (ch_aligner == "witch") {
     ch_msa_trimmer = 'none'
 }
 if (ch_aligner == "witch") {
     include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
     include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
-} else if (ch_aligner = "magus") {
-    include { MAGUS as ALIGN_SEQS                   } from './modules/local/magus'
-    include { MAGUS as ALIGN_REMAINING_SEQS         } from './modules/local/magus'
 } else {
     include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
     include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
