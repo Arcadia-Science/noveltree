@@ -22,7 +22,7 @@ process CIALIGN {
 
     script:
     def args = task.ext.args ?: ''
-    def remove_short = params.min_ungapped_length ? "--remove_short --remove_min_length=${min_ungapped_length}" : ''
+    def remove_short = params.min_ungapped_length ? "--remove_short --remove_min_length=${params.min_ungapped_length}" : ''
     """
     # Get the name of the orthogroup we are processing
     prefix=\$(echo ${fasta} | cut -f1 -d "_")
@@ -48,6 +48,7 @@ process CIALIGN {
     
     # Now, create a protein-species map-file, assuming that trimming didn't lead
     # to the focal MSA being comprised of < 4 sequences. 
+    n_remain=\$(grep ">" \${prefix}_cialign.fa | wc -l)
     if [ \$n_remain -lt 4 ]; then
         rm \${prefix}_cialign.fa
     else
