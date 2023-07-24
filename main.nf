@@ -164,6 +164,7 @@ workflow PHYLORTHOLOGY {
     //
     ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    species_name_list = ch_all_data.complete_prots.collect { it[0].id }
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
     mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
     uniprot_prots_list = ch_all_data.uniprot_prots.collect { it[1] }
@@ -368,7 +369,11 @@ workflow PHYLORTHOLOGY {
             ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
         }
     }
-
+    // Create channels that are just lists of all the msas, and protein-species 
+    // map links that are provided in bulk to SpeciesRax
+    core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
+    core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
+    
     //
     // MODULE: INFER_TREES
     // Infer gene-family trees from the trimmed MSAs using either 
@@ -398,9 +403,12 @@ workflow PHYLORTHOLOGY {
         
         ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
         ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
+        // And create a channel/list (no tuple) of just the core trees used by Asteroid
+        core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
     } else {
         ch_core_gene_trees = INFER_TREES.out.phylogeny
         ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
+        core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
     }
 
     // The following two steps will just be done for the core set of
@@ -409,14 +417,7 @@ workflow PHYLORTHOLOGY {
     // MODULE: ASTEROID
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
-    // Merge the input gene tree and map link channels for Asteroid, 
-    // SpeciesRax and GeneRax per-species. 
-    
-    ASTEROID(
-        ch_all_data.complete_prots.collect { it[0].id },
-        ch_core_gene_trees.collect { it[1] },
-        params.outgroups
-    )
+    ASTEROID(species_name_list, core_gene_tree_list, params.outgroups)
         .rooted_spp_tree
         .set { ch_asteroid }
     ch_versions = ch_versions.mix(ASTEROID.out.versions)
@@ -427,28 +428,12 @@ workflow PHYLORTHOLOGY {
     // reconcile gene family trees, and infer per-family
     // rates of gene-family duplication, transfer, and loss
     //
-    SPECIESRAX(
-        ch_core_og_maplinks.collect { it[1] },
-        ch_core_gene_trees.collect { it[1] },
-        ch_core_og_clean_msas.collect { it[1] },
-        ch_asteroid
-    )
+    SPECIESRAX(core_og_maplink_list, core_gene_tree_list, core_og_clean_msa_list, ch_asteroid)
         .speciesrax_tree
         .set { ch_speciesrax }
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
-
-    // Run again, but this time only using the GeneRax component,
-    // reconciling gene family trees with the rooted species tree
-    // inferred from SpeciesRax for all remaining gene families
-    // This will be done both for per-family and per-species rates
-    // Create the input channel for the per-family GeneRax analysis
     
-    // ch_generax_per_fam = ch_all_generax_map.flatten().
-    //     merge(ch_all_gene_trees.flatten(), 
-    //     ch_all_clean_msas.flatten(), 
-    //     ch_all_per_family.flatten(),
-    //     ch_speciesrax)
-
+    // Now prepare for analysis with GeneRax
     ch_all_map_links = ch_core_og_maplinks
         .concat(ch_rem_og_maplinks)
     ch_all_gene_trees = ch_core_gene_trees
