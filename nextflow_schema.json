@@ -18,8 +18,7 @@
                 "min_prop_spp_for_spptree",
                 "min_num_grp_per_og",
                 "max_copy_num_spp_tree",
-                "max_copy_num_gene_trees",
-                "tree_model"
+                "max_copy_num_gene_trees"
             ],
             "properties": {
                 "input": {
@@ -145,7 +144,11 @@
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
                 }
-            }
+            },
+            "required": [
+                "max_cpus",
+                "max_memory"
+            ]
         },
         "generic_options": {
             "title": "Generic options",
@@ -243,5 +246,41 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "min_num_seq_per_og": {
+            "type": "integer",
+            "default": 4,
+            "description": "The minimum number of sequences within a gene family required for retention of that family for phylogenetic inference."
+        },
+        "outgroups": {
+            "type": "string",
+            "default": "none",
+            "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
+        },
+        "custom_config_version": {
+            "type": "string",
+            "default": "master"
+        },
+        "custom_config_base": {
+            "type": "string",
+            "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+        },
+        "config_profile_description": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_contact": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_url": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_name": {
+            "type": "string",
+            "default": null
+        }
+    }
 }
