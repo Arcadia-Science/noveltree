@@ -85,10 +85,10 @@ include { INPUT_CHECK                               } from './subworkflows/local
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { ORTHOFINDER_PREP                          } from './modules/local/orthofinder_prep'
+include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from './modules/local/orthofinder_prep'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from './modules/local/orthofinder_prep'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from './modules/local/orthofinder_mcl'
-include { ORTHOFINDER_MCL                           } from './modules/local/orthofinder_mcl'
+include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { ANNOTATE_UNIPROT                          } from './modules/local/annotate_uniprot'
 include { COGEQC                                    } from './modules/local/cogeqc'
 include { SELECT_INFLATION                          } from './modules/local/select_inflation'
@@ -112,9 +112,9 @@ include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orth
 // needs to be included twice under different names.
 include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-modified/busco'
 include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
-include { DIAMOND_BLASTP                            } from './modules/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from './modules/nf-core-modified/diamond_blastp'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
-include { IQTREE_PMSF                               } from './modules/nf-core-modified/iqtree_pmsf'
+include { IQTREE_PMSF as IQTREE_PMSF_ALL         } from './modules/nf-core-modified/iqtree_pmsf'
 include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
 
 /*
@@ -200,9 +200,9 @@ workflow PHYLORTHOLOGY {
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
-    ORTHOFINDER_PREP(complete_prots_list, "complete_dataset")
+    ORTHOFINDER_PREP_ALL(complete_prots_list, "complete_dataset")
     ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
-    ch_versions = ch_versions.mix(ORTHOFINDER_PREP.out.versions)
+    ch_versions = ch_versions.mix(ORTHOFINDER_PREP_ALL.out.versions)
 
     //
     // MODULE: All-v-All diamond/blastp
@@ -219,14 +219,14 @@ workflow PHYLORTHOLOGY {
 
     // And for the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
-    DIAMOND_BLASTP(
+    DIAMOND_BLASTP_ALL(
         ch_all_data.complete_prots,
-        ORTHOFINDER_PREP.out.fastas.flatten(),
-        ORTHOFINDER_PREP.out.diamonds.flatten(),
+        ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
+        ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
         "txt",
         "false"
     )
-    ch_versions = ch_versions.mix(DIAMOND_BLASTP.out.versions)
+    ch_versions = ch_versions.mix(DIAMOND_BLASTP_ALL.out.versions)
 
     //
     // MODULE: Run Orthofinder's implementation of MCL (with similarity score
@@ -267,13 +267,13 @@ workflow PHYLORTHOLOGY {
 
     // Using this best-performing inflation parameter, infer orthogroups for
     // all samples.
-    ORTHOFINDER_MCL(
+    ORTHOFINDER_MCL_ALL(
         ch_best_inflation,
-        DIAMOND_BLASTP.out.txt.collect(),
-        ORTHOFINDER_PREP.out.fastas,
-        ORTHOFINDER_PREP.out.diamonds,
-        ORTHOFINDER_PREP.out.sppIDs,
-        ORTHOFINDER_PREP.out.seqIDs,
+        DIAMOND_BLASTP_ALL.out.txt.collect(),
+        ORTHOFINDER_PREP_ALL.out.fastas,
+        ORTHOFINDER_PREP_ALL.out.diamonds,
+        ORTHOFINDER_PREP_ALL.out.sppIDs,
+        ORTHOFINDER_PREP_ALL.out.seqIDs,
         "complete_dataset"
     )
 
@@ -285,7 +285,7 @@ workflow PHYLORTHOLOGY {
     // and the remainder will be used to infer gene family trees only.
     FILTER_ORTHOGROUPS(
         INPUT_CHECK.out.complete_samplesheet,
-        ORTHOFINDER_MCL.out.inflation_dir,
+        ORTHOFINDER_MCL_ALL.out.inflation_dir,
         params.min_num_seq_per_og,
         params.min_num_spp_per_og,
         params.min_prop_spp_for_spptree,
@@ -466,12 +466,12 @@ workflow PHYLORTHOLOGY {
     //
     ORTHOFINDER_PHYLOHOGS(
         ch_speciesrax,
-        ORTHOFINDER_MCL.out.inflation_dir,
-        ORTHOFINDER_PREP.out.fastas,
-        ORTHOFINDER_PREP.out.sppIDs,
-        ORTHOFINDER_PREP.out.seqIDs,
+        ORTHOFINDER_MCL_ALL.out.inflation_dir,
+        ORTHOFINDER_PREP_ALL.out.fastas,
+        ORTHOFINDER_PREP_ALL.out.sppIDs,
+        ORTHOFINDER_PREP_ALL.out.seqIDs,
         ch_recon_perspp_gene_trees,
-        DIAMOND_BLASTP.out.txt.collect()
+        DIAMOND_BLASTP_ALL.out.txt.collect()
     )
 }
 
