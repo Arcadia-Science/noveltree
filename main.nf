@@ -93,8 +93,6 @@ include { ANNOTATE_UNIPROT                          } from './modules/local/anno
 include { COGEQC                                    } from './modules/local/cogeqc'
 include { SELECT_INFLATION                          } from './modules/local/select_inflation'
 include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
-include { CLIPKIT                                   } from './modules/local/clipkit'
-include { CLIPKIT as CLIPKIT_REMAINING              } from './modules/local/clipkit'
 include { ASTEROID                                  } from './modules/local/asteroid'
 include { SPECIESRAX                                } from './modules/local/speciesrax'
 include { GENERAX_PER_FAMILY                        } from './modules/local/generax_per_family'
@@ -116,8 +114,6 @@ include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-mo
 include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
 include { DIAMOND_BLASTP                            } from './modules/nf-core-modified/diamond_blastp'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
-include { IQTREE as INFER_TREES                     } from './modules/nf-core-modified/iqtree'
-include { IQTREE as INFER_REMAINING_TREES           } from './modules/nf-core-modified/iqtree'
 include { IQTREE_PMSF                               } from './modules/nf-core-modified/iqtree_pmsf'
 include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
 
