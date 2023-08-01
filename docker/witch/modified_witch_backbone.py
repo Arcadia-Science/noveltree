@@ -83,29 +83,41 @@ class BackboneJob(object):
             if lengths % 2 == 1 or l2 == lengths - 1:
                 median_full_length = seq_lengths[l2]
             else:
-                median_full_length = (seq_lengths[l2] + seq_lengths[l2+1]) / 2.0
-            
+                median_full_length = (seq_lengths[l2] + seq_lengths[l2 + 1]) / 2.0
+        
             min_length = int(median_full_length * (1 - self.backbone_threshold))
             max_length = int(median_full_length * (1 + self.backbone_threshold))
+            num_in_bb = [x for x in seq_lengths if x < max_length and x > min_length]
             query_names = [name for name in sequences
-                           if len(sequences[name]) > max_length or 
+                           if len(sequences[name]) > max_length or
                            len(sequences[name]) < min_length]
 
-            if (len(sequences) - len(query_names)) < 2:                
-                while len(sequences) - len(query_names) < max(2, int(0.25 * len(sequences))):
-                    self.backbone_threshold = round(self.backbone_threshold + 0.05, 2)
-                    min_length = int(median_full_length * (1 - self.backbone_threshold))
-                    max_length = int(median_full_length * (1 + self.backbone_threshold))
-                    query_names = [name for name in sequences
-                                   if len(sequences[name]) > max_length or 
-                                   len(sequences[name]) < min_length]                
-
-            Configs.log('Final backbone threshold: ' 
-                    + '{}'.format(self.backbone_threshold))
-            Configs.log('Full length sequences set to be from '
+            # If we don't have the right balance of backbone to query sequences,
+            # just take the 75% most distant sequences from the median length 
+            # as the query. 
+            if len(query_names) < 1 or (len(sequences) - len(query_names)) < 2:
+                # Calculate the distance of each sequence length from the median_full_length
+                seq_distances = {name: abs(len(sequences[name]) - median_full_length) for name in sequences}
+            
+                # Sort the distances in descending order and select the 75% most distant sequences
+                most_distant_sequences = sorted(seq_distances.items(), key=lambda x: x[1], reverse=True)
+                
+                # If there are only four sequences, choose the top two furthest)
+                if len(sequences) == 4:
+                    queries = most_distant_sequences[:int(2)]
+                    Configs.log('Full length sequences set to be the top two closest to the median length')
+                    # Update query_names to include the 75% most distant sequences
+                    query_names = [name for name, distance in queries]
+                else:
+                    queries = most_distant_sequences[:int(len(most_distant_sequences) * 0.75)]
+                    Configs.log('Full length sequences set to be the top 25% closest to the median length')
+                    # Update query_names to include the 75% most distant sequences
+                    query_names = [name for name, distance in queries]
+            else:
+                Configs.log('Full length sequences set to be from '
                     + '{} to {} character long'.format(min_length, max_length))
 
-            if len(query_names) > 1:
+            if len(query_names) >= 1:
                 Configs.log(
                     'Detected {} sequences not within median length'.format(
                         len(query_names)))

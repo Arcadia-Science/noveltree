@@ -2,7 +2,7 @@ process WITCH {
     tag "$meta.og"
     label 'process_magus'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/witch_0.3.0:0.0.2' :
+    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/witch_0.3.0:0.0.2' :
         '' }"
     // TODO: address this issue (permission related errors) in future release
     containerOptions = "--user root"

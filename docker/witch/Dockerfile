@@ -24,12 +24,12 @@ RUN git clone -b v0.3.0 https://github.com/c5shen/WITCH.git
 RUN cd WITCH && \ 
     pip install -r requirements.txt && \
     python setup.py
-    
+
+# Retain the original backbone construction script:
+RUN mv /WITCH/gcmm/backbone.py /WITCH/gcmm/backbone_original.py
+
 # Modify the backbone construction
-COPY ./modified_witch_backbone.py .
-# Retain the original script, with a slightly modified name
-RUN cp /WITCH/gcmm/backbone.py /WITCH/gcmm/backbone_original.py
-RUN mv modified_witch_backbone.py /WITCH/gcmm/backbone.py
+COPY modified_witch_backbone.py /WITCH/gcmm/backbone.py
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
