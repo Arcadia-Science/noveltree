@@ -47,6 +47,11 @@
                     "description": "Optional path to where BUSCO lineage datasets are stored remotely (e.g. on S3).",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "min_num_seq_per_og": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "The minimum number of sequences within a gene family required for retention of that family for phylogenetic inference."
+                },
                 "min_num_spp_per_og": {
                     "type": "integer",
                     "default": 4,
@@ -101,6 +106,11 @@
                     "type": "string",
                     "default": "none",
                     "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
+                },
+                "outgroups": {
+                    "type": "string",
+                    "default": "none",
+                    "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
                 },
                 "email": {
                     "type": "string",
@@ -248,16 +258,6 @@
         }
     ],
     "properties": {
-        "min_num_seq_per_og": {
-            "type": "integer",
-            "default": 4,
-            "description": "The minimum number of sequences within a gene family required for retention of that family for phylogenetic inference."
-        },
-        "outgroups": {
-            "type": "string",
-            "default": "none",
-            "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
-        },
         "custom_config_version": {
             "type": "string",
             "default": "master"
