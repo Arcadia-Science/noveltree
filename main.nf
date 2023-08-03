@@ -45,9 +45,6 @@ ch_aligner = params.aligner
 ch_msa_trimmer = params.msa_trimmer
 ch_tree_method = params.tree_method
 if (ch_aligner == "witch") {
-    ch_msa_trimmer = 'none'
-}
-if (ch_aligner == "witch") {
     include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
     include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
 } else {
