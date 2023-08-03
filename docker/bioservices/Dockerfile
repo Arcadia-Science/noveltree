@@ -8,9 +8,9 @@ RUN apt-get update && \
         
 # Install the required Python dependencies
 RUN pip install --no-cache-dir \
-    argparse \
+    argparse=1.1 \
     bioservices==1.10.0 \
-    pandas
+    pandas==2.0.0
 
 # Set the default command to launch an interactive shell
 CMD ["/bin/bash", "-l"]
