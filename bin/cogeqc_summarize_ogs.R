@@ -110,19 +110,19 @@ for(i in 1:length(spps)){
 
     # Identify which we have annotations for this species.
     non_missing <-
-        c(sum(is.na(annotations$InterPro)) == length(annotations$InterPro),
-        sum(is.na(annotations$OMA)) == length(annotations$OMA))
+        c(sum(is.na(annotations$xref_interpro)) == length(annotations$xref_interpro),
+        sum(is.na(annotations$xref_oma)) == length(annotations$xref_oma))
 
     # Pull out the InterPro annotations
     interpro[[i]] <-
         if(non_missing[1] == FALSE){
-            interpro[[i]] <- get_annots(spp, annotations$From, annotations$InterPro)
+            interpro[[i]] <- get_annots(spp, annotations$accession, annotations$xref_interpro)
         }else{
             interpro[[i]] <- NA
         }
     oma[[i]] <-
         if(non_missing[2] == FALSE){
-            oma[[i]] <- get_annots(spp, annotations$From, annotations$OMA)
+            oma[[i]] <- get_annots(spp, annotations$accession, annotations$xref_oma)
         }else{
             oma[[i]] <- NA
         }

@@ -4,6 +4,7 @@ process IQTREE {
     // 2) parameterize tree-model specification
     // 3) correctly handle "task.memory" specification for memory handling by iqtree
     // 4) update the Docker container to use iqtree v2.2.0.5
+    // 6) input/output files in appropriate tuple format
     tag "$alignment"
     label 'process_iqtree'
 
@@ -17,13 +18,13 @@ process IQTREE {
     )
     
     input:
-    path(alignment)
-    val model
+    tuple val(meta), file(alignment)
+    val model 
 
     output:
-    path("*.treefile")  , emit: phylogeny
-    path "*.log"        , emit: iqtree_log
-    path "versions.yml" , emit: versions
+    tuple val(meta), path("*.treefile") , emit: phylogeny
+    tuple val(meta), path("*.log")      , emit: iqtree_log
+    path "versions.yml"                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

@@ -18,8 +18,7 @@
                 "min_prop_spp_for_spptree",
                 "min_num_grp_per_og",
                 "max_copy_num_spp_tree",
-                "max_copy_num_gene_trees",
-                "tree_model"
+                "max_copy_num_gene_trees"
             ],
             "properties": {
                 "input": {
@@ -48,10 +47,10 @@
                     "description": "Optional path to where BUSCO lineage datasets are stored remotely (e.g. on S3).",
                     "fa_icon": "fas fa-file-csv"
                 },
-                "download_annots": {
-                    "type": "string",
-                    "default": "minimal",
-                    "description": "Option specifying the protein annotations the user would like to download. See README for a description of options."
+                "min_num_seq_per_og": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "The minimum number of sequences within a gene family required for retention of that family for phylogenetic inference."
                 },
                 "min_num_spp_per_og": {
                     "type": "integer",
@@ -85,12 +84,12 @@
                 },
                 "msa_trimmer": {
                     "type": "string",
-                    "default": "cialign",
+                    "default": "none",
                     "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign ('cialign') or ClipKIT ('clipkit'). Additional params for either method should be provided in modules.config."
                 },
                 "min_ungapped_length": {
                     "type": "integer",
-                    "default": 25,
+                    "default": 20,
                     "description": "Option specifying the minimum ungapped length of cleaned/trimmed multiple sequence alignments. Prevents ClipKIT from removing all non-gap characters. Specify as null (no quotes) if you do not want to remove short sequences with CIAlign."
                 },
                 "tree_method": {
@@ -107,6 +106,11 @@
                     "type": "string",
                     "default": "none",
                     "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
+                },
+                "outgroups": {
+                    "type": "string",
+                    "default": "none",
+                    "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
                 },
                 "email": {
                     "type": "string",
@@ -150,7 +154,11 @@
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
                 }
-            }
+            },
+            "required": [
+                "max_cpus",
+                "max_memory"
+            ]
         },
         "generic_options": {
             "title": "Generic options",
@@ -248,5 +256,31 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "custom_config_version": {
+            "type": "string",
+            "default": "master"
+        },
+        "custom_config_base": {
+            "type": "string",
+            "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+        },
+        "config_profile_description": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_contact": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_url": {
+            "type": "string",
+            "default": null
+        },
+        "config_profile_name": {
+            "type": "string",
+            "default": null
+        }
+    }
 }

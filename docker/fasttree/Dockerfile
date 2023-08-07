@@ -1,8 +1,4 @@
-# Use an Ubuntu base image
-FROM ubuntu:20.04
-
-# Prevent interactive querying of geographic area during build
-ENV DEBIAN_FRONTEND noninteractive
+FROM arcadiascience/rbase_4.2.2:0.0.1
 
 # Install the required dependencies
 RUN apt-get update && \
@@ -28,6 +24,9 @@ RUN wget http://microbesonline.org/fasttree/FastTree.c && \
     gcc -DUSE_DOUBLE -DOPENMP -fopenmp -O3 -finline-functions -funroll-loops -Wall -o FastTreeDblMP FastTree.c -lm && \
     chmod u+x FastTreeDblMP && \
     cp FastTreeDblMP /bin/
+
+# Install ape to resolve polytomies
+RUN Rscript -e "install.packages('ape', version = '5.6.2', repos='https://cloud.r-project.org/')"
 
 # Clean up
 RUN apt-get -y autoremove && \

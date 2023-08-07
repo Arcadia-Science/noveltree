@@ -11,13 +11,13 @@ process ORTHOFINDER_PHYLOHOGS {
     )
 
     input:
-    path species_tree        // Rooted species tree inferred using SpeciesRax
-    path orthogroups         // Orthofinder results directory inferred using MCL
-    path orthofinder_fastas  // Orthofinder-formatted fasta files
-    path orthofinder_seq_ids // Orthofinder sequence IDs
-    path orthofinder_spp_ids // Orthofinder species IDs
-    path generax_gfts        // Reconciled gene family trees from GeneRax
-    path blast               // Blast similarity scores
+    file species_tree        // Rooted species tree inferred using SpeciesRax
+    file orthogroups         // Orthofinder results directory inferred using MCL
+    file orthofinder_fastas  // Orthofinder-formatted fasta files
+    file orthofinder_seq_ids // Orthofinder sequence IDs
+    file orthofinder_spp_ids // Orthofinder species IDs
+    file generax_gfts        // Reconciled gene family trees from GeneRax
+    file blast               // Blast similarity scores
 
     output:
     path "Results_HOGs/" , emit: phylohogs
@@ -60,6 +60,9 @@ process ORTHOFINDER_PHYLOHOGS {
     -ft \$of_results_dir/ \
     -a ${task.cpus} \
     -y
+    
+    # Move the generax reconciled gene family trees within the the Orthofinder HOG directory
+    mv \$of_results_dir/Gene_Trees/ Results_HOGs/GeneRax_Reconciled_GFTs
     
     # And clean up,rename a few things so as not to have conflicting filenames in the resultant output
     rm -r \$of_results_dir

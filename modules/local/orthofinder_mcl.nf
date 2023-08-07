@@ -1,16 +1,16 @@
 process ORTHOFINDER_MCL {
     tag "MCL clustering"
-    label 'process_lowcpu'
+    label 'process_high'
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
         '' }"
 
     input:
     each mcl_inflation
-    path(blast)
-    path(fasta)
-    path(db)
-    path(sppIDs)
-    path(seqIDs)
+    file(blast)
+    file(fasta)
+    file(db)
+    file(sppIDs)
+    file(seqIDs)
     val output_directory
 
     output:
