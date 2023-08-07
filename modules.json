@@ -1,6 +1,6 @@
 {
-    "name": "Arcadia-Science/phylorthology",
-    "homePage": "https://github.com/Arcadia-Science/phylorthology",
+    "name": "Arcadia-Science/NovelTree",
+    "homePage": "https://github.com/Arcadia-Science/NovelTree",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
@@ -25,7 +25,7 @@
                         "branch": "master",
                         "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
                     }
-                }              
+                }
             }
         }
     }
