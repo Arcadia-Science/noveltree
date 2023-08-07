@@ -13,17 +13,23 @@ RUN apt-get update && \
         libssl-dev \
         git \
         pip \
-        python3.8 \
+        python3.9 \
         python-is-python3 \
-        wget
+        git
         
-# Clone MAGUS and VeryFastTree github repos
-RUN git clone -b v0.1.0 https://github.com/vlasmirnov/MAGUS.git
+# Clone the WITCH github repo
+RUN git clone -b v0.3.0 https://github.com/c5shen/WITCH.git
 
 # Build and install
-RUN cd MAGUS && \
-    python setup.py build && \
-    python setup.py install
-    
+RUN cd WITCH && \ 
+    pip install -r requirements.txt && \
+    python setup.py
+
+# Retain the original backbone construction script:
+RUN mv /WITCH/gcmm/backbone.py /WITCH/gcmm/backbone_original.py
+
+# Modify the backbone construction
+COPY modified_witch_backbone.py /WITCH/gcmm/backbone.py
+
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]

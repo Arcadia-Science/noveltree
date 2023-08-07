@@ -11,7 +11,7 @@ process ORTHOFINDER_PREP {
     )
 
     input:
-    path(fasta)
+    file(fasta)
     val output_directory
 
     output:
@@ -23,7 +23,6 @@ process ORTHOFINDER_PREP {
 
     script:
     """
-    ls
     # The fasta directory depends on whether we're running the mcl testing or not.
     orthofinder \\
         -f ./ \\
