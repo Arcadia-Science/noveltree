@@ -16,7 +16,7 @@ process SAMPLESHEET_CHECK {
     when:
     task.ext.when == null || task.ext.when
 
-    script: // This python script is bundled with the pipeline, in phylorthology/bin/
+    script: // This python script is bundled with the pipeline, in bin/
     """
     check_samplesheet.py \\
         $complete_samplesheet \\
