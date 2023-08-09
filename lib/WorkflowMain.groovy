@@ -1,5 +1,5 @@
 //
-// This file holds several functions specific to the main.nf workflow in the Arcadia-Science/NovelTree pipeline
+// This file holds several functions specific to the main.nf workflow in the Arcadia-Science/noveltree pipeline
 //
 
 class WorkflowMain {

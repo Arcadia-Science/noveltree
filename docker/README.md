@@ -1,4 +1,4 @@
-# Arcadia-Science/NovelTree Docker images
+# Arcadia-Science/noveltree Docker images
 
 This folder includes the Dockerfile used for the custome modules of the pipeline. The final versions of all containers are hosted on [Arcadia Science's DockerHub account](https://hub.docker.com/u/arcadiascience).
 

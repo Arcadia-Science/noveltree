@@ -1,6 +1,6 @@
 {
-    "name": "Arcadia-Science/NovelTree",
-    "homePage": "https://github.com/Arcadia-Science/NovelTree",
+    "name": "Arcadia-Science/noveltree",
+    "homePage": "https://github.com/Arcadia-Science/noveltree",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

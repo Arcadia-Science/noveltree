@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/Arcadia-Science/NovelTree/master/nextflow_schema.json",
-    "title": "Arcadia-Science/NovelTree pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/Arcadia-Science/noveltree/master/nextflow_schema.json",
+    "title": "Arcadia-Science/noveltree pipeline parameters",
     "description": "taking proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree",
     "type": "object",
     "definitions": {
