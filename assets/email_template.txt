@@ -1,10 +1,10 @@
 Run Name: $runName
 
 <% if (success){
-    out << "## Arcadia-Science/NovelTree execution completed successfully! ##"
+    out << "## Arcadia-Science/noveltree execution completed successfully! ##"
 } else {
     out << """####################################################
-## Arcadia-Science/NovelTree execution completed unsuccessfully! ##
+## Arcadia-Science/noveltree execution completed unsuccessfully! ##
 ####################################################
 The exit status of the task that caused the workflow execution to fail was: $exitStatus.
 The full error message was:
@@ -27,5 +27,5 @@ Pipeline Configuration:
 <% out << summary.collect{ k,v -> " - $k: $v" }.join("\n") %>
 
 --
-Arcadia-Science/NovelTree
-https://github.com/Arcadia-Science/NovelTree
+Arcadia-Science/noveltree
+https://github.com/Arcadia-Science/noveltree

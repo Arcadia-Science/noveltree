@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Arcadia-Science/NovelTree
+    Arcadia-Science/noveltree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/Arcadia-Science/NovelTree
+    Github : https://github.com/Arcadia-Science/noveltree
 ----------------------------------------------------------------------------------------
 */
 
@@ -146,9 +146,9 @@ def create_og_channel(Object inputs) {
 
 
 //
-// WORKFLOW: Run main Arcadia-Science/NovelTree analysis pipeline
+// WORKFLOW: Run main Arcadia-Science/noveltree analysis pipeline
 //
-workflow NOVEL_TREE {
+workflow NOVELTREE {
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
 
@@ -477,7 +477,7 @@ workflow NOVEL_TREE {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    NOVEL_TREE()
+    NOVELTREE()
 }
 
 /*

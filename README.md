@@ -1,6 +1,6 @@
 # NovelTree: High-throughput and reproducible phylogenomic inference of gene family evolution
 
-**Arcadia-Science/NovelTree** is a phylogenomic pipeline designed to proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree. The pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required.
+**Arcadia-Science/noveltree** is a phylogenomic pipeline designed to proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree. The pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required.
 
 `NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.
 
@@ -137,7 +137,7 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 
 ## The workflow thus proceeds as follows:
 
-![Workflow Figure](https://github.com/Arcadia-Science/NovelTree/blob/ap/workflow_fig_readme/NovelTree_WorkflowGraphic.png)
+![Workflow Figure](https://github.com/Arcadia-Science/noveltree/blob/ap/workflow_fig_readme/NovelTree_WorkflowGraphic.png)
 
 <details>
   <summary>Expand for step-by-step description:</summary>
@@ -377,7 +377,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 ## Citations
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  Arcadia-Science/NovelTree for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+<!-- If you use  Arcadia-Science/noveltree for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

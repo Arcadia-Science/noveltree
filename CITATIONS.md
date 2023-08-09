@@ -1,4 +1,4 @@
-# Arcadia-Science/NovelTree: Citations
+# Arcadia-Science/noveltree: Citations
 
 ## [nf-core](https://doi.org/10.1038/s41587-020-0439-x)
 
