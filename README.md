@@ -142,7 +142,7 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 
 ## The workflow thus proceeds as follows:
 
-![Workflow Figure](https://github.com/Arcadia-Science/noveltree/blob/ap/workflow_fig_readme/NovelTree_WorkflowGraphic.png)
+![Workflow Figure](https://github.com/Arcadia-Science/noveltree/blob/ap/readmes/NovelTree.png)
 
 <details>
   <summary>Expand for step-by-step description:</summary>
