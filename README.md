@@ -54,11 +54,11 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 > `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).
 > `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.
 > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.
-> `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species an orthogroup must contain for phylogenetic inference.
-> `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.
+> `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.
+> `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups an gene family must contain for phylogenetic inference.
 > `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Either MAGUS ('magus') or MAFFT ('mafft').
-> `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number an orthogroup may contain for species-tree inference.
-> `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.
+> `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.
+> `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.
 > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.
 > `download_annots`: DEFAULT: "minimal". Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.
 > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.
@@ -130,7 +130,7 @@ To account for the confounding effects of sequence length (and thus evolutionary
 
 Once the first round of MCL clustering has completed, `NovelTree` summarizes orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs.
 
-With orthogroups/gene families inferred, `NovelTree` will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it may be best, depending on use-case, to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
+With orthogroups/gene families inferred, `NovelTree` will summarize each gene family on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it may be best, depending on use-case, to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
 For both subsets, `NovelTree` subsequently infers cleaned multiple sequences alignments (using [`WITCH`](https://github.com/c5shen/WITCH)) and gene-family trees using [`FastTree2`](http://www.microbesonline.org/fasttree/).
 
@@ -154,7 +154,7 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 4. `ORTHOFINDER_PREP`: Proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 5. `DIAMOND_BLASTP`: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
 6. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
-7. `COGEQC`: Summarization and quantification of orthogroup inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs.
+7. `COGEQC`: Summarization and quantification of gene family inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs.
 8. `SELECT_INFLATION`: Based on the above summaries, select the (mean) inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
 9. `ORTHOFINDER_MCL`: Repeat step six (6: MCL clustering into orthogroups) for all species under the optimal inflation parameter
 10. `FILTER_ORTHOGROUPS`: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
@@ -210,10 +210,10 @@ process {
 - `download_annots`: Specified in the parameter file.
 - **Parameter may be specified as one of three things:**
   i. `all` - download all 16 possible sets of protein annotations from UniProt where possible.
-  ii. `minimal` - download only the minimum necessary annotations that are used by cogeqc for orthogroup inference quality assessments.
+  ii. `minimal` - download only the minimum necessary annotations that are used by cogeqc for gene family inference quality assessments.
   iii. A quoted, comma separated string of select numbers 1-16: example `"1,2,4,7,10"`. Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
   ```
-  1. Minimal set of protein annotations/metadata required for COGEQC orthogroup inference:
+  1. Minimal set of protein annotations/metadata required for COGEQC gene family inference:
      protein external IDs for InterPro, OMA
   2. General protein metadata: protein name, length, mass, information from mass spec
      experiments, host organisms (for viral proteins), which organelle (if relevant)
@@ -248,23 +248,46 @@ process {
 #### 5. [`FILTER_ORTHOGROUPS`](modules/local/filter_orthogroups.nf):
 
 - Parameters specified in parameter json file or via commandline when running workflow.
-- `min_num_spp`: Minimum \# of species an orthogroup must contain for phylogenetic inference.
-- `min_num_groups`: Minimum \# of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.
-- `max_copy_num_filt1`: Maximum \# of per-species gene copy number an orthogroup may contain for species-tree inference.
-- `max_copy_num_filt2`: Maximum \# of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.
+- `min_num_seq_per_og`: Minimum number of sequences a gene family must contain for phylogenetic inference.
+- `min_prop_spp_for_spptree`: Minimum \% of species for inclusion in species tree inference
+- `min_num_spp_per_og`: Minimum \# of species a gene family must contain for phylogenetic inference.
+- `min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups a gene family must contain for phylogenetic inference.
+- `max_copy_num_filt1`: Maximum \# of per-species gene copy number a gene family may contain for species-tree inference.
+- `max_copy_num_filt2`: Maximum \# of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.
 
-#### 6. [`MAFFT`](modules/nf-core-modified/mafft.nf):
+#### 6. `ALIGN_SEQS`
+### [`MAFFT`](modules/nf-core-modified/mafft.nf):
 
 - Parameters specified in [`conf/modules.config`](conf/modules.config). See MAFFT documentation for detailed description of options.
 - `--localpair --maxiterate 1000 --anysymbol`: Runs MAFFT L-INS-i. Iterative refinement method incorporating local pairwise alignment information. Highly accurate, but slower.
 - [MAFFT documentation](https://mafft.cbrc.jp/alignment/software/)
 
-#### 7. [`CLIPKIT`](modules/local/clipkit.nf):
+### [`WITCH`](modules/nf-core-modified/witch.nf):
+
+- Parameters specified in [`conf/modules.config`](conf/modules.config).
+- See [WITCH documentation](https://github.com/c5shen/WITCH) for detailed description of options.
+
+
+#### 7. `TRIM_SEQS
+### [`CLIPKIT`](modules/local/clipkit.nf):
 
 - Defaults used. Custom parameters should be specified in [`conf/modules.config`](conf/modules.config).
 - [ClipKIT documentation](https://jlsteenwyk.com/ClipKIT/)
 
-#### 8. [`IQTREE`](modules/nf-core-modified/iqtree.nf):
+### [`CIALIGN`](modules/local/cialign.nf):
+
+- Custom parameters specified in [`conf/modules.config`](conf/modules.config).
+- See [CIALIGN documentation](https://github.com/KatyBrown/CIAlign) for detailed description of options.
+- `--crop_divergent_min_prop_ident=0.25 --crop_divergent_min_prop_nongap=0.25 --crop_ends --remove_insertions --insertion_min_size=5 --insertion_max_size=200 --remove_divergent --remove_divergent_minperc=0.15`
+
+#### 8. 
+### [`FASTTREE`](modules/nf-core-modified/fasttree.nf):
+
+- Custom parameters specified in [`conf/modules.config`](conf/modules.config).
+- See [FastTree2 documentation](http://www.microbesonline.org/fasttree/) for detailed description of options.
+- `-lg -cat 20 -gamma -sprlength 50 -mlacc 3 -topm 2 -bionj`
+
+### [`IQTREE`](modules/nf-core-modified/iqtree.nf):
 
 - `tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree. Specified in parameter-file.
 - `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used. Specified in parameter-file.
@@ -281,27 +304,35 @@ process {
 
 ##### **PLEASE** read the [SpeciesRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax) to GeneRax and SpeciesRax for a more detailed explanation, both of these options as well as other possible parameter specifications.
 
-- Parameters should be specified in [`conf/modules.config`](conf/modules.config).
-- `--per-family-rates`: Estimate duplication-transfer-loss rates per gene family.
-- `--rec-model UndatedDTL`: Use the undated duplication-transfer-loss likelihood.
-- `--prune-species-tree`: Remove species not observed in gene family trees when conducting gene family tree - species tree reconciliation.
-- `--si-strategy HYBRID`: Both optimize and re-root the starting tree inferred from `Asteroid`.
-- `--si-quartet-support`: Estimate paralogy-aware quartet uncertainty score interpretation (topological uncertainty - see [here](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax)).
-- `--si-estimate-bl`: Estimate species tree branch-lengths (in substitutions-per-site).
-- `--strategy SPR`: Use the method of subtree pruning and re-grafting to perform tree search/improve topology under DTL model when performing gene family tree - species tree reconciliation.
+- The following parameters are specified within the [SpeciesRax module file](modules/local/speciesrax.nf)
+- `--strategy SKIP --si-estimate-bl --per-species-rates`
+  
+- The following parameters are specified in [`conf/modules.config`](conf/modules.config).
+- `--rec-model UndatedDTL --si-strategy SKIP --si-quartet-support`
 
-#### 11. [`GENERAX`](modules/local/generax.nf):
+#### 11. [`GENERAX_PER_FAMILY`](modules/local/generax_per_family.nf):
 
-- Parameters should be specified in [`conf/modules.config`](conf/modules.config).
-- `--rec-model UndatedDTL`: Same as in `SpeciesRax`.
-- `--prune-species-tree`: Same as in `SpeciesRax`.
-- `--per-family-rates`: Same as in `SpeciesRax`.
-- `--strategy SPR`: Same as in `SpeciesRax`.
+- The following parameters are specified within the [GeneRax per-family module file](modules/local/generax_per_family.nf)
+- `--prune-species-tree --reconciliation-samples 100`
+  
+- The following parameters are specified in [`conf/modules.config`](conf/modules.config).
+-  `--rec-model UndatedDTL --strategy SPR`
+  
+- [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)\
+
+#### 12. [`GENERAX_PER_SPECIES`](modules/local/generax_per_species.nf):
+
+- The following parameters are specified within the [GeneRax per-species module file](modules/local/generax_per_species.nf)
+- `--prune-species-tree --reconciliation-samples 100 --per-species-rates`
+  
+- The following parameters are specified in [`conf/modules.config`](conf/modules.config).
+-  `--rec-model UndatedDTL --strategy SPR`
+  
 - [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)
 </details>
 
 ## Outputs
-
+Note that a detailed walkthrough of how the results of NovelTree may be summarized and visualized, as applied to a dataset of 36 species of Telenemids, Stramenopiles, Alveolates, and Rhizarians, [may be found here](https://github.com/Arcadia-Science/2023-tsar-phylorthology/tree/main/scripts/noveltree-summarization). 
 <details>
   <summary>Workflow outputs, directory structure, and their contents.</summary>
   <br/>
@@ -318,13 +349,9 @@ process {
 
 **3.** `diamond/`: contains the results of all pairwise comparisons of sequence similarity, between and within species using diamond BLASTP.
 
-- TODO - would like you delete the TestBlast outputs at the conclusion of the workflow (or at least after their use/when running the complete mcl clustering.). Need to figure this out still.
-- Can't be solved with the symlink, since it depends on whether we're MCL testing or not.
-
 **4.** `OrthoFinder/`: contains all results from orthofinder runs, including the MCL testing stage (`mcl_test_dataset`) and the full analysis using the best-performing inflation parameter (complete_dataset).
 
-- `mcl_test_dataset/`: Contains one directory per tested inflation parameter. Directory structure follows OrthoFinder convention - orthogroup sequences are not retained to save space.
-  - TODO - delete persistent "OrthoFinder" directory. fixed with "publish as symlink"? Would be great if these links could just be ephemeral.
+- `mcl_test_dataset/`: Contains one directory per tested inflation parameter. Directory structure follows OrthoFinder convention - gene family sequences are not retained to save space.
 - `complete_dataset/`: Contains OrthoFinder output for the best-performing inflation parameter following standard convention (using OrthoFinder's -os flag).
 
 **5.** `orthogroup_summaries/`: Results from cogeqc.
@@ -340,41 +367,36 @@ process {
 - `all_ogs_counts.csv`: comma-separated csv listing, for all orthogroups (including those fro which msa/gene family trees are not inferred), the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included.
 - `(gene)speciestree_core_ogs_counts.csv`: the same as above, but for only the two respects subsets of gene families.
 
-**7.** `mafft/`: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number).
+**7.** either `mafft_alignments/` or `witch_alignments`: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number). 
+- `witch_alignments` contains both the "raw" alignments inferred from witch (`original_alignments`), as well as the cleaned alignments produced by the software, with gappy or otherwise poorly alignmed columns removed.
+- If no alignment cleaning method is used, these directories will contain another subdirectory, `species_protein_maps`, which contains the map files linking each protein ID to the parent species. 
 
-**8.** `trimmed_msas/`: Multiple sequence alignments inferred using mafft, trimmed for phylogenetic inference with ClipKIT.
+**8.** `trimmed_msas/`: Only produced if using CIAlign or ClipKIT to clean multiple sequence alignments.
+- If this directory is produced by the workflow, the `species_protein_maps` subdirectory can be found here. 
 
-**9.** `iqtree/`: gene family trees (and corresponding log files) for all gene families for which (trimmed) multiple sequence alignments were estimates.
+**9.** `fasttree_gene_trees` or `iqtree_gene_trees/`: Gene family trees using either FastTree2 or IQ-TREE respectively.
 
-**10.** `species_tree_prep/`: set of files used by asteroid and Gene/SpeciesRax to correspond gene-family protein sequences to species IDs, etc.
-
-**11.** `asteroid/`: starting, unrooted species tree inferred using all gene family trees with asteroid. Includes:
+**10.** `asteroid/`: Asteroid species tree, either rooted or unrooted. Includes:
 
 - asteroid.bestTree.newick: Single species tree with the greatest likelihood among set of inferred trees (for instance if multiple random starting trees are used).
 - asteroid.allTrees.newick: All inferred species trees (=1 if default of 1 random starting tree is used).
+- asteroid.bsTrees.newick: Bootstrapped species trees. Number of trees = number of bootstrap replicates. 
 - asteroid.scores.txt: likelihood scores for all inferred trees.
+- disco_decomposed_rooted_gfts.newick: A newick tree file containing all single-copy gene family trees inferred using [DISCO](https://github.com/JSdoubleL/DISCO) by decomposing each mutiple copy gene family tree into their respective single-copy counterparts. 
 
 **12.** `speciesrax/`: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:
 
 - `species_trees/`: contains inferred rooted species trees, species tree likihoods, and species trees with internal nodels labeled according to their support values.
-- `reconciliations/`: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species.
+- `reconciliations/`: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species. Reconciliations here are obtained without optimization of the gene family tree topology under a model of gene duplication, transfer, and loss. 
+
+**13.** `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Reconciliations are the result of joint optimization of the gene family tree topology and reconciliation, and duplication/transfer/loss rates. 
+
+- `per_family_rates`: Results of the per-family model. One directory for each gene family, named by the corresponding family ID. 
+- `per_species_rates`: Results of the per-species model. One directory for each gene family, named by the corresponding family ID. 
+- Each has a similar directory structure to SpeciesRax, but lacking the species trees directory, and lacking another directory containing the results of gene family tree reconciation and inferred rates of gene duplication, transfer, and loss.
 - `results/`: one directory per-gene-family containing reconciled gene trees and inferred rates of gene family duplication, transfer and loss.
 
-**13.** `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github.
-
-- Directory structure here is the same as for SpeciesRax, but there is no directory for species trees, as this step was conducted during the SpeciesRax module.
-
 </details>
-
----
-
-## Credits
-
-NovelTree was originally written by Arcadia Science.
-
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
