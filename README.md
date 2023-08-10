@@ -1,20 +1,18 @@
-# NovelTree: High-throughput and reproducible phylogenomic inference of gene family evolution
+# NovelTree: Highly parallelized phylogenomic inference  
 
 **Arcadia-Science/noveltree** is a phylogenomic pipeline designed to proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree. The pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required.
 
-`NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.
-
-On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
+`NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.  
 
 ---
 
 ## Quick Start
 
-**1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`).
+**1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`).  
 
-**2.** Install [`Docker`](https://docs.docker.com/engine/installation/).
+**2.** Install [`Docker`](https://docs.docker.com/engine/installation/).  
 
-**3.** Prepare a samplesheet following the required format:
+**3.** Prepare a samplesheet following the required format:  
 
 ```
 species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test
@@ -39,26 +37,33 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
   "input": "/full/path/to/samplesheet.csv",
   "outdir": "results",
   "mcl_inflation": "1.0,2.0,3.0",
+  "min_ungapped_length": 30,
   "min_num_spp_per_og": 4,
   "min_num_grp_per_og": 1,
+	"aligner": "witch",
   "max_copy_num_spp_tree": 5,
   "max_copy_num_gene_trees": 10,
   "download_annots": "none",
-  "tree_model": "LG+F+G4"
+  "tree_model": "LG+F+G4",
+  "outgroups": "none"
 }
 ```
 
 > #### Parameter descriptions:
 >
 > `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).
-> `mcl_inflation`: DEFAULT "1.0,2.0,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.
+> `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder.
+> `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.
 > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species an orthogroup must contain for phylogenetic inference.
 > `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups and orthogroup must contain for phylogenetic inference.
+> `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Either MAGUS ('magus') or MAFFT ('mafft').
 > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number an orthogroup may contain for species-tree inference.
 > `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number an orthogroup may contain for gene tree - species tree reconciliation with GeneRax.
+> `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.
 > `download_annots`: DEFAULT: "minimal". Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.
 > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.
-> `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.
+> `tree_model_pmsf`: OPTIONAL: Posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
+> `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses. 
 >
 > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/novelTree/tsar).
 
@@ -94,7 +99,7 @@ OR
 
 ```bash
 # If you're using Arcadia Science's test dataset
-nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/novelTree/nextflow_parameters.json
+nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/nextflow_parameters.json
 ```
 
 **NOTE: Currently the workflow only works using the docker profile.**
@@ -111,9 +116,9 @@ nextflow run . -profile docker -params-file <PARAMS.JSON>
 
 ---
 
-## Pipeline summary
+## Pipeline summary (Defaults)
 
-At its core, `NovelTree` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. **_The method automates all steps of the process, from calculating reciprocal sequence similary to orthogroup/gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to quantification of gene-family evolutionary dynamics._**
+At its core, `NovelTree` is a compilation of methods that facilites user-customized phylogenomic inference from whole proteome amino acid sequence data. **_The method automates all steps of the process, from calculating reciprocal protein-sequence similary to gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to inference of gene-family evolutionary dynamics._**
 
 Because `NovelTree` is built in [Nextflow](https://www.nextflow.io), the workflow distributes tasks in a highly parallel and asynchronous manner across available computational resources. The workflow is currently optimized for a single computational environment but is continually being developed for deployment across AWS spot-instances with Nextflow Tower, and may also be configured to run in a highly parallel manner on SLURM schedulers ([see here for documentation](https://www.nextflow.io/docs/latest/executor.html)).
 
@@ -127,11 +132,11 @@ Once the first round of MCL clustering has completed, `NovelTree` summarizes ort
 
 With orthogroups/gene families inferred, `NovelTree` will summarize each orthogroup on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it may be best, depending on use-case, to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
-For both subsets, `NovelTree` subsequently infers multiple sequences alignments (using [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)), trim these alignments for gappy/uninformative regions (using [`ClipKIT`](https://jlsteenwyk.com/ClipKIT/)), and infer gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) under a specified model of amino acid substitution (e.g. LG+F+G4).
+For both subsets, `NovelTree` subsequently infers cleaned multiple sequences alignments (using [`WITCH`](https://github.com/c5shen/WITCH)) and gene-family trees using [`FastTree2`](http://www.microbesonline.org/fasttree/).
 
-Using the first conservatively sized subset of gene family trees, `NovelTree` infers a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). This starting species tree is provided along with each gene family tree and corresponding multiple sequence alignment to [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
+Using the first conservatively sized subset of gene family trees, `NovelTree` infers a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid), a highly computationally efficient method. In parallel, a second species tree is inferred using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
 
-Using this improved species tree, `NovelTree` then uses [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family.
+Using this improved species tree, `NovelTree` then uses [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family and each species, using both the per-family, and per-species models.
 
 With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups.
 
@@ -153,13 +158,14 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 8. `SELECT_INFLATION`: Based on the above summaries, select the (mean) inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
 9. `ORTHOFINDER_MCL`: Repeat step six (6: MCL clustering into orthogroups) for all species under the optimal inflation parameter
 10. `FILTER_ORTHOGROUPS`: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
-11. `MAFFT`: Infer multiple sequence alignments for each focal gene family with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
-12. `CLIPKIT`: Trim uninformative/memory-consuming/gappy segments of alignments with [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
-13. `IQTREE`: Infer gene family trees using [`IQ-TREE`](http://www.iqtree.org/)
-14. `ASTEROID`: Infer a starting species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid)
-15. `SPECIESRAX`: Root the species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax)
-16. `GENERAX`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax)
-17. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+11. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with either [`WITCH`](https://github.com/c5shen/WITCH) (default) or [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
+12. `TRIM_SEQS`: OPTIONAL: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) (defualt) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
+14. `INFER_TREES`: Infer gene family trees using either [`FastTree2`](http://www.iqtree.org/) (default) or [`IQ-TREE`](http://www.iqtree.org/)
+16. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species. 
+17. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
+18. `GENERAX_PER_FAMILY`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
+18. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates)
+19. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 
 </details>
 
