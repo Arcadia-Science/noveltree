@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Arcadia-Science/phylorthology
+    Arcadia-Science/noveltree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/Arcadia-Science/phylorthology
+    Github : https://github.com/Arcadia-Science/noveltree
 ----------------------------------------------------------------------------------------
 */
 
@@ -146,9 +146,9 @@ def create_og_channel(Object inputs) {
 
 
 //
-// WORKFLOW: Run main Arcadia-Science/phylorthology analysis pipeline
+// WORKFLOW: Run main Arcadia-Science/noveltree analysis pipeline
 //
-workflow PHYLORTHOLOGY {
+workflow NOVELTREE {
     ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
 
@@ -314,10 +314,10 @@ workflow PHYLORTHOLOGY {
         ALIGN_SEQS(ch_spptree_fas)
         ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
-    
+
     // And for the remaining orthogroups:
     // Only start once species tree MSAs have finished (to give them priority)
-    // We use the combination of collect().count() to hold off on running this 
+    // We use the combination of collect().count() to hold off on running this
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
     if (ch_aligner == "witch") {
         ALIGN_REMAINING_SEQS(ch_genetree_fas)
@@ -327,7 +327,7 @@ workflow PHYLORTHOLOGY {
 
     //
     // MODULE: TRIM_MSAS
-    // Trim gappy regions, poorly aligned, or and phylogenetically 
+    // Trim gappy regions, poorly aligned, or and phylogenetically
     // uninformative/problematic sites from the MSAs using either
     // CIAlign or ClipKIT based on parameter specification.
     //
@@ -362,26 +362,26 @@ workflow PHYLORTHOLOGY {
             ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
         }
     }
-    // Create channels that are just lists of all the msas, and protein-species 
+    // Create channels that are just lists of all the msas, and protein-species
     // map links that are provided in bulk to SpeciesRax
     core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
     core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
-    
+
     //
     // MODULE: INFER_TREES
-    // Infer gene-family trees from the trimmed MSAs using either 
-    // VeryFastTree or IQ-TREE. 
+    // Infer gene-family trees from the trimmed MSAs using either
+    // VeryFastTree or IQ-TREE.
     //
     INFER_TREES(ch_core_og_clean_msas, params.tree_model)
     INFER_REMAINING_TREES(ch_rem_og_clean_msas, params.tree_model)
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
-    // Run IQ-TREE PMSF if model is specified, and subsequently collect final 
+    // Run IQ-TREE PMSF if model is specified, and subsequently collect final
     // phylogenies into a channel for downstram use
     if (params.tree_model_pmsf != 'none') {
         //
         // MODULE: IQTREE_PMSF
-        // Infer gene-family trees from the trimmed MSAs and guide trees from the 
+        // Infer gene-family trees from the trimmed MSAs and guide trees from the
         // previous tree inference module
         //
         // Be sure that both the MSAs and guide trees are sorted into the same
@@ -393,7 +393,7 @@ workflow PHYLORTHOLOGY {
         IQTREE_PMSF(ch_pmsf_input, params.tree_model_pmsf)
         IQTREE_PMSF_REMAINING(ch_pmsf_input_remaining, params.tree_model_pmsf)
         ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
-        
+
         ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
         ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
         // And create a channel/list (no tuple) of just the core trees used by Asteroid
@@ -425,7 +425,7 @@ workflow PHYLORTHOLOGY {
         .speciesrax_tree
         .set { ch_speciesrax }
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
-    
+
     // Now prepare for analysis with GeneRax
     ch_all_map_links = ch_core_og_maplinks
         .concat(ch_rem_og_maplinks)
@@ -434,20 +434,20 @@ workflow PHYLORTHOLOGY {
     ch_all_og_clean_msas = ch_core_og_clean_msas
         .concat(ch_rem_og_clean_msas)
 
-    // Join these so that each gene family may be dealt with asynchronously as soon 
-    // as possible, and include with them the species tree. 
+    // Join these so that each gene family may be dealt with asynchronously as soon
+    // as possible, and include with them the species tree.
     ch_generax_input = ch_all_map_links
         .join(ch_all_gene_trees)
         .join(ch_all_og_clean_msas)
         .combine(ch_speciesrax)
-    
+
     GENERAX_PER_FAMILY(
         ch_generax_input
     )
         .generax_per_fam_gfts
         .collect { it[1] }
         .set { ch_recon_perfam_gene_trees }
-    
+
     GENERAX_PER_SPECIES(
         ch_generax_input
     )
@@ -477,7 +477,7 @@ workflow PHYLORTHOLOGY {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    PHYLORTHOLOGY()
+    NOVELTREE()
 }
 
 /*
