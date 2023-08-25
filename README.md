@@ -50,6 +50,14 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 
 ---
 
+## Usage
+For a detailed description of basic- to advance-usage of the workflow, please see the [`USAGE.md`](USAGE.md) file. 
+
+## Outputs
+For a detailed description of basic- to advance-usage of the workflow, please see the [`OUTPUTS.md`](OUTPUTS.md) file. 
+
+---
+
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see [Arcadia Science's contribution guidelines](https://github.com/Arcadia-Science/arcadia-software-handbook/blob/main/guides-and-standards/guide-credit-for-contributions.md).
