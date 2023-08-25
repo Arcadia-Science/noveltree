@@ -40,7 +40,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
   "min_ungapped_length": 30,
   "min_num_spp_per_og": 4,
   "min_num_grp_per_og": 1,  
-	"aligner": "witch",
+  "aligner": "witch",
   "max_copy_num_spp_tree": 5,
   "max_copy_num_gene_trees": 10,
   "download_annots": "none",
@@ -65,7 +65,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 > `tree_model_pmsf`: OPTIONAL: Posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.  
 > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.  
 >
-> Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/novelTree/tsar).  
+> Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/noveltree).  
 
 **5.** Ensure that proteins are named following the following convention: `Species_genus:GeneID`  
 
@@ -99,7 +99,7 @@ OR
 
 ```bash
 # If you're using Arcadia Science's test dataset
-nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/nextflow_parameters.json
+nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
 ```
 
 **NOTE: Currently the workflow only works using the docker profile.**  
