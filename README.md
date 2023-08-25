@@ -20,6 +20,8 @@
 nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
 ```
 
+**NOTE: Currently the workflow only works using the docker profile.**  
+
 ---
 
 ## Pipeline summary (Defaults)
