@@ -14,6 +14,12 @@
 
 **2.** Install [`Docker`](https://docs.docker.com/engine/installation/).  
 
+**3.** Download the pipeline and our minimal test dataset with a single command run in the root of this repository:  
+
+```bash
+nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
+```
+
 **3.** Prepare a samplesheet following the required format:  
 
 ```
@@ -88,20 +94,6 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 # Future versions will include a utility to automate sequence naming, and the ability
 # to automatically correspond other standard sequence identifiers (e.g. NCBI RefSeq)
 # with UniProt accessions to facilitate this annotation process.
-```
-
-**6.** Download the pipeline and test it on a minimal dataset with a single command run in the root of this repository:  
-
-```bash
-# If you're using your own test data
-nextflow run . -profile docker -params-file parameters.json
-```
-
-OR
-
-```bash
-# If you're using Arcadia Science's test dataset
-nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
 ```
 
 **NOTE: Regarding our analysis on Nextflow Tower**  
