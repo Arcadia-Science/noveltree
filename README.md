@@ -51,10 +51,10 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 ---
 
 ## Usage
-For a detailed description of basic- to advance-usage of the workflow, please see the [`USAGE.md`](USAGE.md) file. 
+For a detailed description of basic- to advance-usage of the workflow, please see the [`USAGE.md`](docs/USAGE.md) file. 
 
 ## Outputs
-For a detailed description of basic- to advance-usage of the workflow, please see the [`OUTPUTS.md`](OUTPUTS.md) file. 
+For a detailed description of basic- to advance-usage of the workflow, please see the [`OUTPUTS.md`](docs/OUTPUTS.md) file. 
 
 ---
 
