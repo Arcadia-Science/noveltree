@@ -39,7 +39,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
   "mcl_inflation": "1.0,2.0,3.0",
   "min_ungapped_length": 30,
   "min_num_spp_per_og": 4,
-  "min_num_grp_per_og": 1,
+  "min_num_grp_per_og": 1,  
 	"aligner": "witch",
   "max_copy_num_spp_tree": 5,
   "max_copy_num_gene_trees": 10,
