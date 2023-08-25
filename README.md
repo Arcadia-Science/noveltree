@@ -2,6 +2,8 @@
 
 **Arcadia-Science/noveltree** is a phylogenomic pipeline designed to proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree. The pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required.
 
+![Workflow Figure](https://github.com/Arcadia-Science/noveltree/blob/ap/readmes/NovelTree.png)  
+
 `NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.  
 
 ---
@@ -146,8 +148,6 @@ Using this improved species tree, `NovelTree` then uses [`GeneRax`](https://gith
 With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups.  
 
 ## The workflow thus proceeds as follows:  
-
-![Workflow Figure](https://github.com/Arcadia-Science/noveltree/blob/ap/readmes/NovelTree.png)  
 
 <details>
   <summary>Expand for step-by-step description:</summary>
