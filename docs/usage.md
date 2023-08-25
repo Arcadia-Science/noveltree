@@ -117,3 +117,158 @@ This included:
 18. `GENERAX_PER_FAMILY`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)  
 18. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates)  
 19. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)  
+
+# Advanced Usage
+
+The sections below describe advanced usage of `NovelTree`, including per-module parameter specifications and outputs.  
+
+## Parameter specification
+
+We have set sensible parameter choices as default for each module, however several modules have parameters that are best-suited to user specification on a per-analysis basis. This section describes, for each module, fixed parameter names, or what default parameters specifications may be. Where necessary, refer to the documentation of each respective software for a more complete list of possible parameter choices.  
+
+Certain modules have parameters/flags that are specified in [`conf/modules.config`](conf/modules.config); these are indicated as necessary. It is up to the user to determine whether default specifications are sensible for any given dataset/analysis. Custom specifications may be made following the same convention (example below, [documented here](https://nf-co.re/developers/modules#general)) as used for these modules.  
+
+```
+process {
+    withName: 'MAFFT' {
+        ext.args = [
+            '--localpair',
+            '--maxiterate 1000',
+            '--anysymbol'
+        ].join(' ')
+    }
+}
+```
+
+### Module: select each to follow links to corresponding module file.  
+
+#### 1. [`BUSCO`](modules/nf-core-modified/busco.nf):
+
+- `config_file`: Optional config file used used by BUSCO.  
+- `busco_lineages_path`: Optional path to locally stored BUSCO lineage datasets  
+- [BUSCO documentation](https://busco.ezlab.org/busco_userguide.html)  
+
+#### 2. [`ANNOTATE_UNIPROT`](modules/local/annotate_uniprot.nf):  
+
+- `download_annots`: Specified in the parameter file.  
+- **Parameter may be specified as one of three things:**  
+  i. `all` - download all 16 possible sets of protein annotations from UniProt where possible.  
+  ii. `minimal` - download only the minimum necessary annotations that are used by cogeqc for gene family inference quality assessments.  
+  iii. A quoted, comma separated string of select numbers 1-16: example `"1,2,4,7,10"`. Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.  
+  ```
+  1. Minimal set of protein annotations/metadata required for COGEQC gene family inference:
+     protein external IDs for InterPro, OMA
+  2. General protein metadata: protein name, length, mass, information from mass spec
+     experiments, host organisms (for viral proteins), which organelle (if relevant)
+     encoding the protein, any AA variants due to RNA editing
+  3. Gene ontologies - biological process, cellular component, molecular function,
+     ontology ID
+  4. Function: Multiple annotations pertaining to the molecular function of the protein
+  5. Interactions
+  6. Protein-protein interactions (external database reference IDs)
+  7. Pathology & biotech
+  8. Subcellular location
+  9. Post-translation modification (PTM) / processsing
+  10. PTM databases
+  11. Protein family & domains
+  12. Protein family/group databases
+  13. Sequence databases
+  14. 3D structure databases
+  15. Enzyme and pathway databases
+  16. Phylogenomic databases
+  ```
+
+#### 3. [`DIAMOND_BLASTP`](modules/nf-core-modified/diamond_blastp.nf):  
+
+- `--ultra-sensitive`: Specified in [`conf/modules.config`](conf/modules.config). By default, sequence similarity is assessed using the most sensitive (albeit slowest) method.  
+- [Diamond documentation](https://github.com/bbuchfink/diamond/wiki)  
+
+#### 4. [`ORTHOFINDER_MCL`](modules/local/orthofinder_mcl.nf):  
+
+- `mcl_inflation`: Comma-separated list of inflation parameter values to be used in testing. Currently testing is mandatory - optional use is a work in progress.  
+- [OrthoFinder2 documentation](https://github.com/davidemms/OrthoFinder)  
+
+#### 5. [`FILTER_ORTHOGROUPS`](modules/local/filter_orthogroups.nf):  
+
+- Parameters specified in parameter json file or via commandline when running workflow.  
+- `min_num_seq_per_og`: Minimum number of sequences a gene family must contain for phylogenetic inference.  
+- `min_prop_spp_for_spptree`: Minimum \% of species for inclusion in species tree inference.  
+- `min_num_spp_per_og`: Minimum \# of species a gene family must contain for phylogenetic inference.  
+- `min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups a gene family must contain for phylogenetic inference.  
+- `max_copy_num_filt1`: Maximum \# of per-species gene copy number a gene family may contain for species-tree inference.  
+- `max_copy_num_filt2`: Maximum \# of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.  
+
+#### 6. `ALIGN_SEQS`  
+### [`MAFFT`](modules/nf-core-modified/mafft.nf):  
+
+- Parameters specified in [`conf/modules.config`](conf/modules.config). See MAFFT documentation for detailed description of options.  
+- `--localpair --maxiterate 1000 --anysymbol`: Runs MAFFT L-INS-i. Iterative refinement method incorporating local pairwise alignment information. Highly accurate, but slower.  
+- [MAFFT documentation](https://mafft.cbrc.jp/alignment/software/)  
+
+### [`WITCH`](modules/nf-core-modified/witch.nf):  
+
+- Parameters specified in [`conf/modules.config`](conf/modules.config).  
+- See [WITCH documentation](https://github.com/c5shen/WITCH) for detailed description of options.  
+
+
+#### 7. `TRIM_SEQS  
+### [`CLIPKIT`](modules/local/clipkit.nf):  
+
+- Defaults used. Custom parameters should be specified in [`conf/modules.config`](conf/modules.config).  
+- [ClipKIT documentation](https://jlsteenwyk.com/ClipKIT/)  
+
+### [`CIALIGN`](modules/local/cialign.nf):  
+
+- Custom parameters specified in [`conf/modules.config`](conf/modules.config).  
+- See [CIALIGN documentation](https://github.com/KatyBrown/CIAlign) for detailed description of options.  
+- `--crop_divergent_min_prop_ident=0.25 --crop_divergent_min_prop_nongap=0.25 --crop_ends --remove_insertions --insertion_min_size=5 --insertion_max_size=200 --remove_divergent --remove_divergent_minperc=0.15`  
+
+#### 8.  INFER_TREES
+### [`FASTTREE`](modules/nf-core-modified/fasttree.nf):  
+
+- Custom parameters specified in [`conf/modules.config`](conf/modules.config).  
+- See [FastTree2 documentation](http://www.microbesonline.org/fasttree/) for detailed description of options.  
+- `-lg -cat 20 -gamma -sprlength 50 -mlacc 3 -topm 2 -bionj`  
+
+### [`IQTREE`](modules/nf-core-modified/iqtree.nf):  
+
+- `tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree. Specified in parameter-file.  
+- `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used. Specified in parameter-file.  
+- All other custom parameters should be specified in [`conf/modules.config`](conf/modules.config).  
+- [IQ-TREE documentation](http://www.iqtree.org/)  
+
+#### 9. [`ASTEROID`](modules/local/asteroid.nf):  
+
+- Parameters should be specified in [`conf/modules.config`](conf/modules.config).  
+- `--random-starting-trees 10`: Number of random starting trees used in species tree inference.  
+- [Asteroid documentation](https://github.com/BenoitMorel/Asteroid)  
+
+#### 10. [`SPECIESRAX`](modules/local/speciesrax.nf):  
+
+##### **PLEASE** read the [SpeciesRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax) to GeneRax and SpeciesRax for a more detailed explanation, both of these options as well as other possible parameter specifications.  
+
+- The following parameters are specified within the [SpeciesRax module file](modules/local/speciesrax.nf)  
+- `--strategy SKIP --si-estimate-bl --per-species-rates`  
+  
+- The following parameters are specified in [`conf/modules.config`](conf/modules.config).  
+- `--rec-model UndatedDTL --si-strategy SKIP --si-quartet-support`  
+
+#### 11. [`GENERAX_PER_FAMILY`](modules/local/generax_per_family.nf):  
+
+- The following parameters are specified within the [GeneRax per-family module file](modules/local/generax_per_family.nf)  
+- `--prune-species-tree --reconciliation-samples 100`  
+  
+- The following parameters are specified in [`conf/modules.config`](conf/modules.config).  
+-  `--rec-model UndatedDTL --strategy SPR`  
+  
+- [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)  
+
+#### 12. [`GENERAX_PER_SPECIES`](modules/local/generax_per_species.nf):  
+
+- The following parameters are specified within the [GeneRax per-species module file](modules/local/generax_per_species.nf)  
+- `--prune-species-tree --reconciliation-samples 100 --per-species-rates`  
+  
+- The following parameters are specified in [`conf/modules.config`](conf/modules.config).  
+-  `--rec-model UndatedDTL --strategy SPR`  
+  
+- [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)  
