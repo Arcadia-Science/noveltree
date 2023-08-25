@@ -102,11 +102,16 @@ OR
 nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
 ```
 
-**NOTE: Currently the workflow only works using the docker profile.**  
+**NOTE: Regarding our analysis on Nextflow Tower**  
 
-Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.  
+When NovelTree was applied to the dataset used within its associated pub, we did so on Nextflow Tower. Accordingly, we specified a handful of additional configurations.  
 
-> - The pipeline comes with multiple config profiles, however for the workflow to work properly, you must use `-profile docker`  
+This included:  
+  1) `max_cpus = 5000`: This set the maximum number of available cpus (as spot instances) to all concurrent processes. Effectively the number of CPUs available to our virtual "cloud" computer.  
+  2) `max_memory = 30000.GB`: The same, but for memory alloted for all concurrent processes.  
+  3) `max_time = 2400.h`: Again, the same, but the maximum time alloted for all concurrent processes.  
+  4) Additionally, we allocated 32 CPUs to the head node to ensure efficient monitoring and submission of jobs.  
+
 
 **7.** Start running your own analysis! See [here](#parameter-specification) for in-depth parameter description.  
 
