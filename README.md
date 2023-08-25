@@ -1,6 +1,6 @@
 # NovelTree: Highly parallelized phylogenomic inference  
 
-**Arcadia-Science/noveltree** is a phylogenomic pipeline designed to proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree. The pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required.
+**Arcadia-Science/noveltree** is a phylogenomic pipeline designed to analyze proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree. The pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required.
 
 ![Workflow Figure](https://github.com/Arcadia-Science/noveltree/blob/ap/readmes/NovelTree.png)  
 
