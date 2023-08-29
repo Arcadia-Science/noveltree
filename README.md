@@ -58,6 +58,10 @@ For a detailed description of basic- to advance-usage of the workflow, please se
 
 ---
 
+## Credits
+
+NovelTree was originally written by Arcadia Science.  
+
 ## Feedback, contributions, and reuse
 
 We try to be as open as possible with our work and make all of our code both available and usable. 
