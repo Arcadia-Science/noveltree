@@ -1,5 +1,5 @@
 # Run the workflow on your own custom dataset
-As a reminder - the pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required. For a description of such a filtering procedure, see the following [GitHub repository](https://github.com/Arcadia-Science/2023-tsar-noveltree/tree/main/scripts/data-preprocessing).
+As a reminder - the pipeline assumes that prior to analysis, input proteomes for each species have been sufficiently filtered such that no additional filtering of species or sequences is required. For a description of such a filtering procedure, see the following [GitHub repository](https://github.com/Arcadia-Science/2023-tsar-noveltree/tree/main/scripts/data-preprocessing). Briefly, these scripts: 1) remove short protein sequences, 2) retain only the longest protein per-gene (in the case of transcriptomes with multiple isoforms), 3) remove redundant protein sequences, and 4) rename protein sequences in accordance to NovelTree's expected format. 
 
 ## Preparation
 **1.** Prepare a samplesheet following the required format:  
@@ -88,7 +88,7 @@ nextflow run . -profile docker -params-file <PARAMS.JSON>
 
 ### **NOTE: Regarding our analysis on Nextflow Tower**  
 
-When NovelTree was applied to the dataset used within its associated pub, we did so on Nextflow Tower. Accordingly, we specified a handful of additional configurations.  
+When applying NovelTree to the dataset used in [the associated pub](https://doi.org/10.57844/arcadia-z08x-v798), we launched the workflow via Nextflow Tower to run on AWS Batch and specified additional configurations:  
 
 This included:  
   1) `max_cpus = 5000`: This set the maximum number of available cpus (as spot instances) to all concurrent processes. Effectively the number of CPUs available to our virtual "cloud" computer.  
