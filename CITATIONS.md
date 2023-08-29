@@ -18,9 +18,13 @@
 
   > The UniProt Consortium. (2023). UniProt: the universal protein knowledgebase in 2023. https://doi.org/10.1093/nar/gkac1052
 
-- [UniProt.ws](https://doi.org/doi:10.18129/B9.bioc.UniProt.ws)
+- [BioServices](https://doi.org/10.1093/bioinformatics/btt547)
 
-  > Carlson M, Ramos M. (2022). UniProt.ws: R Interface to UniProt web services. R package version 2.38.1. https://doi.org/doi:10.18129/B9.bioc.UniProt.ws
+  > Cokelaer, T, Pultz, D, Harder, LM, Serra-Musach, J, Saez-Rodriguez, J. (2013). BioServices: a common Python package to access biological Web Services programmatically. https://doi.org/10.1093/bioinformatics/btt547
+
+- [pandas](https://zenodo.org/record/8239932)
+
+  >  Data structures for statistical computing in python. https://doi.org/10.25080/Majora-92bf1922-00a
 
 - [OrthoFinder](https://doi.org/10.1186/s13059-015-0721-2)
 
@@ -46,9 +50,21 @@
 
   > Nakamura, T, Yamada, KD, Tomii, K, & Katoh, K. (2018). Parallelization of MAFFT for large-scale multiple sequence alignments. https://doi.org/10.1093/bioinformatics/bty121
 
+- [WITCH](https://doi.org/10.1089/cmb.2021.0585)
+
+  > Shen, C, Park, M, & Warnow, T. (2022). WITCH: improved multiple sequence alignment through weighted consensus hidden Markov model alignment. https://doi.org/10.1089/cmb.2021.0585
+
 - [ClipKIT](https://doi.org/10.1371/journal.pbio.3001007)
 
   > Steenwyk JL, Buida III TJ, Li Y, Shen XX, Rokas A. (2020). ClipKIT: a multiple sequence alignment trimming software for accurate phylogenomic inference. https://doi.org/10.1371/journal.pbio.3001007
+  
+- [CIALIGN](https://doi.org/10.7717/peerj.12983)
+
+  > Tumescheit C, Firth AE, Brown K. (2022). CIAlign: A highly customisable command line tool to clean, interpret and visualise multiple sequence alignments. https://doi.org/10.7717/peerj.12983
+
+- [FASTTREE2](https://doi.org/10.1371/journal.pone.0009490)
+
+  > Price, MN, Dehal, SP, Arkin, AP. (2010). FastTree 2 – Approximately Maximum-Likelihood Trees for Large Alignments. https://doi.org/10.1371/journal.pone.0009490
 
 - [IQ-TREE](https://doi.org/10.1093/molbev/msaa015)
 
@@ -81,6 +97,15 @@
 - [elbow](https://github.com/ahasverus/elbow)
   > Casajus N. (2022). elbow: Detect inflection point of a concave curve. R package version 0.0.0.9000. https://github.com/ahasverus/elbow
 
+- [ape](https://doi.org/10.1093/bioinformatics/btg412)
+  > Paradis, E, Claude, J, Strimmer, K. (2004). APE: Analyses of Phylogenetics and Evolution in R language. https://doi.org/10.1093/bioinformatics/btg412
+
+- [phytools](https://doi.org/10.1111/j.2041-210X.2011.00169.x)
+  > Revell, LJ. (2011). phytools: an R package for phylogenetic comparative biology (and other things). https://doi.org/10.1111/j.2041-210X.2011.00169.x
+
+- [DISCO](https://doi.org/10.1093/sysbio/syab070)
+  > Willson, J, Saha Roddur, M, Liu, B, Zaharias, P, Warnow, T. (2021). DISCO: Species Tree Inference using Multicopy Gene Family Tree Decomposition. https://doi.org/10.1093/sysbio/syab070
+
 ## Software packaging/containerization tools
 
 - [Anaconda](https://anaconda.com)
@@ -102,5 +127,4 @@
   > R Core Team. (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria.
 
 - [Singularity](https://doi.org/10.1371/journal.pone.0177459)
-
-  > Kurtzer GM, Sochat V, Bauer MW. (2017). Singularity: Scientific containers for mobility of compute. https://doi.org/10.1371/journal.pone.0177459
+  

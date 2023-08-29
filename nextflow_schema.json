@@ -79,8 +79,8 @@
                 },
                 "aligner": {
                     "type": "string",
-                    "default": "mafft",
-                    "description": "Option specifying the method used to infer multiple sequence alignments. Either MAGUS ('magus') or MAFFT ('mafft'). Additional params for either method should be provided in modules.config."
+                    "default": "witch",
+                    "description": "Option specifying the method used to infer multiple sequence alignments. Either WITCH ('witch') or MAFFT ('mafft'). Additional params for either method should be provided in modules.config."
                 },
                 "msa_trimmer": {
                     "type": "string",
