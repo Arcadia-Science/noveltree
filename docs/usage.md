@@ -90,8 +90,8 @@ nextflow run . -profile docker -params-file <PARAMS.JSON>
 
 When applying NovelTree to the dataset used in [the associated pub](https://doi.org/10.57844/arcadia-z08x-v798), we launched the workflow via Nextflow Tower to run on AWS Batch and specified additional configurations:  
 
-This included:  
-  1) `max_cpus = 5000`: This set the maximum number of available cpus (as spot instances) to all concurrent processes. Effectively the number of CPUs available to our virtual "cloud" computer.  
+These included:  
+  1) `max_cpus = 5000`: This set the maximum number of available cpus (as spot instances) to all concurrent processes. Effectively the number of CPUs available to our virtual "cloud" computer.  This parameter (along with `max_memory` and `max_time` interact with both the run-specific configuration, as well as the runs compute environment. 
   2) `max_memory = 30000.GB`: The same, but for memory alloted for all concurrent processes.  
   3) `max_time = 2400.h`: Again, the same, but the maximum time alloted for all concurrent processes.  
   4) Additionally, we allocated 32 CPUs to the head node to ensure efficient monitoring and submission of jobs.
