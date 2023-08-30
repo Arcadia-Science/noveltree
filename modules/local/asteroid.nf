@@ -2,7 +2,7 @@ process ASTEROID {
     tag "Asteroid"
     label 'process_asteroid'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117_disco_20e10c3_rbase_4.2.2:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0':
         '' }"
 
     publishDir(
@@ -15,7 +15,7 @@ process ASTEROID {
     val species_names  // Names of all species
     file treefiles     // Filepath to the asteroid treefile (all newick gene trees)
     val outgroups      // String of specified outgroups to root species tree with, if provided
-    
+
     output:
     path "asteroid.bestTree.newick"        , emit: spp_tree
     path "asteroid_rooted.bestTree.newick" , emit: rooted_spp_tree, optional: true
@@ -36,8 +36,8 @@ process ASTEROID {
     echo "$species_names" | sed "s/\\[//g" | sed "s/\\]//g" | tr "," "\\n" > original_spp_names.txt
     sed "s/_/-/g" original_spp_names.txt | sed "s/ //g" > new_spp_names.txt
     paste original_spp_names.txt new_spp_names.txt > spp_rename.txt
-    rm original_spp_names.txt new_spp_names.txt 
-    
+    rm original_spp_names.txt new_spp_names.txt
+
     # Create the list of gene family trees to be decomposed into single-copy
     # trees using DISCO
     cat *.treefile >> gene_family_trees.newick
@@ -51,8 +51,8 @@ process ASTEROID {
         new=\$(echo \$spp | cut -f2 -d" ")
         sed -i "s/\${old}/\${new}/g" gene_family_trees.newick
     done < spp_rename.txt
-    
-    # Run DISCO to decompose gene family trees into single-copy trees, rooted to 
+
+    # Run DISCO to decompose gene family trees into single-copy trees, rooted to
     # minimize the number of duplications and losses
     python /DISCO/disco.py \\
         -i gene_family_trees.newick \\
@@ -73,12 +73,12 @@ process ASTEROID {
         new=\$(echo \$spp | cut -f2 -d" ")
         sed -i "s/\${new}/\${old}/g" *.newick
     done < spp_rename.txt
-    
+
     # Lastly, reroot the tree if user-specified outgroups are provided
     if [[ $outgroups != "none" ]]; then
         reroot_speciestree.R asteroid.bestTree.newick $outgroups
     fi
-    
+
     # Version is hardcoded for now (asteroid doesn't output this currently)
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

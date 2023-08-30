@@ -2,11 +2,11 @@ process WITCH {
     tag "$meta.og"
     label 'process_magus'
 
-    container "${ workflow.containerEngine == 'docker' ? 'austinhpatton123/witch_0.3.0:0.0.2' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/witch_0.3.0:1.0.0' :
         '' }"
     // TODO: address this issue (permission related errors) in future release
     containerOptions = "--user root"
-    
+
     stageInMode = 'copy'
     publishDir(
         path: "${params.outdir}/witch_alignments",
@@ -37,11 +37,11 @@ process WITCH {
         rm -rf alignments/
     fi
 
-    # Be sure to remove any non-standard amino acid codes in the input sequences, as this 
-    # can cause errors downstream and in parsing. 
+    # Be sure to remove any non-standard amino acid codes in the input sequences, as this
+    # can cause errors downstream and in parsing.
     sed -E -i '/>/!s/U//g' ${fasta} # selenocysteine
     sed -E -i '/>/!s/O//g' ${fasta} # pyrrolysine
-    
+
     python3 /WITCH/witch.py \\
         -i ${fasta} \\
         -d alignments \\
@@ -49,11 +49,11 @@ process WITCH {
         --graphtraceoptimize true \\
         --molecule amino \\
         $args
-    
-    # By default, witch only masks (and removes) singleton columns - we still would 
-    # like to make sure that we are removing sequences with too many positions removed. 
+
+    # By default, witch only masks (and removes) singleton columns - we still would
+    # like to make sure that we are removing sequences with too many positions removed.
     # So, here we're using awk to remove sequences with fewer than params.min_ungapped_length
-    # AA remaining once masked. 
+    # AA remaining once masked.
     awk -v N=${min_len} -F "" \
         'BEGIN { getline; header=\$0; seq="" } \
         !/^>/ { for (i=1; i<=NF; i++) if (\$i != "-") s++ } \
@@ -62,8 +62,8 @@ process WITCH {
         END { if (s >= N) { print header; print seq } }' \
         alignments/merged.fasta.masked > tmp.fasta
 
-    # And remove any columns that are now comprised exclusively of gaps following the exclusion 
-    # of (if any) sequences in the above step. 
+    # And remove any columns that are now comprised exclusively of gaps following the exclusion
+    # of (if any) sequences in the above step.
     awk 'BEGIN {seq_count=0} \
         /^>/ {seq_count++; headers[seq_count]=\$0; next} \
         {sequences[seq_count]=sequences[seq_count]\$0} \
@@ -75,17 +75,17 @@ process WITCH {
           } \
           for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
         }' tmp.fasta > final_masked.fasta
-    
+
     # Reorganize results for publishing
     mkdir original_alignments
     mkdir cleaned_alignments
     mv alignments/merged.fasta original_alignments/${og}_witch.fa
     mv final_masked.fasta cleaned_alignments/${og}_witch_cleaned.fa
     rm -r alignments/ && rm tmp.fasta
-    
-    # In the rare case that this filtering reduces sequences down to < 4 
+
+    # In the rare case that this filtering reduces sequences down to < 4
     # sequences, delete the output cleaned alignments to exclude them from
-    # downstream phylogenetic analyses. 
+    # downstream phylogenetic analyses.
     n_remain=\$(grep ">" cleaned_alignments/${og}_witch_cleaned.fa | wc -l)
     if [ \$n_remain -lt 4 ]; then
         rm cleaned_alignments/${og}_witch_cleaned.fa
@@ -99,7 +99,7 @@ process WITCH {
         paste prot spp > species_protein_maps/${og}_map.link
         rm prot && rm spp
     fi
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         witch: v\$(python3 /WITCH/witch.py -v | cut -f2 -d " ")

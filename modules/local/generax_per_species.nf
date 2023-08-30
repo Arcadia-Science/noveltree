@@ -1,9 +1,9 @@
 process GENERAX_PER_SPECIES {
     tag "$meta.og"
     label 'process_generax'
-    stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems. 
+    stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
     container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/generax_19604b7:0.0.1': '' }"
+        'arcadiascience/generax_19604b71:1.0.0': '' }"
 
     publishDir(
         path: "${params.outdir}/generax/per_species_rates",
@@ -36,7 +36,7 @@ process GENERAX_PER_SPECIES {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
 
-    # Populate the family file for this gene family for the 
+    # Populate the family file for this gene family for the
     # analysis with GeneRax
     # We will be using LG+G4+F for all gene families
     echo "[FAMILIES]" > ${og}.family
@@ -63,7 +63,7 @@ process GENERAX_PER_SPECIES {
 
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
-    
+
     # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
     mkdir $og/reconciliations/reconciliation_transfer_samples/
     mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
