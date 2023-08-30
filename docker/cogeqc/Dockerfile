@@ -1,4 +1,4 @@
-FROM arcadiascience/rbase_4.2.2:0.0.1
+FROM arcadiascience/rbase_4.2.2:1.0.0
 
 # Install the required dependencies and R
 RUN apt-get update && \

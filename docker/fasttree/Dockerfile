@@ -1,4 +1,4 @@
-FROM arcadiascience/rbase_4.2.2:0.0.1
+FROM arcadiascience/rbase_4.2.2:1.0.0
 
 # Install the required dependencies
 RUN apt-get update && \
@@ -14,10 +14,10 @@ RUN apt-get update && \
         libgmp3-dev \
         libssl-dev \
         openmpi-bin \
-        openmpi-doc \ 
+        openmpi-doc \
         wget
 
-# Download the FastTree source code and compile with OpenMP for 
+# Download the FastTree source code and compile with OpenMP for
 # parallel execution and use double precision to prevent rounding/
 # numerical issues
 RUN wget http://microbesonline.org/fasttree/FastTree.c && \

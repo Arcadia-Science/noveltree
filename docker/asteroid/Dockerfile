@@ -1,4 +1,4 @@
-FROM arcadiascience/rbase_4.2.2:0.0.1
+FROM arcadiascience/rbase_4.2.2:1.0.0
 
 # Prevent interactive querying of geographic area during build
 ENV DEBIAN_FRONTEND noninteractive
@@ -24,7 +24,7 @@ RUN git clone --recursive https://github.com/BenoitMorel/Asteroid && \
     cd Asteroid/ && \
     git checkout 3aae117df3353c28c6a07d58a4c8b0ab290f974f && \
     bash ./install.sh
-    
+
 # Clone the DISCO repository and install, along with dependencies
 RUN git clone https://github.com/JSdoubleL/DISCO.git && \
     cd DISCO/ && \

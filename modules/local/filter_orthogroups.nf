@@ -6,7 +6,7 @@ process FILTER_ORTHOGROUPS {
     // installed, which is required by nextflow to monitor
     // processes. So, we use the cogeqc module here for simplicity.
     container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/rbase_4.2.2:0.0.1': '' }"
+        'arcadiascience/rbase_4.2.2:1.0.0': '' }"
 
     publishDir(
         path: "${params.outdir}/filtered_orthogroups",
@@ -31,7 +31,7 @@ process FILTER_ORTHOGROUPS {
     path "genetree_core_ogs_counts.csv" , emit: genetree_core_ogs
     path "species_tree_og_msas/*.fa"    , emit: spptree_fas
     path "gene_tree_og_msas/*.fa"       , emit: genetree_fas
-    
+
     when:
     task.ext.when == null || task.ext.when
 
