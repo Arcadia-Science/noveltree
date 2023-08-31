@@ -4,7 +4,7 @@ This folder includes the Dockerfiles used for the custome modules of the pipelin
 
 ## Base images
 
-The Dockerfiles we include in this folder use two separate base images as starting points: [ubuntu:20.04](https://hub.docker.com/layers/library/ubuntu/20.04/images/sha256-3246518d9735254519e1b2ff35f95686e4a5011c90c85344c1f38df7bae9dd37?context=explore) and [pyton:3.9-slim](https://hub.docker.com/layers/library/python/3.9-slim/images/sha256-b370e60efdfcc5fcb0a080c0905bbcbeb1060db3ce07c3ea0e830b0d4a17f758).
+The Dockerfiles we include in this folder use three separate base images as starting points: [ubuntu:20.04](https://hub.docker.com/layers/library/ubuntu/20.04/images/sha256-3246518d9735254519e1b2ff35f95686e4a5011c90c85344c1f38df7bae9dd37?context=explore), [pyton:3.9-slim](https://hub.docker.com/layers/library/python/3.9-slim/images/sha256-b370e60efdfcc5fcb0a080c0905bbcbeb1060db3ce07c3ea0e830b0d4a17f758) and [arcadiascience/rbase_4.2.2](https://hub.docker.com/r/arcadiascience/rbase_4.2.2). The final image is a custom built image by us that comes with R v4.2.2.
 
 ## Naming conventions
 
