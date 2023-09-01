@@ -144,19 +144,19 @@ oma <- oma[which(names(oma) %in% species)]
 # well each inflation parameter infers sensible orthogroups with respect to the
 # homogeneity and dispersal of annotations
 # Count the number of species for which we have each summary statistic - we can
-# only calculate these if there is >= 2 species. 
+# only calculate these if there is >= 2 species.
 og_assess_list <- list(
     list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(interpro)),], 
+        og_set = orthogroups[which(orthogroups$Species %in% names(interpro)),],
         ann_set = interpro, spp_count = length(names(interpro))),
     list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(oma)),], 
+        og_set = orthogroups[which(orthogroups$Species %in% names(oma)),],
         ann_set = oma, spp_count = length(names(oma)))
 )
 
 # A quick function to run the assessment in parallel, checking that there are
 # enough species
-get_assessments <- 
+get_assessments <-
     function(i){
         if(og_assess_list[[i]]$spp_count > 1){
             assess <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
@@ -187,7 +187,7 @@ og_freqs <- table(as.factor(unique(orthogroups[,1:2])$Orthogroup))
 # Get the number of gene copies per species, per orthogroup
 per_spp_og_counts <- table(orthogroups[,1:2])
 
-# And from this, get the mean per-species count per orthogroup with at least 
+# And from this, get the mean per-species count per orthogroup with at least
 # the user-specified minimum number of species
 per_spp_og_counts <- rowMeans(per_spp_og_counts[!rowSums(per_spp_og_counts == 0) >= min_spp,])
 
