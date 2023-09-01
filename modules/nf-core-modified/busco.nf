@@ -1,9 +1,9 @@
 process BUSCO {
     // Modified from nf-core to:
-    // 1) specify required "mode" parameter 
+    // 1) specify required "mode" parameter
     // 2) allow scale-dependent (from meta) specification of lineage dataset
     tag "$meta.id"
-    label 'process_lowcpu'
+    label 'process_low_cpu'
 
     conda (params.enable_conda ? "bioconda::busco=5.4.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -20,12 +20,12 @@ process BUSCO {
     tuple val(meta), path("*_busco.batch_summary.txt") , emit: batch_summary, optional: true
     tuple val(meta), path("short_summary.*.txt")       , emit: short_summaries_txt, optional: true
     tuple val(meta), path("short_summary.*.json")      , emit: short_summaries_json, optional: true
-    tuple val(meta), path("*_busco.tar.gz")                   , emit: busco_dir, optional: true
+    tuple val(meta), path("*_busco.tar.gz")            , emit: busco_dir, optional: true
     path "versions.yml"                                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
-    
+
     script:
     def args              = task.ext.args ?: ''
     def prefix            = lineage_scale.equals('shallow') ? "${meta.id}_${meta.shallow_db}" : "${meta.id}_${meta.broad_db}"
@@ -72,18 +72,18 @@ process BUSCO {
         $busco_lineage_dir \\
         $busco_config \\
         $args
-    
+
     # clean up
     rm -rf "\$INPUT_SEQS"
-    
+
     # Move files to avoid staging/publishing issues
     mv ${prefix}_busco/batch_summary.txt ${prefix}_busco.batch_summary.txt
     mv ${prefix}_busco/*/short_summary.*.{json,txt} . || echo "Short summaries were not available: No genes were found."
-    
+
     # Compress and then remove the busco dir, as these contain many largely unnecessary files:
     tar -czvf ${prefix}_busco.tar.gz ${prefix}_busco/
     rm -r ${prefix}_busco/
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         busco: \$( busco --version 2>&1 | sed 's/^BUSCO //' )
