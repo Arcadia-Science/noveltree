@@ -1,9 +1,8 @@
 process SAMPLESHEET_CHECK {
     tag "$complete_samplesheet"
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.9--1' :
-        'quay.io/biocontainers/python:3.9--1' }"
+    container "${ workflow.containerEngine == 'docker' ?
+        'quay.io/biocontainers/python:3.9--1': '' }"
 
     input:
     path complete_samplesheet // Samplesheet formatted as described in the README

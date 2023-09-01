@@ -415,9 +415,11 @@ workflow NOVELTREE {
         .set { ch_asteroid }
     ch_versions = ch_versions.mix(ASTEROID.out.versions)
 
-    // If no outgroups are provided (and thus no rooted species tree output 
+    // If no outgroups are provided (and thus no rooted species tree output
     // by Asteroid), define ch_asteroid as a null/empty channel
-    if (params.outgroups == 'none') {ch_asteroid = Channel.value([null])}
+    if (params.outgroups == 'none') {
+        ch_asteroid = Channel.value([null])
+    }
 
     //
     // MODULE: SPECIESRAX
