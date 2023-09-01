@@ -2,7 +2,7 @@ process FASTTREE {
     tag "$meta.og"
     label 'process_fasttree'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:1.0.0':
         '' }"
 
     publishDir(
@@ -33,7 +33,7 @@ process FASTTREE {
     FastTreeDblMP \\
         $args \\
         $alignment > ${og}_ft.treefile
-        
+
     # prevent zero-length branches (sometimes inferred with fasttree)
     resolve_polytomies.R ${og}_ft.treefile resolved.tree
     mv resolved.tree ${og}_ft.treefile

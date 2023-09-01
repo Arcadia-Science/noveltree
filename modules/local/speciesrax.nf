@@ -1,9 +1,9 @@
 process SPECIESRAX {
     tag "SpeciesRax"
     label 'process_generax'
-    stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems. 
+    stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
     container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/generax_19604b7:0.0.1': '' }"
+        'arcadiascience/generax_19604b71:1.0.0': '' }"
 
     publishDir(
         path: "${params.outdir}/speciesrax",
@@ -33,7 +33,7 @@ process SPECIESRAX {
     else
         starting_tree="MiniNJ"
     fi
-    
+
     # Recode selenocysteine as a gap character:
     # RAxML-NG (used under the hood by SpeciesRax and
     # GeneRax) cannot handle these. Even if rare,
@@ -43,7 +43,7 @@ process SPECIESRAX {
 
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
-    
+
     # Construct the family files for each gene family
     echo "[FAMILIES]" > speciesrax_orthogroup.families
     for msa in \$(ls *fa)
@@ -51,8 +51,8 @@ process SPECIESRAX {
         # Get the OG name
         og=\$(echo \$msa | cut -f1 -d"_")
         tree=\$(ls \${og}*.treefile)
-        
-        # Populate the families file for this gene family for the 
+
+        # Populate the families file for this gene family for the
         # analysis with SpeciesRax
         # We will be using LG+G4+F for all gene families
         echo "- \${og}" >> speciesrax_orthogroup.families
@@ -77,12 +77,12 @@ process SPECIESRAX {
         $args
 
     # Remove the redundant result directory, moving everything into the
-    # working directory, deleiting the meaningless reconciliations 
+    # working directory, deleiting the meaningless reconciliations
     # directory and cleaning up
     mv SpeciesRax/* .
     rm -r reconciliations
     rm -r SpeciesRax
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         generax: \$( generax | head -n1 | sed "s/.*GeneRax //g" )

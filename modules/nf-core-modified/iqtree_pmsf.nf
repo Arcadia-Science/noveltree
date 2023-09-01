@@ -9,9 +9,9 @@ process IQTREE_PMSF {
     tag "$alignment"
     label 'process_iqtree'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
         '' }"
-    
+
     publishDir(
         path: "${params.outdir}/iqtree_pmsf_gene_trees",
         mode: params.publish_dir_mode,
@@ -20,13 +20,13 @@ process IQTREE_PMSF {
 
     input:
     tuple val(meta), file(alignment), file(guide_tree)
-    val pmsf_model 
+    val pmsf_model
 
     output:
     tuple val(meta), path("*pmsf.treefile") , emit: phylogeny
     tuple val(meta), path("*.log")      , emit: iqtree_log
     path "versions.yml"                 , emit: versions
-    
+
     when:
     task.ext.when == null || task.ext.when
 
@@ -49,7 +49,7 @@ process IQTREE_PMSF {
     # Rename the tree and log file to something more informative
     mv ${alignment}.treefile ${alignment}.pmsf.treefile
     mv ${alignment}.log ${alignment}.pmsf.log
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         iqtree: \$(echo \$(iqtree -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')

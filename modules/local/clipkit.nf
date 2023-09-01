@@ -2,7 +2,7 @@ process CLIPKIT {
     tag "$fasta"
     label 'process_lowcpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_1.3.0-seqmagick_0.8.4:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_1.3.0-seqmagick_0.8.4:1.0.0' :
         '' }"
 
     publishDir(
@@ -39,7 +39,7 @@ process CLIPKIT {
         \${prefix}_tmp.fa \\
         \${prefix}_clipkit.fa
 
-    # Now, create a protein-species map-file: 
+    # Now, create a protein-species map-file:
     # Pull out the sequences, and split into a TreeRecs format mapping
     # file, where each protein in the tree is a new line, listing species
     # and then the protein
@@ -48,7 +48,7 @@ process CLIPKIT {
     sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
     paste prot spp > species_protein_maps/\${prefix}_map.link
     rm prot && rm spp
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         clipkit: \$( clipkit --version | sed "s/clipkit //g" )
