@@ -28,7 +28,7 @@ process SPECIESRAX {
 
     script:
     def args = task.ext.args ?: ''
-    def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : 'MiniNJ'
+    def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : "MiniNJ"
     """
     # Recode selenocysteine as a gap character:
     # RAxML-NG (used under the hood by SpeciesRax and
