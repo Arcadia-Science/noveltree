@@ -1,9 +1,10 @@
 process ORTHOFINDER_PHYLOHOGS {
-    // label 'process_highthread'
     label 'process_medium'
+    stageInMode = "copy"
+
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
         '' }"
-    stageInMode = "copy"
+
     publishDir(
         path: "${params.outdir}/orthofinder/complete_dataset/",
         mode: params.publish_dir_mode, overwrite: false,

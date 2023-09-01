@@ -2,6 +2,7 @@ process GENERAX_PER_SPECIES {
     tag "$meta.og"
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
+
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/generax_19604b71:1.0.0': '' }"
 
