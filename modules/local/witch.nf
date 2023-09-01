@@ -1,6 +1,6 @@
 process WITCH {
     tag "$meta.og"
-    label 'process_magus'
+    label 'process_witch'
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/witch_0.3.0:1.0.0' :
         '' }"
