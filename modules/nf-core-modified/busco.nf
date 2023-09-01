@@ -20,7 +20,7 @@ process BUSCO {
     tuple val(meta), path("*_busco.batch_summary.txt") , emit: batch_summary, optional: true
     tuple val(meta), path("short_summary.*.txt")       , emit: short_summaries_txt, optional: true
     tuple val(meta), path("short_summary.*.json")      , emit: short_summaries_json, optional: true
-    tuple val(meta), path("*_busco.tar.gz")                   , emit: busco_dir, optional: true
+    tuple val(meta), path("*_busco.tar.gz")            , emit: busco_dir, optional: true
     path "versions.yml"                                , emit: versions
 
     when:
