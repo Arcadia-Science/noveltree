@@ -2,6 +2,7 @@ process SPECIESRAX {
     tag "SpeciesRax"
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
+
     container "${ workflow.containerEngine == 'docker' ?
         'arcadiascience/generax_19604b71:1.0.0': '' }"
 
@@ -27,13 +28,8 @@ process SPECIESRAX {
 
     script:
     def args = task.ext.args ?: ''
+    def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : "MiniNJ"
     """
-    if [[ $rooted_spp_tree != "none" ]]; then
-        starting_tree=$rooted_spp_tree
-    else
-        starting_tree="MiniNJ"
-    fi
-
     # Recode selenocysteine as a gap character:
     # RAxML-NG (used under the hood by SpeciesRax and
     # GeneRax) cannot handle these. Even if rare,
@@ -68,7 +64,7 @@ process SPECIESRAX {
         --allow-run-as-root \\
         --use-hwthread-cpus \\
         generax \\
-        --species-tree \$starting_tree \\
+        --species-tree $starting_tree \\
         --families speciesrax_orthogroup.families \\
         --prefix SpeciesRax \\
         --strategy SKIP \\
