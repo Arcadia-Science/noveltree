@@ -2,7 +2,7 @@ process ANNOTATE_UNIPROT {
     tag "$meta.id"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/python3.9_bioservices_1.10.0:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/bioservices_1.10.0:1.0.0':
         '' }"
 
     publishDir(
@@ -40,8 +40,8 @@ process ANNOTATE_UNIPROT {
         # This Python script uses the bioservices python package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
         protein_annotation.py $spp ${spp}_protein_accessions.txt
-        
-        # Organize results so that the cogeqc annotations are in the current 
+
+        # Organize results so that the cogeqc annotations are in the current
         # directory, and all others are moved into a single directory for the
         # species
         mkdir $spp

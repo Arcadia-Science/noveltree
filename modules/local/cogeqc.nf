@@ -2,7 +2,7 @@ process COGEQC {
     tag "Orthogroup Summary"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cogeqc_1.2.1:0.0.1':
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cogeqc_1.2.1:1.0.0':
         '' }"
 
     publishDir(

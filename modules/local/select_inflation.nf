@@ -3,7 +3,7 @@ process SELECT_INFLATION {
     label 'process_low'
 
     container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/select_mcl_inflation_params:0.0.1': '' }"
+        'arcadiascience/select_mcl_inflation_params_08302023:1.0.0': '' }"
 
     publishDir(
         path: "${params.outdir}/orthogroup_summaries",

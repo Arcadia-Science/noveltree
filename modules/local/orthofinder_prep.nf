@@ -1,7 +1,7 @@
 process ORTHOFINDER_PREP {
     tag "Prepping data for OrthoFinder"
     label 'process_low'
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
         '' }"
 
     publishDir(

@@ -16,13 +16,21 @@ RUN apt-get update && \
         python3.9 \
         python-is-python3 \
         git
-        
+
 # Clone the WITCH github repo
 RUN git clone -b v0.3.0 https://github.com/c5shen/WITCH.git
 
-# Build and install
-RUN cd WITCH && \ 
-    pip install -r requirements.txt && \
+# Install the required Python dependencies
+# Here we're not using the requirements.txt at the root of the repo
+# because the repo doesn't pin versions, which leads to dependency conflicts
+RUN pip install --no-cache-dir \
+    configparser==5.3.0 \
+    DendroPy==4.5.2 \
+    numpy==1.24.2 \
+    psutil==5.9.4
+
+# Build WITCH
+RUN cd WITCH && \
     python setup.py
 
 # Retain the original backbone construction script:

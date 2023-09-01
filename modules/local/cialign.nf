@@ -2,7 +2,7 @@ process CIALIGN {
     tag "$fasta"
     label 'process_lowcpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:0.0.1' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:1.0.0' :
         '' }"
 
     publishDir(
@@ -45,9 +45,9 @@ process CIALIGN {
     # And do the same for the log files
     mkdir log_files
     mv *log.txt log_files
-    
+
     # Now, create a protein-species map-file, assuming that trimming didn't lead
-    # to the focal MSA being comprised of < 4 sequences. 
+    # to the focal MSA being comprised of < 4 sequences.
     n_remain=\$(grep ">" \${prefix}_cialign.fa | wc -l)
     if [ \$n_remain -lt 4 ]; then
         rm \${prefix}_cialign.fa
