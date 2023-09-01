@@ -417,8 +417,8 @@ workflow NOVELTREE {
 
     // If no outgroups are provided (and thus no rooted species tree output
     // by Asteroid), define ch_asteroid as a null/empty channel
-    if (params.outgroups == 'none') {
-        ch_asteroid = Channel.value([null])
+    if (params.outgroups == "none") {
+        ch_asteroid = Channel.value("none")
     }
 
     //
