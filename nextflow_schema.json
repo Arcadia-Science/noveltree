@@ -31,8 +31,15 @@
                     "fa_icon": "fas fa-file-csv"
                 },
                 "mcl_inflation": {
-                    "type": "string",
-                    "description": "Array of MCL inflation values, expressed a comma-separated string (ie 1.0,2.0,3.0)",
+                    "anyOf": [
+                        {
+                            "type": "string",
+                        },
+                        {
+                            "type": "number",
+                        }
+                    ],
+                    "description": "Array of MCL inflation values, expressed a comma-separated string (ie 1.0,2.0,3.0), or a single numerical value (ie 1.0).",
                     "fa_icon": "fas fa-file-signature"
                 },
                 "outdir": {
