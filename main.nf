@@ -30,7 +30,7 @@ if (params.input) {
     exit 1, 'Input samplesheet not specified!'
 }
 if (params.mcl_inflation) {
-    ch_mcl_inflation = Channel.of(params.mcl_inflation.split(","))
+    mcl_inflation = params.mcl_inflation.toString().split(",")
 } else {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
@@ -149,7 +149,6 @@ def create_og_channel(Object inputs) {
 // WORKFLOW: Run main Arcadia-Science/noveltree analysis pipeline
 //
 workflow NOVELTREE {
-    ch_inflation = ch_mcl_inflation.toList().flatten()
     ch_versions = Channel.empty()
 
     //
@@ -159,8 +158,66 @@ workflow NOVELTREE {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     species_name_list = ch_all_data.complete_prots.collect { it[0].id }
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
-    mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
     uniprot_prots_list = ch_all_data.uniprot_prots.collect { it[1] }
+
+    //
+    // MODULE: Annotate UniProt Proteins
+    //
+    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots)
+        .cogeqc_annotations
+        .collect()
+        .set { ch_annotations }
+    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
+
+    //
+    // Running steps to find the best mcl_inflation parameter value.
+    // These steps will only run if more than one value was provided.
+    //
+    if (mcl_inflation.length > 1) {
+        ch_inflation = Channel.of(mcl_inflation)
+        mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
+
+        ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
+
+        // Run for the test set (used to determine the best value of the MCL
+        // inflation parameter)
+        DIAMOND_BLASTP_TEST(
+            ch_all_data.mcl_test_prots,
+            ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
+            ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
+            "txt",
+            "true"
+        )
+
+        // TODO: Fix the output_dir determination logic
+        // First determine the optimal MCL inflation parameter, and then
+        // subsequently use this for full orthogroup inference.
+        ORTHOFINDER_MCL_TEST(
+            ch_inflation,
+            DIAMOND_BLASTP_TEST.out.txt.collect(),
+            ORTHOFINDER_PREP_TEST.out.fastas,
+            ORTHOFINDER_PREP_TEST.out.diamonds,
+            ORTHOFINDER_PREP_TEST.out.sppIDs,
+            ORTHOFINDER_PREP_TEST.out.seqIDs,
+            "mcl_test_dataset"
+        )
+
+        COGEQC(
+            ORTHOFINDER_MCL_TEST.out.inflation_dir,
+            params.min_num_spp_per_og,
+            ch_annotations
+        )
+        ch_cogeqc_summary = COGEQC.out.cogeqc_summary.collect()
+        ch_versions = ch_versions.mix(COGEQC.out.versions)
+
+        // Now, from these orthogroup summaries, select the best inflation parameter
+        SELECT_INFLATION(ch_cogeqc_summary, params.min_num_spp_per_og)
+            .best_inflation.text.trim()
+            .set { ch_best_inflation }
+        ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
+    } else {
+        ch_best_inflation = mcl_inflation[0]
+    }
 
     //
     // MODULE: Run BUSCO
@@ -185,36 +242,16 @@ workflow NOVELTREE {
     )
 
     //
-    // MODULE: Annotate UniProt Proteins
-    //
-    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots)
-        .cogeqc_annotations
-        .collect()
-        .set { ch_annotations }
-    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
-
-    //
     // MODULE: Prepare directory structure and fasta files according to
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
     ORTHOFINDER_PREP_ALL(complete_prots_list, "complete_dataset")
-    ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
     ch_versions = ch_versions.mix(ORTHOFINDER_PREP_ALL.out.versions)
 
     //
     // MODULE: All-v-All diamond/blastp
     //
-    // Run for the test set (used to determine the best value of the MCL
-    // inflation parameter)
-    DIAMOND_BLASTP_TEST(
-        ch_all_data.mcl_test_prots,
-        ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
-        ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
-        "txt",
-        "true"
-    )
-
-    // And for the full dataset, to be clustered into orthogroups using
+    // For the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
     DIAMOND_BLASTP_ALL(
         ch_all_data.complete_prots,
@@ -224,43 +261,6 @@ workflow NOVELTREE {
         "false"
     )
     ch_versions = ch_versions.mix(DIAMOND_BLASTP_ALL.out.versions)
-
-    //
-    // MODULE: Run Orthofinder's implementation of MCL (with similarity score
-    //         correction).
-    //
-
-    // TODO: Fix the output_dir determination logic
-    // First determine the optimal MCL inflation parameter, and then
-    // subsequently use this for full orthogroup inference.
-    ORTHOFINDER_MCL_TEST(
-        ch_inflation,
-        DIAMOND_BLASTP_TEST.out.txt.collect(),
-        ORTHOFINDER_PREP_TEST.out.fastas,
-        ORTHOFINDER_PREP_TEST.out.diamonds,
-        ORTHOFINDER_PREP_TEST.out.sppIDs,
-        ORTHOFINDER_PREP_TEST.out.seqIDs,
-        "mcl_test_dataset"
-    )
-
-    //
-    // MODULE: COGEQC
-    // Run an R-script that applies cogqc to assess orthogroup inference
-    // accuracy/performance.
-    //
-    COGEQC(
-        ORTHOFINDER_MCL_TEST.out.inflation_dir,
-        params.min_num_spp_per_og,
-        ch_annotations
-    )
-    ch_cogeqc_summary = COGEQC.out.cogeqc_summary.collect()
-    ch_versions = ch_versions.mix(COGEQC.out.versions)
-
-    // Now, from these orthogroup summaries, select the best inflation parameter
-    SELECT_INFLATION(ch_cogeqc_summary, params.min_num_spp_per_og)
-        .best_inflation.text.trim()
-        .set { ch_best_inflation }
-    ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
 
     // Using this best-performing inflation parameter, infer orthogroups for
     // all samples.
