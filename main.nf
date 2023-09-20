@@ -158,16 +158,6 @@ workflow NOVELTREE {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     species_name_list = ch_all_data.complete_prots.collect { it[0].id }
     complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
-    uniprot_prots_list = ch_all_data.uniprot_prots.collect { it[1] }
-
-    //
-    // MODULE: Annotate UniProt Proteins
-    //
-    ANNOTATE_UNIPROT(ch_all_data.uniprot_prots)
-        .cogeqc_annotations
-        .collect()
-        .set { ch_annotations }
-    ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
     //
     // Running steps to find the best mcl_inflation parameter value.
@@ -176,6 +166,15 @@ workflow NOVELTREE {
     if (mcl_inflation.length > 1) {
         ch_inflation = Channel.of(mcl_inflation)
         mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
+
+        //
+        // MODULE: Annotate UniProt Proteins
+        //
+        ANNOTATE_UNIPROT(ch_all_data.uniprot_prots)
+            .cogeqc_annotations
+            .collect()
+            .set { ch_annotations }
+        ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
 
         ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
 
