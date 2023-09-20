@@ -30,7 +30,7 @@ if (params.input) {
     exit 1, 'Input samplesheet not specified!'
 }
 if (params.mcl_inflation) {
-    mcl_inflation = params.mcl_inflation.toString().split(",")
+    mcl_inflation = params.mcl_inflation.toString().split(",").collect { it.trim() }
 } else {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
@@ -163,9 +163,13 @@ workflow NOVELTREE {
     // Running steps to find the best mcl_inflation parameter value.
     // These steps will only run if more than one value was provided.
     //
-    if (mcl_inflation.length > 1) {
-        ch_inflation = Channel.of(mcl_inflation)
+    if (mcl_inflation.size() > 1) {
+        ch_inflation = Channel.fromList(mcl_inflation)
         mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
+
+        ch_all_data.uniprot_prots.ifEmpty {
+            error('Sample sheet must include samples from UniProt (uniprot column value is true) when doing MCL parameter best fit!')
+        }
 
         //
         // MODULE: Annotate UniProt Proteins
@@ -215,7 +219,7 @@ workflow NOVELTREE {
             .set { ch_best_inflation }
         ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
     } else {
-        ch_best_inflation = mcl_inflation[0]
+        ch_best_inflation = Channel.of(mcl_inflation.first())
     }
 
     //
