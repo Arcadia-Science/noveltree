@@ -168,7 +168,7 @@ workflow NOVELTREE {
         mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
 
         ch_all_data.uniprot_prots.ifEmpty {
-            error('Sample sheet must include samples from UniProt (uniprot column value is true) when doing MCL parameter best fit!')
+            exit 1, 'Samplesheet must include samples with UniProt annotations (uniprot column set to true) when performing MCL parameter selection.'
         }
 
         //
