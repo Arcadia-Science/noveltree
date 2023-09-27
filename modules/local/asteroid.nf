@@ -31,7 +31,7 @@ process ASTEROID {
     // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
-    def sppid_protid_delim = "${params.sppid_protid_delim}""
+    def sppid_protid_delim = "${params.sppid_protid_delim}"
     """
     # If the delimiter between species ID and protein ID is not an underscore (_), 
     # then make sure that any underscore in the species names is replaced with a dash (-),

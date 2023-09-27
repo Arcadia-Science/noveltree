@@ -28,7 +28,7 @@ process ANNOTATE_UNIPROT {
     def spp                = "${meta.id}"
     def is_uniprot         = "${meta.uniprot}"
     def project_dir        = "${projectDir}"
-    def sppid_protid_delim = "${params.sppid_protid_delim}""
+    def sppid_protid_delim = "${params.sppid_protid_delim}"
     """
     # Only annotate species for which protein IDs are found in UniProt (i.e.
     # proteomes come from UniProt).
