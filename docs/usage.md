@@ -103,8 +103,6 @@ These included:
 3. `max_time = 2400.h`: Again, the same, but the maximum time alloted for all concurrent processes.
 4. Additionally, we allocated 32 CPUs to the head node to ensure efficient monitoring and submission of jobs.
 
-![Workflow Figure](../NovelTree.png)
-
 ## The workflow proceeds to conduct the following steps:
 
 1. `INPUT_CHECK`: Proteomes are staged locally (including downloaded from S3 or other cloud storage if necessary)
@@ -120,6 +118,9 @@ These included:
 5. `DIAMOND_BLASTP`: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive.
 6. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
 7. `FILTER_ORTHOGROUPS`: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
+
+![Workflow Figure](../Fig2-Workflow-part-one.png)  
+
 8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with either [`WITCH`](https://github.com/c5shen/WITCH) (default) or [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
 9. `TRIM_SEQS`: OPTIONAL: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) (defualt) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`FastTree2`](http://www.iqtree.org/) (default) or [`IQ-TREE`](http://www.iqtree.org/)
@@ -128,6 +129,8 @@ These included:
 13. `GENERAX_PER_FAMILY`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
 14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates)
 15. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+
+![Workflow Figure](../Fig4-Workflow-part-two.png)  
 
 # Advanced Usage
 
