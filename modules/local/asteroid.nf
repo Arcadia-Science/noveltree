@@ -72,14 +72,17 @@ process ASTEROID {
     -p asteroid \
     $args
 
-    # Now revert the species names back to their original values in all treefiles:
-    while read spp
-    do
-        old=\$(echo \$spp | cut -f1 -d" ")
-        new=\$(echo \$spp | cut -f2 -d" ")
-        sed -i "s/\${new}/\${old}/g" *.newick
-    done < spp_rename.txt
-
+    # Now, conditionally (based on the protein/species ID delimiter) revert the 
+    # species names back to their original values in all treefiles:
+    if [ "$sppid_protid_delim" != "_" ]; then
+        while read spp
+        do
+            old=\$(echo \$spp | cut -f1 -d" ")
+            new=\$(echo \$spp | cut -f2 -d" ")
+            sed -i "s/\${new}/\${old}/g" *.newick
+        done < spp_rename.txt
+    fi
+    
     # Lastly, reroot the tree if user-specified outgroups are provided
     if [[ $outgroups != "none" ]]; then
         reroot_speciestree.R asteroid.bestTree.newick $outgroups
