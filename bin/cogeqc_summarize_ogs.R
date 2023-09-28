@@ -60,7 +60,7 @@ og_dir <- args[1]
 # And the minimum number of species for orthogroup phylogenetic inference
 min_spp <- args[2]
 
-sppid_protid_delim <- arg[3]
+sppid_protid_delim <- args[3]
 
 # Read in the annotations.
 annots <- list.files('./', pattern = "cogeqc_annotations.tsv")
