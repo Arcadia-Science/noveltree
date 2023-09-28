@@ -60,6 +60,8 @@ og_dir <- args[1]
 # And the minimum number of species for orthogroup phylogenetic inference
 min_spp <- args[2]
 
+sppid_protid_delim <- arg[3]
+
 # Read in the annotations.
 annots <- list.files('./', pattern = "cogeqc_annotations.tsv")
 spps <- gsub("_cogeqc_annotations.tsv", "", annots)
@@ -75,12 +77,12 @@ og_file <- paste0(og_dir, '/Orthogroups/Orthogroups.tsv')
 og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 
 # Go ahead and read in the orthogroups file
-orthogroups <- read_orthogroups(og_file)
+orthogroups <- read_orthogroups(og_file,)
 
-# Strip trailing text from species name - may not need in full implementation.
-# Names are determined in orthofinder using the file name, so just include
-# the species here.
-orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
+# Update the species and gene in this table to correspond to the 
+# species ID and gene ID we are using throughout.
+orthogroups$Species <- gsub(paste0(sppid_protid_delim, '.*'), '', orthogroups$Gene)
+orthogroups$Gene <- gsub(paste0('.*', sppid_protid_delim), '', orthogroups$Gene)
 
 # Get the complete list of species included here
 all_species <- unique(orthogroups$Species)
@@ -93,10 +95,6 @@ orthogroups <- orthogroups[which(orthogroups$Species %in% spps),]
 # annotations for species other than those we're testing inflation
 # parameters with.
 species <- unique(orthogroups$Species)
-
-# and remove the Species name from the gene name - this will create issues when
-# pairing with the annotations.
-orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
 
 # Initialize
 interpro <- list()

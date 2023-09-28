@@ -25,12 +25,13 @@ process COGEQC {
 
     // always gets set as the file itself, excluding the path
     script:
+    def sppid_protid_delim = "${params.sppid_protid_delim}"
     """
     # Assess orthogroups inferred using each inflation parameter, summarizing
     # how well they group proteins with the same domains together, as well as
     # other summary stats like number of ogs with >= the minimum # species,
     # per-species gene count per-og, etc.
-    cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp}
+    cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp} ${sppid_protid_delim}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         cogeqc: \$( cat version.txt | head -n1 | sed "s/\\[1] ‘//g" | sed "s/’//g" )
