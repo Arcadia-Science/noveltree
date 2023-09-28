@@ -77,7 +77,7 @@ og_file <- paste0(og_dir, '/Orthogroups/Orthogroups.tsv')
 og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 
 # Go ahead and read in the orthogroups file
-orthogroups <- read_orthogroups(og_file,)
+orthogroups <- read_orthogroups(og_file)
 
 # Update the species and gene in this table to correspond to the 
 # species ID and gene ID we are using throughout.
