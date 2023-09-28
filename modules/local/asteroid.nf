@@ -33,6 +33,10 @@ process ASTEROID {
     def args = task.ext.args ?: ''
     def sppid_protid_delim = "${params.sppid_protid_delim}"
     """
+    # Create the list of gene family trees to be decomposed into single-copy
+    # trees using DISCO
+    cat *.treefile >> gene_family_trees.newick
+    
     # If the delimiter between species ID and protein ID is not an underscore (_), 
     # then make sure that any underscore in the species names is replaced with a dash (-),
     # and replace that delimiter with an underscore.
@@ -42,10 +46,6 @@ process ASTEROID {
         sed "s/_/-/g" original_spp_names.txt | sed "s/ //g" > new_spp_names.txt
         paste original_spp_names.txt new_spp_names.txt > spp_rename.txt
         rm original_spp_names.txt new_spp_names.txt
-    
-        # Create the list of gene family trees to be decomposed into single-copy
-        # trees using DISCO
-        cat *.treefile >> gene_family_trees.newick
     
         # Use the updated species names to update protein names in these gene family
         # trees, ensuring that underscores in names successfully delimit protein ids
