@@ -31,7 +31,7 @@ process COGEQC {
     # how well they group proteins with the same domains together, as well as
     # other summary stats like number of ogs with >= the minimum # species,
     # per-species gene count per-og, etc.
-    cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp} ${sppid_protid_delim}
+    cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp} "${sppid_protid_delim}"
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         cogeqc: \$( cat version.txt | head -n1 | sed "s/\\[1] ‘//g" | sed "s/’//g" )
