@@ -81,8 +81,18 @@ orthogroups <- read_orthogroups(og_file)
 
 # Update the species and gene in this table to correspond to the 
 # species ID and gene ID we are using throughout.
-orthogroups$Species <- gsub(paste0(sppid_protid_delim, '.*'), '', orthogroups$Gene)
-orthogroups$Gene <- gsub(paste0('.*', sppid_protid_delim), '', orthogroups$Gene)
+# NOTE: If using ":" as the species/protein ID delimiter, orthofinder will 
+# replace this with a "_". This means we need to split on the last "_" 
+# given that underscores may have been used in the species ID.
+if(sppid_protid_delim == ":"){
+    orthogroups$Species <- gsub('_[^_]*$', '', orthogroups$Gene)
+    orthogroups$Gene <- gsub('.*_', '', orthogroups$Gene)
+}else{ 
+    # Otherwise, use the specific delimiter that the user provided
+    orthogroups$Species <- gsub(paste0(sppid_protid_delim, '.*'), '', orthogroups$Gene)
+    orthogroups$Gene <- gsub(paste0('.*', sppid_protid_delim), '', orthogroups$Gene)
+}
+
 
 # Get the complete list of species included here
 all_species <- unique(orthogroups$Species)
