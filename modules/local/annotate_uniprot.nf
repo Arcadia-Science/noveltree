@@ -36,7 +36,13 @@ process ANNOTATE_UNIPROT {
     if [ "$is_uniprot" == "true" ]; then
         # Pull out the sequence names, strip trailing info, and remove spp name.
         grep ">" $fasta | cut -d" " -f1 | cut -d"$sppid_protid_delim" -f2 > ${spp}_protein_accessions.txt
-
+        
+        # If the data was pre-processed using our snakemake workflow, the uniprot
+        # accessions will actually be nested between to pipes ("|") - for example:
+        # "tr|UNIPROTID|UNIPROTID-SppAbbrev"
+        # Make sure that the file containing protein accessions have pulled these out
+        cut -f2 -d"|" ${spp}_protein_accessions.txt > tmp && mv tmp ${spp}_protein_accessions.txt
+        
         # Now run the script to pull down annotations for the protein accessions in this species.
         # This Python script uses the bioservices python package to accomplish this.
         # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
