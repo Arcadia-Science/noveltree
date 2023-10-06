@@ -100,6 +100,10 @@ all_species <- unique(orthogroups$Species)
 # Remove any orthogroup members for which we do not have annotations
 orthogroups <- orthogroups[which(orthogroups$Species %in% spps),]
 
+# As before, make sure we pull out the uniprot annotations from between the 
+# pipes in the case that the data were preprocessed using our snakemake workflow
+orthogroups$Gene <- gsub("^[^|]*\\|", "", orthogroups$Gene) %>% gsub("\\|.*$", "", .)
+
 # Pull out the list of species - we are only running this script on a
 # on a subset of species, so we want to be sure that we're not reading in
 # annotations for species other than those we're testing inflation
@@ -164,16 +168,23 @@ og_assess_list <- list(
 
 # A quick function to run the assessment in parallel, checking that there are
 # enough species
-get_assessments <-
-    function(i){
-        if(og_assess_list[[i]]$spp_count > 1){
-            assess <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
-            assess <- mean(assess$Mean_score)
-        }else{
-            assess <- NA
-        }
-        return(assess)
+get_assessments <- function(i) {
+    assess <- NA  # Initialize assess with NA
+    if (og_assess_list[[i]]$spp_count > 1) {
+        # Attempt to execute the following block of code
+        tryCatch({
+            assess_temp <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
+            # Only calculate the mean if assess_temp is not NULL
+            if (!is.null(assess_temp)) {
+                assess <- mean(assess_temp$Mean_score)
+            }
+        }, error = function(e) {
+            # If there's an error, catch it and keep assess as NA
+            warning(paste("Error in get_assessments at index", i, ":", e$message))
+        })
     }
+    return(assess)
+}
 
 # First identify for which we have enough species
 target_anns <- which(c(length(interpro), length(oma)) > 1)
