@@ -36,15 +36,8 @@
                     "description": "Option specifying the character that delimits the unique species and protein IDs. This delimiter MUST NOT occur within either the species ID or any protein ID."
                 },
                 "mcl_inflation": {
-                    "anyOf": [
-                        {
-                            "type": "string",
-                        },
-                        {
-                            "type": "number",
-                        }
-                    ],
-                    "description": "Array of MCL inflation values, expressed a comma-separated string (ie 1.0,2.0,3.0), or a single numerical value (ie 1.0).",
+                    "type": "string",
+                    "description": "Array of MCL inflation values, expressed as a comma-separated string (ie 1.5,3.0,4.5), or a single numerical value (ie 1.5).",
                     "fa_icon": "fas fa-file-signature"
                 },
                 "outdir": {
