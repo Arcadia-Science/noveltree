@@ -37,8 +37,8 @@ process WITCH {
     # running out of memory for this reason). Will slow down MAGUS somewhat, 
     # but will increase the chance of the process completing successfully. 
     mafft_threads=\$(( 9 - ${task.attempt} ))
-    sed -i "s/numthreadsit=8/numthreadsit=\$mafft_threads/g" WITCH/*/*/*/*/*/bin/mafft 
-    sed -i "s/numthreads -lt 8/numthreads -lt \$mafft_threads/g" WITCH/*/*/*/*/*/bin/mafft 
+    sed -i "s/numthreadsit=8/numthreadsit=\$mafft_threads/g" /WITCH/*/*/*/*/*/bin/mafft 
+    sed -i "s/numthreads -lt 8/numthreads -lt \$mafft_threads/g" /WITCH/*/*/*/*/*/bin/mafft 
     
     # If we are resuming a run, do some cleanup:
     if [ -d "alignments/" ]; then
