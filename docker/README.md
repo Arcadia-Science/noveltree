@@ -14,7 +14,7 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 * Describe what the image essentially does or represents. If it's a web service with Node.js and Nginx, it might be something like `node-nginx`. If it only includes `Asteroid`, it might be something like `asteroid`. If an image uses way too many libraries, a descriptive name is preferred (i.e. `select_mcl_inflation_params`).
   * If multiple packages need to be represented, they should be separated by `-` (i.e. `node-nginx`)
 * The main package's version should be represented in the image name. For example, if you're shipping Python 3.8, you could use python3.8 as part of the name or tag. If a version number is available, the first 8 characters of the commit SHA can be used. If none of that is available, you can use the date stamp. For instance:
-  * If an image is using ClipKIT v1.3.0, the base name would be `clipkit_1.3.0`
+  * If an image is using ClipKIT v2.1.1, the base name would be `clipkit_2.1.1`
   * If an image is using Asteroid (only available through GitHub) at commit SHA `3aae117df3353c28c6a07d58a4c8b0ab290f974f`, the base name would be `asteroid_3aae117d`
 
 `<SEMANTIC_VERSIONING>` is a widely accepted standard. A version like `1.2.3` stands for `MAJOR.MINOR.PATCH``. This provides clear semantics on the kind of changes that happened. This version is different from the underlying package version and it reflects the level of stability of the image from our perspective.
@@ -26,7 +26,7 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `ASTEROID`                           | [Asteroid @ commit 3aae117d](./asteroid/)                             | [arcadiascience/asteroid_3aae117d-disco_20e10c33](https://hub.docker.com/r/arcadiascience/asteroid_3aae117d-disco_20e10c33)
 | `ANNOTATE_UNIPROT`                   | [bioservices v1.10.0](./bioservices/)                             | [arcadiascience/bioservices_1.10.0](https://hub.docker.com/r/arcadiascience/bioservices_1.10.0)                       |
 | `CIALIGN`                            | [CIAlign v1.1.0](./cialign/)                                         | [arcadiascience/cialign_1.1.0](https://hub.docker.com/r/arcadiascience/cialign_1.1.0)                             |
-| `CLIPKIT`                            | [ClipKIT v1.3.0](./clipkit/)                                         | [arcadiascience/clipkit_1.3.0-seqmagick_0.8.4](https://hub.docker.com/r/arcadiascience/clipkit_1.3.0-seqmagick_0.8.4)                             |
+| `CLIPKIT`                            | [ClipKIT v2.1.1](./clipkit/)                                         | [arcadiascience/clipkit_2.1.1-seqmagick_0.8.4](https://hub.docker.com/r/arcadiascience/clipkit_2.1.1-seqmagick_0.8.4)                             |
 | `COGEQC`                             | [cogeqc v1.2.1](./cogeqc/)                                           | [arcadiascience/cogeqc_1.2.1](https://hub.docker.com/r/arcadiascience/cogeqc_1.2.1)                               |
 | `FASTTREE`                 | [FastTree v2.1.11](./fasttree/)                               | [arcadiascience/fasttree_2.1.11](https://hub.docker.com/r/arcadiascience/fasttree_2.1.11)                         |
 | `GENERAX/SPECIESRAX`                 | [GeneRax @ commit 19604b71](./generax/)                               | [arcadiascience/generax_19604b71](https://hub.docker.com/r/arcadiascience/generax_19604b71)                         |

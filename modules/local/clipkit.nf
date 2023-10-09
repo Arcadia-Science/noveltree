@@ -2,7 +2,7 @@ process CLIPKIT {
     tag "$fasta"
     label 'process_low_cpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_1.3.0-seqmagick_0.8.4:1.0.0' :
+    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/clipkit_2.1.1-seqmagick_0.8.4:1.0.0' :
         '' }"
 
     publishDir(
