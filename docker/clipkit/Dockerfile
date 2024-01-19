@@ -13,7 +13,7 @@ RUN apt-get update && \
         python3.9 \
         python3-pip \
         wget && \
-    pip3 install clipkit==1.3.0 biopython==1.79 seqmagick==0.8.4
+    pip3 install clipkit==2.1.1 biopython==1.79 seqmagick==0.8.4
 
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
