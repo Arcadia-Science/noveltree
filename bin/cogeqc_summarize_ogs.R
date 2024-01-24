@@ -60,6 +60,8 @@ og_dir <- args[1]
 # And the minimum number of species for orthogroup phylogenetic inference
 min_spp <- args[2]
 
+sppid_protid_delim <- args[3]
+
 # Read in the annotations.
 annots <- list.files('./', pattern = "cogeqc_annotations.tsv")
 spps <- gsub("_cogeqc_annotations.tsv", "", annots)
@@ -77,10 +79,20 @@ og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 # Go ahead and read in the orthogroups file
 orthogroups <- read_orthogroups(og_file)
 
-# Strip trailing text from species name - may not need in full implementation.
-# Names are determined in orthofinder using the file name, so just include
-# the species here.
-orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
+# Update the species and gene in this table to correspond to the 
+# species ID and gene ID we are using throughout.
+# NOTE: If using ":" as the species/protein ID delimiter, orthofinder will 
+# replace this with a "_". This means we need to split on the last "_" 
+# given that underscores may have been used in the species ID.
+if(sppid_protid_delim == ":"){
+    orthogroups$Species <- gsub('_[^_]*$', '', orthogroups$Gene)
+    orthogroups$Gene <- gsub('.*_', '', orthogroups$Gene)
+}else{ 
+    # Otherwise, use the specific delimiter that the user provided
+    orthogroups$Species <- gsub(paste0(sppid_protid_delim, '.*'), '', orthogroups$Gene)
+    orthogroups$Gene <- gsub(paste0('.*', sppid_protid_delim), '', orthogroups$Gene)
+}
+
 
 # Get the complete list of species included here
 all_species <- unique(orthogroups$Species)
@@ -88,15 +100,15 @@ all_species <- unique(orthogroups$Species)
 # Remove any orthogroup members for which we do not have annotations
 orthogroups <- orthogroups[which(orthogroups$Species %in% spps),]
 
+# As before, make sure we pull out the uniprot annotations from between the 
+# pipes in the case that the data were preprocessed using our snakemake workflow
+orthogroups$Gene <- gsub("^[^|]*\\|", "", orthogroups$Gene) %>% gsub("\\|.*$", "", .)
+
 # Pull out the list of species - we are only running this script on a
 # on a subset of species, so we want to be sure that we're not reading in
 # annotations for species other than those we're testing inflation
 # parameters with.
 species <- unique(orthogroups$Species)
-
-# and remove the Species name from the gene name - this will create issues when
-# pairing with the annotations.
-orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
 
 # Initialize
 interpro <- list()
@@ -156,16 +168,23 @@ og_assess_list <- list(
 
 # A quick function to run the assessment in parallel, checking that there are
 # enough species
-get_assessments <-
-    function(i){
-        if(og_assess_list[[i]]$spp_count > 1){
-            assess <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
-            assess <- mean(assess$Mean_score)
-        }else{
-            assess <- NA
-        }
-        return(assess)
+get_assessments <- function(i) {
+    assess <- NA  # Initialize assess with NA
+    if (og_assess_list[[i]]$spp_count > 1) {
+        # Attempt to execute the following block of code
+        tryCatch({
+            assess_temp <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
+            # Only calculate the mean if assess_temp is not NULL
+            if (!is.null(assess_temp)) {
+                assess <- mean(assess_temp$Mean_score)
+            }
+        }, error = function(e) {
+            # If there's an error, catch it and keep assess as NA
+            warning(paste("Error in get_assessments at index", i, ":", e$message))
+        })
     }
+    return(assess)
+}
 
 # First identify for which we have enough species
 target_anns <- which(c(length(interpro), length(oma)) > 1)
