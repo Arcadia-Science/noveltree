@@ -7,9 +7,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - Batch summary results for each species, to each lineage dataset.  
 - Directory for each species' busco analysis with more detailed output.  
 
-**2.** `protein_annotations/`: protein annotations obtained per each species for which uniprot accessions (i.e. those corresponding to RefSeq protein accessions) are available.  
-
-- Which annotations are included here depends on how the "download_annots" parameter was specified.  
+**2.** `protein_annotations/`: protein annotations (InterPro domain and OMA orthology group ID) obtained per each species for which uniprot accessions (i.e. those corresponding to RefSeq protein accessions) are available.  
 
 **3.** `diamond/`: contains the results of all pairwise comparisons of sequence similarity, between and within species using diamond BLASTP.  
 
