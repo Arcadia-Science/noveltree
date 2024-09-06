@@ -164,33 +164,7 @@ process {
 
 #### 2. [`ANNOTATE_UNIPROT`](modules/local/annotate_uniprot.nf):
 
-- `download_annots`: Specified in the parameter file.
-- **Parameter may be specified as one of three things:**
-  i. `all` - download all 16 possible sets of protein annotations from UniProt where possible.
-  ii. `minimal` - download only the minimum necessary annotations that are used by cogeqc for gene family inference quality assessments.
-  iii. A quoted, comma separated string of select numbers 1-16: example `"1,2,4,7,10"`. Numbers correspond to the index of annotations the user would like to download. See below for the correspondance and brief description of each annotation. For indices 4-16 (in particular) see https://www.uniprot.org/help/return_fields.
-  ```
-  1. Minimal set of protein annotations/metadata required for COGEQC gene family inference:
-     protein external IDs for InterPro, OMA
-  2. General protein metadata: protein name, length, mass, information from mass spec
-     experiments, host organisms (for viral proteins), which organelle (if relevant)
-     encoding the protein, any AA variants due to RNA editing
-  3. Gene ontologies - biological process, cellular component, molecular function,
-     ontology ID
-  4. Function: Multiple annotations pertaining to the molecular function of the protein
-  5. Interactions
-  6. Protein-protein interactions (external database reference IDs)
-  7. Pathology & biotech
-  8. Subcellular location
-  9. Post-translation modification (PTM) / processsing
-  10. PTM databases
-  11. Protein family & domains
-  12. Protein family/group databases
-  13. Sequence databases
-  14. 3D structure databases
-  15. Enzyme and pathway databases
-  16. Phylogenomic databases
-  ```
+- Downloads minimal set of protein annotations/metadata required for COGEQC gene family inference: protein external IDs for InterPro domain, OMA orthology group.
 
 #### 3. [`DIAMOND_BLASTP`](modules/nf-core-modified/diamond_blastp.nf):
 
