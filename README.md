@@ -11,6 +11,8 @@
 
 ## Quick Start
 
+**NOTE: Unfortunately, at this time NovelTree is not compatible with Apple silicon/ARM architectures (e.g. M1, M2 chips).**
+
 **1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`).
 
 **2.** Install [`Docker`](https://docs.docker.com/engine/installation/).
@@ -20,6 +22,14 @@
 ```bash
 nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
 ```
+
+In cases where you need to specify resource usage limits to NovelTree (e.g. you are running it on a local desktop or laptop), you can specify the maximum available CPU and memory resources as follows:
+
+```bash
+nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json  --max_cpus 12 --max_memory 16GB
+```
+
+Nextflow requires some memory resources to be allocated for overhead - consequently, we suggest reducing the specified `--max_memory` by ~2GB or more below the amount available to your particular compute environment.
 
 **NOTE: Currently the workflow only works using the docker profile.**
 
@@ -37,7 +47,7 @@ To account for the confounding effects of sequence length (and thus evolutionary
 **1.** An initial round for inflation parameter testing on a (reduced) set of proteomes for which UniProt protein accessions are available, and
 **2.** A second round on the complete dataset.
 
-Once the first round of MCL clustering has completed, `NovelTree` summarizes orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" of domains within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs.
+Once the first round of MCL clustering has completed, `NovelTree` summarizes orthogroups based on a number of metrics, choosing a best-performing inflation parameter for the analysis of the full dataset. This includes a functional protein annotation score calculated with [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html), which quantifies the ratio of InterPro domain "Homogeneity" within orthogroups to "Dispersal" of domains among orthogroups. This statistic is also calculated for OMA orthology database IDs.
 
 With orthogroups/gene families inferred, `NovelTree` will summarize each gene family on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it may be best, depending on use-case, to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
@@ -55,7 +65,7 @@ With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://
 For a detailed description of basic- to advance-usage of the workflow, please see the [`usage.md`](docs/usage.md) file.
 
 ## Outputs
-For a detailed description of basic- to advance-usage of the workflow, please see the [`outputs.md`](docs/outputs.md) file.
+For a detailed description of workflow outputs, please see the [`outputs.md`](docs/outputs.md) file.
 
 ---
 
