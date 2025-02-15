@@ -31,27 +31,33 @@ process ASTEROID {
     // always gets set as the file itself, excluding the path
     script:
     def args = task.ext.args ?: ''
+    def sppid_protid_delim = "${params.sppid_protid_delim}"
     """
-    # Generate new protein names to more readily delimit species/protein ids
-    echo "$species_names" | sed "s/\\[//g" | sed "s/\\]//g" | tr "," "\\n" > original_spp_names.txt
-    sed "s/_/-/g" original_spp_names.txt | sed "s/ //g" > new_spp_names.txt
-    paste original_spp_names.txt new_spp_names.txt > spp_rename.txt
-    rm original_spp_names.txt new_spp_names.txt
-
     # Create the list of gene family trees to be decomposed into single-copy
     # trees using DISCO
     cat *.treefile >> gene_family_trees.newick
-
-    # Use the updated species names to update protein names in these gene family
-    # trees, ensuring that underscores in names successfully delimit protein ids
-    # Combine these, and update names in the tree file to match these:
-    while read spp
-    do
-        old=\$(echo \$spp | cut -f1 -d" ")
-        new=\$(echo \$spp | cut -f2 -d" ")
-        sed -i "s/\${old}/\${new}/g" gene_family_trees.newick
-    done < spp_rename.txt
-
+    
+    # If the delimiter between species ID and protein ID is not an underscore (_), 
+    # then make sure that any underscore in the species names is replaced with a dash (-),
+    # and replace that delimiter with an underscore.
+    if [ "$sppid_protid_delim" != "_" ]; then
+        # Generate new protein names to more readily delimit species/protein ids
+        echo "$species_names" | sed "s/\\[//g" | sed "s/\\]//g" | tr "," "\\n" > original_spp_names.txt
+        sed "s/_/-/g" original_spp_names.txt | sed "s/ //g" > new_spp_names.txt
+        paste original_spp_names.txt new_spp_names.txt > spp_rename.txt
+        rm original_spp_names.txt new_spp_names.txt
+    
+        # Use the updated species names to update protein names in these gene family
+        # trees, ensuring that underscores in names successfully delimit protein ids
+        # Combine these, and update names in the tree file to match these:
+        while read spp
+        do
+            old=\$(echo \$spp | cut -f1 -d" ")
+            new=\$(echo \$spp | cut -f2 -d" ")
+            sed -i "s/\${old}/\${new}/g" gene_family_trees.newick
+        done < spp_rename.txt
+    fi
+    
     # Run DISCO to decompose gene family trees into single-copy trees, rooted to
     # minimize the number of duplications and losses
     python /DISCO/disco.py \\
@@ -66,14 +72,17 @@ process ASTEROID {
     -p asteroid \
     $args
 
-    # Now revert the species names back to their original values in all treefiles:
-    while read spp
-    do
-        old=\$(echo \$spp | cut -f1 -d" ")
-        new=\$(echo \$spp | cut -f2 -d" ")
-        sed -i "s/\${new}/\${old}/g" *.newick
-    done < spp_rename.txt
-
+    # Now, conditionally (based on the protein/species ID delimiter) revert the 
+    # species names back to their original values in all treefiles:
+    if [ "$sppid_protid_delim" != "_" ]; then
+        while read spp
+        do
+            old=\$(echo \$spp | cut -f1 -d" ")
+            new=\$(echo \$spp | cut -f2 -d" ")
+            sed -i "s/\${new}/\${old}/g" *.newick
+        done < spp_rename.txt
+    fi
+    
     # Lastly, reroot the tree if user-specified outgroups are provided
     if [[ $outgroups != "none" ]]; then
         reroot_speciestree.R asteroid.bestTree.newick $outgroups
