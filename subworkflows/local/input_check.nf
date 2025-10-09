@@ -20,15 +20,20 @@ workflow INPUT_CHECK {
     complete_prots.filter {
         it[0].mcl_test == 'true'
     }.set { mcl_test_prots }
-    
+
     complete_prots.filter {
         it[0].uniprot == 'true'
     }.set { uniprot_prots }
+
+    mcl_test_prots.filter {
+        it[0].uniprot == 'true'
+    }.set { annotation_prots }
 
     emit:
     complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
     mcl_test_prots                            // channel: [ val(meta), [ mcl_test_prots ] ]
     uniprot_prots                             // channel: [ val(meta), [ uniprot_prots ] ]
+    annotation_prots                          // channel: [ val(meta), [ annotation_prots ] ]
     complete_samplesheet = SAMPLESHEET_CHECK.out.csv
     versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
@@ -44,6 +49,7 @@ def create_prots_channel(LinkedHashMap row) {
         meta.mode = row.mode
         meta.uniprot = row.uniprot
         meta.mcl_test = row.mcl_test
+        meta.annotate = (row.uniprot == "true") && (row.mcl_test == "true")
 
     // add path(s) of the proteome file to the meta map
     def prots_meta = []
