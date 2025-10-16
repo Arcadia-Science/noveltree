@@ -80,10 +80,10 @@ if (params.workflow_mode == 'full') {
 // SUBWORKFLOW
 //
 include { INPUT_CHECK                               } from './subworkflows/local/input_check'
+include { MCL_INFLATION_SELECTION                   } from './subworkflows/local/mcl_inflation_selection'
 
-// New subworkflows for simplified mode (can also be used in full mode)
+// Simplified mode only subworkflows
 if (params.workflow_mode == 'simplified') {
-    include { MCL_INFLATION_SELECTION               } from './subworkflows/local/mcl_inflation_selection'
     include { INFER_TREES as INFER_SPECIES_TREES    } from './subworkflows/local/infer_trees'
     include { INFER_TREES as INFER_REMAINING_TREES  } from './subworkflows/local/infer_trees'
 }
@@ -99,24 +99,12 @@ include { ASTEROID                                  } from './modules/local/aste
 include { SPECIESRAX                                } from './modules/local/speciesrax'
 include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
+include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
+include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 
 // Full mode only modules
 if (params.workflow_mode == 'full') {
-    include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from './modules/local/orthofinder_prep'
-    include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from './modules/local/orthofinder_mcl'
-    include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
-    include { ANNOTATE_UNIPROT                          } from './modules/local/annotate_uniprot'
-    include { COGEQC                                    } from './modules/local/cogeqc'
-    include { SELECT_INFLATION                          } from './modules/local/select_inflation'
     include { GENERAX_PER_FAMILY                        } from './modules/local/generax_per_family'
-} else {
-    // Simplified mode: uses MCL_INFLATION_SELECTION subworkflow, ORTHOFINDER_MCL_ALL directly
-    include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
-}
-
-// Simplified mode only module
-if (params.workflow_mode == 'simplified') {
-    include { PHYLO_PROFILES                        } from './modules/local/phylo_profiles'
 }
 
 /*
@@ -134,7 +122,6 @@ include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from './modules/nf-core-mo
 if (params.workflow_mode == 'full') {
     include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-modified/busco'
     include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
-    include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from './modules/nf-core-modified/diamond_blastp'
     include { IQTREE_PMSF as IQTREE_PMSF_ALL            } from './modules/nf-core-modified/iqtree_pmsf'
     include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
 }
@@ -189,72 +176,14 @@ workflow NOVELTREE {
     // These steps will only run if more than one value was provided.
     //
     if (mcl_inflation.size() > 1) {
-        if (params.workflow_mode == 'simplified') {
-            // Simplified mode: use MCL_INFLATION_SELECTION subworkflow
-            MCL_INFLATION_SELECTION(
-                ch_all_data.mcl_test_prots,
-                ch_all_data.annotation_prots,
-                mcl_inflation
-            )
-            ch_best_inflation = MCL_INFLATION_SELECTION.out.best_inflation
-            ch_versions = ch_versions.mix(MCL_INFLATION_SELECTION.out.versions)
-        } else {
-            // Full mode: inline MCL testing (original behavior)
-            ch_inflation = Channel.fromList(mcl_inflation)
-            mcl_test_prots_list = ch_all_data.mcl_test_prots.collect { it[1] }
-
-            ch_all_data.uniprot_prots.ifEmpty {
-                exit 1, 'Samplesheet must include samples with UniProt annotations (uniprot column set to true) when performing MCL parameter selection.'
-            }
-
-            //
-            // MODULE: Annotate UniProt Proteins
-            //
-            ANNOTATE_UNIPROT(ch_all_data.uniprot_prots)
-                .cogeqc_annotations
-                .collect()
-                .set { ch_annotations }
-            ch_versions = ch_versions.mix(ANNOTATE_UNIPROT.out.versions)
-
-            ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
-
-            // Run for the test set (used to determine the best value of the MCL
-            // inflation parameter)
-            DIAMOND_BLASTP_TEST(
-                ch_all_data.mcl_test_prots,
-                ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
-                ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
-                "txt",
-                "true"
-            )
-
-            // TODO: Fix the output_dir determination logic
-            // First determine the optimal MCL inflation parameter, and then
-            // subsequently use this for full orthogroup inference.
-            ORTHOFINDER_MCL_TEST(
-                ch_inflation,
-                DIAMOND_BLASTP_TEST.out.txt.collect(),
-                ORTHOFINDER_PREP_TEST.out.fastas,
-                ORTHOFINDER_PREP_TEST.out.diamonds,
-                ORTHOFINDER_PREP_TEST.out.sppIDs,
-                ORTHOFINDER_PREP_TEST.out.seqIDs,
-                "mcl_test_dataset"
-            )
-
-            COGEQC(
-                ORTHOFINDER_MCL_TEST.out.inflation_dir,
-                params.min_num_spp_per_og,
-                ch_annotations
-            )
-            ch_cogeqc_summary = COGEQC.out.cogeqc_summary.collect()
-            ch_versions = ch_versions.mix(COGEQC.out.versions)
-
-            // Now, from these orthogroup summaries, select the best inflation parameter
-            SELECT_INFLATION(ch_cogeqc_summary, params.min_num_spp_per_og)
-                .best_inflation.text.trim()
-                .set { ch_best_inflation }
-            ch_versions = ch_versions.mix(SELECT_INFLATION.out.versions)
-        }
+        // Use MCL_INFLATION_SELECTION subworkflow for both modes
+        MCL_INFLATION_SELECTION(
+            ch_all_data.mcl_test_prots,
+            ch_all_data.annotation_prots,
+            mcl_inflation
+        )
+        ch_best_inflation = MCL_INFLATION_SELECTION.out.best_inflation
+        ch_versions = ch_versions.mix(MCL_INFLATION_SELECTION.out.versions)
     } else {
         ch_best_inflation = Channel.of(mcl_inflation.first())
     }
@@ -377,20 +306,11 @@ workflow NOVELTREE {
         // families using WITCH (default) or MAFFT
         //
         // For the extreme core set to be used in species tree inference
-        if (ch_aligner == "witch") {
-            ALIGN_SEQS(ch_spptree_fas)
-            ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
-        } else {
-            ALIGN_SEQS(ch_spptree_fas)
-            ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
-        }
+        ALIGN_SEQS(ch_spptree_fas)
+        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
 
         // And for the remaining orthogroups:
-        if (ch_aligner == "witch") {
-            ALIGN_REMAINING_SEQS(ch_genetree_fas)
-        } else {
-            ALIGN_REMAINING_SEQS(ch_genetree_fas)
-        }
+        ALIGN_REMAINING_SEQS(ch_genetree_fas)
 
         //
         // MODULE: TRIM_MSAS
@@ -399,35 +319,20 @@ workflow NOVELTREE {
         // CIAlign or ClipKIT based on parameter specification.
         //
         if (ch_msa_trimmer == 'none') {
-            if (ch_aligner == 'witch') {
-                ch_core_og_maplinks = ALIGN_SEQS.out.map_link
-                ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
-                ch_core_og_clean_msas = ALIGN_SEQS.out.cleaned_msas
-                ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.cleaned_msas
-            } else {
-                ch_core_og_maplinks = ALIGN_SEQS.out.map_link
-                ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
-                ch_core_og_clean_msas = ALIGN_SEQS.out.msas
-                ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.msas
-            }
+            // No trimming - use alignment outputs directly
+            ch_core_og_clean_msas = ALIGN_SEQS.out.msas
+            ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.msas
+            ch_core_og_maplinks = ALIGN_SEQS.out.map_link
+            ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
         } else {
-            if (ch_aligner == 'witch') {
-                TRIM_MSAS(ALIGN_SEQS.out.cleaned_msas)
-                TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.cleaned_msas)
-                ch_core_og_maplinks = TRIM_MSAS.out.map_link
-                ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
-                ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
-                ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
-                ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
-            } else {
-                TRIM_MSAS(ALIGN_SEQS.out.msas)
-                TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.msas)
-                ch_core_og_maplinks = TRIM_MSAS.out.map_link
-                ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
-                ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
-                ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
-                ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
-            }
+            // Apply trimming
+            TRIM_MSAS(ALIGN_SEQS.out.msas)
+            TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.msas)
+            ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
+            ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
+            ch_core_og_maplinks = TRIM_MSAS.out.map_link
+            ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
+            ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
         }
         // Create channels that are just lists of all the msas, and protein-species
         // map links that are provided in bulk to SpeciesRax
@@ -463,13 +368,13 @@ workflow NOVELTREE {
 
             ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
             ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
-            // And create a channel/list (no tuple) of just the core trees used by Asteroid
-            core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
         } else {
             ch_core_gene_trees = INFER_TREES.out.phylogeny
             ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
-            core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
         }
+
+        // Create a channel/list (no tuple) of just the core trees used by Asteroid
+        core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
     }
 
     // The following two steps will just be done for the core set of
@@ -501,12 +406,9 @@ workflow NOVELTREE {
     ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
 
     // Now prepare for analysis with GeneRax
-    ch_all_map_links = ch_core_og_maplinks
-        .concat(ch_rem_og_maplinks)
-    ch_all_gene_trees = ch_core_gene_trees
-        .concat(ch_rem_gene_trees)
-    ch_all_og_clean_msas = ch_core_og_clean_msas
-        .concat(ch_rem_og_clean_msas)
+    ch_all_map_links = ch_core_og_maplinks.concat(ch_rem_og_maplinks)
+    ch_all_gene_trees = ch_core_gene_trees.concat(ch_rem_gene_trees)
+    ch_all_og_clean_msas = ch_core_og_clean_msas.concat(ch_rem_og_clean_msas)
 
     // Join these so that each gene family may be dealt with asynchronously as soon
     // as possible, and include with them the species tree.
@@ -532,23 +434,24 @@ workflow NOVELTREE {
 
     ch_recon_perspp_gene_trees = GENERAX_PER_SPECIES.out.generax_per_spp_gfts.collect { it[1] }
 
-    // PHYLO_PROFILES: simplified mode only
-    if (params.workflow_mode == 'simplified') {
-        event_counts_ch = GENERAX_PER_SPECIES.out.event_counts.collect { it[1] }
-        species_event_counts_ch = GENERAX_PER_SPECIES.out.species_event_counts.collect { it[1] }
-        transfer_event_counts_ch = GENERAX_PER_SPECIES.out.transfer_event_counts.collect { it[1] }
-        species_coverage_ch = GENERAX_PER_SPECIES.out.species_coverage.collect { it[1] }
-        ogs_ch = GENERAX_PER_SPECIES.out.event_counts.collect { it[0].og }
+    //
+    // MODULE: PHYLO_PROFILES
+    // Generate phylogenetic profiles from GeneRax reconciliation outputs
+    //
+    event_counts_ch = GENERAX_PER_SPECIES.out.event_counts.collect { it[1] }
+    species_event_counts_ch = GENERAX_PER_SPECIES.out.species_event_counts.collect { it[1] }
+    transfer_event_counts_ch = GENERAX_PER_SPECIES.out.transfer_event_counts.collect { it[1] }
+    species_coverage_ch = GENERAX_PER_SPECIES.out.species_coverage.collect { it[1] }
+    ogs_ch = GENERAX_PER_SPECIES.out.event_counts.collect { it[0].og }
 
-        PHYLO_PROFILES(
-            event_counts_ch,
-            species_event_counts_ch,
-            transfer_event_counts_ch,
-            species_coverage_ch,
-            ogs_ch,
-            ORTHOFINDER_MCL_ALL.out.inflation_dir
-        )
-    }
+    PHYLO_PROFILES(
+        event_counts_ch,
+        species_event_counts_ch,
+        transfer_event_counts_ch,
+        species_coverage_ch,
+        ogs_ch,
+        ORTHOFINDER_MCL_ALL.out.inflation_dir
+    )
 
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS

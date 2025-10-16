@@ -18,8 +18,7 @@ process WITCH {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("**_witch.fa")         , emit: msas
-    tuple val(meta), path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
+    tuple val(meta), path("**_witch_cleaned.fa") , emit: msas, optional: true
     tuple val(meta), path("**_map.link")         , emit: map_link, optional: true
     path("*")                                    , emit: results
     path "versions.yml"                          , emit: versions
