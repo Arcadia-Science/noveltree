@@ -12,7 +12,7 @@ workflow INFER_TREES {
     ALIGN_SEQS(fas)
     versions = versions.mix(ALIGN_SEQS.out.versions)
 
-    TRIM_MSAS(ALIGN_SEQS.out.cleaned_msas)
+    TRIM_MSAS(ALIGN_SEQS.out.msas)
     versions = versions.mix(TRIM_MSAS.out.versions)
     map_link = TRIM_MSAS.out.map_link
     cleaned_msas = TRIM_MSAS.out.cleaned_msas
