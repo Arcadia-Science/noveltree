@@ -63,3 +63,18 @@ These scripts provide two key functionalities for the Noveltree pipeline:
 - All R scripts use relative paths to source C++ files via `Rcpp::sourceCpp()`
 - C++ files are compiled at Docker build time
 - Scripts are designed to work from this directory location
+
+---
+
+## Noveltree Pipeline Differences from RAAS
+
+### Output Aggregation
+
+The Noveltree pipeline aggregates per-gene-family outputs into `results/phylo_dist_aggregated/all_protein_comparisons.tsv.gz`.
+
+**Key difference from RAAS:**
+- RAAS filters aggregated results to disease-associated genes only (requires ClinVar data)
+- Noveltree includes ALL protein comparisons without filtering (no ClinVar integration)
+- Disease annotation columns (`disease_name`, etc.) are `NA` since pipeline uses `clinvar = NULL`
+
+**To add disease filtering:** Integrate ClinVar data by updating `modules/local/phylo_dist.nf` to pass `clinvar` parameter instead of NULL, then filter the aggregated output to `!is.na(disease_name)`.

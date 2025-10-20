@@ -103,6 +103,9 @@ include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orth
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
 include { PHYLO_DIST                                } from './modules/local/phylo_dist'
+include { AGGREGATE_PHYLO_DIST                      } from './modules/local/aggregate_phylo_dist'
+include { DOWNLOAD_HGNC                             } from './modules/local/download_hgnc'
+include { PROCESS_ZOOGLE_TABLE                      } from './modules/local/process_zoogle_table'
 
 // Full mode only modules
 if (params.workflow_mode == 'full') {
@@ -528,6 +531,32 @@ workflow NOVELTREE {
         ch_speciesrax,
         params.ref_species
     )
+
+    //
+    // MODULE: AGGREGATE_PHYLO_DIST
+    // Aggregate all per-gene-family statistical comparison tables into one file
+    //
+    AGGREGATE_PHYLO_DIST(
+        PHYLO_DIST.out.final_summary_table.collect()
+    )
+
+    //
+    // MODULE: DOWNLOAD_HGNC
+    // Download and process HGNC gene symbol mappings
+    //
+    DOWNLOAD_HGNC()
+    ch_versions = ch_versions.mix(DOWNLOAD_HGNC.out.versions)
+
+    //
+    // MODULE: PROCESS_ZOOGLE_TABLE
+    // Add zoogle-specific columns (HGNC gene symbols, rankings, etc.) to the aggregated table
+    // Uses exact same processing functions as the 2025-zoogle organism selection portal
+    //
+    PROCESS_ZOOGLE_TABLE(
+        AGGREGATE_PHYLO_DIST.out.aggregated_table,
+        DOWNLOAD_HGNC.out.hgnc_processed
+    )
+    ch_versions = ch_versions.mix(PROCESS_ZOOGLE_TABLE.out.versions)
 
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS
