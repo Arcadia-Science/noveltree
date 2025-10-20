@@ -101,6 +101,8 @@ include { GENERAX_PER_SPECIES                       } from './modules/local/gene
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
+include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
+include { PHYLO_DIST                                } from './modules/local/phylo_dist'
 
 // Full mode only modules
 if (params.workflow_mode == 'full') {
@@ -451,6 +453,80 @@ workflow NOVELTREE {
         species_coverage_ch,
         ogs_ch,
         ORTHOFINDER_MCL_ALL.out.inflation_dir
+    )
+
+    //
+    // MODULE: PHYSICOCHEMICAL_PROPS
+    // Calculate physicochemical properties for all gene families
+    //
+    all_og_msa_files = ch_all_og_clean_msas.collect { it[1] }
+
+    PHYSICOCHEMICAL_PROPS(
+        all_og_msa_files
+    )
+
+    //
+    // MODULE: PHYLO_DIST
+    // Calculate phylogenetically-corrected protein distances
+    //
+    // Create channel pairing gene family trees with their physicochemical properties
+    ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
+        .map { meta, tree -> [meta, tree] }
+        .combine(PHYSICOCHEMICAL_PROPS.out.per_family_summaries.flatten())
+        .filter { meta, tree, props_file ->
+            props_file.name.contains(meta.og) && props_file.name.contains("_summary_statistics.csv")
+        }
+        .filter { meta, tree, props_file ->
+            // Validate gene family has sufficient proteins for phylo-dist analysis
+            // Read CSV and extract protein IDs (first column, skip header)
+            def lines = props_file.readLines()
+            def proteinIds = lines.drop(1).collect { it.split(',')[0] }
+
+            if (proteinIds.size() == 0) {
+                log.info "Skipping ${meta.og}: No proteins found in CSV"
+                return false
+            }
+
+            // Count reference species proteins
+            def refCount = proteinIds.count { it.startsWith("${params.ref_species}_") }
+
+            // Count non-reference proteins
+            def nonrefCount = proteinIds.size() - refCount
+
+            // Count proteins per non-reference species
+            // NOTE: Must match R script's species extraction logic (line 145 of protein_distance_calculation_functions.R)
+            // R uses: gsub("_.*", "", focal_prots) which removes everything after FIRST underscore
+            def nonrefProteinsBySpecies = proteinIds
+                .findAll { !it.startsWith("${params.ref_species}_") }
+                .collect { it.replaceFirst(/_.*/, '') }  // Extract genus name only (everything before first underscore)
+                .countBy { it }  // Map of species -> count
+
+            // Count unique non-reference species
+            def nonrefSpeciesCount = nonrefProteinsBySpecies.size()
+
+            // Count how many non-reference species have at least 2 proteins
+            // (Wilcoxon test requires at least 2 observations per group)
+            def speciesWithEnoughProteins = nonrefProteinsBySpecies.count { species, count -> count >= 2 }
+
+            // Apply validation criteria (maps directly to the 3 observed errors)
+            def isValid = (refCount >= 1) && (nonrefCount >= 2) && (speciesWithEnoughProteins >= 2)
+
+            // Log skipped gene families with reason
+            if (!isValid) {
+                def reason = refCount < 1 ? "no reference species proteins" :
+                             nonrefCount < 2 ? "insufficient non-reference proteins (${nonrefCount})" :
+                             speciesWithEnoughProteins < 2 ? "insufficient species with >=2 proteins (${speciesWithEnoughProteins} of ${nonrefSpeciesCount})" :
+                             "unknown validation failure"
+                log.info "Skipping ${meta.og}: ${reason} (ref=${refCount}, nonref=${nonrefCount}, species=${nonrefSpeciesCount})"
+            }
+
+            return isValid
+        }
+
+    PHYLO_DIST(
+        ch_phylo_dist_input,
+        ch_speciesrax,
+        params.ref_species
     )
 
     //
