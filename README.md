@@ -17,7 +17,19 @@
 
 **2.** Install [`Docker`](https://docs.docker.com/engine/installation/).
 
-**3.** Download the pipeline and our minimal test dataset with a single command run in the root of this repository:
+**3.** Build the required Docker images (optional - only needed if you've modified the pipeline or are using a custom fork):
+
+```bash
+make docker-all
+```
+
+Or build individual images:
+```bash
+make docker-physicochemical-props
+make docker-phylo-dist
+```
+
+**4.** Download the pipeline and our minimal test dataset with a single command run in the root of this repository:
 
 ```bash
 nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
@@ -32,6 +44,40 @@ nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/t
 Nextflow requires some memory resources to be allocated for overhead - consequently, we suggest reducing the specified `--max_memory` by ~2GB or more below the amount available to your particular compute environment.
 
 **NOTE: Currently the workflow only works using the docker profile.**
+
+---
+
+## Building Docker Images
+
+NovelTree uses custom Docker images for specific analysis modules. If you're using a custom fork or have modified the pipeline code, you'll need to rebuild these images.
+
+### Quick Build
+
+Build all required images:
+```bash
+make docker-all
+```
+
+### Individual Image Builds
+
+Build specific images:
+```bash
+# Physicochemical properties calculation module
+make docker-physicochemical-props
+
+# Phylogenetic distance analysis module
+make docker-phylo-dist
+```
+
+### Technical Details
+
+All Docker images are built from the repository root with the build context set to ensure access to vendored code in `bin/raas/`. The images are built for `linux/amd64` platform for compatibility.
+
+**Note:** Building R-based images (phylo-dist) may take 15-20 minutes due to package compilation.
+
+### Vendored RAAS Code
+
+The `bin/raas/` directory contains code vendored from the [raas-organism-prioritization](https://github.com/Arcadia-Science/raas-organism-prioritization) repository. See `bin/raas/README.md` for provenance details including source commit and modifications.
 
 ---
 
