@@ -511,15 +511,6 @@ workflow NOVELTREE {
             // Apply validation criteria (maps directly to the 3 observed errors)
             def isValid = (refCount >= 1) && (nonrefCount >= 2) && (speciesWithEnoughProteins >= 2)
 
-            // Log skipped gene families with reason
-            if (!isValid) {
-                def reason = refCount < 1 ? "no reference species proteins" :
-                             nonrefCount < 2 ? "insufficient non-reference proteins (${nonrefCount})" :
-                             speciesWithEnoughProteins < 2 ? "insufficient species with >=2 proteins (${speciesWithEnoughProteins} of ${nonrefSpeciesCount})" :
-                             "unknown validation failure"
-                log.info "Skipping ${meta.og}: ${reason} (ref=${refCount}, nonref=${nonrefCount}, species=${nonrefSpeciesCount})"
-            }
-
             return isValid
         }
 
