@@ -28,6 +28,11 @@ process FAMSA {
     def aln_trimmer = params.msa_trimmer
     def prefix = fasta.baseName
     """
+    # Be sure to remove any non-standard amino acid codes in the input sequences, as this
+    # can cause errors downstream and in parsing.
+    sed -E -i '/>/!s/U//g' ${fasta} # selenocysteine
+    sed -E -i '/>/!s/O//g' ${fasta} # pyrrolysine
+
     # Run FAMSA alignment
     famsa \\
         -t ${task.cpus} \\
