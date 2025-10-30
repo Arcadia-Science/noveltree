@@ -1,6 +1,6 @@
 include { CIALIGN as TRIM_MSAS } from '../../modules/local/cialign'
 include { FASTTREE             } from '../../modules/local/fasttree'
-include { WITCH as ALIGN_SEQS  } from '../../modules/local/witch'
+include { FAMSA as ALIGN_SEQS  } from '../../modules/local/famsa'
 
 workflow INFER_TREES {
     take:
