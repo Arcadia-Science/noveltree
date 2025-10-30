@@ -43,9 +43,9 @@ process PHYLO_DIST {
     work_dir <- getwd()
     cat("Work directory:", work_dir, "\\n")
 
-    # Change to /opt/raas to source R scripts (they need to source C++ files with relative paths)
-    setwd("/opt/raas")
-    cat("Sourcing R scripts from /opt/raas...\\n")
+    # Change to /opt/phylo_dist to source R scripts (they need to source C++ files with relative paths)
+    setwd("/opt/phylo_dist")
+    cat("Sourcing R scripts from /opt/phylo_dist...\\n")
     source("phylo_multivariate_distance_functions.R")
     source("protein_dist_permutation_tests.R")
     source("simple_protein_dist_signif_tests.R")
