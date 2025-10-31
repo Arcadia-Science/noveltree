@@ -30,16 +30,6 @@ process SPECIESRAX {
     def args = task.ext.args ?: ''
     def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : "MiniNJ"
     """
-    # Recode selenocysteine as a gap character:
-    # RAxML-NG (used under the hood by SpeciesRax and
-    # GeneRax) cannot handle these. Even if rare,
-    # their inclusion leads a number of gene families
-    # to be excluded from analyses.
-    sed -E -i '/>/!s/U/-/g' *.fa
-
-    # Do the same for Pyrrolysine
-    sed -E -i '/>/!s/O/-/g' *.fa
-
     # Construct the family files for each gene family
     echo "[FAMILIES]" > speciesrax_orthogroup.families
     for msa in \$(ls *fa)
