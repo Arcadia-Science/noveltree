@@ -92,16 +92,46 @@ nextflow run . -profile docker -params-file <PARAMS.JSON>
 
 ---
 
-### **NOTE: Regarding our analysis on Nextflow Tower**
+## Running on AWS Batch
+
+NovelTree can be executed on AWS Batch for large-scale analyses. You can run it through Nextflow Tower or directly using the `awsbatch` profile.
+
+### Prerequisites
+
+- AWS Batch compute environment and job queue configured
+- S3 buckets for work directory and output storage
+- IAM permissions for Batch job submission and S3 access
+
+### Using the awsbatch Profile
+
+```bash
+nextflow run Arcadia-Science/noveltree \
+  -profile awsbatch \
+  --awsqueue <your-batch-queue> \
+  --awsregion <your-aws-region> \
+  -work-dir s3://<your-bucket>/work \
+  --outdir s3://<your-bucket>/results \
+  --input s3://<your-bucket>/input.csv
+```
+
+**Required parameters:**
+- `--awsqueue`: Your AWS Batch job queue name
+- `--awsregion`: AWS region (e.g., `us-east-1`)
+- `-work-dir`: S3 URI for Nextflow work directory
+- `--outdir`: S3 URI for outputs
+
+### Running via Nextflow Tower (Publication Example)
 
 When applying NovelTree to the dataset used in [the associated pub](https://doi.org/10.57844/arcadia-z08x-v798), we launched the workflow via Nextflow Tower to run on AWS Batch and specified additional configurations:
 
 These included:
 
-1. `max_cpus = 5000`: This set the maximum number of available cpus (as spot instances) to all concurrent processes. Effectively the number of CPUs available to our virtual "cloud" computer. This parameter (along with `max_memory` and `max_time` interact with both the run-specific configuration, as well as the runs compute environment.
+1. `max_cpus = 5000`: This set the maximum number of available cpus (as spot instances) to all concurrent processes. Effectively the number of CPUs available to our virtual "cloud" computer. This parameter (along with `max_memory` and `max_time`) interact with both the run-specific configuration, as well as the run's compute environment.
 2. `max_memory = 30000.GB`: The same, but for memory alloted for all concurrent processes.
 3. `max_time = 2400.h`: Again, the same, but the maximum time alloted for all concurrent processes.
 4. Additionally, we allocated 32 CPUs to the head node to ensure efficient monitoring and submission of jobs.
+
+---
 
 ## The workflow proceeds to conduct the following steps:
 

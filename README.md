@@ -47,6 +47,29 @@ Nextflow requires some memory resources to be allocated for overhead - consequen
 
 ---
 
+## Running on AWS Batch
+
+NovelTree can be run on AWS Batch for large-scale analyses. To use AWS Batch:
+
+```bash
+nextflow run . \
+  -profile awsbatch \
+  --awsqueue <your-batch-queue> \
+  --awsregion <your-aws-region> \
+  -work-dir s3://<your-bucket>/work \
+  --outdir s3://<your-bucket>/results \
+  --input <input.csv>
+```
+
+**Requirements:**
+- AWS Batch compute environment and job queue must be configured
+- Work directory and output directory must be S3 buckets
+- Appropriate IAM permissions for Batch and S3 access
+
+For detailed AWS Batch setup instructions, see the [usage documentation](docs/usage.md#running-on-aws-batch).
+
+---
+
 ## Building Docker Images
 
 NovelTree uses custom Docker images for specific analysis modules. If you're using a custom fork or have modified the pipeline code, you'll need to rebuild these images.
