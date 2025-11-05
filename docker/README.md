@@ -35,3 +35,9 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `FILTER_ORTHOGROUPS`                 | [R v4.2.2](./rbase/)                                                 | [arcadiascience/rbase_4.2.2](https://hub.docker.com/r/arcadiascience/rbase_4.2.2)                                 |
 | `SELECT_INFLATION`                   | [select_mcl_inflation_params created on 08/30/2023](./select_mcl_inflation_params/) | [arcadiascience/select_mcl_inflation_params_08302023](https://hub.docker.com/r/arcadiascience/select_mcl_inflation_params_08302023) |
 | `WITCH`                   | [WITCH v0.3.0](./witch/) | [arcadiascience/witch_0.3.0](https://hub.docker.com/r/arcadiascience/witch_0.3.0) |
+| `FAMSA`                   | [FAMSA v2.5.0](./famsa/) | [arcadiascience/famsa_2.0.0](https://hub.docker.com/r/arcadiascience/famsa_2.0.0) |
+| `PHYLO_PROFILES`          | [phylo_profiles v1.0.0](./phylo_profiles/) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
+| `PHYSICOCHEMICAL_PROPS`   | [physicochemical_props v1.0.0](./physicochemical_props/) | [arcadiascience/physicochemical_props:1.0.0](https://hub.docker.com/r/arcadiascience/physicochemical_props) |
+| `PHYLO_DIST`              | [phylo_dist v1.0.0](./phylo_dist/) | [arcadiascience/phylo_dist:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_dist) |
+| `SUMMARIZE`               | [R summarization packages](./summarize/) | [arcadiascience/summarize](https://hub.docker.com/r/arcadiascience/summarize) |
+| `QUERYUP`                 | [queryup v1.0.5](./queryup/) | [arcadiascience/queryup_1.0.5](https://hub.docker.com/r/arcadiascience/queryup_1.0.5) |

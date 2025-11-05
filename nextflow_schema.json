@@ -88,7 +88,8 @@
                 "aligner": {
                     "type": "string",
                     "default": "witch",
-                    "description": "Option specifying the method used to infer multiple sequence alignments. Either WITCH ('witch') or MAFFT ('mafft'). Additional params for either method should be provided in modules.config."
+                    "description": "Option specifying the method used to infer multiple sequence alignments. Options: WITCH ('witch'), MAFFT ('mafft'), or FAMSA ('famsa'). Additional params for each method should be provided in modules.config.",
+                    "enum": ["witch", "mafft", "famsa"]
                 },
                 "msa_trimmer": {
                     "type": "string",
@@ -119,6 +120,12 @@
                     "type": "string",
                     "default": "none",
                     "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
+                },
+                "ref_species": {
+                    "type": "string",
+                    "description": "Reference species name for phylogenetic distance comparisons in the PHYLO_DIST module. Required when running PHYLO_DIST analysis.",
+                    "help_text": "Species name to use as reference for calculating phylogenetically-corrected protein distances. All other species' proteins will be compared to this reference species. Must match a species name from the input samplesheet (format: Genus_species). The PHYLO_DIST module will only run for gene families that contain at least one protein from this reference species.",
+                    "fa_icon": "fas fa-bullseye"
                 },
                 "email": {
                     "type": "string",

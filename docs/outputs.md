@@ -29,16 +29,21 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - `all_ogs_counts.csv`: comma-separated csv listing, for all orthogroups (including those fro which msa/gene family trees are not inferred), the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included.  
 - `(gene)speciestree_core_ogs_counts.csv`: the same as above, but for only the two respects subsets of gene families.
 
-**7.** either `mafft_alignments/` or `witch_alignments`: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number).   
-- `witch_alignments` contains both the "raw" alignments inferred from witch (`original_alignments`), as well as the cleaned alignments produced by the software, with gappy or otherwise poorly alignmed columns removed.  
+**7.** either `mafft_alignments/`, `witch_alignments`, or `famsa_alignments`: multiple sequence alignments for orthogroups passing filtering thresholds (e.g. minimum number of species, maximum copy number).
+- `witch_alignments` contains both the "raw" alignments inferred from witch (`original_alignments`), as well as the cleaned alignments produced by the software, with gappy or otherwise poorly alignmed columns removed.
+- `famsa_alignments` contains:
+  - `*_famsa.fa`: aligned sequences in FASTA format
+  - `species_protein_maps/` subdirectory (if no trimmer used): `*_map.link` files for protein-to-species mapping
 - If no alignment cleaning method is used, these directories will contain another subdirectory, `species_protein_maps`, which contains the map files linking each protein ID to the parent species.  
 
 **8.** `trimmed_msas/`: Only produced if using CIAlign or ClipKIT to clean multiple sequence alignments.  
 - If this directory is produced by the workflow, the `species_protein_maps` subdirectory can be found here.   
 
-**9.** `fasttree_gene_trees` or `iqtree_gene_trees/`: Gene family trees using either FastTree2 or IQ-TREE respectively.  
+**9.** `fasttree_gene_trees` or `iqtree_gene_trees/`: Gene family trees using either FastTree2 or IQ-TREE respectively.
 
-**10.** `asteroid/`: Asteroid species tree, either rooted or unrooted. Includes:  
+**10.** `iqtree_pmsf_gene_trees/`: OPTIONAL: Gene family trees refined using IQ-TREE's Posterior Mean Site Frequency (PMSF) model. Only produced if `tree_model_pmsf` parameter is specified in full mode.
+
+**11.** `asteroid/`: Asteroid species tree, either rooted or unrooted. Includes:  
 
 - asteroid.bestTree.newick: Single species tree with the greatest likelihood among set of inferred trees (for instance if multiple random starting trees are used).  
 - asteroid.allTrees.newick: All inferred species trees (=1 if default of 1 random starting tree is used).  
@@ -46,14 +51,42 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - asteroid.scores.txt: likelihood scores for all inferred trees.  
 - disco_decomposed_rooted_gfts.newick: A newick tree file containing all single-copy gene family trees inferred using [DISCO](https://github.com/JSdoubleL/DISCO) by decomposing each mutiple copy gene family tree into their respective single-copy counterparts.  
 
-**12.** `speciesrax/`: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:  
+**13.** `speciesrax/`: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:
 
-- `species_trees/`: contains inferred rooted species trees, species tree likihoods, and species trees with internal nodels labeled according to their support values.  
-- `reconciliations/`: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species. Reconciliations here are obtained without optimization of the gene family tree topology under a model of gene duplication, transfer, and loss.  
+- `species_trees/`: contains inferred rooted species trees, species tree likihoods, and species trees with internal nodels labeled according to their support values.
+- `reconciliations/`: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species. Reconciliations here are obtained without optimization of the gene family tree topology under a model of gene duplication, transfer, and loss.
 
-**13.** `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Reconciliations are the result of joint optimization of the gene family tree topology and reconciliation, and duplication/transfer/loss rates.  
+**14.** `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Reconciliations are the result of joint optimization of the gene family tree topology and reconciliation, and duplication/transfer/loss rates.
 
-- `per_family_rates`: Results of the per-family model. One directory for each gene family, named by the corresponding family ID.  
-- `per_species_rates`: Results of the per-species model. One directory for each gene family, named by the corresponding family ID.  
-- Each has a similar directory structure to SpeciesRax, but lacking the species trees directory, and lacking another directory containing the results of gene family tree reconciation and inferred rates of gene duplication, transfer, and loss.  
-- `results/`: one directory per-gene-family containing reconciled gene trees and inferred rates of gene family duplication, transfer and loss.  
+- `per_family_rates`: Results of the per-family model. One directory for each gene family, named by the corresponding family ID.
+- `per_species_rates`: Results of the per-species model. One directory for each gene family, named by the corresponding family ID.
+- Each has a similar directory structure to SpeciesRax, but lacking the species trees directory, and lacking another directory containing the results of gene family tree reconciation and inferred rates of gene duplication, transfer, and loss.
+- `results/`: one directory per-gene-family containing reconciled gene trees and inferred rates of gene family duplication, transfer and loss.
+
+**15.** `gene_family_evolution/`: Phylogenetic profiles and event summaries from PHYLO_PROFILES module.
+
+- `duplication_count_per_species_per_gene_family.tsv`: Matrix of duplication events with species as rows and gene families as columns.
+- `hgt_summed_counts_recip_donor.tsv`: Horizontal gene transfer network matrix showing donor-recipient relationships between species.
+- `loss_count_per_per_species_gene_family.tsv`: Matrix of gene loss events per species per gene family.
+- `speciation_count_per_species_per_gene_family.tsv`: Matrix of speciation events per species per gene family.
+- `transfer_donor_count_per_species_per_gene_family.tsv`: HGT events where each species acted as donor.
+- `transfer_recipient_count_per_species_per_gene_family.tsv`: HGT events where each species acted as recipient.
+
+**16.** `physicochemical_properties/`: Amino acid composition and physicochemical property summaries from PHYSICOCHEMICAL_PROPS module.
+
+- `aa-summary-stats/across-family-summaries/`: Aggregated statistics across all gene families.
+- `aa-summary-stats/per-family-summaries/`: Per-family directories containing property summaries for each protein.
+  - Contains CSV files with 20 amino acid frequencies and physicochemical properties (molecular weight, aromaticity, instability, flexibility, GRAVY, isoelectric point, charge at pH 3/5/7/9, helix/sheet fractions, extinction coefficients).
+
+**17.** `phylo_dist/`: Phylogenetically-corrected protein distance analyses from PHYLO_DIST module (only for families with reference species proteins).
+
+- `phylo_corrected_data/`: GLS-corrected physicochemical property data after removing phylogenetic signal.
+- `protein-dist-mats/`: Raw protein-protein distance matrices.
+- `protein-phylo-dist-mats/`: Phylogenetically-corrected Mahalanobis distance matrices.
+- `congruified-gfts/`: Gene family trees congruified with species tree topology.
+- `protein-dists-to-reference/`: Distances from each protein to reference species proteins.
+- `species-dists-to-reference/`: Species-level average distances to reference.
+- `protein-pvals/`: Statistical significance of protein distances to reference.
+- `species-pvals/`: Statistical significance of species-level distances.
+- `pairwise-protein-dist-perm-test/`: Permutation test results for protein pairs.
+- `final_protein_pair_summary_tables/`: Comprehensive summary tables combining all analyses.  

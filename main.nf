@@ -48,9 +48,12 @@ if (params.workflow_mode == 'full') {
     if (ch_aligner == "witch") {
         include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
         include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
-    } else {
+    } else if (ch_aligner == "mafft") {
         include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
         include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
+    } else if (ch_aligner == "famsa") {
+        include { FAMSA as ALIGN_SEQS                   } from './modules/local/famsa'
+        include { FAMSA as ALIGN_REMAINING_SEQS         } from './modules/local/famsa'
     }
     if (ch_msa_trimmer == "clipkit") {
         include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
