@@ -35,9 +35,9 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
   "aligner": "witch",
   "max_copy_num_spp_tree": 5,
   "max_copy_num_gene_trees": 10,
-  "download_annots": "none",
   "tree_model": "LG+F+G4",
   "outgroups": "none",
+  "ref_species": "Genus_species",
   "msa_trimmer": "none",
   "tree_method": "fasttree"
 }
@@ -50,14 +50,14 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/>
 > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/>
 > `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups an gene family must contain for phylogenetic inference.<br/>
-> `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Either WITCH (`witch`) or MAFFT (`mafft`).<br/>
+> `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/>
 > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/>
 > `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.<br/>
 > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/>
-> `download_annots`: DEFAULT: "minimal". Set of annotations to be downloaded. "none" corresponds to a minimal set. See description of parameters for expanded description of options.<br/>
 > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.<br/>
 > `tree_model_pmsf`: OPTIONAL: Posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.<br/>
 > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/>
+> `ref_species`: REQUIRED for PHYLO_DIST. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/>
 > `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/>
 > `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/>
 >
@@ -151,16 +151,20 @@ These included:
 
 ![Workflow Figure](../Fig2-Workflow-part-one.png)  
 
-8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with either [`WITCH`](https://github.com/c5shen/WITCH) (default) or [`MAFFT`](https://mafft.cbrc.jp/alignment/software/)
+8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with [`WITCH`](https://github.com/c5shen/WITCH) (default), [`MAFFT`](https://mafft.cbrc.jp/alignment/software/), or [`FAMSA`](https://github.com/refresh-bio/FAMSA)
 9. `TRIM_SEQS`: OPTIONAL: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) (defualt) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`FastTree2`](http://www.iqtree.org/) (default) or [`IQ-TREE`](http://www.iqtree.org/)
-11. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
-12. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
-13. `GENERAX_PER_FAMILY`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
-14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates)
-15. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+11. `IQTREE_PMSF`: OPTIONAL (full mode only): If `tree_model_pmsf` parameter is specified, perform second round of tree inference using IQ-TREE with Posterior Mean Site Frequency (PMSF) model for improved accuracy
+12. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
+13. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
+14. `GENERAX_PER_FAMILY`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
+15. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates)
+16. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+17. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, transfer, loss, and speciation events across species and gene families
+18. `PHYSICOCHEMICAL_PROPS`: Calculate amino acid composition and physicochemical properties for all gene families
+19. `PHYLO_DIST`: Calculate phylogenetically-corrected protein distances using PGLS (Phylogenetic Generalized Least Squares) and Mahalanobis distances
 
-![Workflow Figure](../Fig4-Workflow-part-two.png)  
+![Workflow Figure](../Fig4-Workflow-part-two.png)
 
 # Advanced Usage
 
@@ -229,6 +233,17 @@ process {
 - Parameters specified in [`conf/modules.config`](conf/modules.config).
 - See [WITCH documentation](https://github.com/c5shen/WITCH) for detailed description of options.
 
+### [`FAMSA`](modules/local/famsa.nf):
+
+- Fast and accurate multiple sequence alignment algorithm optimized for large protein families
+- Parameters specified in [`conf/modules.config`](conf/modules.config)
+- Default: Uses standard FAMSA parameters with automatic thread detection
+- Common options (can be added to modules.config):
+  - `-medoidtree`: Use medoid tree heuristic for faster alignment of very large families
+  - `-gt upgma/sl/parttree`: Guide tree method selection (default: upgma)
+  - `-t <n>`: Number of threads (automatically set from task.cpus)
+- [FAMSA documentation](https://github.com/refresh-bio/FAMSA)
+
 #### 7. `TRIM_SEQS
 
 ### [`CLIPKIT`](modules/local/clipkit.nf):
@@ -257,10 +272,20 @@ process {
 - All other custom parameters should be specified in [`conf/modules.config`](conf/modules.config).
 - [IQ-TREE documentation](http://www.iqtree.org/)
 
+### [`IQTREE_PMSF`](modules/nf-core-modified/iqtree_pmsf.nf):
+
+- Performs second round of tree inference using Posterior Mean Site Frequency (PMSF) model
+- Only runs if `tree_model_pmsf` parameter is specified (full mode only)
+- Uses guide trees from initial tree inference (FastTree or IQ-TREE)
+- Improves accuracy for difficult alignments with site-heterogeneous evolution
+- Parameters same as regular IQ-TREE but with PMSF approximation
+- [IQ-TREE PMSF documentation](http://www.iqtree.org/doc/Substitution-Models#posterior-mean-site-frequency-model)
+
 #### 9. [`ASTEROID`](modules/local/asteroid.nf):
 
 - Parameters should be specified in [`conf/modules.config`](conf/modules.config).
 - `--random-starting-trees 10`: Number of random starting trees used in species tree inference.
+- `--bs-replicates 100`: Number of bootstrap replicates for assessing species tree support.
 - [Asteroid documentation](https://github.com/BenoitMorel/Asteroid)
 
 #### 10. [`SPECIESRAX`](modules/local/speciesrax.nf):
@@ -292,3 +317,31 @@ process {
 - `--rec-model UndatedDTL --strategy SPR`
 
 - [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)
+
+#### 13. [`ORTHOFINDER_PHYLOHOGS`](modules/local/orthofinder_phylohogs.nf):
+
+- Infers phylogenetically hierarchical orthogroups (HOGs) using reconciled gene family trees
+- Uses rooted species tree from SpeciesRax and gene family trees from GeneRax
+- No additional parameters required
+- [OrthoFinder documentation](https://github.com/davidemms/OrthoFinder)
+
+#### 14. [`PHYLO_PROFILES`](modules/local/phylo_profiles.nf):
+
+- Generates phylogenetic profiles from GeneRax per-species reconciliation outputs
+- Summarizes gene duplication, transfer, loss, and speciation events across species
+- No parameters required - processes all GeneRax output files automatically
+- Outputs stored in `gene_family_evolution/` directory
+
+#### 15. [`PHYSICOCHEMICAL_PROPS`](modules/local/physicochemical_props.nf):
+
+- Calculates amino acid composition and physicochemical properties for all gene families
+- Computes 20 amino acid frequencies and properties (molecular weight, aromaticity, GRAVY, isoelectric point, etc.)
+- No parameters required
+- Outputs stored in `physicochemical_properties/` directory
+
+#### 16. [`PHYLO_DIST`](modules/local/phylo_dist.nf):
+
+- Calculates phylogenetically-corrected protein distances using PGLS and Mahalanobis distances
+- **Requires**: `ref_species` parameter to define reference species for comparisons
+- Only processes gene families with ≥1 reference protein and ≥2 non-reference proteins
+- Outputs stored in `phylo_dist/` directory with distance matrices and statistical tests

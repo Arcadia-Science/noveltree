@@ -22,6 +22,10 @@
 
   > Cokelaer, T, Pultz, D, Harder, LM, Serra-Musach, J, Saez-Rodriguez, J. (2013). BioServices: a common Python package to access biological Web Services programmatically. https://doi.org/10.1093/bioinformatics/btt547
 
+- [Biopython](https://doi.org/10.1093/bioinformatics/btp163)
+
+  > Cock PJ, Antao T, Chang JT, Chapman BA, Cox CJ, Dalke A, Friedberg I, Hamelryck T, Kauff F, Wilczynski B, de Hoon MJ. (2009). Biopython: freely available Python tools for computational molecular biology and bioinformatics. https://doi.org/10.1093/bioinformatics/btp163
+
 - [pandas](https://zenodo.org/record/8239932)
 
   >  Data structures for statistical computing in python. https://doi.org/10.25080/Majora-92bf1922-00a
@@ -53,6 +57,10 @@
 - [WITCH](https://doi.org/10.1089/cmb.2021.0585)
 
   > Shen, C, Park, M, & Warnow, T. (2022). WITCH: improved multiple sequence alignment through weighted consensus hidden Markov model alignment. https://doi.org/10.1089/cmb.2021.0585
+
+- [FAMSA2](https://doi.org/10.1101/2025.07.15.664876)
+
+  > Deorowicz S, Debudaj-Grabysz A, Gudyś A. (2025). FAMSA2 enables accurate multiple sequence alignment at protein-universe scale. https://doi.org/10.1101/2025.07.15.664876
 
 - [ClipKIT](https://doi.org/10.1371/journal.pbio.3001007)
 
@@ -86,6 +94,14 @@
 
   > Wickham H et al. (2019). Welcome to the Tidyverse. https://doi.org/10.21105/joss.01686
 
+- [data.table](https://CRAN.R-project.org/package=data.table)
+
+  > Dowle M, Srinivasan A. (2023). data.table: Extension of `data.frame`. R package version 1.14.8. https://CRAN.R-project.org/package=data.table
+
+- [plyr](https://CRAN.R-project.org/package=plyr)
+
+  > Wickham H. (2011). The Split-Apply-Combine Strategy for Data Analysis. Journal of Statistical Software, 40(1), 1-29. https://www.jstatsoft.org/v40/i01/
+
 - [reshape](https://doi.org/10.18637/jss.v021.i12)
 
   > Wickham H. (2007). Reshaping data with the reshape package. https://doi.org/10.18637/jss.v021.i12
@@ -102,6 +118,15 @@
 
 - [phytools](https://doi.org/10.1111/j.2041-210X.2011.00169.x)
   > Revell, LJ. (2011). phytools: an R package for phylogenetic comparative biology (and other things). https://doi.org/10.1111/j.2041-210X.2011.00169.x
+
+- [geiger](https://doi.org/10.1093/bioinformatics/btu181)
+  > Harmon LJ, Weir JT, Brock CD, Glor RE, Challenger W. (2014). GEIGER: investigating evolutionary radiations. https://doi.org/10.1093/bioinformatics/btu181
+
+- [Rcpp](https://doi.org/10.18637/jss.v040.i08)
+  > Eddelbuettel D, François R. (2011). Rcpp: Seamless R and C++ Integration. https://doi.org/10.18637/jss.v040.i08
+
+- [RcppArmadillo](https://doi.org/10.1007/s00180-016-0695-x)
+  > Eddelbuettel D, Sanderson C. (2014). RcppArmadillo: Accelerating R with high-performance C++ linear algebra. https://doi.org/10.1007/s00180-016-0695-x
 
 - [DISCO](https://doi.org/10.1093/sysbio/syab070)
   > Willson, J, Saha Roddur, M, Liu, B, Zaharias, P, Warnow, T. (2021). DISCO: Species Tree Inference using Multicopy Gene Family Tree Decomposition. https://doi.org/10.1093/sysbio/syab070
