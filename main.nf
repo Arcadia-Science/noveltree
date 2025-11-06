@@ -37,47 +37,6 @@ if (params.mcl_inflation) {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-<<<<<<< HEAD
-    IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-// Full mode: parameter-based module selection (existing behavior)
-if (params.workflow_mode == 'full') {
-    ch_aligner = params.aligner
-    ch_msa_trimmer = params.msa_trimmer
-    ch_tree_method = params.tree_method
-    if (ch_aligner == "witch") {
-        include { WITCH as ALIGN_SEQS                   } from './modules/local/witch'
-        include { WITCH as ALIGN_REMAINING_SEQS         } from './modules/local/witch'
-    } else if (ch_aligner == "mafft") {
-        include { MAFFT as ALIGN_SEQS                   } from './modules/nf-core-modified/mafft'
-        include { MAFFT as ALIGN_REMAINING_SEQS         } from './modules/nf-core-modified/mafft'
-    } else if (ch_aligner == "famsa") {
-        include { FAMSA as ALIGN_SEQS                   } from './modules/local/famsa'
-        include { FAMSA as ALIGN_REMAINING_SEQS         } from './modules/local/famsa'
-    }
-    if (ch_msa_trimmer == "clipkit") {
-        include { CLIPKIT as TRIM_MSAS                  } from './modules/local/clipkit'
-        include { CLIPKIT as TRIM_REMAINING_MSAS        } from './modules/local/clipkit'
-    } else if (ch_msa_trimmer == 'cialign') {
-        include { CIALIGN as TRIM_MSAS                  } from './modules/local/cialign'
-        include { CIALIGN as TRIM_REMAINING_MSAS        } from './modules/local/cialign'
-    }
-    if (ch_tree_method == "iqtree") {
-        include { IQTREE as INFER_TREES                 } from './modules/nf-core-modified/iqtree'
-        include { IQTREE as INFER_REMAINING_TREES       } from './modules/nf-core-modified/iqtree'
-    } else {
-        include { FASTTREE as INFER_TREES               } from './modules/local/fasttree'
-        include { FASTTREE as INFER_REMAINING_TREES     } from './modules/local/fasttree'
-    }
-}
-
-// Simplified mode: uses subworkflows with hardcoded tools (no individual module imports needed)
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-=======
->>>>>>> 9861f01 (Cleaned up workflow to use subworkflow for all paths.)
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
