@@ -37,6 +37,7 @@ if (params.mcl_inflation) {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<<<<<<< HEAD
     IMPORT PARAMETER-SPECIFIED ALTERNATIVE MODULES (INCLUDES LOCAL AND NF-CORE-MODIFIED)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -75,6 +76,8 @@ if (params.workflow_mode == 'full') {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=======
+>>>>>>> 9861f01 (Cleaned up workflow to use subworkflow for all paths.)
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -82,14 +85,10 @@ if (params.workflow_mode == 'full') {
 //
 // SUBWORKFLOW
 //
-include { INPUT_CHECK                               } from './subworkflows/local/input_check'
-include { MCL_INFLATION_SELECTION                   } from './subworkflows/local/mcl_inflation_selection'
-
-// Simplified mode only subworkflows
-if (params.workflow_mode == 'simplified') {
-    include { INFER_TREES as INFER_SPECIES_TREES    } from './subworkflows/local/infer_trees'
-    include { INFER_TREES as INFER_REMAINING_TREES  } from './subworkflows/local/infer_trees'
-}
+include { INPUT_CHECK                           } from './subworkflows/local/input_check'
+include { MCL_INFLATION_SELECTION               } from './subworkflows/local/mcl_inflation_selection'
+include { INFER_TREES as INFER_SPECIES_TREES    } from './subworkflows/local/infer_trees'
+include { INFER_TREES as INFER_REMAINING_TREES  } from './subworkflows/local/infer_trees'
 
 //
 // MODULE
@@ -107,9 +106,8 @@ include { PHYLO_PROFILES                            } from './modules/local/phyl
 include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
 include { PHYLO_DIST                                } from './modules/local/phylo_dist'
 
-// Full mode only modules
-if (params.workflow_mode == 'full') {
-    include { GENERAX_PER_FAMILY                        } from './modules/local/generax_per_family'
+if (params.generax_per_family) {
+    include { GENERAX_PER_FAMILY                    } from './modules/local/generax_per_family'
 }
 
 /*
@@ -123,12 +121,14 @@ if (params.workflow_mode == 'full') {
 //
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from './modules/nf-core-modified/diamond_blastp'
 
-// Full mode only modules
-if (params.workflow_mode == 'full') {
-    include { BUSCO as BUSCO_SHALLOW                    } from './modules/nf-core-modified/busco'
-    include { BUSCO as BUSCO_BROAD                      } from './modules/nf-core-modified/busco'
-    include { IQTREE_PMSF as IQTREE_PMSF_ALL            } from './modules/nf-core-modified/iqtree_pmsf'
-    include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from './modules/nf-core-modified/iqtree_pmsf'
+if (params.busco) {
+    include { BUSCO as BUSCO_SHALLOW                } from './modules/nf-core-modified/busco'
+    include { BUSCO as BUSCO_BROAD                  } from './modules/nf-core-modified/busco'
+}
+
+if (params.tree_model_pmsf != 'none') {
+    include { IQTREE_PMSF as IQTREE_PMSF_ALL        } from './modules/nf-core-modified/iqtree_pmsf'
+    include { IQTREE_PMSF as IQTREE_PMSF_REMAINING  } from './modules/nf-core-modified/iqtree_pmsf'
 }
 
 /*
@@ -199,7 +199,7 @@ workflow NOVELTREE {
     // do not use these outputs, so multiple busco runs may be conducted
     // simultaneously
     //
-    if (params.workflow_mode == 'full') {
+    if (params.busco) {
         // Shallow taxonomic scale:
         BUSCO_SHALLOW(
             ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
@@ -281,106 +281,48 @@ workflow NOVELTREE {
     // TREE INFERENCE: Alignment → Trimming → Phylogeny
     // Different approaches for full vs simplified modes
     //
-    if (params.workflow_mode == 'simplified') {
-        //
-        // Simplified mode: Use INFER_TREES subworkflow (hardcoded WITCH→CIALIGN→FASTTREE)
-        //
-        INFER_SPECIES_TREES(ch_spptree_fas)
-        ch_versions = ch_versions.mix(INFER_SPECIES_TREES.out.versions)
 
-        INFER_REMAINING_TREES(ch_genetree_fas)
-        ch_versions = ch_versions.mix(INFER_REMAINING_TREES.out.versions)
+    INFER_SPECIES_TREES(ch_spptree_fas)
+    ch_versions = ch_versions.mix(INFER_SPECIES_TREES.out.versions)
 
-        // Set output channels for downstream use
-        ch_core_og_maplinks = INFER_SPECIES_TREES.out.map_link
-        ch_rem_og_maplinks = INFER_REMAINING_TREES.out.map_link
-        ch_core_og_clean_msas = INFER_SPECIES_TREES.out.cleaned_msas
-        ch_rem_og_clean_msas = INFER_REMAINING_TREES.out.cleaned_msas
-        ch_core_gene_trees = INFER_SPECIES_TREES.out.phylogeny
-        ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
+    INFER_REMAINING_TREES(ch_genetree_fas)
+    ch_versions = ch_versions.mix(INFER_REMAINING_TREES.out.versions)
 
-        core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
-        core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
-        core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
-    } else {
+    // Set output channels for downstream use
+    ch_core_og_maplinks = INFER_SPECIES_TREES.out.map_link
+    ch_rem_og_maplinks = INFER_REMAINING_TREES.out.map_link
+    ch_core_og_clean_msas = INFER_SPECIES_TREES.out.cleaned_msas
+    ch_rem_og_clean_msas = INFER_REMAINING_TREES.out.cleaned_msas
+    ch_core_gene_trees = INFER_SPECIES_TREES.out.phylogeny
+    ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
+
+    core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
+    core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
+
+    // Run IQ-TREE PMSF if model is specified, and subsequently collect final
+    // phylogenies into a channel for downstram use
+    if (params.tree_model_pmsf != 'none') {
         //
-        // Full mode: Parameter-based tool selection (original behavior)
+        // MODULE: IQTREE_PMSF
+        // Infer gene-family trees from the trimmed MSAs and guide trees from the
+        // previous tree inference module
         //
-        // MODULE: ALIGN_SEQS
-        // Infer multiple sequence alignments of orthogroups/gene
-        // families using WITCH (default) or MAFFT
-        //
-        // For the extreme core set to be used in species tree inference
-        ALIGN_SEQS(ch_spptree_fas)
-        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
+        // Be sure that both the MSAs and guide trees are sorted into the same
+        // order as before to prevent any hiccups - do so by temporarily
+        // joining the two channels.
+        ch_pmsf_input = ch_core_og_clean_msas.join(INFER_TREES.out.phylogeny)
+        ch_pmsf_input_remaining = ch_rem_og_clean_msas.join(INFER_REMAINING_TREES.out.phylogeny)
+        // Now run
+        IQTREE_PMSF(ch_pmsf_input, params.tree_model_pmsf)
+        IQTREE_PMSF_REMAINING(ch_pmsf_input_remaining, params.tree_model_pmsf)
+        ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
 
-        // And for the remaining orthogroups:
-        ALIGN_REMAINING_SEQS(ch_genetree_fas)
-
-        //
-        // MODULE: TRIM_MSAS
-        // Trim gappy regions, poorly aligned, or and phylogenetically
-        // uninformative/problematic sites from the MSAs using either
-        // CIAlign or ClipKIT based on parameter specification.
-        //
-        if (ch_msa_trimmer == 'none') {
-            // No trimming - use alignment outputs directly
-            ch_core_og_clean_msas = ALIGN_SEQS.out.msas
-            ch_rem_og_clean_msas = ALIGN_REMAINING_SEQS.out.msas
-            ch_core_og_maplinks = ALIGN_SEQS.out.map_link
-            ch_rem_og_maplinks = ALIGN_REMAINING_SEQS.out.map_link
-        } else {
-            // Apply trimming
-            TRIM_MSAS(ALIGN_SEQS.out.msas)
-            TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.msas)
-            ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
-            ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
-            ch_core_og_maplinks = TRIM_MSAS.out.map_link
-            ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
-            ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
-        }
-        // Create channels that are just lists of all the msas, and protein-species
-        // map links that are provided in bulk to SpeciesRax
-        core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
-        core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
-
-        //
-        // MODULE: INFER_TREES
-        // Infer gene-family trees from the trimmed MSAs using either
-        // VeryFastTree or IQ-TREE.
-        //
-        INFER_TREES(ch_core_og_clean_msas, params.tree_model)
-        INFER_REMAINING_TREES(ch_rem_og_clean_msas, params.tree_model)
-        ch_versions = ch_versions.mix(INFER_TREES.out.versions)
-
-        // Run IQ-TREE PMSF if model is specified, and subsequently collect final
-        // phylogenies into a channel for downstram use
-        if (params.tree_model_pmsf != 'none') {
-            //
-            // MODULE: IQTREE_PMSF
-            // Infer gene-family trees from the trimmed MSAs and guide trees from the
-            // previous tree inference module
-            //
-            // Be sure that both the MSAs and guide trees are sorted into the same
-            // order as before to prevent any hiccups - do so by temporarily
-            // joining the two channels.
-            ch_pmsf_input = ch_core_og_clean_msas.join(INFER_TREES.out.phylogeny)
-            ch_pmsf_input_remaining = ch_rem_og_clean_msas.join(INFER_REMAINING_TREES.out.phylogeny)
-            // Now run
-            IQTREE_PMSF(ch_pmsf_input, params.tree_model_pmsf)
-            IQTREE_PMSF_REMAINING(ch_pmsf_input_remaining, params.tree_model_pmsf)
-            ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
-
-            ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
-            ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
-        } else {
-            ch_core_gene_trees = INFER_TREES.out.phylogeny
-            ch_rem_gene_trees = INFER_REMAINING_TREES.out.phylogeny
-        }
-
-        // Create a channel/list (no tuple) of just the core trees used by Asteroid
-        core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
+        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
+        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
     }
+
+    // Create a channel/list (no tuple) of just the core trees used by Asteroid
+    core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
 
     // The following two steps will just be done for the core set of
     // orthogroups that will be used to infer the species tree
@@ -423,7 +365,7 @@ workflow NOVELTREE {
         .combine(ch_speciesrax)
 
     // GENERAX_PER_FAMILY: full mode only
-    if (params.workflow_mode == 'full') {
+    if (params.generax_per_family) {
         GENERAX_PER_FAMILY(
             ch_generax_input
         )
@@ -433,9 +375,7 @@ workflow NOVELTREE {
     }
 
     // GENERAX_PER_SPECIES: both modes
-    GENERAX_PER_SPECIES(
-        ch_generax_input
-    )
+    GENERAX_PER_SPECIES(ch_generax_input)
 
     ch_recon_perspp_gene_trees = GENERAX_PER_SPECIES.out.generax_per_spp_gfts.collect { it[1] }
 
@@ -464,64 +404,63 @@ workflow NOVELTREE {
     //
     all_og_msa_files = ch_all_og_clean_msas.collect { it[1] }
 
-    PHYSICOCHEMICAL_PROPS(
-        all_og_msa_files
-    )
+    if (params.physicochemical_properties) {
+        PHYSICOCHEMICAL_PROPS(
+            all_og_msa_files
+        )
+    }
 
-    //
-    // MODULE: PHYLO_DIST
-    // Calculate phylogenetically-corrected protein distances
-    //
-    // Create channel pairing gene family trees with their physicochemical properties
-    ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
-        .map { meta, tree -> [meta, tree] }
-        .combine(PHYSICOCHEMICAL_PROPS.out.per_family_summaries.flatten())
-        .filter { meta, tree, props_file ->
-            props_file.name.contains(meta.og) && props_file.name.contains("_summary_statistics.csv")
-        }
-        .filter { meta, tree, props_file ->
-            // Validate gene family has sufficient proteins for phylo-dist analysis
-            // Read CSV and extract protein IDs (first column, skip header)
-            def lines = props_file.readLines()
-            def proteinIds = lines.drop(1).collect { it.split(',')[0] }
+    if (params.phylo_dist) {
+        ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
+            .map { meta, tree -> [meta, tree] }
+            .combine(PHYSICOCHEMICAL_PROPS.out.per_family_summaries.flatten())
+            .filter { meta, tree, props_file ->
+                props_file.name.contains(meta.og) && props_file.name.contains("_summary_statistics.csv")
+            }
+            .filter { meta, tree, props_file ->
+                // Validate gene family has sufficient proteins for phylo-dist analysis
+                // Read CSV and extract protein IDs (first column, skip header)
+                def lines = props_file.readLines()
+                def proteinIds = lines.drop(1).collect { it.split(',')[0] }
 
-            if (proteinIds.size() == 0) {
-                log.info "Skipping ${meta.og}: No proteins found in CSV"
-                return false
+                if (proteinIds.size() == 0) {
+                    log.info "Skipping ${meta.og}: No proteins found in CSV"
+                    return false
+                }
+
+                // Count reference species proteins
+                def refCount = proteinIds.count { it.startsWith("${params.ref_species}_") }
+
+                // Count non-reference proteins
+                def nonrefCount = proteinIds.size() - refCount
+
+                // Count proteins per non-reference species
+                // NOTE: Must match R script's species extraction logic (line 145 of protein_distance_calculation_functions.R)
+                // R uses: gsub("_.*", "", focal_prots) which removes everything after FIRST underscore
+                def nonrefProteinsBySpecies = proteinIds
+                    .findAll { !it.startsWith("${params.ref_species}_") }
+                    .collect { it.replaceFirst(/_.*/, '') }  // Extract genus name only (everything before first underscore)
+                    .countBy { it }  // Map of species -> count
+
+                // Count unique non-reference species
+                def nonrefSpeciesCount = nonrefProteinsBySpecies.size()
+
+                // Count how many non-reference species have at least 2 proteins
+                // (Wilcoxon test requires at least 2 observations per group)
+                def speciesWithEnoughProteins = nonrefProteinsBySpecies.count { species, count -> count >= 2 }
+
+                // Apply validation criteria (maps directly to the 3 observed errors)
+                def isValid = (refCount >= 1) && (nonrefCount >= 2) && (speciesWithEnoughProteins >= 2)
+
+                return isValid
             }
 
-            // Count reference species proteins
-            def refCount = proteinIds.count { it.startsWith("${params.ref_species}_") }
-
-            // Count non-reference proteins
-            def nonrefCount = proteinIds.size() - refCount
-
-            // Count proteins per non-reference species
-            // NOTE: Must match R script's species extraction logic (line 145 of protein_distance_calculation_functions.R)
-            // R uses: gsub("_.*", "", focal_prots) which removes everything after FIRST underscore
-            def nonrefProteinsBySpecies = proteinIds
-                .findAll { !it.startsWith("${params.ref_species}_") }
-                .collect { it.replaceFirst(/_.*/, '') }  // Extract genus name only (everything before first underscore)
-                .countBy { it }  // Map of species -> count
-
-            // Count unique non-reference species
-            def nonrefSpeciesCount = nonrefProteinsBySpecies.size()
-
-            // Count how many non-reference species have at least 2 proteins
-            // (Wilcoxon test requires at least 2 observations per group)
-            def speciesWithEnoughProteins = nonrefProteinsBySpecies.count { species, count -> count >= 2 }
-
-            // Apply validation criteria (maps directly to the 3 observed errors)
-            def isValid = (refCount >= 1) && (nonrefCount >= 2) && (speciesWithEnoughProteins >= 2)
-
-            return isValid
-        }
-
-    PHYLO_DIST(
-        ch_phylo_dist_input,
-        ch_speciesrax,
-        params.ref_species
-    )
+        PHYLO_DIST(
+            ch_phylo_dist_input,
+            ch_speciesrax,
+            params.ref_species
+        )
+    }
 
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS
