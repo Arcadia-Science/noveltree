@@ -16,31 +16,56 @@ ANNOTATION_SETS = {
     'cogeqc': ['organism_name', 'organism_id', 'accession', 'xref_interpro', 'xref_oma']
 }
 
+MIN_PROP_RETRIEVED = 0.5  # Minimum proportion of accessions that must be retrieved
+MAX_RETRY_DEPTH = 5  # Maximum recursion depth for retries
+
 # Suffixes for each annotation filename
 ANNOT_NAMES = ['_cogeqc_annotations.tsv']
 
-def fetch_batch(batch_accessions, organism_name, columns):
+def fetch_batch(batch_accessions, organism_name, columns, depth=0):
+    """Fetch annotations for a batch, recursively splitting on errors."""
+    # Safety check: prevent excessive recursion
+    if depth > MAX_RETRY_DEPTH:
+        print(f"Warning: Max recursion depth reached for batch of size {len(batch_accessions)}")
+        return []
+
     uniprot = UniProt()
     query = " OR ".join([f"accession:{acc}" for acc in batch_accessions])
-    result = uniprot.search(query, frmt="tsv", columns=",".join(columns), limit=None)
 
+    # Try to fetch results
+    result = None
+    try:
+        result = uniprot.search(query, frmt="tsv", columns=",".join(columns), limit=None)
+    except (KeyError, AttributeError):
+        pass  # result stays None, will be handled below
+
+    # Check if result is valid (covers both exception case and invalid return)
+    if not result or not isinstance(result, str):
+        # Invalid result - split and retry if possible
+        if len(batch_accessions) > 1:
+            mid = len(batch_accessions) // 2
+            first_half = fetch_batch(batch_accessions[:mid], organism_name, columns, depth + 1)
+            second_half = fetch_batch(batch_accessions[mid:], organism_name, columns, depth + 1)
+            return first_half + second_half
+        else:
+            return []
+
+    # Parse valid result
     annotations = []
-    if result and isinstance(result, str):
-        lines = result.strip().split('\n')[1:]  # Ignore the header row
-        for line in lines:
-            fields = line.split('\t')
-            annotations.append(fields)
+    lines = result.strip().split('\n')[1:]
+    for line in lines:
+        fields = line.split('\t')
+        annotations.append(fields)
     return annotations
 
 def get_annotations(organism_name, input_file, columns, num_workers=None):
-    uniprot = UniProt()
     annotations = []
 
     with open(input_file, 'r') as file:
         accessions = file.read().splitlines()
 
-    # Split the accessions into batches of 100
-    batch_size = 100
+    # Split the accessions into batches of 50
+    batch_size = 50
     batches = [accessions[i:i + batch_size] for i in range(0, len(accessions), batch_size)]
     
     if num_workers is None:
@@ -60,6 +85,9 @@ def get_annotations(organism_name, input_file, columns, num_workers=None):
             with annotations_lock:
                 annotations.extend(batch_annotations)
             print(f"Completed batch {i + 1} of {len(batches)}")
+
+    if len(annotations) < MIN_PROP_RETRIEVED * len(accessions):
+        raise RuntimeError("Less than 50% of accessions were retrieved. Possible error in UniProt query.")
 
     return annotations
 

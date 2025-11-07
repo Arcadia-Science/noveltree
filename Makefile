@@ -1,93 +1,374 @@
-# Makefile for NovelTree Docker image management
+# Makefile for NovelTree Docker Image Management
 #
 # This Makefile provides targets for building Docker images used in the NovelTree pipeline.
-# All images are built from the repository root to ensure proper build context.
+# Images that reference files outside their docker/ subdirectory are built from the repository root.
+# All other images are built from their respective docker/ subdirectories for cleaner, faster builds.
 
-# Docker image configuration
+# Docker configuration
 DOCKER_PLATFORM := linux/amd64
 DOCKER_ORG := arcadiascience
 
+# =============================================================================
 # Image names and versions
+# =============================================================================
+
+# Images requiring root context (COPY files from outside their docker/ directory)
 PHYSICOCHEMICAL_PROPS_IMAGE := $(DOCKER_ORG)/physicochemical_props
 PHYSICOCHEMICAL_PROPS_TAG := 1.0.0
-
 PHYLO_DIST_IMAGE := $(DOCKER_ORG)/phylo_dist
 PHYLO_DIST_TAG := 1.0.0
 
-# Phony targets (targets that don't represent files)
-.PHONY: help docker-all docker-physicochemical-props docker-phylo-dist clean
+# Images built from their docker/ subdirectory
+ASTEROID_IMAGE := $(DOCKER_ORG)/asteroid_3aae117d-disco_20e10c33
+ASTEROID_TAG := 1.0.0
+BIOSERVICES_IMAGE := $(DOCKER_ORG)/bioservices_1.10.0
+BIOSERVICES_TAG := 1.0.0
+CIALIGN_IMAGE := $(DOCKER_ORG)/cialign_1.1.0
+CIALIGN_TAG := 1.0.0
+CLIPKIT_IMAGE := $(DOCKER_ORG)/clipkit_2.1.1-seqmagick_0.8.4
+CLIPKIT_TAG := 1.0.0
+COGEQC_IMAGE := $(DOCKER_ORG)/cogeqc_1.2.1
+COGEQC_TAG := 1.0.0
+FAMSA_IMAGE := $(DOCKER_ORG)/famsa_2.0.0
+FAMSA_TAG := 1.0.0
+FASTTREE_IMAGE := $(DOCKER_ORG)/fasttree_2.1.11
+FASTTREE_TAG := 1.0.0
+GENERAX_SPECIES_IMAGE := $(DOCKER_ORG)/generax_56f3ed0
+GENERAX_SPECIES_TAG := 1.1.3
+GENERAX_FAMILY_IMAGE := $(DOCKER_ORG)/generax_19604b71
+GENERAX_FAMILY_TAG := 1.0.0
+IQTREE_IMAGE := $(DOCKER_ORG)/iqtree_2.2.0.5
+IQTREE_TAG := 1.0.0
+ORTHOFINDER_IMAGE := $(DOCKER_ORG)/orthofinder_2.5.4
+ORTHOFINDER_TAG := 1.0.0
+PHYLO_PROFILES_IMAGE := $(DOCKER_ORG)/phylo_profiles
+PHYLO_PROFILES_TAG := 1.0.0
+RBASE_IMAGE := $(DOCKER_ORG)/rbase_4.2.2
+RBASE_TAG := 1.0.0
+SELECT_INFLATION_IMAGE := $(DOCKER_ORG)/select_mcl_inflation_params_08302023
+SELECT_INFLATION_TAG := 1.0.0
+WITCH_IMAGE := $(DOCKER_ORG)/witch_0.3.0
+WITCH_TAG := 1.0.0
 
-# Default target: show help
+# =============================================================================
+# Phony targets
+# =============================================================================
+
+.PHONY: help docker-all \
+	docker-physicochemical-props docker-phylo-dist \
+	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
+	docker-cogeqc docker-famsa docker-fasttree docker-generax-species \
+	docker-generax-family docker-iqtree docker-orthofinder \
+	docker-phylo-profiles docker-rbase docker-select-inflation docker-witch \
+	push-all push-physicochemical-props push-phylo-dist \
+	push-asteroid push-bioservices push-cialign push-clipkit \
+	push-cogeqc push-famsa push-fasttree push-generax-species \
+	push-generax-family push-iqtree push-orthofinder \
+	push-phylo-profiles push-rbase push-select-inflation push-witch \
+	clean
+
+# =============================================================================
+# Help target
+# =============================================================================
+
 help:
 	@echo "NovelTree Docker Image Build Targets"
 	@echo "====================================="
 	@echo ""
-	@echo "Available targets:"
-	@echo "  make docker-all                  - Build all Docker images"
-	@echo "  make docker-physicochemical-props - Build physicochemical properties image"
-	@echo "  make docker-phylo-dist           - Build phylogenetic distance image"
-	@echo "  make clean                       - Remove dangling Docker images"
+	@echo "Build all images:"
+	@echo "  make docker-all                    - Build all Docker images"
 	@echo ""
-	@echo "Images are built for platform: $(DOCKER_PLATFORM)"
+	@echo "Build individual images:"
+	@echo "  make docker-physicochemical-props  - Physicochemical properties"
+	@echo "  make docker-phylo-dist             - Phylogenetic distance"
+	@echo "  make docker-asteroid               - Asteroid"
+	@echo "  make docker-bioservices            - Bioservices"
+	@echo "  make docker-cialign                - CIAlign"
+	@echo "  make docker-clipkit                - ClipKIT"
+	@echo "  make docker-cogeqc                 - CoGeQC"
+	@echo "  make docker-famsa                  - FAMSA"
+	@echo "  make docker-fasttree               - FastTree"
+	@echo "  make docker-generax-species        - GeneRax (per-species)"
+	@echo "  make docker-generax-family         - GeneRax (per-family)"
+	@echo "  make docker-iqtree                 - IQ-TREE"
+	@echo "  make docker-orthofinder            - OrthoFinder"
+	@echo "  make docker-phylo-profiles         - Phylogenetic profiles"
+	@echo "  make docker-rbase                  - R base image"
+	@echo "  make docker-select-inflation       - MCL inflation selection"
+	@echo "  make docker-witch                  - WITCH"
 	@echo ""
-	@echo "Note: Building may take 15-20 minutes depending on your system."
-
-# Build all Docker images
-docker-all: docker-physicochemical-props docker-phylo-dist
+	@echo "Push images:"
+	@echo "  make push-all                      - Push all images to Docker Hub"
+	@echo "  make push-<image-name>             - Push specific image"
 	@echo ""
-	@echo "✓ All Docker images built successfully!"
+	@echo "Other:"
+	@echo "  make clean                         - Remove dangling Docker images"
 	@echo ""
-	@echo "Built images:"
-	@echo "  - $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)"
-	@echo "  - $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)"
-
-# Build physicochemical properties Docker image
-docker-physicochemical-props:
-	@echo "Building physicochemical properties Docker image..."
-	@echo "Image: $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)"
 	@echo "Platform: $(DOCKER_PLATFORM)"
+	@echo "Organization: $(DOCKER_ORG)"
+
+# =============================================================================
+# Build all images
+# =============================================================================
+
+docker-all: docker-physicochemical-props docker-phylo-dist \
+	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
+	docker-cogeqc docker-famsa docker-fasttree docker-generax-species \
+	docker-generax-family docker-iqtree docker-orthofinder docker-phylo-profiles \
+	docker-rbase docker-select-inflation docker-witch
 	@echo ""
+	@echo "All Docker images built successfully!"
+
+# =============================================================================
+# Build individual images
+# =============================================================================
+
+# Images requiring root context
+docker-physicochemical-props:
+	@echo "Building $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG) from root context..."
 	docker build \
 		--platform $(DOCKER_PLATFORM) \
 		-t $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG) \
 		-f docker/physicochemical_props/Dockerfile \
 		.
-	@echo ""
-	@echo "✓ Physicochemical properties image built successfully!"
+	@echo "Built successfully!"
 
-# Build phylogenetic distance Docker image
 docker-phylo-dist:
-	@echo "Building phylogenetic distance Docker image..."
-	@echo "Image: $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)"
-	@echo "Platform: $(DOCKER_PLATFORM)"
-	@echo ""
+	@echo "Building $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG) from root context..."
 	docker build \
 		--platform $(DOCKER_PLATFORM) \
 		-t $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG) \
 		-f docker/phylo_dist/Dockerfile \
 		.
-	@echo ""
-	@echo "✓ Phylogenetic distance image built successfully!"
+	@echo "Built successfully!"
 
-# Clean up dangling Docker images
+# Images built from their docker/ subdirectory
+docker-asteroid:
+	@echo "Building $(ASTEROID_IMAGE):$(ASTEROID_TAG)..."
+	cd docker/asteroid && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(ASTEROID_IMAGE):$(ASTEROID_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-bioservices:
+	@echo "Building $(BIOSERVICES_IMAGE):$(BIOSERVICES_TAG)..."
+	cd docker/bioservices && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(BIOSERVICES_IMAGE):$(BIOSERVICES_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-cialign:
+	@echo "Building $(CIALIGN_IMAGE):$(CIALIGN_TAG)..."
+	cd docker/cialign && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(CIALIGN_IMAGE):$(CIALIGN_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-clipkit:
+	@echo "Building $(CLIPKIT_IMAGE):$(CLIPKIT_TAG)..."
+	cd docker/clipkit && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(CLIPKIT_IMAGE):$(CLIPKIT_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-cogeqc:
+	@echo "Building $(COGEQC_IMAGE):$(COGEQC_TAG)..."
+	cd docker/cogeqc && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(COGEQC_IMAGE):$(COGEQC_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-famsa:
+	@echo "Building $(FAMSA_IMAGE):$(FAMSA_TAG)..."
+	cd docker/famsa && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(FAMSA_IMAGE):$(FAMSA_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-fasttree:
+	@echo "Building $(FASTTREE_IMAGE):$(FASTTREE_TAG)..."
+	cd docker/fasttree && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(FASTTREE_IMAGE):$(FASTTREE_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-generax-species:
+	@echo "Building $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG)..."
+	cd docker/generax && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-generax-family:
+	@echo "Building $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG)..."
+	cd docker/generax && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-iqtree:
+	@echo "Building $(IQTREE_IMAGE):$(IQTREE_TAG)..."
+	cd docker/iqtree && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(IQTREE_IMAGE):$(IQTREE_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-orthofinder:
+	@echo "Building $(ORTHOFINDER_IMAGE):$(ORTHOFINDER_TAG)..."
+	cd docker/orthofinder && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(ORTHOFINDER_IMAGE):$(ORTHOFINDER_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-phylo-profiles:
+	@echo "Building $(PHYLO_PROFILES_IMAGE):$(PHYLO_PROFILES_TAG)..."
+	cd docker/phylo_profiles && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(PHYLO_PROFILES_IMAGE):$(PHYLO_PROFILES_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-rbase:
+	@echo "Building $(RBASE_IMAGE):$(RBASE_TAG)..."
+	cd docker/rbase && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(RBASE_IMAGE):$(RBASE_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-select-inflation:
+	@echo "Building $(SELECT_INFLATION_IMAGE):$(SELECT_INFLATION_TAG)..."
+	cd docker/select_mcl_inflation_params && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(SELECT_INFLATION_IMAGE):$(SELECT_INFLATION_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-witch:
+	@echo "Building $(WITCH_IMAGE):$(WITCH_TAG)..."
+	cd docker/witch && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(WITCH_IMAGE):$(WITCH_TAG) \
+		.
+	@echo "Built successfully!"
+
+# =============================================================================
+# Push all images
+# =============================================================================
+
+push-all: push-physicochemical-props push-phylo-dist \
+	push-asteroid push-bioservices push-cialign push-clipkit \
+	push-cogeqc push-famsa push-fasttree push-generax-species \
+	push-generax-family push-iqtree push-orthofinder push-phylo-profiles \
+	push-rbase push-select-inflation push-witch
+	@echo ""
+	@echo "All images pushed to Docker Hub successfully!"
+
+# =============================================================================
+# Push individual images
+# =============================================================================
+
+push-physicochemical-props: docker-physicochemical-props
+	@echo "Pushing $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)..."
+	docker push $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)
+	@echo "Pushed successfully!"
+
+push-phylo-dist: docker-phylo-dist
+	@echo "Pushing $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)..."
+	docker push $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)
+	@echo "Pushed successfully!"
+
+push-asteroid: docker-asteroid
+	@echo "Pushing $(ASTEROID_IMAGE):$(ASTEROID_TAG)..."
+	docker push $(ASTEROID_IMAGE):$(ASTEROID_TAG)
+	@echo "Pushed successfully!"
+
+push-bioservices: docker-bioservices
+	@echo "Pushing $(BIOSERVICES_IMAGE):$(BIOSERVICES_TAG)..."
+	docker push $(BIOSERVICES_IMAGE):$(BIOSERVICES_TAG)
+	@echo "Pushed successfully!"
+
+push-cialign: docker-cialign
+	@echo "Pushing $(CIALIGN_IMAGE):$(CIALIGN_TAG)..."
+	docker push $(CIALIGN_IMAGE):$(CIALIGN_TAG)
+	@echo "Pushed successfully!"
+
+push-clipkit: docker-clipkit
+	@echo "Pushing $(CLIPKIT_IMAGE):$(CLIPKIT_TAG)..."
+	docker push $(CLIPKIT_IMAGE):$(CLIPKIT_TAG)
+	@echo "Pushed successfully!"
+
+push-cogeqc: docker-cogeqc
+	@echo "Pushing $(COGEQC_IMAGE):$(COGEQC_TAG)..."
+	docker push $(COGEQC_IMAGE):$(COGEQC_TAG)
+	@echo "Pushed successfully!"
+
+push-famsa: docker-famsa
+	@echo "Pushing $(FAMSA_IMAGE):$(FAMSA_TAG)..."
+	docker push $(FAMSA_IMAGE):$(FAMSA_TAG)
+	@echo "Pushed successfully!"
+
+push-fasttree: docker-fasttree
+	@echo "Pushing $(FASTTREE_IMAGE):$(FASTTREE_TAG)..."
+	docker push $(FASTTREE_IMAGE):$(FASTTREE_TAG)
+	@echo "Pushed successfully!"
+
+push-generax-species: docker-generax-species
+	@echo "Pushing $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG)..."
+	docker push $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG)
+	@echo "Pushed successfully!"
+
+push-generax-family: docker-generax-family
+	@echo "Pushing $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG)..."
+	docker push $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG)
+	@echo "Pushed successfully!"
+
+push-iqtree: docker-iqtree
+	@echo "Pushing $(IQTREE_IMAGE):$(IQTREE_TAG)..."
+	docker push $(IQTREE_IMAGE):$(IQTREE_TAG)
+	@echo "Pushed successfully!"
+
+push-orthofinder: docker-orthofinder
+	@echo "Pushing $(ORTHOFINDER_IMAGE):$(ORTHOFINDER_TAG)..."
+	docker push $(ORTHOFINDER_IMAGE):$(ORTHOFINDER_TAG)
+	@echo "Pushed successfully!"
+
+push-phylo-profiles: docker-phylo-profiles
+	@echo "Pushing $(PHYLO_PROFILES_IMAGE):$(PHYLO_PROFILES_TAG)..."
+	docker push $(PHYLO_PROFILES_IMAGE):$(PHYLO_PROFILES_TAG)
+	@echo "Pushed successfully!"
+
+push-rbase: docker-rbase
+	@echo "Pushing $(RBASE_IMAGE):$(RBASE_TAG)..."
+	docker push $(RBASE_IMAGE):$(RBASE_TAG)
+	@echo "Pushed successfully!"
+
+push-select-inflation: docker-select-inflation
+	@echo "Pushing $(SELECT_INFLATION_IMAGE):$(SELECT_INFLATION_TAG)..."
+	docker push $(SELECT_INFLATION_IMAGE):$(SELECT_INFLATION_TAG)
+	@echo "Pushed successfully!"
+
+push-witch: docker-witch
+	@echo "Pushing $(WITCH_IMAGE):$(WITCH_TAG)..."
+	docker push $(WITCH_IMAGE):$(WITCH_TAG)
+	@echo "Pushed successfully!"
+
+# =============================================================================
+# Clean up
+# =============================================================================
+
 clean:
 	@echo "Removing dangling Docker images..."
 	docker image prune -f
-	@echo "✓ Cleanup complete!"
-
-# Advanced: Push images to Docker Hub (requires authentication)
-.PHONY: docker-push-all docker-push-physicochemical-props docker-push-phylo-dist
-
-docker-push-physicochemical-props: docker-physicochemical-props
-	@echo "Pushing $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG) to Docker Hub..."
-	docker push $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)
-	@echo "✓ Image pushed successfully!"
-
-docker-push-phylo-dist: docker-phylo-dist
-	@echo "Pushing $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG) to Docker Hub..."
-	docker push $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)
-	@echo "✓ Image pushed successfully!"
-
-docker-push-all: docker-push-physicochemical-props docker-push-phylo-dist
-	@echo ""
-	@echo "✓ All images pushed to Docker Hub successfully!"
+	@echo "Cleanup complete!"
