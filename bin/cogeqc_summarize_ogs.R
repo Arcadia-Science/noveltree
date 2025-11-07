@@ -109,9 +109,10 @@ for(i in 1:length(spps)){
     annotations <- read.delim(paste0('./', spp, '_cogeqc_annotations.tsv'), sep = "\t", header = T)
 
     # Identify which we have annotations for this species.
+    # Check if ALL annotations are either NA, empty strings, or just whitespace
     non_missing <-
-        c(sum(is.na(annotations$xref_interpro)) == length(annotations$xref_interpro),
-        sum(is.na(annotations$xref_oma)) == length(annotations$xref_oma))
+        c(all(is.na(annotations$xref_interpro) | annotations$xref_interpro == "" | grepl("^\\s*$", annotations$xref_interpro)),
+        all(is.na(annotations$xref_oma) | annotations$xref_oma == "" | grepl("^\\s*$", annotations$xref_oma)))
 
     # Pull out the InterPro annotations
     interpro[[i]] <-
@@ -139,6 +140,38 @@ oma <- Filter(function(a) any(!is.na(a)), oma)
 # And lastly intersect these with the species used for MCL-testing
 interpro <- interpro[which(names(interpro) %in% species)]
 oma <- oma[which(names(oma) %in% species)]
+
+# Filter out species that don't have sufficient annotation coverage
+# assess_orthogroups requires at least 1 orthogroup with >=2 unique annotated genes
+# to calculate Sorensen-Dice scores (exact requirement from calculate_H function)
+check_min_annotations <- function(spp_name, ann_df, og_df) {
+    if(is.na(ann_df)[1]) return(FALSE)
+
+    # Get orthogroups for this species
+    spp_ogs <- og_df[which(og_df$Species == spp_name), ]
+
+    # Merge with annotations
+    merged <- merge(spp_ogs, ann_df, by = "Gene")
+    merged <- merged[!is.na(merged$Annotation), ]
+
+    # Count unique annotated genes per orthogroup (not rows, since genes can have multiple annotations)
+    by_og <- split(merged, merged$Orthogroup)
+    unique_genes_per_og <- sapply(by_og, function(x) length(unique(x$Gene)))
+
+    # Check if at least one orthogroup has >=2 unique annotated genes
+    return(sum(unique_genes_per_og >= 2) >= 1)
+}
+
+# Apply the check to filter species
+interpro_valid <- sapply(names(interpro), function(s) {
+    check_min_annotations(s, interpro[[s]], orthogroups)
+})
+oma_valid <- sapply(names(oma), function(s) {
+    check_min_annotations(s, oma[[s]], orthogroups)
+})
+
+interpro <- interpro[interpro_valid]
+oma <- oma[oma_valid]
 
 # Great, now we can pair these annotations with the orthogroups, assessing how
 # well each inflation parameter infers sensible orthogroups with respect to the
