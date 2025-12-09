@@ -2,11 +2,7 @@ process FILTER_ORTHOGROUPS {
     tag "Summarize OG taxon distribution"
     label 'process_high'
 
-    // Dockerhubs r-base container doesn't have ps (procps)
-    // installed, which is required by nextflow to monitor
-    // processes. So, we use the cogeqc module here for simplicity.
-    container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/rbase_4.2.2:1.0.0': '' }"
+    container 'arcadiascience/rbase_4.2.2:1.0.0'
 
     publishDir(
         path: "${params.outdir}/filtered_orthogroups",

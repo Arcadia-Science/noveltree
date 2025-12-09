@@ -2,8 +2,7 @@ process ANNOTATE_UNIPROT {
     tag "$meta.id"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/bioservices_1.10.0:1.0.0':
-        '' }"
+    container 'arcadiascience/bioservices_1.10.0:1.0.0'
 
     publishDir(
         path: "${params.outdir}/protein_annotations",

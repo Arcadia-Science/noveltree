@@ -1,8 +1,7 @@
 process SAMPLESHEET_CHECK {
     tag "$complete_samplesheet"
 
-    container "${ workflow.containerEngine == 'docker' ?
-        'quay.io/biocontainers/python:3.9--1': '' }"
+    container 'python:3.9'
 
     input:
     path complete_samplesheet // Samplesheet formatted as described in the README

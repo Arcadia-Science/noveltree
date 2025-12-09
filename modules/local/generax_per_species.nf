@@ -3,10 +3,7 @@ process GENERAX_PER_SPECIES {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
-    container "${
-        (workflow.containerEngine == 'docker') || (workflow.containerEngine == 'singularity') ?
-        'arcadiascience/generax_56f3ed0:1.1.3':''
-    }"
+    container 'arcadiascience/generax_56f3ed0:1.1.3'
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)

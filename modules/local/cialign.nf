@@ -2,8 +2,7 @@ process CIALIGN {
     tag "$fasta"
     label 'process_low_cpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:1.0.0' :
-        '' }"
+    container 'arcadiascience/cialign_1.1.0:1.0.0'
 
     publishDir(
         path: "${params.outdir}/cialign_cleaned_msas",

@@ -2,10 +2,7 @@ process PHYLO_PROFILES {
     tag "Phylo Profiles"
     label "process_single"
 
-    container "${
-        (workflow.containerEngine == 'docker') || (workflow.containerEngine == 'singularity') ?
-        'arcadiascience/phylo_profiles:1.0.0':''
-    }"
+    container 'arcadiascience/phylo_profiles:1.0.0'
 
     input:
     path 'event_count_files'

@@ -363,13 +363,11 @@ workflow NOVELTREE {
     //
     all_og_msa_files = ch_all_og_clean_msas.collect { it[1] }
 
-    if (params.physicochemical_properties) {
+    if (params.zoogle) {
         PHYSICOCHEMICAL_PROPS(
             all_og_msa_files
         )
-    }
 
-    if (params.phylo_dist) {
         ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
             .map { meta, tree -> [meta, tree] }
             .combine(PHYSICOCHEMICAL_PROPS.out.per_family_summaries.flatten())

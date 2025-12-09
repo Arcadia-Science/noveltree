@@ -2,8 +2,7 @@ process FASTTREE {
     tag "$meta.og"
     label 'process_fasttree'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:1.0.0':
-        '' }"
+    container 'arcadiascience/fasttree_2.1.11:1.0.0'
 
     publishDir(
         path: "${params.outdir}/fasttree_gene_trees",
