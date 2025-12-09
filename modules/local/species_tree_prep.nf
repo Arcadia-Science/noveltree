@@ -2,8 +2,7 @@ process SPECIES_TREE_PREP {
     tag "Preparing for species tree inference."
     label 'process_high'
 
-    container "${ workflow.containerEngine == 'docker' ?
-        'ubuntu:20.04': '' }"
+    container 'ubuntu:20.04'
 
     publishDir(
         path: "${params.outdir}/species_tree_prep",

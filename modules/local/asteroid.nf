@@ -2,8 +2,7 @@ process ASTEROID {
     tag "Asteroid"
     label 'process_asteroid'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0':
-        '' }"
+    container 'arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0'
 
     publishDir(
         path: "${params.outdir}/asteroid",

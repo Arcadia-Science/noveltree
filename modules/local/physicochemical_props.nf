@@ -2,10 +2,7 @@ process PHYSICOCHEMICAL_PROPS {
     tag "Physicochemical Properties"
     label "process_high"
 
-    container "${
-        (workflow.containerEngine == 'docker') || (workflow.containerEngine == 'singularity') ?
-        'arcadiascience/physicochemical_props:1.0.0':''
-    }"
+    container 'arcadiascience/physicochemical_props:1.0.0'
 
     input:
     path msa_files

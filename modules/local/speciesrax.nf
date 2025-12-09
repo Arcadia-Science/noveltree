@@ -3,8 +3,7 @@ process SPECIESRAX {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
-    container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/generax_19604b71:1.0.0': '' }"
+    container 'arcadiascience/generax_19604b71:1.0.0'
 
     publishDir(
         path: "${params.outdir}/speciesrax",

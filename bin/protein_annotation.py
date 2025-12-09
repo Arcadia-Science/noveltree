@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 import argparse
+import os
+import tempfile
+
+# Fix for bioservices in containers - set writable config/cache directories
+# bioservices uses appdirs which looks for XDG_CONFIG_HOME and XDG_CACHE_HOME
+tmpdir = tempfile.gettempdir()
+os.environ['HOME'] = tmpdir
+os.environ['XDG_CONFIG_HOME'] = tmpdir
+os.environ['XDG_CACHE_HOME'] = tmpdir
+
 from bioservices import UniProt
 from bioservices import EUtils
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import concurrent.futures
 import pandas as pd
-import os
 
 # Columns (query fields) that we will use when accessing UniProt protein annotations
 COLUMNS = ['organism_name', 'organism_id', 'accession', 'xref_interpro', 'xref_oma']
@@ -69,7 +78,7 @@ def get_annotations(organism_name, input_file, columns, num_workers=None):
     batches = [accessions[i:i + batch_size] for i in range(0, len(accessions), batch_size)]
     
     if num_workers is None:
-        num_workers = min(os.cpu_count(), len(batches))
+        num_workers = min(4, len(batches))
     
     # Print out some info:
     print(f"Pulling down annotations for {organism_name}")

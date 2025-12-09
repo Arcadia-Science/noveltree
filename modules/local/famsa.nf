@@ -2,8 +2,7 @@ process FAMSA {
     tag "$meta.og"
     label 'process_high'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/famsa_2.0.0:1.0.0' :
-        '' }"
+    container 'arcadiascience/famsa_2.0.0:1.0.0'
 
     publishDir(
         path: "${params.outdir}/famsa_alignments",
