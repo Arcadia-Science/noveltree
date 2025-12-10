@@ -34,6 +34,10 @@ if (params.mcl_inflation) {
 } else {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
+// Check if zoogle mode requires a reference time tree
+if (params.zoogle && (!params.reference_time_tree || params.reference_time_tree == 'none')) {
+    exit 1, 'Zoogle mode requires a reference time tree for phylogenetic distance analysis! Please provide --reference_time_tree'
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,6 +62,7 @@ include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from './modules/local/orth
 include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
 include { ASTEROID                                  } from './modules/local/asteroid'
 include { SPECIESRAX                                } from './modules/local/speciesrax'
+include { TIME_CALIBRATE_SPECIES_TREE               } from './modules/local/time_calibrate_species_tree'
 include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
@@ -412,9 +417,20 @@ workflow NOVELTREE {
                 return isValid
             }
 
+        //
+        // MODULE: TIME_CALIBRATE_SPECIES_TREE
+        // Time-calibrate the consensus species tree for phylogenetic distance analysis
+        //
+        TIME_CALIBRATE_SPECIES_TREE(
+            ch_speciesrax,
+            file(params.reference_time_tree),
+            params.time_calibration_method
+        )
+        ch_versions = ch_versions.mix(TIME_CALIBRATE_SPECIES_TREE.out.versions)
+
         PHYLO_DIST(
             ch_phylo_dist_input,
-            ch_speciesrax,
+            TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree,
             params.ref_species
         )
     }
