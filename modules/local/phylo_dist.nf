@@ -2,7 +2,7 @@ process PHYLO_DIST {
     tag "${meta.og}"
     label "process_high"
 
-    container 'arcadiascience/phylo_dist:1.1.0'
+    container 'arcadiascience/phylo_dist:1.0.0'
 
     input:
     tuple val(meta), path(gene_tree), path(phys_props_file)
