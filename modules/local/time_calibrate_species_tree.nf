@@ -11,7 +11,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     )
 
     input:
-    path consensus_tree     // Consensus species tree from SpeciesRax (Newick format)
+    path species_tree       // Species tree from SpeciesRax (Newick format)
     path reference_tree     // User-provided time-calibrated reference tree (Newick format)
     val calibration_method  // Method for time calibration: "treePL" or "PATHd8"
 
@@ -26,9 +26,9 @@ process TIME_CALIBRATE_SPECIES_TREE {
     script:
     def args = task.ext.args ?: ''
     """
-    # Run the R script to time-calibrate the consensus species tree
+    # Run the R script to time-calibrate the species tree
     time_calibrate_species_tree.R \\
-        ${consensus_tree} \\
+        ${species_tree} \\
         ${reference_tree} \\
         time_calibrated_species_tree.newick \\
         ${calibration_method} \\

@@ -419,7 +419,7 @@ workflow NOVELTREE {
 
         //
         // MODULE: TIME_CALIBRATE_SPECIES_TREE
-        // Time-calibrate the consensus species tree for phylogenetic distance analysis
+        // Time-calibrate the species tree for phylogenetic distance analysis
         //
         TIME_CALIBRATE_SPECIES_TREE(
             ch_speciesrax,
