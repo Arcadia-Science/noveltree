@@ -1,7 +1,7 @@
 process SAMPLESHEET_CHECK {
     tag "$complete_samplesheet"
 
-    container 'python:3.9'
+    container 'arcadiascience/python_3.9'
 
     input:
     path complete_samplesheet // Samplesheet formatted as described in the README
