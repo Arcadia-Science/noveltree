@@ -7,15 +7,21 @@ process CLIPKIT {
     publishDir(
         path: "${params.outdir}/clipkit_cleaned_msas",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        pattern: "*_clipkit.fa",
+    )
+    publishDir(
+        path: "${params.outdir}/clipkit_cleaned_msas/species_protein_maps",
+        mode: params.publish_dir_mode,
+        pattern: "species_protein_maps/*",
+        saveAs: { fn -> fn.split('/')[-1] },
     )
 
     input:
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("**_clipkit.fa") , emit: cleaned_msas, optional: true
-    tuple val(meta), path("**_map.link")   , emit: map_link, optional: true
+    tuple val(meta), path("*_clipkit.fa")  , emit: cleaned_msas, optional: true
+    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
     path "versions.yml"                    , emit: versions
 
     when:

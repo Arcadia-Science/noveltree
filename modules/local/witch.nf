@@ -10,16 +10,24 @@ process WITCH {
     publishDir(
         path: "${params.outdir}/witch_alignments",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        pattern: "{original_alignments,cleaned_alignments}/*",
+        saveAs: { fn -> fn.split('/')[-1] },
+    )
+    publishDir(
+        path: "${params.outdir}/witch_alignments/species_protein_maps",
+        mode: params.publish_dir_mode,
+        pattern: "species_protein_maps/*",
+        saveAs: { fn -> fn.split('/')[-1] },
     )
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("**_witch_cleaned.fa") , emit: msas, optional: true
-    tuple val(meta), path("**_map.link")         , emit: map_link, optional: true
-    path("*")                                    , emit: results
+    tuple val(meta), path("cleaned_alignments/*_witch_cleaned.fa"), emit: msas, optional: true
+    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
+    path "original_alignments/*"                 , emit: original_alignments
+    path "cleaned_alignments/*"                  , emit: cleaned_alignments, optional: true
     path "versions.yml"                          , emit: versions
 
     when:

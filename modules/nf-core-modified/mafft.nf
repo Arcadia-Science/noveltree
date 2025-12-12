@@ -14,16 +14,21 @@ process MAFFT {
     publishDir(
         path: "${params.outdir}/mafft_alignments",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        pattern: "*_mafft.fa",
+    )
+    publishDir(
+        path: "${params.outdir}/mafft_alignments/species_protein_maps",
+        mode: params.publish_dir_mode,
+        pattern: "species_protein_maps/*",
+        saveAs: { fn -> fn.split('/')[-1] },
     )
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("**_mafft.fa")         , emit: msas
-    tuple val(meta), path("**_map.link")         , emit: map_link, optional: true
-    path("*")                                    , emit: results
+    tuple val(meta), path("*_mafft.fa")          , emit: msas
+    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
     path "versions.yml"                          , emit: versions
 
     when:
