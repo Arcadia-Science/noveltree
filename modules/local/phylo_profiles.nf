@@ -1,6 +1,6 @@
 process PHYLO_PROFILES {
     tag "Phylo Profiles"
-    label "process_single"
+    label "process_high_memory"
 
     container 'arcadiascience/phylo_profiles:1.0.0'
 
