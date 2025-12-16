@@ -17,6 +17,9 @@ per_spp_og_events <- unlist(strsplit(species_event_counts_files, " "))
 spp_tranf_rates_fpaths <- unlist(strsplit(transfer_event_counts_files, " "))
 ogs <- unlist(strsplit(ogs, " "))
 
+# Chunk size for memory-efficient processing
+CHUNK_SIZE <- 1000
+
 get_per_spp_og_counts <-
   function(orthogroup_dir){
     og_counts <-
@@ -248,73 +251,107 @@ summarize_generax_per_species <-
            spp_tranf_rates_fpaths,
            ogs,
            per_spp_og_counts,
-           nparallel = detectCores()-1){
-    # Get the counts of each event type (duplications, transfers, losses, etc)
-    # per-og, across all species
-    message("Extracting event counts for each species per gene family.")
-    per_og_event_res <-
-      do.call(rbind, mclapply(X = 1:length(per_og_events),
-                              get_og_event_counts, per_spp_og_counts = per_spp_og_counts,
-                              per_og_events = per_og_events, ogs = ogs,
-                              mc.cores = nparallel))
+           nparallel = detectCores()-1,
+           chunk_size = CHUNK_SIZE){
 
-    # Get the counts of events per species, per orthogroup
-    # Begin by first summarizing these event counts per orthogroup
-    message("Extracting event counts per-species, per-orthogroup.")
-    per_spp_events <-
-      mclapply(1:length(per_spp_og_events),
-               get_og_events_per_spp, per_spp_og_counts = per_spp_og_counts,
-               per_spp_og_events = per_spp_og_events, ogs = ogs,
-               mc.cores = nparallel)
+    # Get species names for initializing the transfer matrix
+    species <-
+      colnames(per_spp_og_counts)[-c(1, (ncol(per_spp_og_counts)-1):ncol(per_spp_og_counts))]
 
-    # And then pull out each event type individually
-    message("Now, pulling out each event type individually.")
-    per_spp_og_speciation <-
-      do.call(rbind, mclapply(1:length(per_spp_events), get_speciations,
-                              per_spp_events = per_spp_events,
-                              mc.cores = nparallel))
-    per_spp_og_duplication <-
-      do.call(rbind, mclapply(1:length(per_spp_events), get_duplications,
-                              per_spp_events = per_spp_events,
-                              mc.cores = nparallel))
-    per_spp_og_loss <-
-      do.call(rbind, mclapply(1:length(per_spp_events), get_losses,
-                              per_spp_events = per_spp_events,
-                              mc.cores = nparallel))
+    # Initialize the cumulative transfer count matrix (summed incrementally)
+    transf_count_mat <- matrix(0, nrow = length(species), ncol = length(species),
+                               dimnames = list(species, species))
 
-    # Clean up the large interim list
-    rm(per_spp_events)
+    # Calculate number of chunks
+    n_total <- length(ogs)
+    n_chunks <- ceiling(n_total / chunk_size)
+    message(paste("Processing", n_total, "orthogroups in", n_chunks, "chunks of", chunk_size))
 
-    # Now, focusing on transfers - get a summed matrix of transfers among species,
-    # with donors along the x-axis, and recipients along the y.
-    # y-axis: recipient, x-axis: donor
-    message("Summarizing gene transfer recipient events.")
-    transf_res <-
-      transpose(mclapply(1:length(spp_tranf_rates_fpaths),
-                         get_tranfer_donor_recips,
-                         per_spp_og_counts = per_spp_og_counts,
-                         spp_tranf_rates_fpaths = spp_tranf_rates_fpaths,
-                         ogs = ogs,
-                         mc.cores = nparallel))
-    message("Summarizing gene transfer events into a matrix of donor-recipient species pairs.")
-    transf_count_mat <- Reduce("+", transf_res$summed_matrix)
-    message("Pulling out the count of transfer-donor events for each species per gene family")
-    transf_donors <- do.call("rbind", transf_res$gf_transfer_donors)
-    message("Pulling out the count of transfer-recipient events for each species per gene family")
-    transf_recips <- do.call("rbind", transf_res$gf_transfer_recips)
+    # Initialize lists to collect results (will use rbindlist at the end)
+    all_og_event_res <- vector("list", n_chunks)
+    all_speciations <- vector("list", n_chunks)
+    all_duplications <- vector("list", n_chunks)
+    all_losses <- vector("list", n_chunks)
+    all_transf_donors <- vector("list", n_chunks)
+    all_transf_recips <- vector("list", n_chunks)
 
-    # Generate a list containing alll required outputs for plotting
-    results <- list(
-      events_per_og = per_og_event_res,
-      lgt_count_mat = transf_count_mat,
-      speciations_per_spp =  per_spp_og_speciation,
-      duplications_per_spp =  per_spp_og_duplication,
-      losses_per_spp = per_spp_og_loss,
-      transfer_donor_counts = transf_donors,
-      transfer_recip_counts = transf_recips)
+    # Process in chunks
+    for (chunk_idx in 1:n_chunks) {
+      start_idx <- (chunk_idx - 1) * chunk_size + 1
+      end_idx <- min(chunk_idx * chunk_size, n_total)
+      chunk_indices <- start_idx:end_idx
 
-    out_dir = "."
+      message(paste("Processing chunk", chunk_idx, "of", n_chunks,
+                    "(orthogroups", start_idx, "to", end_idx, ")"))
 
+      # Get the counts of each event type per-og for this chunk
+      chunk_og_event_res <-
+        rbindlist(mclapply(X = chunk_indices,
+                           get_og_event_counts, per_spp_og_counts = per_spp_og_counts,
+                           per_og_events = per_og_events, ogs = ogs,
+                           mc.cores = nparallel))
+      all_og_event_res[[chunk_idx]] <- chunk_og_event_res
+
+      # Get the counts of events per species, per orthogroup for this chunk
+      chunk_spp_events <-
+        mclapply(chunk_indices,
+                 get_og_events_per_spp, per_spp_og_counts = per_spp_og_counts,
+                 per_spp_og_events = per_spp_og_events, ogs = ogs,
+                 mc.cores = nparallel)
+
+      # Extract each event type and store
+      all_speciations[[chunk_idx]] <-
+        rbindlist(lapply(chunk_spp_events, function(x) x$speciations), fill = TRUE)
+      all_duplications[[chunk_idx]] <-
+        rbindlist(lapply(chunk_spp_events, function(x) x$duplications), fill = TRUE)
+      all_losses[[chunk_idx]] <-
+        rbindlist(lapply(chunk_spp_events, function(x) x$losses), fill = TRUE)
+
+      # Clean up chunk per-species events
+      rm(chunk_spp_events)
+
+      # Process transfers for this chunk - sum matrices incrementally
+      message(paste("  Processing transfer events for chunk", chunk_idx))
+      chunk_transf_res <-
+        mclapply(chunk_indices,
+                 get_tranfer_donor_recips,
+                 per_spp_og_counts = per_spp_og_counts,
+                 spp_tranf_rates_fpaths = spp_tranf_rates_fpaths,
+                 ogs = ogs,
+                 mc.cores = nparallel)
+
+      # Incrementally sum transfer matrices (the key memory optimization)
+      for (res in chunk_transf_res) {
+        transf_count_mat <- transf_count_mat + res$summed_matrix
+      }
+
+      # Collect donor/recipient tables
+      all_transf_donors[[chunk_idx]] <-
+        rbindlist(lapply(chunk_transf_res, function(x) x$gf_transfer_donors), fill = TRUE)
+      all_transf_recips[[chunk_idx]] <-
+        rbindlist(lapply(chunk_transf_res, function(x) x$gf_transfer_recips), fill = TRUE)
+
+      # Clean up chunk transfer results
+      rm(chunk_transf_res)
+      gc()
+    }
+
+    # Combine all chunks using rbindlist (memory efficient)
+    message("Combining results from all chunks...")
+    per_og_event_res <- rbindlist(all_og_event_res, fill = TRUE)
+    per_spp_og_speciation <- rbindlist(all_speciations, fill = TRUE)
+    per_spp_og_duplication <- rbindlist(all_duplications, fill = TRUE)
+    per_spp_og_loss <- rbindlist(all_losses, fill = TRUE)
+    transf_donors <- rbindlist(all_transf_donors, fill = TRUE)
+    transf_recips <- rbindlist(all_transf_recips, fill = TRUE)
+
+    # Clean up chunk lists
+    rm(all_og_event_res, all_speciations, all_duplications, all_losses,
+       all_transf_donors, all_transf_recips)
+    gc()
+
+    # Write outputs
+    message("Writing output files...")
     write.table(transf_count_mat,
                 file = "hgt_summed_counts_recip_donor.tsv",
                 sep = "\t", quote = F, row.names = T, col.names = NA)
