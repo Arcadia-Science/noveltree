@@ -1,24 +1,35 @@
 #!/usr/bin/env Rscript
+message("DEBUG: Script starting"); flush(stderr())
 library(data.table)
+message("DEBUG: Loaded data.table"); flush(stderr())
 library(parallel)
+message("DEBUG: Loaded parallel"); flush(stderr())
 library(plyr)
+message("DEBUG: Loaded plyr"); flush(stderr())
 library(purrr)
+message("DEBUG: Loaded purrr"); flush(stderr())
 
 args = commandArgs(trailingOnly=TRUE)
+message("DEBUG: Got args"); flush(stderr())
 event_counts_files <- args[1]
 species_event_counts_files <- args[2]
 transfer_event_counts_files <- args[3]
 species_coverage_files <- args[4]
 ogs <- args[5]
 orthogroup_dir <- args[6]
+message("DEBUG: Parsed args"); flush(stderr())
 
 per_og_events <- unlist(strsplit(event_counts_files, " "))
+message(paste("DEBUG: Split event_counts_files, length:", length(per_og_events))); flush(stderr())
 per_spp_og_events <- unlist(strsplit(species_event_counts_files, " "))
+message(paste("DEBUG: Split species_event_counts_files, length:", length(per_spp_og_events))); flush(stderr())
 spp_tranf_rates_fpaths <- unlist(strsplit(transfer_event_counts_files, " "))
+message(paste("DEBUG: Split transfer_event_counts_files, length:", length(spp_tranf_rates_fpaths))); flush(stderr())
 ogs <- unlist(strsplit(ogs, " "))
+message(paste("DEBUG: Split ogs, length:", length(ogs))); flush(stderr())
 
 # Chunk size for memory-efficient processing
-CHUNK_SIZE <- 1000
+CHUNK_SIZE <- 100
 
 get_per_spp_og_counts <-
   function(orthogroup_dir){
@@ -372,8 +383,11 @@ summarize_generax_per_species <-
                 sep = "\t", quote = F, row.names = F, col.names = T)
   }
 
+message("DEBUG: About to call get_per_spp_og_counts"); flush(stderr())
 per_spp_og_counts <- get_per_spp_og_counts(orthogroup_dir)
+message(paste("DEBUG: Loaded per_spp_og_counts, dim:", nrow(per_spp_og_counts), "x", ncol(per_spp_og_counts))); flush(stderr())
 
+message("DEBUG: About to call summarize_generax_per_species"); flush(stderr())
 generax_res_per_species <-
   summarize_generax_per_species(
     per_og_events,
