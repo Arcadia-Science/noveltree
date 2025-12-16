@@ -67,6 +67,7 @@ include { GENERAX_PER_SPECIES                       } from './modules/local/gene
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
+include { MERGE_PHYLO_PROFILES                      } from './modules/local/merge_phylo_profiles'
 include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
 include { PHYLO_DIST                                } from './modules/local/phylo_dist'
 
@@ -344,22 +345,45 @@ workflow NOVELTREE {
     ch_recon_perspp_gene_trees = GENERAX_PER_SPECIES.out.generax_per_spp_gfts.collect { it[1] }
 
     //
-    // MODULE: PHYLO_PROFILES
+    // MODULE: PHYLO_PROFILES (batched)
     // Generate phylogenetic profiles from GeneRax reconciliation outputs
+    // Batch inputs to avoid staging too many files at once
     //
-    event_counts_ch = GENERAX_PER_SPECIES.out.event_counts.collect { it[1] }
-    species_event_counts_ch = GENERAX_PER_SPECIES.out.species_event_counts.collect { it[1] }
-    transfer_event_counts_ch = GENERAX_PER_SPECIES.out.transfer_event_counts.collect { it[1] }
-    species_coverage_ch = GENERAX_PER_SPECIES.out.species_coverage.collect { it[1] }
-    ogs_ch = GENERAX_PER_SPECIES.out.event_counts.collect { it[0].og }
+    def batch_size = 1000
+
+    // Combine all related data for each orthogroup into a tuple, then batch
+    ch_phylo_profiles_input = GENERAX_PER_SPECIES.out.event_counts
+        .join(GENERAX_PER_SPECIES.out.species_event_counts)
+        .join(GENERAX_PER_SPECIES.out.transfer_event_counts)
+        .join(GENERAX_PER_SPECIES.out.species_coverage)
+        .map { meta, event_count, species_event_count, transfer_event_count, species_coverage ->
+            [meta.og, event_count, species_event_count, transfer_event_count, species_coverage]
+        }
+        .toList()
+        .flatMap { items ->
+            items.collate(batch_size).withIndex().collect { batch, idx ->
+                def ogs = batch.collect { it[0] }
+                def event_counts = batch.collect { it[1] }
+                def species_event_counts = batch.collect { it[2] }
+                def transfer_event_counts = batch.collect { it[3] }
+                def species_coverages = batch.collect { it[4] }
+                [idx, event_counts, species_event_counts, transfer_event_counts, species_coverages, ogs]
+            }
+        }
 
     PHYLO_PROFILES(
-        event_counts_ch,
-        species_event_counts_ch,
-        transfer_event_counts_ch,
-        species_coverage_ch,
-        ogs_ch,
+        ch_phylo_profiles_input,
         ORTHOFINDER_MCL_ALL.out.inflation_dir
+    )
+
+    // Merge batched outputs
+    MERGE_PHYLO_PROFILES(
+        PHYLO_PROFILES.out.duplication_count.collect(),
+        PHYLO_PROFILES.out.hgt_summed_count.collect(),
+        PHYLO_PROFILES.out.loss_count.collect(),
+        PHYLO_PROFILES.out.speciation_count.collect(),
+        PHYLO_PROFILES.out.transfer_donor_count.collect(),
+        PHYLO_PROFILES.out.transfer_recipient_count.collect()
     )
 
     //
