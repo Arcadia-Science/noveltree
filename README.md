@@ -5,6 +5,8 @@
 ![Workflow Figure](./Fig2-Workflow-part-one.png)
 ![Workflow Figure](./Fig4-Workflow-part-two.png)
 
+*These figures illustrate the full workflow mode. Simplified and zoogle modes skip certain steps (e.g., BUSCO, per-family GeneRax) or add additional analyses (e.g., phylo-dist). See [Workflow Modes](#workflow-modes) for details.*
+
 `NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.
 
 ---
@@ -43,13 +45,59 @@ nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/t
 
 Nextflow requires some memory resources to be allocated for overhead - consequently, we suggest reducing the specified `--max_memory` by ~2GB or more below the amount available to your particular compute environment.
 
-**NOTE: Currently the workflow only works using the docker profile.**
+**NOTE: The workflow supports both Docker and Singularity profiles.**
+
+---
+
+## Workflow Modes
+
+NovelTree supports three workflow modes to accommodate different use cases and computational constraints:
+
+| Feature | Full | Simplified | Zoogle |
+|---------|:----:|:----------:|:------:|
+| BUSCO quality assessment | ✓ | ✗ | ✗ |
+| Default aligner | WITCH | FAMSA | FAMSA |
+| Per-family GeneRax | ✓ | ✗ | ✗ |
+| Per-species GeneRax | ✓ | ✓ | ✓ |
+| GeneRax strategy | SPR | EVAL | EVAL |
+| Phylogenetic profiles | ✓ | ✓ | ✓ |
+| Physicochemical properties | ✗ | ✗ | ✓ |
+| Time-calibrated species tree | ✗ | ✗ | ✓ |
+| Phylo-dist analysis | ✗ | ✗ | ✓ |
+
+### Full Mode (Default)
+
+The complete pipeline with all optional analyses enabled. Best for comprehensive phylogenomic studies where accuracy is prioritized over speed.
+
+```bash
+nextflow run . -profile docker --input samplesheet.csv --outdir results
+```
+
+### Simplified Mode
+
+A streamlined, high-throughput variant optimized for large datasets. Uses FAMSA (faster) instead of WITCH for alignment, skips BUSCO quality assessment, and runs only per-species GeneRax with the faster EVAL strategy.
+
+```bash
+nextflow run . -profile docker,simplified --input samplesheet.csv --outdir results
+```
+
+### Zoogle Mode
+
+Inherits simplified mode settings and adds analyses for organism prioritization: physicochemical protein properties, time calibration of the species tree, and phylogenetically-corrected protein distance analysis. Requires a reference time-calibrated tree and specification of a reference species.
+
+```bash
+nextflow run . -profile docker,zoogle \
+  --input samplesheet.csv \
+  --outdir results \
+  --reference_time_tree reference_timetree.newick \
+  --ref_species Genus_species
+```
 
 ---
 
 ## Running on AWS Batch
 
-NovelTree can be run on AWS Batch for large-scale analyses. To use AWS Batch:
+NovelTree includes a dedicated AWS Batch profile optimized for cloud-scale analyses:
 
 ```bash
 nextflow run . \
@@ -58,15 +106,32 @@ nextflow run . \
   --awsregion <your-aws-region> \
   -work-dir s3://<your-bucket>/work \
   --outdir s3://<your-bucket>/results \
-  --input <input.csv>
+  --input s3://<your-bucket>/samplesheet.csv
 ```
 
+The `awsbatch` profile includes optimized executor settings (queue size of 1000 jobs) and automatic report overwriting for seamless pipeline resumption.
+
 **Requirements:**
-- AWS Batch compute environment and job queue must be configured
-- Work directory and output directory must be S3 buckets
+- AWS Batch compute environment and job queue configured
+- Work directory (`-work-dir`) and output directory (`--outdir`) must be S3 paths
+- Input samplesheet and proteome files accessible from S3
 - Appropriate IAM permissions for Batch and S3 access
 
 For detailed AWS Batch setup instructions, see the [usage documentation](docs/usage.md#running-on-aws-batch).
+
+---
+
+## Running with Singularity
+
+NovelTree supports Singularity as an alternative to Docker, which is useful for HPC environments where Docker may not be available:
+
+```bash
+nextflow run . -profile singularity --input samplesheet.csv --outdir results
+```
+
+Docker images are automatically pulled and converted to Singularity format. Converted images are cached in `${outdir}/singularity_cache` to avoid repeated conversions on subsequent runs.
+
+For detailed Singularity instructions, see the [Singularity documentation](docs/singularity.md).
 
 ---
 
@@ -108,7 +173,7 @@ The `bin/raas/` directory contains code vendored from the [raas-organism-priorit
 
 At its core, `NovelTree` is a compilation of methods that facilitates user-customized phylogenomic inference from whole proteome amino acid sequence data. **_The method automates all steps of the process, from calculating reciprocal protein-sequence similarity to gene-family inference, multiple sequence alignment and trimming, gene-family and rooted species tree inference, to inference of gene-family evolutionary dynamics._**
 
-Because `NovelTree` is built in [Nextflow](https://www.nextflow.io), the workflow distributes tasks in a highly parallel and asynchronous manner across available computational resources. The workflow is currently optimized for a single computational environment but is continually being developed for deployment across AWS spot-instances with Nextflow Tower, and may also be configured to run in a highly parallel manner on SLURM schedulers ([see here for documentation](https://www.nextflow.io/docs/latest/executor.html)).
+Because `NovelTree` is built in [Nextflow](https://www.nextflow.io), the workflow distributes tasks in a highly parallel and asynchronous manner across available computational resources. The workflow supports multiple execution environments including local execution, [AWS Batch](#running-on-aws-batch) for cloud-scale analyses, and SLURM schedulers for HPC clusters ([see Nextflow executor documentation](https://www.nextflow.io/docs/latest/executor.html)).
 
 To account for the confounding effects of sequence length (and thus evolutionary) divergence on sequence similarity scores, `NovelTree` leverages [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) to normalize these similarity scores prior to clustering into orthogroups/gene families with MCL clustering. Because this clustering is contingent upon the MCL inflation parameter, `NovelTree` automates the identification of the inflation parameter that returns the most biologically sensible set of orthogroups when a list of MCL inflation values is provided. If a single MCL inflation is provided by the user, the pipeline will use that as the best-performing inflation parameter. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.
 
@@ -127,6 +192,29 @@ Using the first conservatively sized subset of gene family trees, `NovelTree` in
 Using this improved species tree, `NovelTree` then uses [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family and each species, using both the per-family, and per-species models.
 
 With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups.
+
+### Phylogenetic Profiles
+
+The GeneRax reconciliation outputs are curated into **phylogenetic profiles**—species × gene family matrices that summarize evolutionary events across the phylogeny. These matrices include:
+
+- **Duplication counts**: Gene duplications per species-tree node per gene family
+- **Loss counts**: Gene losses per species-tree node per gene family
+- **Speciation counts**: Speciation events per species-tree node per gene family
+- **HGT donor counts**: Horizontal gene transfer events where the species is the donor
+- **HGT recipient counts**: Horizontal gene transfer events where the species is the recipient
+- **HGT summed counts**: Combined donor and recipient transfer events
+
+These profiles provide a comprehensive view of gene family evolutionary dynamics and can be used for downstream comparative analyses.
+
+### Zoogle Mode Analyses
+
+When running with the `zoogle` profile, NovelTree performs additional analyses designed for organism prioritization based on protein evolution:
+
+1. **Physicochemical Properties**: Calculates amino acid composition and physicochemical properties (molecular weight, aromaticity, instability index, flexibility, hydropathy, isoelectric point, charge, and secondary structure fractions) for all proteins in each gene family.
+
+2. **Time Calibration**: Calibrates the inferred species tree against a user-provided reference timetree using congruification, enabling evolutionary rate comparisons across lineages.
+
+3. **Phylogenetically-Corrected Protein Distances**: For each gene family, computes multivariate distances between proteins based on their physicochemical properties, correcting for phylogenetic non-independence. Statistical tests identify proteins that are exceptionally (dis)similar to a reference species, which may be indicative of unusual evolutionary divergence, convergence, or conservatism.
 
 ---
 

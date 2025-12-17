@@ -1,7 +1,10 @@
 ## Outputs
-Note that a detailed walkthrough of how the results of NovelTree may be summarized and visualized, as applied to a dataset of 36 species of Telenemids, Stramenopiles, Alveolates, and Rhizarians, [may be found here](https://github.com/Arcadia-Science/2023-tsar-noveltree/tree/main/scripts/noveltree-summarization).  
 
-**1.** `busco/`: Contains output of all BUSCO analyses. Primary directory includes:  
+Note that a detailed walkthrough of how the results of NovelTree may be summarized and visualized, as applied to a dataset of 36 species of Telenemids, Stramenopiles, Alveolates, and Rhizarians, [may be found here](https://github.com/Arcadia-Science/2023-tsar-noveltree/tree/main/scripts/noveltree-summarization).
+
+> **Mode-specific outputs**: Some outputs are only produced in certain workflow modes. These are marked with *(full mode only)* or *(zoogle mode only)*. Outputs without annotations are produced in all modes.
+
+**1.** `busco/` *(full mode only)*: Contains output of all BUSCO analyses. Primary directory includes:  
 
 - Short summary results for each species, to each lineage dataset (shallow or broad) in text and json formats.  
 - Batch summary results for each species, to each lineage dataset.  
@@ -41,7 +44,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 
 **9.** `fasttree_gene_trees` or `iqtree_gene_trees/`: Gene family trees using either FastTree2 or IQ-TREE respectively.
 
-**10.** `iqtree_pmsf_gene_trees/`: OPTIONAL: Gene family trees refined using IQ-TREE's Posterior Mean Site Frequency (PMSF) model. Only produced if `tree_model_pmsf` parameter is specified in full mode.
+**10.** `iqtree_pmsf_gene_trees/` *(full mode only, optional)*: Gene family trees refined using IQ-TREE's Posterior Mean Site Frequency (PMSF) model. Only produced if `tree_model_pmsf` parameter is specified.
 
 **11.** `asteroid/`: Asteroid species tree, either rooted or unrooted. Includes:  
 
@@ -51,42 +54,54 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - asteroid.scores.txt: likelihood scores for all inferred trees.  
 - disco_decomposed_rooted_gfts.newick: A newick tree file containing all single-copy gene family trees inferred using [DISCO](https://github.com/JSdoubleL/DISCO) by decomposing each mutiple copy gene family tree into their respective single-copy counterparts.  
 
-**13.** `speciesrax/`: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:
+**12.** `speciesrax/`: all results/outputs from SpeciesRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Key output directories includes:
 
 - `species_trees/`: contains inferred rooted species trees, species tree likihoods, and species trees with internal nodels labeled according to their support values.
 - `reconciliations/`: gene-family tree - species tree reconciliations (species trees with gene family duplications, transfers, and losses mapped on) in several formats. May be plotted using reconciliation software like thirdkind. Additionally contains files for each gene family that enumerate duplication-transfer-loss event counts per species. Reconciliations here are obtained without optimization of the gene family tree topology under a model of gene duplication, transfer, and loss.
 
-**14.** `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Reconciliations are the result of joint optimization of the gene family tree topology and reconciliation, and duplication/transfer/loss rates.
+**13.** `generax/`: all results/outputs from GeneRax inferred using the subset of gene families that passed filters for involvement in rooted species tree inference. Full description of these outputs (including gene-family tree/species tree reconciliations) are described on the GeneRax github. Reconciliations are the result of joint optimization of the gene family tree topology and reconciliation, and duplication/transfer/loss rates.
 
-- `per_family_rates`: Results of the per-family model. One directory for each gene family, named by the corresponding family ID.
-- `per_species_rates`: Results of the per-species model. One directory for each gene family, named by the corresponding family ID.
+- `per_family_rates/` *(full mode only)*: Results of the per-family model. One directory for each gene family, named by the corresponding family ID.
+- `per_species_rates/`: Results of the per-species model. One directory for each gene family, named by the corresponding family ID.
 - Each has a similar directory structure to SpeciesRax, but lacking the species trees directory, and lacking another directory containing the results of gene family tree reconciation and inferred rates of gene duplication, transfer, and loss.
 - `results/`: one directory per-gene-family containing reconciled gene trees and inferred rates of gene family duplication, transfer and loss.
 
-**15.** `gene_family_evolution/`: Phylogenetic profiles and event summaries from PHYLO_PROFILES module.
+**14.** `gene_family_evolution/`: Phylogenetic profiles and event summaries from PHYLO_PROFILES module.
 
-- `duplication_count_per_species_per_gene_family.tsv`: Matrix of duplication events with species as rows and gene families as columns.
+- `duplication_count_per_species_per_gene_family.tsv`: Matrix of duplication events with species-tree nodes as rows and gene families as columns.
 - `hgt_summed_counts_recip_donor.tsv`: Horizontal gene transfer network matrix showing donor-recipient relationships between species.
-- `loss_count_per_per_species_gene_family.tsv`: Matrix of gene loss events per species per gene family.
-- `speciation_count_per_species_per_gene_family.tsv`: Matrix of speciation events per species per gene family.
+- `loss_count_per_per_species_gene_family.tsv`: Matrix of gene loss events per species-tree node per gene family.
+- `speciation_count_per_species_per_gene_family.tsv`: Matrix of speciation events per species-tree node per gene family.
 - `transfer_donor_count_per_species_per_gene_family.tsv`: HGT events where each species acted as donor.
 - `transfer_recipient_count_per_species_per_gene_family.tsv`: HGT events where each species acted as recipient.
 
-**16.** `physicochemical_properties/`: Amino acid composition and physicochemical property summaries from PHYSICOCHEMICAL_PROPS module.
+**15.** `time_calibrated_species_tree/` *(zoogle mode only)*: Time-calibrated species tree from TIME_CALIBRATE_SPECIES_TREE module.
+
+- `time_calibrated_species_tree.newick`: The inferred species tree with branch lengths scaled to time units, calibrated against the user-provided reference timetree using congruification.
+- `calibration_log.txt`: Log file with details of the calibration process.
+
+**16.** `physicochemical_properties/` *(zoogle mode only)*: Amino acid composition and physicochemical property summaries from PHYSICOCHEMICAL_PROPS module.
 
 - `aa-summary-stats/across-family-summaries/`: Aggregated statistics across all gene families.
 - `aa-summary-stats/per-family-summaries/`: Per-family directories containing property summaries for each protein.
   - Contains CSV files with 20 amino acid frequencies and physicochemical properties (molecular weight, aromaticity, instability, flexibility, GRAVY, isoelectric point, charge at pH 3/5/7/9, helix/sheet fractions, extinction coefficients).
 
-**17.** `phylo_dist/`: Phylogenetically-corrected protein distance analyses from PHYLO_DIST module (only for families with reference species proteins).
+**17.** `phylo_dist/` *(zoogle mode only)*: Phylogenetically-corrected protein distance analyses from PHYLO_DIST module. Only produced for gene families containing at least one protein from the reference species (`ref_species`) and sufficient non-reference proteins for statistical testing.
 
-- `phylo_corrected_data/`: GLS-corrected physicochemical property data after removing phylogenetic signal.
-- `protein-dist-mats/`: Raw protein-protein distance matrices.
+- `phylo-corrected-data/`: Physicochemical property data after phylogenetic correction.
+- `protein-dist-mats/`: Raw protein-protein distance matrices based on physicochemical properties.
 - `protein-phylo-dist-mats/`: Phylogenetically-corrected Mahalanobis distance matrices.
-- `congruified-gfts/`: Gene family trees congruified with species tree topology.
+- `congruified-gfts/`: Gene family trees congruified with the time-calibrated species tree topology.
 - `protein-dists-to-reference/`: Distances from each protein to reference species proteins.
 - `species-dists-to-reference/`: Species-level average distances to reference.
-- `protein-pvals/`: Statistical significance of protein distances to reference.
-- `species-pvals/`: Statistical significance of species-level distances.
-- `pairwise-protein-dist-perm-test/`: Permutation test results for protein pairs.
-- `final_protein_pair_summary_tables/`: Comprehensive summary tables combining all analyses.  
+- `protein-pvals/`: Statistical significance (p-values) of protein distances to reference species.
+- `species-pvals/`: Statistical significance (p-values) of species-level distances to reference.
+- `pairwise-protein-dist-perm-test/`: Permutation test results for pairwise protein comparisons.
+- `final_protein_pair_summary_tables/`: Comprehensive summary tables combining distance metrics, p-values, and protein metadata for each gene family.
+
+**18.** `pipeline_info/`: Nextflow execution reports and pipeline metadata.
+
+- `execution_timeline_*.html`: Interactive timeline showing when each process started and completed.
+- `execution_report_*.html`: Detailed execution report with resource usage statistics.
+- `execution_trace_*.txt`: Tab-separated file with detailed metrics for each task.
+- `pipeline_dag_*.html`: Directed acyclic graph visualization of the workflow.  
