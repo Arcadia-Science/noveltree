@@ -5,7 +5,7 @@
 ![Workflow Figure](./Fig2-Workflow-part-one.png)
 ![Workflow Figure](./Fig4-Workflow-part-two.png)
 
-*These figures illustrate the full workflow mode. Simplified and zoogle modes skip certain steps (e.g., BUSCO, per-family GeneRax) or add additional analyses (e.g., phylo-dist). See [Workflow Modes](#workflow-modes) for details.*
+_These figures illustrate the full workflow mode. Simplified and zoogle modes skip certain steps (e.g., BUSCO, per-family GeneRax) or add additional analyses (e.g., phylo-dist). See [Workflow Modes](#workflow-modes) for details._
 
 `NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.
 
@@ -26,6 +26,7 @@ make docker-all
 ```
 
 Or build individual images:
+
 ```bash
 make docker-physicochemical-props
 make docker-phylo-dist
@@ -53,17 +54,17 @@ Nextflow requires some memory resources to be allocated for overhead - consequen
 
 NovelTree supports three workflow modes to accommodate different use cases and computational constraints:
 
-| Feature | Full | Simplified | Zoogle |
-|---------|:----:|:----------:|:------:|
-| BUSCO quality assessment | ✓ | ✗ | ✗ |
-| Default aligner | WITCH | FAMSA | FAMSA |
-| Per-family GeneRax | ✓ | ✗ | ✗ |
-| Per-species GeneRax | ✓ | ✓ | ✓ |
-| GeneRax strategy | SPR | EVAL | EVAL |
-| Phylogenetic profiles | ✓ | ✓ | ✓ |
-| Physicochemical properties | ✗ | ✗ | ✓ |
-| Time-calibrated species tree | ✗ | ✗ | ✓ |
-| Phylo-dist analysis | ✗ | ✗ | ✓ |
+| Feature                      | Full  | Simplified | Zoogle |
+| ---------------------------- | :---: | :--------: | :----: |
+| BUSCO quality assessment     |   ✓   |     ✗      |   ✗    |
+| Default aligner              | WITCH |   FAMSA    | FAMSA  |
+| Per-family GeneRax           |   ✓   |     ✗      |   ✗    |
+| Per-species GeneRax          |   ✓   |     ✓      |   ✓    |
+| GeneRax strategy             |  SPR  |    EVAL    |  EVAL  |
+| Phylogenetic profiles        |   ✓   |     ✓      |   ✓    |
+| Physicochemical properties   |   ✗   |     ✗      |   ✓    |
+| Time-calibrated species tree |   ✗   |     ✗      |   ✓    |
+| Phylo-dist analysis          |   ✗   |     ✗      |   ✓    |
 
 ### Full Mode (Default)
 
@@ -112,6 +113,7 @@ nextflow run . \
 The `awsbatch` profile includes optimized executor settings (queue size of 1000 jobs) and automatic report overwriting for seamless pipeline resumption.
 
 **Requirements:**
+
 - AWS Batch compute environment and job queue configured
 - Work directory (`-work-dir`) and output directory (`--outdir`) must be S3 paths
 - Input samplesheet and proteome files accessible from S3
@@ -142,6 +144,7 @@ NovelTree uses custom Docker images for specific analysis modules. If you're usi
 ### Quick Build
 
 Build all required images:
+
 ```bash
 make docker-all
 ```
@@ -149,6 +152,7 @@ make docker-all
 ### Individual Image Builds
 
 Build specific images:
+
 ```bash
 # Physicochemical properties calculation module
 make docker-physicochemical-props
@@ -163,9 +167,9 @@ All Docker images are built from the repository root with the build context set 
 
 **Note:** Building R-based images (phylo-dist) may take 15-20 minutes due to package compilation.
 
-### Vendored RAAS Code
+### Vendored Organism Selection Code
 
-The `bin/phylo_dist/` directory contains code vendored from the [raas-organism-prioritization](https://github.com/Arcadia-Science/raas-organism-prioritization) repository. See `bin/phylo_dist/README.md` for provenance details including source commit and modifications.
+The `bin/phylo_dist/` directory contains code vendored from the [2024-organismal-selection](https://github.com/Arcadia-Science/2024-organismal-selection) repository associated with our Pub, [Leveraging evolution to identify novel organismal models of human biology] (https://thestacks.org/publications/result-evolutionary-organismal-selection). See `bin/phylo_dist/README.md` for provenance details including source commit and modifications.
 
 ---
 
@@ -219,9 +223,11 @@ When running with the `zoogle` profile, NovelTree performs additional analyses d
 ---
 
 ## Usage
+
 For a detailed description of basic- to advance-usage of the workflow, please see the [`usage.md`](docs/usage.md) file.
 
 ## Outputs
+
 For a detailed description of workflow outputs, please see the [`outputs.md`](docs/outputs.md) file.
 
 ---
@@ -249,7 +255,8 @@ We encourage anyone to build upon our efforts.
 ## Citations
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-If you use  Arcadia-Science/noveltree for your analysis, please cite it using the following doi: [10.57844/arcadia-z08x-v798](https://doi.org/10.57844/arcadia-z08x-v798)
+
+If you use Arcadia-Science/noveltree for your analysis, please cite it using the following doi: [10.57844/arcadia-z08x-v798](https://doi.org/10.57844/arcadia-z08x-v798)
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
