@@ -13,14 +13,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 
 > #### Description of Columns:
 >
-> `species`: species name to use.<br/>
-> `file`: complete path to fasta file, whether local or remote (e.g. provide complete local file path, or S3 URI/hyperlink to other cloud storage).<br/>
-> `taxonomy`: higher-rank taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.<br/>
-> `shallow_db`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota). If NA, will not run.<br/>
-> `broad_db`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota). If NA, will not run.<br/>
-> `mode`: specification of busco analysis mode.<br/>
-> `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that `NovelTree` can use to annotate).<br/>
-> `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).<br/>
+> `species`: species name to use.<br/> > `file`: complete path to fasta file, whether local or remote (e.g. provide complete local file path, or S3 URI/hyperlink to other cloud storage).<br/> > `taxonomy`: higher-rank taxonomy for each species (e.g. supergroup, class, family, genus). Utility of this parameter depends on the taxonomic scope of each dataset. Used in filtering orthogroups for phylogenetic inference.<br/> > `shallow_db`: busco lineage dataset for shallow taxonomic scale analysis (e.g. below eukaryota). If NA, will not run.<br/> > `broad_db`: busco lineage dataset for broad taxonomic scale analysis (e.g. eukaryota). If NA, will not run.<br/> > `mode`: specification of busco analysis mode.<br/> > `uniprot`: true/false specification indicating whether the proteome comes from UniProt (i.e. has UniProt protein accessions that `NovelTree` can use to annotate).<br/> > `mcl_test`: true/false specification of whether this species is to be included in the MCL inflation parameter test-set. These species must have UniProt protein accessions (for COGEQC protein domain score).<br/>
 
 **2.** Create a parameter file that includes all necessary input, output, and parameter specifications: example below.
 
@@ -45,21 +38,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 
 > #### Parameter descriptions:
 >
-> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).<br/>
-> `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. A single value is also allowed - no testing will occur in this case. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.<br/>
-> `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/>
-> `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/>
-> `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups an gene family must contain for phylogenetic inference.<br/>
-> `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/>
-> `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/>
-> `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.<br/>
-> `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/>
-> `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.<br/>
-> `tree_model_pmsf`: OPTIONAL: Posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.<br/>
-> `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/>
-> `ref_species`: REQUIRED for PHYLO_DIST. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/>
-> `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/>
-> `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/>
+> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).<br/> > `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. A single value is also allowed - no testing will occur in this case. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.<br/> > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/> > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/> > `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups an gene family must contain for phylogenetic inference.<br/> > `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/> > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/> > `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.<br/> > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/> > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.<br/> > `tree_model_pmsf`: OPTIONAL: Posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.<br/> > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/> > `ref_species`: REQUIRED for zoogle mode. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/> > `reference_time_tree`: REQUIRED for zoogle mode. Path to a reference time-calibrated phylogenetic tree (Newick format) used to calibrate the inferred species tree.<br/> > `time_calibration_method`: DEFAULT: "PATHd8". Method for time calibration of the species tree. Options: "PATHd8" or "treePL".<br/> > `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/> > `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/> > `busco`: DEFAULT: true. Enable/disable BUSCO quality assessment. Set to false in simplified/zoogle modes.<br/> > `generax_per_family`: DEFAULT: true. Enable/disable per-family GeneRax analysis. Set to false in simplified/zoogle modes.<br/>
 >
 > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/noveltree).
 
@@ -92,6 +71,68 @@ nextflow run . -profile docker -params-file <PARAMS.JSON>
 
 ---
 
+## Workflow Modes
+
+NovelTree supports three workflow modes that can be selected using Nextflow profiles:
+
+### Full Mode (Default)
+
+The complete pipeline with all analyses enabled. Best for comprehensive phylogenomic studies.
+
+```bash
+nextflow run . -profile docker -params-file params.json
+```
+
+### Simplified Mode
+
+A streamlined variant optimized for large datasets:
+
+- Uses FAMSA (faster) instead of WITCH for alignment
+- Skips BUSCO quality assessment
+- Runs only per-species GeneRax with the faster EVAL strategy
+- Skips per-family GeneRax analysis
+
+```bash
+nextflow run . -profile docker,simplified -params-file params.json
+```
+
+### Zoogle Mode
+
+Inherits simplified mode settings and adds analyses for organism prioritization:
+
+- Physicochemical protein properties
+- Time calibration of the species tree
+- Phylogenetically-corrected protein distance analysis
+
+Requires additional parameters:
+
+```bash
+nextflow run . -profile docker,zoogle \
+  -params-file params.json \
+  --reference_time_tree /path/to/reference_timetree.newick \
+  --ref_species Genus_species
+```
+
+### Combining Profiles
+
+Profiles can be combined with container engines:
+
+```bash
+# Simplified mode with Singularity
+nextflow run . -profile singularity,simplified -params-file params.json
+
+# Zoogle mode on AWS Batch
+nextflow run . -profile awsbatch,zoogle \
+  --awsqueue my-queue \
+  --awsregion us-east-1 \
+  -work-dir s3://bucket/work \
+  --outdir s3://bucket/results \
+  --reference_time_tree s3://bucket/timetree.newick \
+  --ref_species Genus_species
+```
+
+---
+
 ## Running on AWS Batch
 
 NovelTree can be executed on AWS Batch for large-scale analyses. You can run it through Nextflow Tower or directly using the `awsbatch` profile.
@@ -115,6 +156,7 @@ nextflow run Arcadia-Science/noveltree \
 ```
 
 **Required parameters:**
+
 - `--awsqueue`: Your AWS Batch job queue name
 - `--awsregion`: AWS region (e.g., `us-east-1`)
 - `-work-dir`: S3 URI for Nextflow work directory
@@ -133,36 +175,51 @@ These included:
 
 ---
 
+## Running with Singularity
+
+NovelTree supports Singularity as an alternative to Docker, useful for HPC environments where Docker is not available:
+
+```bash
+nextflow run . -profile singularity -params-file params.json
+```
+
+Docker images are automatically pulled and converted to Singularity format. Converted images are cached in `${outdir}/singularity_cache` to avoid repeated conversions.
+
+For detailed instructions, see the [Singularity documentation](singularity.md).
+
+---
+
 ## The workflow proceeds to conduct the following steps:
 
 1. `INPUT_CHECK`: Proteomes are staged locally (including downloaded from S3 or other cloud storage if necessary)
 2. When a list of mcl inflation values is provided, the pipeline performs these additional steps to select the best-performing MCL inflation parameter on a reduced set of proteomes for which UniProt protein accessions are available:
-    1. `PROTEIN_ANNOTATION`: Proteomes for which sequence names include [`UniProt`](https://www.uniprot.org/) protein accessions are annotated using [`UniProt.ws`](https://bioconductor.org/packages/release/bioc/html/UniProt.ws.html)
-    2. `ORTHOFINDER_PREP`: Proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
-    3. `DIAMOND_BLASTP`: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
-    4. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
-    5. `COGEQC`: Summarization and quantification of gene family inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs.
-    6. `SELECT_INFLATION`: Based on the above summaries, select the (mean) inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
-3. `BUSCO`: Each proteome is summarized using [`BUSCO`](https://busco.ezlab.org/) completeness at both user-specified shallow (e.g. Eukaryota) and taxon-specific scales
+   1. `PROTEIN_ANNOTATION`: Proteomes for which sequence names include [`UniProt`](https://www.uniprot.org/) protein accessions are annotated using [`UniProt.ws`](https://bioconductor.org/packages/release/bioc/html/UniProt.ws.html)
+   2. `ORTHOFINDER_PREP`: Proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+   3. `DIAMOND_BLASTP`: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive
+   4. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
+   5. `COGEQC`: Summarization and quantification of gene family inference performance using a set of summary statistics, including the functional annotation score using [`COGEQC`](https://almeidasilvaf.github.io/cogeqc/index.html) applied to both [`InterPro`](https://ebi.ac.uk/interpro/) domain annotations and [`OMA`](https://omabrowser.org/oma/home/) orthology IDs.
+   6. `SELECT_INFLATION`: Based on the above summaries, select the (mean) inflation parameter that performs best (e.g. orthogroups are most homogenous in protein domain annotations, penalizing against dispersal of annotations across orthogroups), accounting for diminishing returns with increasing or decreasing parameter values.
+3. `BUSCO` _(full mode only)_: Each proteome is summarized using [`BUSCO`](https://busco.ezlab.org/) completeness at both user-specified shallow (e.g. Eukaryota) and taxon-specific scales
 4. `ORTHOFINDER_PREP`: All proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 5. `DIAMOND_BLASTP`: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive.
 6. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
 7. `FILTER_ORTHOGROUPS`: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
 
-![Workflow Figure](../Fig2-Workflow-part-one.png)  
+![Workflow Figure](../Fig2-Workflow-part-one.png)
 
-8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with [`WITCH`](https://github.com/c5shen/WITCH) (default), [`MAFFT`](https://mafft.cbrc.jp/alignment/software/), or [`FAMSA`](https://github.com/refresh-bio/FAMSA)
-9. `TRIM_SEQS`: OPTIONAL: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) (defualt) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
-10. `INFER_TREES`: Infer gene family trees using either [`FastTree2`](http://www.iqtree.org/) (default) or [`IQ-TREE`](http://www.iqtree.org/)
-11. `IQTREE_PMSF`: OPTIONAL (full mode only): If `tree_model_pmsf` parameter is specified, perform second round of tree inference using IQ-TREE with Posterior Mean Site Frequency (PMSF) model for improved accuracy
+8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with [`WITCH`](https://github.com/c5shen/WITCH) (full mode default), [`MAFFT`](https://mafft.cbrc.jp/alignment/software/), or [`FAMSA`](https://github.com/refresh-bio/FAMSA) (simplified/zoogle mode default)
+9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
+10. `INFER_TREES`: Infer gene family trees using either [`FastTree2`](http://www.microbesonline.org/fasttree/) (default) or [`IQ-TREE`](http://www.iqtree.org/)
+11. `IQTREE_PMSF` _(full mode only, optional)_: If `tree_model_pmsf` parameter is specified, perform second round of tree inference using IQ-TREE with Posterior Mean Site Frequency (PMSF) model for improved accuracy
 12. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
 13. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
-14. `GENERAX_PER_FAMILY`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
-15. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates)
+14. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
+15. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
 16. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 17. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, transfer, loss, and speciation events across species and gene families
-18. `PHYSICOCHEMICAL_PROPS`: Calculate amino acid composition and physicochemical properties for all gene families
-19. `PHYLO_DIST`: Calculate phylogenetically-corrected protein distances using PGLS (Phylogenetic Generalized Least Squares) and Mahalanobis distances
+18. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against a user-provided reference timetree containing (some) overlapping species using congruification
+19. `PHYSICOCHEMICAL_PROPS` _(zoogle mode only)_: Calculate amino acid composition and physicochemical properties for all gene families
+20. `PHYLO_DIST` _(zoogle mode only)_: Calculate phylogenetically-corrected protein distances using Mahalanobis distances and permutation tests
 
 ![Workflow Figure](../Fig4-Workflow-part-two.png)
 
@@ -332,16 +389,25 @@ process {
 - No parameters required - processes all GeneRax output files automatically
 - Outputs stored in `gene_family_evolution/` directory
 
-#### 15. [`PHYSICOCHEMICAL_PROPS`](modules/local/physicochemical_props.nf):
+#### 15. [`TIME_CALIBRATE_SPECIES_TREE`](modules/local/time_calibrate_species_tree.nf) _(zoogle mode only)_:
+
+- Time-calibrates the inferred species tree against a user-provided reference timetree
+- Uses congruification to match and transfer divergence times from the reference tree
+- **Requires**: `reference_time_tree` parameter with path to reference timetree (Newick format) with at least some fraction of species overlapping with the species analyzed by NovelTree.
+- `time_calibration_method`: Method for calibration - "PATHd8" (default) or "treePL"
+- Outputs stored in `time_calibrated_species_tree/` directory
+
+#### 16. [`PHYSICOCHEMICAL_PROPS`](modules/local/physicochemical_props.nf) _(zoogle mode only)_:
 
 - Calculates amino acid composition and physicochemical properties for all gene families
 - Computes 20 amino acid frequencies and properties (molecular weight, aromaticity, GRAVY, isoelectric point, etc.)
 - No parameters required
 - Outputs stored in `physicochemical_properties/` directory
 
-#### 16. [`PHYLO_DIST`](modules/local/phylo_dist.nf):
+#### 17. [`PHYLO_DIST`](modules/local/phylo_dist.nf) _(zoogle mode only)_:
 
-- Calculates phylogenetically-corrected protein distances using PGLS and Mahalanobis distances
+- Calculates phylogenetically-corrected protein distances using Mahalanobis distances
+- Performs permutation tests to identify proteins exceptionally (dis)similar to reference species
 - **Requires**: `ref_species` parameter to define reference species for comparisons
-- Only processes gene families with ≥1 reference protein and ≥2 non-reference proteins
+- Only processes gene families with ≥1 reference protein and ≥2 non-reference proteins from ≥2 species
 - Outputs stored in `phylo_dist/` directory with distance matrices and statistical tests
