@@ -13,7 +13,7 @@ process GENERAX_PER_SPECIES {
     tuple val(meta), path("${meta.og}/reconciliations/${meta.og}_eventCounts.txt")        , emit: event_counts
     tuple val(meta), path("${meta.og}/reconciliations/${meta.og}_speciesEventCounts.txt") , emit: species_event_counts
     tuple val(meta), path("${meta.og}/reconciliations/${meta.og}_transfers.txt")          , emit: transfer_event_counts
-    tuple val(meta), path("${meta.og}/perSpeciesCoverage.txt")                            , emit: species_coverage
+    tuple val(meta), path("${meta.og}/${meta.og}_perSpeciesCoverage.txt")                  , emit: species_coverage
     tuple val(meta), path("**_reconciled_gft.newick")                                     , emit: generax_per_spp_gfts
 
     when:
@@ -61,6 +61,9 @@ process GENERAX_PER_SPECIES {
 
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     mv "$og/results/$og/geneTree.newick" $og/results/$og/${og}_reconciled_gft.newick
+
+    # Rename perSpeciesCoverage.txt to include orthogroup prefix (prevents file name collisions downstream)
+    mv "$og/perSpeciesCoverage.txt" "$og/${og}_perSpeciesCoverage.txt"
 
     # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
     mkdir $og/reconciliations/reconciliation_transfer_samples/

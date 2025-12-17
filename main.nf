@@ -422,10 +422,11 @@ workflow NOVELTREE {
 
                 // Count proteins per non-reference species
                 // NOTE: Must match R script's species extraction logic (line 145 of protein_distance_calculation_functions.R)
-                // R uses: gsub("_.*", "", focal_prots) which removes everything after FIRST underscore
+                // Protein labels have format: Species_name_ProteinID
+                // Species names are extracted by removing the last underscore-delimited segment
                 def nonrefProteinsBySpecies = proteinIds
                     .findAll { !it.startsWith("${params.ref_species}_") }
-                    .collect { it.replaceFirst(/_.*/, '') }  // Extract genus name only (everything before first underscore)
+                    .collect { it.replaceFirst(/_[^_]+$/, '') }  // Extract species name (remove protein ID after last underscore)
                     .countBy { it }  // Map of species -> count
 
                 // Count unique non-reference species

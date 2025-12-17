@@ -32,8 +32,10 @@ RUN conda config --set channel_priority flexible && \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
 # Install treePL via conda
+# Note: conda package installs binary to /opt/conda/treePL, need to symlink to bin/
 RUN conda install -c genomedk treepl -y && \
-    conda clean -afy
+    conda clean -afy && \
+    ln -s /opt/conda/treePL /opt/conda/bin/treePL
 
 # Download and compile PATHd8 from source
 # PATHd8 is a C program for phylogenetic dating, official site: www2.math.su.se/PATHd8/

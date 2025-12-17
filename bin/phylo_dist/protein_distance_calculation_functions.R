@@ -85,7 +85,7 @@ calc_prot_spp_dists <-
         scale_method <- "PATHd8"
       }
       taxonomy <-
-        matrix(gsub("_.*", "", gf_tree$tip.label),
+        matrix(gsub("_[^_]+$", "", gf_tree$tip.label),
                dimnames = list(gf_tree$tip.label, NULL),
                ncol = 1)
       gf_tree <-
@@ -142,7 +142,7 @@ calc_prot_spp_dists <-
     focal_dist_prot_res <-
       data.frame(protein = focal_prots, focal_stats, row.names = NULL)
     focal_dist_spp_res <-
-      data.frame(species = gsub("_.*", "", focal_prots),
+      data.frame(species = gsub("_[^_]+$", "", focal_prots),
                  focal_stats, row.names = NULL)
 
     # Summarize the data getting the mean of each stat for each species
@@ -170,10 +170,10 @@ calc_prot_spp_dists <-
     # of information and are useful for handing off to translation.
 
     # Identify the non-reference species for each protein pair
-    # Species names always precede the first `_`:
-    # remove everything that follows
+    # Protein labels have format: Species_name_ProteinID
+    # Species names are extracted by removing the last underscore-delimited segment
     nonref_spp <-
-      gsub("_.*", "", per_prot_dist_res$observation)
+      gsub("_[^_]+$", "", per_prot_dist_res$observation)
 
     # And get the UniProt protein IDs for each protein
     # Additional substitutions needed to handle exceptions for
