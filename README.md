@@ -159,13 +159,13 @@ make docker-phylo-dist
 
 ### Technical Details
 
-All Docker images are built from the repository root with the build context set to ensure access to vendored code in `bin/raas/`. The images are built for `linux/amd64` platform for compatibility.
+All Docker images are built from the repository root with the build context set to ensure access to vendored code in `bin/phylo_dist/`. The images are built for `linux/amd64` platform for compatibility.
 
 **Note:** Building R-based images (phylo-dist) may take 15-20 minutes due to package compilation.
 
 ### Vendored RAAS Code
 
-The `bin/raas/` directory contains code vendored from the [raas-organism-prioritization](https://github.com/Arcadia-Science/raas-organism-prioritization) repository. See `bin/raas/README.md` for provenance details including source commit and modifications.
+The `bin/phylo_dist/` directory contains code vendored from the [raas-organism-prioritization](https://github.com/Arcadia-Science/raas-organism-prioritization) repository. See `bin/phylo_dist/README.md` for provenance details including source commit and modifications.
 
 ---
 

@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir \
     pandas==2.0.0
 
 # Copy the physicochemical properties script
-COPY bin/raas/genefam_aa_summaries.py /usr/local/bin/genefam_aa_summaries.py
+COPY bin/phylo_dist/genefam_aa_summaries.py /usr/local/bin/genefam_aa_summaries.py
 RUN chmod +x /usr/local/bin/genefam_aa_summaries.py
 
 # Set the default command to launch an interactive shell
