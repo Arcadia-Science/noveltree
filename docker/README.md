@@ -29,7 +29,7 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `CLIPKIT`                            | [ClipKIT v2.1.1](./clipkit/)                                         | [arcadiascience/clipkit_2.1.1-seqmagick_0.8.4](https://hub.docker.com/r/arcadiascience/clipkit_2.1.1-seqmagick_0.8.4)                             |
 | `COGEQC`                             | [cogeqc v1.2.1](./cogeqc/)                                           | [arcadiascience/cogeqc_1.2.1](https://hub.docker.com/r/arcadiascience/cogeqc_1.2.1)                               |
 | `FASTTREE`                 | [FastTree v2.1.11](./fasttree/)                               | [arcadiascience/fasttree_2.1.11](https://hub.docker.com/r/arcadiascience/fasttree_2.1.11)                         |
-| `GENERAX/SPECIESRAX`                 | [GeneRax @ commit 19604b71](./generax/)                               | [arcadiascience/generax_19604b71](https://hub.docker.com/r/arcadiascience/generax_19604b71)                         |
+| `GENERAX/SPECIESRAX`                 | [GeneRax @ commit 56f3ed0](./generax/)                               | [arcadiascience/generax_56f3ed0:1.1.3](https://hub.docker.com/r/arcadiascience/generax_56f3ed0)                         |
 | `IQTREE`                             | [IQ-TREE v2.2.0.5](./iqtree/)                                        | [arcadiascience/iqtree_2.2.0.5](https://hub.docker.com/r/arcadiascience/iqtree_2.2.0.5)                        |
 | `ORTHOFINDER` (prep, mcl, phylohogs) | [OrthoFinder v2.5.4](./orthofinder)                                  | [arcadiascience/orthofinder_2.5.4](https://hub.docker.com/r/arcadiascience/orthofinder_2.5.4)                     |
 | `FILTER_ORTHOGROUPS`                 | [R v4.2.2](./rbase/)                                                 | [arcadiascience/rbase_4.2.2](https://hub.docker.com/r/arcadiascience/rbase_4.2.2)                                 |
@@ -37,7 +37,9 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `WITCH`                   | [WITCH v0.3.0](./witch/) | [arcadiascience/witch_0.3.0](https://hub.docker.com/r/arcadiascience/witch_0.3.0) |
 | `FAMSA`                   | [FAMSA v2.5.0](./famsa/) | [arcadiascience/famsa_2.0.0](https://hub.docker.com/r/arcadiascience/famsa_2.0.0) |
 | `PHYLO_PROFILES`          | [phylo_profiles v1.0.0](./phylo_profiles/) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
+| `MERGE_PHYLO_PROFILES`    | (uses phylo_profiles image) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
 | `PHYSICOCHEMICAL_PROPS`   | [physicochemical_props v1.0.0](./physicochemical_props/) | [arcadiascience/physicochemical_props:1.0.0](https://hub.docker.com/r/arcadiascience/physicochemical_props) |
 | `PHYLO_DIST`              | [phylo_dist v1.0.0](./phylo_dist/) | [arcadiascience/phylo_dist:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_dist) |
+| `TIME_CALIBRATE_SPECIES_TREE` | (uses phylo_dist image) | [arcadiascience/phylo_dist:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_dist) |
 | `SUMMARIZE`               | [R summarization packages](./summarize/) | [arcadiascience/summarize](https://hub.docker.com/r/arcadiascience/summarize) |
 | `QUERYUP`                 | [queryup v1.0.5](./queryup/) | [arcadiascience/queryup_1.0.5](https://hub.docker.com/r/arcadiascience/queryup_1.0.5) |
