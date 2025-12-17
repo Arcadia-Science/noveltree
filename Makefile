@@ -33,10 +33,8 @@ FAMSA_IMAGE := $(DOCKER_ORG)/famsa_2.0.0
 FAMSA_TAG := 1.0.0
 FASTTREE_IMAGE := $(DOCKER_ORG)/fasttree_2.1.11
 FASTTREE_TAG := 1.0.0
-GENERAX_SPECIES_IMAGE := $(DOCKER_ORG)/generax_56f3ed0
-GENERAX_SPECIES_TAG := 1.1.3
-GENERAX_FAMILY_IMAGE := $(DOCKER_ORG)/generax_19604b71
-GENERAX_FAMILY_TAG := 1.0.0
+GENERAX_IMAGE := $(DOCKER_ORG)/generax_56f3ed0
+GENERAX_TAG := 1.1.3
 IQTREE_IMAGE := $(DOCKER_ORG)/iqtree_2.2.0.5
 IQTREE_TAG := 1.0.0
 ORTHOFINDER_IMAGE := $(DOCKER_ORG)/orthofinder_2.5.4
@@ -57,13 +55,13 @@ WITCH_TAG := 1.0.0
 .PHONY: help docker-all \
 	docker-physicochemical-props docker-phylo-dist \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
-	docker-cogeqc docker-famsa docker-fasttree docker-generax-species \
-	docker-generax-family docker-iqtree docker-orthofinder \
+	docker-cogeqc docker-famsa docker-fasttree docker-generax \
+	docker-iqtree docker-orthofinder \
 	docker-phylo-profiles docker-rbase docker-select-inflation docker-witch \
 	push-all push-physicochemical-props push-phylo-dist \
 	push-asteroid push-bioservices push-cialign push-clipkit \
-	push-cogeqc push-famsa push-fasttree push-generax-species \
-	push-generax-family push-iqtree push-orthofinder \
+	push-cogeqc push-famsa push-fasttree push-generax \
+	push-iqtree push-orthofinder \
 	push-phylo-profiles push-rbase push-select-inflation push-witch \
 	clean
 
@@ -88,8 +86,7 @@ help:
 	@echo "  make docker-cogeqc                 - CoGeQC"
 	@echo "  make docker-famsa                  - FAMSA"
 	@echo "  make docker-fasttree               - FastTree"
-	@echo "  make docker-generax-species        - GeneRax (per-species)"
-	@echo "  make docker-generax-family         - GeneRax (per-family)"
+	@echo "  make docker-generax                - GeneRax"
 	@echo "  make docker-iqtree                 - IQ-TREE"
 	@echo "  make docker-orthofinder            - OrthoFinder"
 	@echo "  make docker-phylo-profiles         - Phylogenetic profiles"
@@ -113,8 +110,8 @@ help:
 
 docker-all: docker-physicochemical-props docker-phylo-dist \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
-	docker-cogeqc docker-famsa docker-fasttree docker-generax-species \
-	docker-generax-family docker-iqtree docker-orthofinder docker-phylo-profiles \
+	docker-cogeqc docker-famsa docker-fasttree docker-generax \
+	docker-iqtree docker-orthofinder docker-phylo-profiles \
 	docker-rbase docker-select-inflation docker-witch
 	@echo ""
 	@echo "All Docker images built successfully!"
@@ -199,19 +196,11 @@ docker-fasttree:
 		.
 	@echo "Built successfully!"
 
-docker-generax-species:
-	@echo "Building $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG)..."
+docker-generax:
+	@echo "Building $(GENERAX_IMAGE):$(GENERAX_TAG)..."
 	cd docker/generax && docker build \
 		--platform $(DOCKER_PLATFORM) \
-		-t $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG) \
-		.
-	@echo "Built successfully!"
-
-docker-generax-family:
-	@echo "Building $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG)..."
-	cd docker/generax && docker build \
-		--platform $(DOCKER_PLATFORM) \
-		-t $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG) \
+		-t $(GENERAX_IMAGE):$(GENERAX_TAG) \
 		.
 	@echo "Built successfully!"
 
@@ -269,8 +258,8 @@ docker-witch:
 
 push-all: push-physicochemical-props push-phylo-dist \
 	push-asteroid push-bioservices push-cialign push-clipkit \
-	push-cogeqc push-famsa push-fasttree push-generax-species \
-	push-generax-family push-iqtree push-orthofinder push-phylo-profiles \
+	push-cogeqc push-famsa push-fasttree push-generax \
+	push-iqtree push-orthofinder push-phylo-profiles \
 	push-rbase push-select-inflation push-witch
 	@echo ""
 	@echo "All images pushed to Docker Hub successfully!"
@@ -324,14 +313,9 @@ push-fasttree: docker-fasttree
 	docker push $(FASTTREE_IMAGE):$(FASTTREE_TAG)
 	@echo "Pushed successfully!"
 
-push-generax-species: docker-generax-species
-	@echo "Pushing $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG)..."
-	docker push $(GENERAX_SPECIES_IMAGE):$(GENERAX_SPECIES_TAG)
-	@echo "Pushed successfully!"
-
-push-generax-family: docker-generax-family
-	@echo "Pushing $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG)..."
-	docker push $(GENERAX_FAMILY_IMAGE):$(GENERAX_FAMILY_TAG)
+push-generax: docker-generax
+	@echo "Pushing $(GENERAX_IMAGE):$(GENERAX_TAG)..."
+	docker push $(GENERAX_IMAGE):$(GENERAX_TAG)
 	@echo "Pushed successfully!"
 
 push-iqtree: docker-iqtree
