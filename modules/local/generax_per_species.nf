@@ -29,10 +29,10 @@ process GENERAX_PER_SPECIES {
     # GeneRax) cannot handle these. Even if rare,
     # their inclusion leads a number of gene families
     # to be excluded from analyses.
-    sed -E -i '/>/!s/U/-/g' *.fa
+    sed -E -i '/>/!s/U/X/g' *.fa
 
     # Do the same for Pyrrolysine
-    sed -E -i '/>/!s/O/-/g' *.fa
+    sed -E -i '/>/!s/O/X/g' *.fa
 
     # Populate the family file for this gene family for the
     # analysis with GeneRax
