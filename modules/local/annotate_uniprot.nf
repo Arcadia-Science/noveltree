@@ -33,7 +33,8 @@ process ANNOTATE_UNIPROT {
     # Check below - if from uniprot, go ahead and annotate, otherwise skip the species.
     if [ "$is_uniprot" == "true" ]; then
         # Pull out the sequence names, strip trailing info, and remove spp name.
-        grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > ${spp}_protein_accessions.txt
+        # Handle both colon-delimited (>Species:Accession) and pipe-delimited (>Species|Accession|Entry) formats
+        grep ">" $fasta | cut -d" " -f1 | awk -F'[:|]' '{print \$2}' > ${spp}_protein_accessions.txt
 
         # Now run the script to pull down annotations for the protein accessions in this species.
         # This Python script uses the bioservices python package to accomplish this.
