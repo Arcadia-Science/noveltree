@@ -77,10 +77,9 @@ og_stat_dir <- paste0(og_dir, '/Comparative_Genomics_Statistics/')
 # Go ahead and read in the orthogroups file
 orthogroups <- read_orthogroups(og_file)
 
-# Strip trailing text from species name - may not need in full implementation.
-# Names are determined in orthofinder using the file name, so just include
-# the species here.
-orthogroups$Species <- gsub('[.].*', '', orthogroups$Species)
+# Convert periods to hyphens in species names to match annotation file naming convention.
+# OrthoFinder uses periods (e.g., "Agaricus.bisporus") but annotations use hyphens (e.g., "Agaricus-bisporus").
+orthogroups$Species <- gsub('[.]', '-', orthogroups$Species)
 
 # Get the complete list of species included here
 all_species <- unique(orthogroups$Species)
@@ -97,6 +96,8 @@ species <- unique(orthogroups$Species)
 # and remove the Species name from the gene name - this will create issues when
 # pairing with the annotations.
 orthogroups$Gene <- gsub('^(?:[^_]*_)*\\s*(.*)', '\\1', orthogroups$Gene)
+# Also handle pipe-delimited format (e.g., "tr|K8EBU5|K8EBU5-9CHLO" -> "K8EBU5")
+orthogroups$Gene <- gsub('^[^|]*\\|([^|]+)\\|.*$', '\\1', orthogroups$Gene)
 
 # Initialize
 interpro <- list()
