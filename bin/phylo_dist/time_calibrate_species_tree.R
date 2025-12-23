@@ -7,6 +7,7 @@
 # Load required libraries
 library(ape)
 library(geiger)
+library(phytools)
 
 # Parse command line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -39,8 +40,13 @@ cat("Reading reference time tree from:", reference_tree_path, "\n")
 reference_tree <- read.tree(reference_tree_path)
 
 # Check that reference tree is ultrametric (time-calibrated)
+# Force ultrametricity to handle rounding errors if needed
 if (!is.ultrametric(reference_tree)) {
-  stop("Reference tree must be ultrametric (time-calibrated)")
+  cat("Reference tree not strictly ultrametric - forcing ultrametricity to handle rounding errors\n")
+  reference_tree <- force.ultrametric(reference_tree)
+  if (!is.ultrametric(reference_tree)) {
+    stop("Reference tree cannot be made ultrametric")
+  }
 }
 
 cat("Reference tree has", length(reference_tree$tip.label), "species\n")
@@ -93,10 +99,15 @@ cat("Time-calibration complete\n")
 cat("Calibrated tree has", length(calibrated_tree$tip.label), "species\n")
 
 # Check if the resulting tree is ultrametric
-if (is.ultrametric(calibrated_tree)) {
-  cat("Output tree is ultrametric (time-calibrated)\n")
+# Force ultrametricity to handle rounding errors if needed
+if (!is.ultrametric(calibrated_tree)) {
+  cat("Output tree not strictly ultrametric - forcing ultrametricity to handle rounding errors\n")
+  calibrated_tree <- force.ultrametric(calibrated_tree)
+  if (!is.ultrametric(calibrated_tree)) {
+    warning("Output tree cannot be made ultrametric - may have structural issues")
+  }
 } else {
-  warning("Output tree is not ultrametric - may have numerical precision issues")
+  cat("Output tree is ultrametric (time-calibrated)\n")
 }
 
 # Write the calibrated tree
