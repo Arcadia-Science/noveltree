@@ -39,6 +39,12 @@ species_tree <- read.tree(species_tree_path)
 cat("Reading reference time tree from:", reference_tree_path, "\n")
 reference_tree <- read.tree(reference_tree_path)
 
+# Normalize species names: convert hyphens to underscores for consistent matching
+# This handles cases where upstream processes use different delimiters
+original_species_names <- species_tree$tip.label
+species_tree$tip.label <- gsub("-", "_", species_tree$tip.label)
+cat("Normalized species tree tip labels (hyphens -> underscores)\n")
+
 # Check that reference tree is ultrametric (time-calibrated)
 # Force ultrametricity to handle rounding errors if needed
 if (!is.ultrametric(reference_tree)) {
