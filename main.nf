@@ -390,7 +390,7 @@ workflow NOVELTREE {
     // MODULE: PHYSICOCHEMICAL_PROPS
     // Calculate physicochemical properties for all gene families
     //
-    all_og_msa_files = ch_all_og_clean_msas.collect { it[1] }
+    all_og_msa_files = ch_all_og_clean_msas.map { it[1] }
 
     if (params.zoogle) {
         PHYSICOCHEMICAL_PROPS(
