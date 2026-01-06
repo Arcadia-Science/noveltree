@@ -390,19 +390,13 @@ workflow NOVELTREE {
     // MODULE: PHYSICOCHEMICAL_PROPS
     // Calculate physicochemical properties for all gene families
     //
-    all_og_msa_files = ch_all_og_clean_msas.map { it[1] }
-
     if (params.zoogle) {
         PHYSICOCHEMICAL_PROPS(
-            all_og_msa_files
+            ch_all_og_clean_msas
         )
 
         ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
-            .map { meta, tree -> [meta, tree] }
-            .combine(PHYSICOCHEMICAL_PROPS.out.per_family_summaries.flatten())
-            .filter { meta, tree, props_file ->
-                props_file.name.contains(meta.og) && props_file.name.contains("_summary_statistics.csv")
-            }
+            .join(PHYSICOCHEMICAL_PROPS.out.summary_stats)
             .filter { meta, tree, props_file ->
                 // Validate gene family has sufficient proteins for phylo-dist analysis
                 // Read CSV and extract protein IDs (first column, skip header)

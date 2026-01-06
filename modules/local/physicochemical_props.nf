@@ -1,28 +1,26 @@
 process PHYSICOCHEMICAL_PROPS {
-    tag "Physicochemical Properties"
+    tag "${meta.og}"
     label "process_high"
 
     container 'arcadiascience/physicochemical_props:1.0.0'
 
     input:
-    path msa_files
+    tuple val(meta), path(msa_file)
 
     output:
-    path "aa-summary-stats/across-family-summaries/*.csv"   , emit: across_family_summaries
-    path "aa-summary-stats/per-family-summaries/**/*.csv"   , emit: per_family_summaries
-    path "aa-summary-stats/"                                , emit: all_outputs
-    path "versions.yml"                                     , emit: versions
+    tuple val(meta), path("aa-summary-stats/per-family-summaries/aa-physical-properties/${meta.og}_summary_statistics.csv"), emit: summary_stats
+    path "aa-summary-stats/per-family-summaries/aa-counts/${meta.og}_aa_composition_counts.csv"           , emit: aa_counts
+    path "aa-summary-stats/per-family-summaries/aa-proportions/${meta.og}_aa_composition_percentages.csv" , emit: aa_proportions
+    path "versions.yml"                                                                                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     """
     # Run the physicochemical properties calculation script
-    # Nextflow stages all input files into the work directory
-    # The script expects a directory path containing the MSA files
-    genefam_aa_summaries.py . --threads ${task.cpus} ${args}
+    # Script processes a single MSA file and outputs with gene family name in filename
+    genefam_aa_summaries.py ${msa_file}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -4,24 +4,16 @@ import pandas as pd
 import argparse
 from Bio import AlignIO
 from Bio.SeqUtils import ProtParam
-from multiprocessing import Pool
 from itertools import product
 
 # Set up command line argument parsing
 parser = argparse.ArgumentParser(
-    description="Analyze multiple sequence alignments in FASTA format"
+    description="Analyze multiple sequence alignment in FASTA format"
 )
 parser.add_argument(
     "input",
     type=str,
-    help="Path to input directory containing MSA files in FASTA format",
-)
-parser.add_argument(
-    "-t",
-    "--threads",
-    type=int,
-    default=os.cpu_count(),
-    help="Number of threads to use for parallel processing (default: number of available CPU cores)",
+    help="Path to input MSA file in FASTA format",
 )
 args = parser.parse_args()
 
@@ -120,13 +112,12 @@ def generate_alternative_sequences(seq):
     return alternative_sequences
 
 
-# List all FASTA files in the input directory
-input_directory = args.input
-msa_files = [
-    os.path.join(input_directory, f)
-    for f in os.listdir(input_directory)
-    if os.path.isfile(os.path.join(input_directory, f)) and f.endswith(('.fa', '.fasta'))
-]
+# Get the input MSA file
+msa_file = args.input
+
+# Validate input file exists
+if not os.path.isfile(msa_file):
+    raise FileNotFoundError(f"Input file not found: {msa_file}")
 
 # Create the output directories
 os.makedirs(across_fam_basedir, exist_ok=True)
@@ -301,44 +292,11 @@ def process_msa(msa_file):
         index=False,
     )
 
-    # Calculate statistics
-    aa_counts_stats = calculate_stats(df_counts.drop(columns=["id"]), gene_family_name)
-    aa_perc_stats = calculate_stats(df_perc.drop(columns=["id"]), gene_family_name)
-    aa_summs_stats = calculate_stats(df_summary.drop(columns=["id"]), gene_family_name)
-
-    # Return the stats in the correct order
-    return (
-        aa_counts_stats["mean"],
-        aa_counts_stats["median"],
-        aa_counts_stats["stdev"],
-        aa_perc_stats["mean"],
-        aa_perc_stats["median"],
-        aa_perc_stats["stdev"],
-        aa_summs_stats["mean"],
-        aa_summs_stats["median"],
-        aa_summs_stats["stdev"],
-    )
-
-
-# Use multiprocessing to process MSA files in parallel
-def process_msa_wrapper(msa_file):
-    return process_msa(msa_file)
+    # Note: The calculate_stats function and aggregation logic were designed
+    # for batch processing multiple gene families. Since we now process one
+    # file at a time, per-family CSVs are the final output.
 
 
 if __name__ == "__main__":
-    with Pool(args.threads) as pool:
-        results = pool.map(process_msa_wrapper, msa_files)
-
-    # Collect the results
-    for result in results:
-        for spec, value in zip(dataframe_specs, result):
-            dataframes[spec["key"]] = pd.concat(
-                [dataframes[spec["key"]], pd.DataFrame([value])], ignore_index=True
-            )
-
-    # Reorder columns and save dataframes to CSV files
-    for spec in dataframe_specs:
-        df = dataframes[spec["key"]]
-        columns = spec["columns"]
-        dataframes[spec["key"]] = df[columns]
-        dataframes[spec["key"]].to_csv(spec["filename"], index=False)
+    # Process the single MSA file
+    process_msa(msa_file)
