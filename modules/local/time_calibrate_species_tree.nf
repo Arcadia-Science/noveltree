@@ -30,9 +30,14 @@ process TIME_CALIBRATE_SPECIES_TREE {
     time_calibrate_species_tree.R \\
         ${species_tree} \\
         ${reference_tree} \\
-        time_calibrated_species_tree.newick \\
+        time_calibrated_species_tree_raw.newick \\
         ${calibration_method} \\
         2>&1 | tee calibration_log.txt
+
+    # Convert species names from underscores to hyphens to match gene family tree naming
+    # This ensures PHYLO_DIST can match species between the calibrated tree and gene family trees
+    # Pattern: Match species names (Capitalized_lowercase format) and convert _ to -
+    sed 's/\\([A-Z][a-z]*\\)_\\([a-z]\\)/\\1-\\2/g' time_calibrated_species_tree_raw.newick > time_calibrated_species_tree.newick
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
