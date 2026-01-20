@@ -12,10 +12,16 @@ if (params.msa_trimmer == "clipkit") {
     include { CIALIGN as TRIM_MSAS            } from '../../modules/local/cialign'
 }
 
-if (params.tree_method == "iqtree") {
+// Tree inference: IQTREE when using iqtree method or fallback mode, otherwise FastTree
+if (params.iqtree_fasttree_fallback || params.tree_method == "iqtree") {
     include { IQTREE as TREES                 } from '../../modules/nf-core-modified/iqtree'
 } else {
     include { FASTTREE as TREES               } from '../../modules/local/fasttree'
+}
+
+// FastTree fallback for when IQ-TREE fails (only in fallback mode)
+if (params.iqtree_fasttree_fallback) {
+    include { FASTTREE as FASTTREE_FALLBACK   } from '../../modules/local/fasttree'
 }
 
 workflow INFER_TREES {
@@ -38,9 +44,30 @@ workflow INFER_TREES {
         cleaned_msas = ALIGN_SEQS.out.msas
     }
 
+    // Run primary tree inference (IQTREE in fallback mode, otherwise based on tree_method)
     TREES(cleaned_msas, params.tree_model)
-    phylogeny = TREES.out.phylogeny
     versions = versions.mix(TREES.out.versions)
+
+    if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
+        // Detect failed alignments by finding inputs that didn't produce trees
+        failed_alignments = cleaned_msas
+            .map { meta, aln -> [meta.og, meta, aln] }
+            .join(
+                TREES.out.phylogeny.map { meta, tree -> [meta.og, tree] },
+                remainder: true
+            )
+            .filter { it[3] == null }  // No tree = IQ-TREE failed
+            .map { og, meta, aln, tree -> [meta, aln] }
+
+        // Run FastTree on failed alignments
+        FASTTREE_FALLBACK(failed_alignments, params.tree_model)
+        versions = versions.mix(FASTTREE_FALLBACK.out.versions)
+
+        // Combine successful IQ-TREE trees with FastTree fallback trees
+        phylogeny = TREES.out.phylogeny.mix(FASTTREE_FALLBACK.out.phylogeny)
+    } else {
+        phylogeny = TREES.out.phylogeny
+    }
 
     emit:
     phylogeny
