@@ -12,8 +12,7 @@ if (params.msa_trimmer == "clipkit") {
     include { CIALIGN as TRIM_MSAS            } from '../../modules/local/cialign'
 }
 
-// Tree inference: IQTREE when using iqtree method or fallback mode, otherwise FastTree
-if (params.iqtree_fasttree_fallback || params.tree_method == "iqtree") {
+if (params.tree_method == "iqtree") {
     include { IQTREE as TREES                 } from '../../modules/nf-core-modified/iqtree'
 } else {
     include { FASTTREE as TREES               } from '../../modules/local/fasttree'

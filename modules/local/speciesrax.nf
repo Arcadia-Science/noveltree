@@ -36,13 +36,14 @@ process SPECIESRAX {
         # Get the OG name
         og=\$(echo \$msa | cut -f1 -d"_")
         tree=\$(ls \${og}*.newick)
+        map_link=\$(ls \${og}*_map.link | head -n1)
 
         # Populate the families file for this gene family for the
         # analysis with SpeciesRax
         # We will be using LG+G4+F for all gene families
         echo "- \${og}" >> speciesrax_orthogroup.families
         echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
-        echo "mapping = \${og}_map.link" >> speciesrax_orthogroup.families
+        echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
         echo "alignment = \$msa" >> speciesrax_orthogroup.families
         echo "subst_model = LG+G4+F" >> speciesrax_orthogroup.families
     done
