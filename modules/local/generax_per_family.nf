@@ -48,7 +48,7 @@ process GENERAX_PER_FAMILY {
     echo "[FAMILIES]" > ${og}.family
     echo "- ${og}" >> ${og}.family
     echo "starting_gene_tree = ${gene_tree}" >> ${og}.family
-    echo "mapping = ${og}_map.link" >> ${og}.family
+    echo "mapping = ${map_link}" >> ${og}.family
     echo "alignment = $alignment" >> ${og}.family
     echo "subst_model = LG+G4+F" >> ${og}.family
 
