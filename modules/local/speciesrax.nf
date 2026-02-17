@@ -8,7 +8,6 @@ process SPECIESRAX {
     publishDir(
         path: "${params.outdir}/species_trees/speciesrax",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input:
@@ -18,9 +17,13 @@ process SPECIESRAX {
     file rooted_spp_tree // Filepath to the rooted asteroid species tree
 
     output:
-    path "*"                                          , emit: results
-    path "species_trees/inferred_species_tree.newick" , emit: speciesrax_tree
-    path "versions.yml"                               , emit: versions
+    path "inferred_species_tree.newick"  , emit: speciesrax_tree
+    path "starting_species_tree.newick"
+    path "species_tree_*.newick"
+    path "*.txt"
+    path "generax.log"
+    path "speciesrax_orthogroup.families"
+    path "versions.yml"                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -62,12 +65,13 @@ process SPECIESRAX {
         --per-species-rates \\
         $args
 
-    # Remove the redundant result directory, moving everything into the
-    # working directory, deleiting the meaningless reconciliations
-    # directory and cleaning up
+    # Move SpeciesRax output into the working directory and clean up
     mv SpeciesRax/* .
-    rm -r reconciliations
-    rm -r SpeciesRax
+    rm -rf reconciliations results SpeciesRax
+
+    # Flatten species_trees/ into working directory
+    mv species_trees/* .
+    rm -r species_trees
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
