@@ -47,7 +47,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 **9.** `species_trees/`: Species trees organized by inference method.
 
 - `asteroid/`: Unrooted (or outgroup-rooted) species tree from [Asteroid](https://github.com/BenoitMorel/Asteroid). Includes `asteroid.bestTree.newick` (best-scoring tree), `asteroid.allTrees.newick`, `asteroid.bsTrees.newick` (bootstrap trees), `asteroid.scores.txt`, and `disco_decomposed_rooted_gfts.newick` (single-copy trees from [DISCO](https://github.com/JSdoubleL/DISCO) decomposition).
-- `speciesrax/`: Rooted species tree from [SpeciesRax](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). Contains `species_trees/` (inferred rooted species trees with support values). The raw reconciliation files are included in the compressed archive.
+- `speciesrax/`: Rooted species tree from [SpeciesRax](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). Contains inferred species trees with support values (`inferred_species_tree.newick`, `species_tree_*.newick`, `starting_species_tree.newick`), per-species event and coverage summaries, and run statistics.
 - `time_calibrated/` *(zoogle mode only)*: Time-calibrated species tree. Contains `time_calibrated_species_tree.newick` and `calibration_log.txt`.
 
 **10.** `generax/`: Results from GeneRax gene-family tree/species tree reconciliation with joint optimization of gene tree topology and duplication/transfer/loss rates. Each gene family directory contains the key output files in a flat structure, plus a compressed archive of the full GeneRax output.
