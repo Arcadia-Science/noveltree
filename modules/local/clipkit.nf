@@ -5,12 +5,12 @@ process CLIPKIT {
     container 'arcadiascience/clipkit_2.1.1-seqmagick_0.8.4:1.0.0'
 
     publishDir(
-        path: "${params.outdir}/clipkit_cleaned_msas",
+        path: "${params.outdir}/alignments/trimmed",
         mode: params.publish_dir_mode,
         pattern: "*_clipkit.fa",
     )
     publishDir(
-        path: "${params.outdir}/clipkit_cleaned_msas/species_protein_maps",
+        path: "${params.outdir}/alignments/species_protein_maps",
         mode: params.publish_dir_mode,
         pattern: "species_protein_maps/*",
         saveAs: { fn -> fn.split('/')[-1] },
@@ -32,8 +32,8 @@ process CLIPKIT {
     def args = task.ext.args ?: ''
     def min_ungapped_length = params.min_ungapped_length
     """
-    # Get the name of the orthogroup we are processing
-    prefix=\$(echo $fasta | cut -f1 -d "_")
+    # Get the alignment prefix (strip .fa extension, preserving aligner provenance)
+    prefix=\$(basename "$fasta" .fa)
 
     # Trim the MSAs for each orthogroup containing at least 4 species.
     clipkit ${fasta} -o \${prefix}_tmp.fa $args

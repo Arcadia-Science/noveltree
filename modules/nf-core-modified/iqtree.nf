@@ -12,7 +12,7 @@ process IQTREE {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/iqtree_gene_trees",
+        path: "${params.outdir}/gene_family_trees/original",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -22,9 +22,8 @@ process IQTREE {
     val model
 
     output:
-    tuple val(meta), path("*.treefile") , emit: phylogeny
-    tuple val(meta), path("*.log")      , emit: iqtree_log
-    path "versions.yml"                 , emit: versions
+    tuple val(meta), path("*_iqt.newick") , emit: phylogeny
+    path "versions.yml"                   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -32,14 +31,10 @@ process IQTREE {
     script:
     def args   = task.ext.args ?: ''
     def memory = task.memory.toString().replaceAll(' ', '')
+    def prefix = alignment.baseName
 
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
-
-    # Check if this is a resumed run:
-    # error trying to resume if not.)
-    # If the checkpoint file indicates the run finished, go ahead and
-    # skip the analyses, otherwise run iqtree as normal.
 
     # Infer the phylogeny
     iqtree2 \\
@@ -49,6 +44,9 @@ process IQTREE {
         -mem \$memory \\
         -m $model \\
         $args
+
+    # Rename to standardized output format
+    mv ${alignment}.treefile ${prefix}_iqt.newick
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

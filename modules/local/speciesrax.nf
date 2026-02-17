@@ -6,7 +6,7 @@ process SPECIESRAX {
     container 'arcadiascience/generax_56f3ed0:1.1.3'
 
     publishDir(
-        path: "${params.outdir}/speciesrax",
+        path: "${params.outdir}/species_trees/speciesrax",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -35,7 +35,7 @@ process SPECIESRAX {
     do
         # Get the OG name
         og=\$(echo \$msa | cut -f1 -d"_")
-        tree=\$(ls \${og}*.treefile)
+        tree=\$(ls \${og}*.newick)
 
         # Populate the families file for this gene family for the
         # analysis with SpeciesRax

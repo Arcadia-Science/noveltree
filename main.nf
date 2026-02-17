@@ -91,11 +91,6 @@ if (params.busco) {
     include { BUSCO as BUSCO_BROAD                  } from './modules/nf-core-modified/busco'
 }
 
-if (params.tree_model_pmsf != 'none') {
-    include { IQTREE_PMSF as IQTREE_PMSF_ALL        } from './modules/nf-core-modified/iqtree_pmsf'
-    include { IQTREE_PMSF as IQTREE_PMSF_REMAINING  } from './modules/nf-core-modified/iqtree_pmsf'
-}
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -227,9 +222,7 @@ workflow NOVELTREE {
         params.min_num_seq_per_og,
         params.min_num_spp_per_og,
         params.min_prop_spp_for_spptree,
-        params.min_num_grp_per_og,
-        params.max_copy_num_spp_tree,
-        params.max_copy_num_gene_trees
+        params.max_copy_num_spp_tree
     )
 
     // Create meta maps for the two sets by just providing the simple name of each orthogroup:
@@ -263,28 +256,6 @@ workflow NOVELTREE {
 
     core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
     core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
-
-    // Run IQ-TREE PMSF if model is specified, and subsequently collect final
-    // phylogenies into a channel for downstram use
-    if (params.tree_model_pmsf != 'none') {
-        //
-        // MODULE: IQTREE_PMSF
-        // Infer gene-family trees from the trimmed MSAs and guide trees from the
-        // previous tree inference module
-        //
-        // Be sure that both the MSAs and guide trees are sorted into the same
-        // order as before to prevent any hiccups - do so by temporarily
-        // joining the two channels.
-        ch_pmsf_input = ch_core_og_clean_msas.join(INFER_TREES.out.phylogeny)
-        ch_pmsf_input_remaining = ch_rem_og_clean_msas.join(INFER_REMAINING_TREES.out.phylogeny)
-        // Now run
-        IQTREE_PMSF(ch_pmsf_input, params.tree_model_pmsf)
-        IQTREE_PMSF_REMAINING(ch_pmsf_input_remaining, params.tree_model_pmsf)
-        ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
-
-        ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
-        ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
-    }
 
     // Create a channel/list (no tuple) of just the core trees used by Asteroid
     core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
@@ -331,16 +302,13 @@ workflow NOVELTREE {
 
     // GENERAX_PER_FAMILY: full mode only
     if (params.generax_per_family) {
-        GENERAX_PER_FAMILY(
-            ch_generax_input
-        )
-            .generax_per_fam_gfts
-            .collect { it[1] }
-            .set { ch_recon_perfam_gene_trees }
+        GENERAX_PER_FAMILY(ch_generax_input)
+        ch_versions = ch_versions.mix(GENERAX_PER_FAMILY.out.versions)
     }
 
     // GENERAX_PER_SPECIES: both modes
     GENERAX_PER_SPECIES(ch_generax_input)
+    ch_versions = ch_versions.mix(GENERAX_PER_SPECIES.out.versions)
 
     ch_recon_perspp_gene_trees = GENERAX_PER_SPECIES.out.generax_per_spp_gfts.collect { it[1] }
 
@@ -385,6 +353,8 @@ workflow NOVELTREE {
         PHYLO_PROFILES.out.transfer_donor_count.collect(),
         PHYLO_PROFILES.out.transfer_recipient_count.collect()
     )
+    ch_versions = ch_versions.mix(PHYLO_PROFILES.out.versions)
+    ch_versions = ch_versions.mix(MERGE_PHYLO_PROFILES.out.versions)
 
     //
     // MODULE: PHYSICOCHEMICAL_PROPS
@@ -394,6 +364,7 @@ workflow NOVELTREE {
         PHYSICOCHEMICAL_PROPS(
             ch_all_og_clean_msas
         )
+        ch_versions = ch_versions.mix(PHYSICOCHEMICAL_PROPS.out.versions)
 
         ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
             .join(PHYSICOCHEMICAL_PROPS.out.summary_stats)
@@ -452,6 +423,7 @@ workflow NOVELTREE {
             TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree,
             params.ref_species
         )
+        ch_versions = ch_versions.mix(PHYLO_DIST.out.versions)
     }
 
     //

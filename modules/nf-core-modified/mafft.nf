@@ -12,12 +12,12 @@ process MAFFT {
         'quay.io/biocontainers/mafft:7.490--h779adbc_0' }"
 
     publishDir(
-        path: "${params.outdir}/mafft_alignments",
+        path: "${params.outdir}/alignments/original",
         mode: params.publish_dir_mode,
         pattern: "*_mafft.fa",
     )
     publishDir(
-        path: "${params.outdir}/mafft_alignments/species_protein_maps",
+        path: "${params.outdir}/alignments/species_protein_maps",
         mode: params.publish_dir_mode,
         pattern: "species_protein_maps/*",
         saveAs: { fn -> fn.split('/')[-1] },

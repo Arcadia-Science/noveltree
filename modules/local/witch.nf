@@ -8,13 +8,19 @@ process WITCH {
 
     stageInMode = 'copy'
     publishDir(
-        path: "${params.outdir}/witch_alignments",
+        path: "${params.outdir}/alignments/original",
         mode: params.publish_dir_mode,
-        pattern: "{original_alignments,cleaned_alignments}/*",
+        pattern: "original_alignments/*",
         saveAs: { fn -> fn.split('/')[-1] },
     )
     publishDir(
-        path: "${params.outdir}/witch_alignments/species_protein_maps",
+        path: "${params.outdir}/alignments/trimmed",
+        mode: params.publish_dir_mode,
+        pattern: "cleaned_alignments/*",
+        saveAs: { fn -> fn.split('/')[-1] },
+    )
+    publishDir(
+        path: "${params.outdir}/alignments/species_protein_maps",
         mode: params.publish_dir_mode,
         pattern: "species_protein_maps/*",
         saveAs: { fn -> fn.split('/')[-1] },
