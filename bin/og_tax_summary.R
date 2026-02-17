@@ -12,9 +12,7 @@ samples <- args[2]
 num_seq_filt <- as.numeric(args[3])
 num_spp_filt <- as.numeric(args[4])
 prop_spp_spptree_filt <- as.numeric(args[5])
-num_grp_filt <- as.numeric(args[6])
-copy_num_filt1 <- as.numeric(args[7])
-copy_num_filt2 <- as.numeric(args[8])
+copy_num_filt1 <- as.numeric(args[6])
 
 ogs <- read.delim(ogcounts, check.names = FALSE)
 samples <- read.delim(samples, sep = ",")
@@ -77,13 +75,10 @@ spptree_core <-
     res[which(res$total_copy_num >= num_seq_filt &
               res$mean_copy_num <= copy_num_filt1 &
               res$num_spp >= num_spp_filt &
-              res$num_spp >= num_spp_spptree_filt &
-              res$num_tax_grps >= num_grp_filt),]
+              res$num_spp >= num_spp_spptree_filt),]
 genetree_core <-
     res[which(res$total_copy_num >= num_seq_filt &
-              res$mean_copy_num <= copy_num_filt2 &
-              res$num_spp >= num_spp_filt &
-              res$num_tax_grps >= num_grp_filt),]
+              res$num_spp >= num_spp_filt),]
 
 # And remove the species tree core ogs from the remnants we'll just infer gene
 # family trees for (to eliminate redundant computational effort)

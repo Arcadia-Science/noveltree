@@ -24,10 +24,8 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
   "mcl_inflation": "1.0,2.0,3.0",
   "min_ungapped_length": 30,
   "min_num_spp_per_og": 4,
-  "min_num_grp_per_og": 1,
   "aligner": "witch",
   "max_copy_num_spp_tree": 5,
-  "max_copy_num_gene_trees": 10,
   "tree_model": "LG+F+G4",
   "outgroups": "none",
   "ref_species": "Genus_species",
@@ -38,7 +36,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 
 > #### Parameter descriptions:
 >
-> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).<br/> > `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. A single value is also allowed - no testing will occur in this case. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.<br/> > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/> > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/> > `min_num_grp_per_og`: DEFAULT: 1. Minimum # of 'higher' order taxonomic groups an gene family must contain for phylogenetic inference.<br/> > `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/> > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/> > `max_copy_num_gene_trees`: DEFAULT: 10. Maximum # of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.<br/> > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/> > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree.<br/> > `tree_model_pmsf`: OPTIONAL: Posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used.<br/> > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/> > `ref_species`: REQUIRED for zoogle mode. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/> > `reference_time_tree`: REQUIRED for zoogle mode. Path to a reference time-calibrated phylogenetic tree (Newick format) used to calibrate the inferred species tree.<br/> > `time_calibration_method`: DEFAULT: "PATHd8". Method for time calibration of the species tree. Options: "PATHd8" or "treePL".<br/> > `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/> > `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/> > `busco`: DEFAULT: true. Enable/disable BUSCO quality assessment. Set to false in simplified/zoogle modes.<br/> > `generax_per_family`: DEFAULT: true. Enable/disable per-family GeneRax analysis. Set to false in simplified/zoogle modes.<br/>
+> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).<br/> > `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. A single value is also allowed - no testing will occur in this case. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.<br/> > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/> > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/> > `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/> > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/> > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/> > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference.<br/> > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/> > `ref_species`: REQUIRED for zoogle mode. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/> > `reference_time_tree`: REQUIRED for zoogle mode. Path to a reference time-calibrated phylogenetic tree (Newick format) used to calibrate the inferred species tree.<br/> > `time_calibration_method`: DEFAULT: "PATHd8". Method for time calibration of the species tree. Options: "PATHd8" or "treePL".<br/> > `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/> > `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/> > `busco`: DEFAULT: true. Enable/disable BUSCO quality assessment. Set to false in simplified/zoogle modes.<br/> > `generax_per_family`: DEFAULT: true. Enable/disable per-family GeneRax analysis. Set to false in simplified/zoogle modes.<br/>
 >
 > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/noveltree).
 
@@ -210,16 +208,15 @@ For detailed instructions, see the [Singularity documentation](singularity.md).
 8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family with [`WITCH`](https://github.com/c5shen/WITCH) (full mode default), [`MAFFT`](https://mafft.cbrc.jp/alignment/software/), or [`FAMSA`](https://github.com/refresh-bio/FAMSA) (simplified/zoogle mode default)
 9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`FastTree2`](http://www.microbesonline.org/fasttree/) (default) or [`IQ-TREE`](http://www.iqtree.org/)
-11. `IQTREE_PMSF` _(full mode only, optional)_: If `tree_model_pmsf` parameter is specified, perform second round of tree inference using IQ-TREE with Posterior Mean Site Frequency (PMSF) model for improved accuracy
-12. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
-13. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
-14. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
-15. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
-16. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
-17. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, transfer, loss, and speciation events across species and gene families
-18. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against a user-provided reference timetree containing (some) overlapping species using congruification
-19. `PHYSICOCHEMICAL_PROPS` _(zoogle mode only)_: Calculate amino acid composition and physicochemical properties for all gene families
-20. `PHYLO_DIST` _(zoogle mode only)_: Calculate phylogenetically-corrected protein distances using Mahalanobis distances and permutation tests
+11. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
+12. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
+13. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
+14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
+15. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
+16. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, transfer, loss, and speciation events across species and gene families
+17. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against a user-provided reference timetree containing (some) overlapping species using congruification
+18. `PHYSICOCHEMICAL_PROPS` _(zoogle mode only)_: Calculate amino acid composition and physicochemical properties for all gene families
+19. `PHYLO_DIST` _(zoogle mode only)_: Calculate phylogenetically-corrected protein distances using Mahalanobis distances and permutation tests
 
 ![Workflow Figure](../Fig4-Workflow-part-two.png)
 
@@ -273,9 +270,7 @@ process {
 - `min_num_seq_per_og`: Minimum number of sequences a gene family must contain for phylogenetic inference.
 - `min_prop_spp_for_spptree`: Minimum \% of species for inclusion in species tree inference.
 - `min_num_spp_per_og`: Minimum \# of species a gene family must contain for phylogenetic inference.
-- `min_num_grp_per_og`: Minimum \# of 'higher' order taxonomic groups a gene family must contain for phylogenetic inference.
 - `max_copy_num_filt1`: Maximum \# of per-species gene copy number a gene family may contain for species-tree inference.
-- `max_copy_num_filt2`: Maximum \# of per-species gene copy number a gene family may contain for gene tree - species tree reconciliation with GeneRax.
 
 #### 6. `ALIGN_SEQS`
 
@@ -324,19 +319,9 @@ process {
 
 ### [`IQTREE`](modules/nf-core-modified/iqtree.nf):
 
-- `tree_model`: Model of amino acid substition to be used for phylogenetic inference. If using a posterior mean site frequency model (see below), this model will be used to infer an initial guide-tree. Specified in parameter-file.
-- `tree_model_pmsf`: OPTIONAL posterior mean site frequency model to be used for phylogenetic inference (e.g. "LG+C40+F+G4"). If not specified (i.e. excluded from parameter file), only `tree_model` will be used. Specified in parameter-file.
+- `tree_model`: Model of amino acid substition to be used for phylogenetic inference. Specified in parameter-file.
 - All other custom parameters should be specified in [`conf/modules.config`](conf/modules.config).
 - [IQ-TREE documentation](http://www.iqtree.org/)
-
-### [`IQTREE_PMSF`](modules/nf-core-modified/iqtree_pmsf.nf):
-
-- Performs second round of tree inference using Posterior Mean Site Frequency (PMSF) model
-- Only runs if `tree_model_pmsf` parameter is specified (full mode only)
-- Uses guide trees from initial tree inference (FastTree or IQ-TREE)
-- Improves accuracy for difficult alignments with site-heterogeneous evolution
-- Parameters same as regular IQ-TREE but with PMSF approximation
-- [IQ-TREE PMSF documentation](http://www.iqtree.org/doc/Substitution-Models#posterior-mean-site-frequency-model)
 
 #### 9. [`ASTEROID`](modules/local/asteroid.nf):
 
@@ -395,7 +380,7 @@ process {
 - Uses congruification to match and transfer divergence times from the reference tree
 - **Requires**: `reference_time_tree` parameter with path to reference timetree (Newick format) with at least some fraction of species overlapping with the species analyzed by NovelTree.
 - `time_calibration_method`: Method for calibration - "PATHd8" (default) or "treePL"
-- Outputs stored in `time_calibrated_species_tree/` directory
+- Outputs stored in `species_trees/time_calibrated/` directory
 
 #### 16. [`PHYSICOCHEMICAL_PROPS`](modules/local/physicochemical_props.nf) _(zoogle mode only)_:
 

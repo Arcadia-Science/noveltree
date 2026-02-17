@@ -8,15 +8,21 @@ process GENERAX_PER_FAMILY {
     publishDir(
         path: "${params.outdir}/generax/per_family_rates",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+    publishDir(
+        path: "${params.outdir}/gene_family_trees/reconciled/generax_per_family",
+        mode: params.publish_dir_mode,
+        pattern: "*/*_reconciled_gft.newick",
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/') + 1) },
     )
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
-    path "*"                                         , emit: results
-    tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_fam_gfts
+    tuple val(meta), path("${meta.og}/${meta.og}_reconciled_gft.newick"), emit: generax_per_fam_gfts
+    path "${meta.og}/${meta.og}_full_output.tar.gz"                     , emit: archive
+    path "versions.yml"                                                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -70,5 +76,26 @@ process GENERAX_PER_FAMILY {
     mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
     tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
     rm -r $og/reconciliations/reconciliation_transfer_samples/
+
+    # Extract key files to working directory
+    cp $og/results/$og/${og}_reconciled_gft.newick .
+    cp $og/reconciliations/${og}_eventCounts.txt .
+    cp $og/reconciliations/${og}_speciesEventCounts.txt .
+    cp $og/reconciliations/${og}_transfers.txt .
+
+    # Archive full GeneRax output, then replace with flat structure
+    tar -czf ${og}_full_output.tar.gz $og/
+    rm -rf $og/
+    mkdir $og
+    mv ${og}_reconciled_gft.newick $og/
+    mv ${og}_eventCounts.txt $og/
+    mv ${og}_speciesEventCounts.txt $og/
+    mv ${og}_transfers.txt $og/
+    mv ${og}_full_output.tar.gz $og/
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        generax: \$(generax --version | head -n1 | sed 's/.*GeneRax //')
+    END_VERSIONS
     """
 }

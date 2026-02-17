@@ -5,7 +5,7 @@ process FASTTREE {
     container 'arcadiascience/fasttree_2.1.11:1.0.0'
 
     publishDir(
-        path: "${params.outdir}/fasttree_gene_trees",
+        path: "${params.outdir}/gene_family_trees/original",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -15,15 +15,15 @@ process FASTTREE {
     val model // not used
 
     output:
-    tuple val(meta), path("*.treefile") , emit: phylogeny
-    path "versions.yml"                 , emit: versions
+    tuple val(meta), path("*_ft.newick") , emit: phylogeny
+    path "versions.yml"                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def og   = "${meta.og}"
+    def args   = task.ext.args ?: ''
+    def prefix = alignment.baseName
     """
     # Make sure the number of threads are being specified properly
     export OMP_NUM_THREADS=${task.cpus}
@@ -31,11 +31,11 @@ process FASTTREE {
     # Efficiently infer a gene family tree using FastTree!
     FastTreeDblMP \\
         $args \\
-        $alignment > ${og}_ft.treefile
+        $alignment > ${prefix}_ft.newick
 
     # prevent zero-length branches (sometimes inferred with fasttree)
-    resolve_polytomies.R ${og}_ft.treefile resolved.tree
-    mv resolved.tree ${og}_ft.treefile
+    resolve_polytomies.R ${prefix}_ft.newick resolved.tree
+    mv resolved.tree ${prefix}_ft.newick
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

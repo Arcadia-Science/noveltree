@@ -5,18 +5,18 @@ process CIALIGN {
     container 'arcadiascience/cialign_1.1.0:1.0.0'
 
     publishDir(
-        path: "${params.outdir}/cialign_cleaned_msas",
+        path: "${params.outdir}/alignments/trimmed",
         mode: params.publish_dir_mode,
         pattern: "*_cialign.fa",
     )
     publishDir(
-        path: "${params.outdir}/cialign_cleaned_msas/species_protein_maps",
+        path: "${params.outdir}/alignments/species_protein_maps",
         mode: params.publish_dir_mode,
         pattern: "species_protein_maps/*",
         saveAs: { fn -> fn.split('/')[-1] },
     )
     publishDir(
-        path: "${params.outdir}/cialign_cleaned_msas",
+        path: "${params.outdir}/alignments/trimmed",
         mode: params.publish_dir_mode,
         pattern: "{removed_sites,log_files}/*",
         saveAs: { fn -> fn },
@@ -36,8 +36,8 @@ process CIALIGN {
     def args = task.ext.args ?: ''
     def remove_short = params.min_ungapped_length ? "--remove_short --remove_min_length=${params.min_ungapped_length}" : ''
     """
-    # Get the name of the orthogroup we are processing
-    prefix=\$(echo ${fasta} | cut -f1 -d "_")
+    # Get the alignment prefix (strip .fa extension, preserving aligner provenance)
+    prefix=\$(basename "${fasta}" .fa)
 
     # Clean up the MSAs for each orthogroup containing at least 4 species.
     CIAlign \

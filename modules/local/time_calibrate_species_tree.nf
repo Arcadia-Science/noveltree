@@ -5,7 +5,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     container 'arcadiascience/phylo_dist:1.0.0'
 
     publishDir(
-        path: "${params.outdir}/time_calibrated_species_tree",
+        path: "${params.outdir}/species_trees/time_calibrated",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )

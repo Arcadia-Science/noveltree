@@ -5,12 +5,12 @@ process FAMSA {
     container 'arcadiascience/famsa_2.0.0:1.0.0'
 
     publishDir(
-        path: "${params.outdir}/famsa_alignments",
+        path: "${params.outdir}/alignments/original",
         mode: params.publish_dir_mode,
         pattern: "*_famsa.fa",
     )
     publishDir(
-        path: "${params.outdir}/famsa_alignments/species_protein_maps",
+        path: "${params.outdir}/alignments/species_protein_maps",
         mode: params.publish_dir_mode,
         pattern: "species_protein_maps/*",
         saveAs: { fn -> fn.split('/')[-1] },
