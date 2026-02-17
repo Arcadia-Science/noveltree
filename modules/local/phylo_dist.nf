@@ -67,7 +67,7 @@ process PHYLO_DIST {
         ref_spp = "${ref_species}",
         aa_stat_basedir = "",
         spp_tree = ape::read.tree("${species_tree}"),
-        max_treepl_treesize = 300,
+        max_treepl_treesize = 10000,
         clinvar = NULL,
         keep_stats = c("molecular_weight", "aromaticity", "instability", "flexibility",
                        "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
