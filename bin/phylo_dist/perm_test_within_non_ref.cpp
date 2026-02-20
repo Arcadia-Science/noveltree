@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <random>
+#include <numeric>
 using namespace Rcpp;
 
 // [[Rcpp::export]]
@@ -7,15 +8,15 @@ NumericMatrix perm_test_within_non_ref(NumericMatrix dist_mat, NumericMatrix foc
   // Input: Takes a full distance matrix (dist_mat) between all proteins and a
   //        matrix (focal_dists) of distances from non-human to human proteins,
   //        along with the number of permutations (n_permutations).
-  // Process: Conducts a permutation test by shuffling non-diagonal elements in
-  //          dist_mat and counts occurrences where the permuted distances are
-  //          less than or equal to the distances in focal_dists.
+  // Process: Conducts a permutation test by shuffling column indices rather than
+  //          actual data, then comparing permuted distances to focal_dists.
   // Output: Returns a matrix of p-values (pvals), representing the likelihood of
   //         each non-human to human protein distance being as extreme as observed
   //         under the null hypothesis.
 
   int n_rows = focal_dists.nrow();
   int n_cols = focal_dists.ncol();
+  int n = dist_mat.nrow();
   NumericMatrix count_mat(n_rows, n_cols);
 
   // Find indices of reference (e.g. human) proteins in dist_mat
@@ -33,24 +34,21 @@ NumericMatrix perm_test_within_non_ref(NumericMatrix dist_mat, NumericMatrix foc
     }
   }
 
-  // Permutation test
+  // Build index vector once, reuse across all permutations
+  std::vector<int> indices(n);
+  std::iota(indices.begin(), indices.end(), 0);
+  std::mt19937 rng(std::random_device{}());
+
+  // Permutation test: shuffle indices instead of copying/shuffling data
   for (int perm = 0; perm < n_permutations; perm++) {
     for (int i = 0; i < n_rows; i++) {
-      NumericVector rowVec(dist_mat.nrow());
-      // Copy the non-diagonal elements to a separate vector
-      for (int j = 0; j < rowVec.size(); j++) {
-        if (i != j) {
-          rowVec[j] = dist_mat(i, j);
-        } else {
-          rowVec[j] = NA_REAL;
-        }
-      }
-      std::shuffle(rowVec.begin(), rowVec.end(), std::default_random_engine(std::rand()));
+      std::shuffle(indices.begin(), indices.end(), rng);
 
-      // Counting the number of times permuted distances are smaller than observed distances
       for (int j = 0; j < n_cols; j++) {
-        int ref_col = ref_indices[j];
-        if (!NumericVector::is_na(rowVec[ref_col]) && rowVec[ref_col] < focal_dists(i, j)) {
+        int shuffled_col = indices[ref_indices[j]];
+        // Skip self-comparisons (equivalent to the old NA diagonal handling)
+        if (shuffled_col == i) continue;
+        if (dist_mat(i, shuffled_col) < focal_dists(i, j)) {
           count_mat(i, j)++;
         }
       }
