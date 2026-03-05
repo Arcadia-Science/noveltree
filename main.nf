@@ -459,6 +459,7 @@ workflow NOVELTREE {
         ch_recon_perspp_gene_trees,
         DIAMOND_BLASTP_ALL.out.txt.collect()
     )
+    ch_versions = ch_versions.mix(ORTHOFINDER_PHYLOHOGS.out.versions)
 }
 
 //
