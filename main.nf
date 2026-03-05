@@ -145,8 +145,13 @@ workflow NOVELTREE {
     // Rename FASTA files so filenames match normalized species names.
     // OrthoFinder uses filenames as species identifiers, so this ensures
     // all downstream tip labels use hyphens (e.g. Homo-sapiens_ProteinID).
+    // Must run before everything else for consistent naming.
     RENAME_FASTAS(ch_all_data.complete_prots)
     ch_renamed_prots = RENAME_FASTAS.out.renamed
+
+    // Derive MCL test and annotation subsets from renamed files
+    ch_renamed_mcl_test = ch_renamed_prots.filter { it[0].mcl_test == 'true' }
+    ch_renamed_annotation = ch_renamed_mcl_test.filter { it[0].uniprot == 'true' }
 
     species_name_list = ch_renamed_prots.collect { it[0].id }
     complete_prots_list = ch_renamed_prots.collect { it[1] }
@@ -158,8 +163,8 @@ workflow NOVELTREE {
     if (mcl_inflation.size() > 1) {
         // Use MCL_INFLATION_SELECTION subworkflow for both modes
         MCL_INFLATION_SELECTION(
-            ch_all_data.mcl_test_prots,
-            ch_all_data.annotation_prots,
+            ch_renamed_mcl_test,
+            ch_renamed_annotation,
             mcl_inflation
         )
         ch_best_inflation = MCL_INFLATION_SELECTION.out.best_inflation
