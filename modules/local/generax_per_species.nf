@@ -15,19 +15,12 @@ process GENERAX_PER_SPECIES {
         pattern: "*/*_reconciled_gft.newick",
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/') + 1) },
     )
-    publishDir(
-        path: "${params.outdir}/gene_family_trees/reconciled/generax_per_species",
-        mode: params.publish_dir_mode,
-        pattern: "*/*_events.newick",
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/') + 1) },
-    )
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
     tuple val(meta), path("${meta.og}/${meta.og}_reconciled_gft.newick")        , emit: generax_per_spp_gfts
-    tuple val(meta), path("${meta.og}/${meta.og}_events.newick")               , emit: generax_per_spp_events
     tuple val(meta), path("${meta.og}/${meta.og}_eventCounts.txt")              , emit: event_counts
     tuple val(meta), path("${meta.og}/${meta.og}_speciesEventCounts.txt")       , emit: species_event_counts
     tuple val(meta), path("${meta.og}/${meta.og}_transfers.txt")                , emit: transfer_event_counts
@@ -78,11 +71,9 @@ process GENERAX_PER_SPECIES {
     # Clean up
     rm -fr $og/gene_optimization_*
 
-    # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
-    mv "$og/results/$og/geneTree.newick" $og/results/$og/${og}_reconciled_gft.newick
-
-    # Copy the events tree (internal node labels: S/D/T for speciation/duplication/transfer)
-    cp "$og/reconciliations/${og}_events.newick" $og/${og}_events.newick
+    # Use the events tree as the reconciled gene tree — it's the same topology and branch
+    # lengths as geneTree.newick but includes S/D/T internal node labels from reconciliation
+    cp "$og/reconciliations/${og}_events.newick" $og/results/$og/${og}_reconciled_gft.newick
 
     # Rename perSpeciesCoverage.txt to include orthogroup prefix (prevents file name collisions downstream)
     mv "$og/perSpeciesCoverage.txt" "$og/${og}_perSpeciesCoverage.txt"
@@ -95,7 +86,6 @@ process GENERAX_PER_SPECIES {
 
     # Extract key files to working directory
     cp $og/results/$og/${og}_reconciled_gft.newick .
-    cp $og/${og}_events.newick .
     cp $og/reconciliations/${og}_eventCounts.txt .
     cp $og/reconciliations/${og}_speciesEventCounts.txt .
     cp $og/reconciliations/${og}_transfers.txt .
@@ -106,7 +96,6 @@ process GENERAX_PER_SPECIES {
     rm -rf $og/
     mkdir $og
     mv ${og}_reconciled_gft.newick $og/
-    mv ${og}_events.newick $og/
     mv ${og}_eventCounts.txt $og/
     mv ${og}_speciesEventCounts.txt $og/
     mv ${og}_transfers.txt $og/
