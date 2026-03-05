@@ -14,6 +14,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     path species_tree       // Species tree from SpeciesRax (Newick format)
     path reference_tree     // User-provided time-calibrated reference tree (Newick format)
     val calibration_method  // Method for time calibration: "treePL" or "PATHd8"
+    val age_bracket         // Fractional uncertainty for calibration ages (e.g. 0.20)
 
     output:
     path "time_calibrated_species_tree.newick", emit: calibrated_tree
@@ -34,6 +35,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
         ${reference_tree} \\
         time_calibrated_species_tree.newick \\
         ${calibration_method} \\
+        ${age_bracket} \\
         2>&1 | tee calibration_log.txt
 
     cat <<-END_VERSIONS > versions.yml

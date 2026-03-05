@@ -383,7 +383,8 @@ workflow NOVELTREE {
         TIME_CALIBRATE_SPECIES_TREE(
             ch_speciesrax,
             ch_reference_tree,
-            params.time_calibration_method
+            params.time_calibration_method,
+            params.age_bracket
         )
         ch_versions = ch_versions.mix(TIME_CALIBRATE_SPECIES_TREE.out.versions)
 
@@ -400,8 +401,7 @@ workflow NOVELTREE {
 
         DATE_GENE_FAMILY_TREES(
             ch_dating_input,
-            params.max_treepl_tips,
-            params.age_bracket
+            params.max_treepl_tips
         )
         ch_versions = ch_versions.mix(DATE_GENE_FAMILY_TREES.out.versions)
 
