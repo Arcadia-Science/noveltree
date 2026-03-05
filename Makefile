@@ -15,8 +15,8 @@ DOCKER_ORG := arcadiascience
 # Images requiring root context (COPY files from outside their docker/ directory)
 PHYSICOCHEMICAL_PROPS_IMAGE := $(DOCKER_ORG)/physicochemical_props
 PHYSICOCHEMICAL_PROPS_TAG := 1.0.0
-PHYLO_DIST_IMAGE := $(DOCKER_ORG)/phylo_dist
-PHYLO_DIST_TAG := 1.0.0
+ZOOGLE_IMAGE := $(DOCKER_ORG)/zoogle
+ZOOGLE_TAG := 1.0.0
 
 # Images built from their docker/ subdirectory
 ASTEROID_IMAGE := $(DOCKER_ORG)/asteroid_3aae117d-disco_20e10c33
@@ -53,12 +53,12 @@ WITCH_TAG := 1.0.0
 # =============================================================================
 
 .PHONY: help docker-all \
-	docker-physicochemical-props docker-phylo-dist \
+	docker-physicochemical-props docker-zoogle \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
 	docker-cogeqc docker-famsa docker-fasttree docker-generax \
 	docker-iqtree docker-orthofinder \
 	docker-phylo-profiles docker-rbase docker-select-inflation docker-witch \
-	push-all push-physicochemical-props push-phylo-dist \
+	push-all push-physicochemical-props push-zoogle \
 	push-asteroid push-bioservices push-cialign push-clipkit \
 	push-cogeqc push-famsa push-fasttree push-generax \
 	push-iqtree push-orthofinder \
@@ -78,7 +78,7 @@ help:
 	@echo ""
 	@echo "Build individual images:"
 	@echo "  make docker-physicochemical-props  - Physicochemical properties"
-	@echo "  make docker-phylo-dist             - Phylogenetic distance"
+	@echo "  make docker-zoogle             - Zoogle"
 	@echo "  make docker-asteroid               - Asteroid"
 	@echo "  make docker-bioservices            - Bioservices"
 	@echo "  make docker-cialign                - CIAlign"
@@ -108,7 +108,7 @@ help:
 # Build all images
 # =============================================================================
 
-docker-all: docker-physicochemical-props docker-phylo-dist \
+docker-all: docker-physicochemical-props docker-zoogle \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
 	docker-cogeqc docker-famsa docker-fasttree docker-generax \
 	docker-iqtree docker-orthofinder docker-phylo-profiles \
@@ -130,12 +130,12 @@ docker-physicochemical-props:
 		.
 	@echo "Built successfully!"
 
-docker-phylo-dist:
-	@echo "Building $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG) from root context..."
+docker-zoogle:
+	@echo "Building $(ZOOGLE_IMAGE):$(ZOOGLE_TAG) from root context..."
 	docker build \
 		--platform $(DOCKER_PLATFORM) \
-		-t $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG) \
-		-f docker/phylo_dist/Dockerfile \
+		-t $(ZOOGLE_IMAGE):$(ZOOGLE_TAG) \
+		-f docker/zoogle/Dockerfile \
 		.
 	@echo "Built successfully!"
 
@@ -256,7 +256,7 @@ docker-witch:
 # Push all images
 # =============================================================================
 
-push-all: push-physicochemical-props push-phylo-dist \
+push-all: push-physicochemical-props push-zoogle \
 	push-asteroid push-bioservices push-cialign push-clipkit \
 	push-cogeqc push-famsa push-fasttree push-generax \
 	push-iqtree push-orthofinder push-phylo-profiles \
@@ -273,9 +273,9 @@ push-physicochemical-props: docker-physicochemical-props
 	docker push $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)
 	@echo "Pushed successfully!"
 
-push-phylo-dist: docker-phylo-dist
-	@echo "Pushing $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)..."
-	docker push $(PHYLO_DIST_IMAGE):$(PHYLO_DIST_TAG)
+push-zoogle: docker-zoogle
+	@echo "Pushing $(ZOOGLE_IMAGE):$(ZOOGLE_TAG)..."
+	docker push $(ZOOGLE_IMAGE):$(ZOOGLE_TAG)
 	@echo "Pushed successfully!"
 
 push-asteroid: docker-asteroid
