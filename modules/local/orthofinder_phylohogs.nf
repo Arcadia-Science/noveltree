@@ -49,61 +49,15 @@ process ORTHOFINDER_PHYLOHOGS {
     #   - Directory: Gene_Trees/Trees_ids/
     #   - Filename:  OG{7digit}_tree_id.txt
     #   - Leaf labels: OrthoFinder internal IDs (e.g. 27_153) instead of gene names
-
-    mkdir -p \$of_results_dir/Gene_Trees/Trees_ids
-
-    # Use Python for efficient single-pass label replacement.
-    # Builds a name->id lookup from SequenceIDs.txt, then tokenizes each Newick
-    # string by splitting on Newick delimiters and replaces leaf labels in O(n).
-    python3 << 'PYEOF'
-import os, sys, re, glob
-
-# Build reverse lookup: gene_name -> internal_id
-name_to_id = {}
-with open("SequenceIDs.txt") as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        internal_id, gene_name = line.split(": ", 1)
-        name_to_id[gene_name] = internal_id
-
-# Newick delimiters that separate tokens (labels, branch lengths, etc.)
-# Leaf labels appear between delimiters like ( ) , : ;
-splitter = re.compile(r'([(),;:\[\]])')
-
-of_results_dir = glob.glob("Results*")[0]
-trees_dir = os.path.join(of_results_dir, "Gene_Trees", "Trees_ids")
-
-for tree_file in glob.glob("*_reconciled_gft.newick"):
-    og = tree_file.replace("_reconciled_gft.newick", "")
-    with open(tree_file) as f:
-        newick = f.read().strip()
-
-    # Split into tokens, replace leaf labels
-    tokens = splitter.split(newick)
-    translated = []
-    for token in tokens:
-        if token in name_to_id:
-            translated.append(name_to_id[token])
-        else:
-            translated.append(token)
-
-    out_path = os.path.join(trees_dir, og + "_tree_id.txt")
-    with open(out_path, "w") as f:
-        f.write("".join(translated) + "\\n")
-
-n_trees = len(glob.glob(os.path.join(trees_dir, "*_tree_id.txt")))
-print(f"Converted {n_trees} gene trees to OrthoFinder format", file=sys.stderr)
-PYEOF
+    translate_gene_trees.py SequenceIDs.txt \$of_results_dir
 
     #####################################################################################
     # Run orthofinder to infer hierarchical orthogroups
-    orthofinder \
-        -n HOGs \
-        -s $species_tree \
-        -ft \$of_results_dir/ \
-        -a ${task.cpus} \
+    orthofinder \\
+        -n HOGs \\
+        -s $species_tree \\
+        -ft \$of_results_dir/ \\
+        -a ${task.cpus} \\
         -y
 
     # Preserve GeneRax reconciled gene family trees in the output
