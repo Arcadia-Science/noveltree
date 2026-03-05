@@ -9,15 +9,15 @@ process PHYLO_DIST {
     val ref_species
 
     output:
-    path "gf-aa-multivar-distances/phylo-corrected-data/${meta.og}_phylo_corr_dat.tsv"           , emit: phylo_corrected_data
-    path "gf-aa-multivar-distances/protein-dist-mats/${meta.og}_protein_dists.tsv"               , emit: protein_dist_mat
-    path "gf-aa-multivar-distances/protein-phylo-dist-mats/${meta.og}_phylo_dists.tsv"           , emit: prot_phylo_dists
-    path "gf-aa-multivar-distances/protein-dists-to-reference/${meta.og}_protein_dists.tsv"      , emit: prot_dists_to_ref
-    path "gf-aa-multivar-distances/species-dists-to-reference/${meta.og}_species_dists.tsv"      , emit: spp_dists_to_ref
-    path "gf-aa-multivar-distances/protein-pvals/${meta.og}_protein_reference_dist_pvals.tsv"    , emit: protein_pvals
-    path "gf-aa-multivar-distances/species-pvals/${meta.og}_species_reference_dist_pvals.tsv"    , emit: species_pvals
-    path "gf-aa-multivar-distances/pairwise-protein-dist-perm-test/${meta.og}_protein_protein_dist_permutation_test.tsv" , emit: per_protein_dist_res
-    path "gf-aa-multivar-distances/final_protein_pair_summary_tables/${meta.og}_final_summary_table.tsv" , emit: final_summary_table
+    path "phylo-corrected-data/${meta.og}_phylo_corr_dat.tsv"           , emit: phylo_corrected_data
+    path "protein-dist-mats/${meta.og}_protein_dists.tsv"               , emit: protein_dist_mat
+    path "protein-phylo-dist-mats/${meta.og}_phylo_dists.tsv"           , emit: prot_phylo_dists
+    path "protein-dists-to-reference/${meta.og}_protein_dists.tsv"      , emit: prot_dists_to_ref
+    path "species-dists-to-reference/${meta.og}_species_dists.tsv"      , emit: spp_dists_to_ref
+    path "protein-pvals/${meta.og}_protein_reference_dist_pvals.tsv"    , emit: protein_pvals
+    path "species-pvals/${meta.og}_species_reference_dist_pvals.tsv"    , emit: species_pvals
+    path "pairwise-protein-dist-perm-test/${meta.og}_protein_protein_dist_permutation_test.tsv" , emit: per_protein_dist_res
+    path "final_protein_pair_summary_tables/${meta.og}_final_summary_table.tsv" , emit: final_summary_table
     path "versions.yml"                                                                           , emit: versions
 
     when:
@@ -68,7 +68,7 @@ process PHYLO_DIST {
         keep_stats = c("molecular_weight", "aromaticity", "instability", "flexibility",
                        "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
                        "sheet_fract", "molar_ext_coef_cysteines"),
-        out_dir = "gf-aa-multivar-distances"
+        out_dir = "."
     )
 
     # Create versions file
