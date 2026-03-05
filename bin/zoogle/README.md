@@ -19,7 +19,7 @@ These scripts provide two key functionalities for the Noveltree pipeline:
    - Performs phylogenetic GLS transformation to remove phylogenetic signal
    - Calculates pairwise Mahalanobis distances between proteins
    - Conducts statistical tests for protein similarity
-   - Used by the `PHYLO_DIST` module
+   - Used by the `ZOOGLE` module
 
 ## Files
 

@@ -51,16 +51,14 @@ RUN wget https://www2.math.su.se/PATHd8/PATHd8.zip -O /tmp/PATHd8.zip && \
 RUN R -e "install.packages(c('Rcpp', 'RcppArmadillo', 'dplyr', 'tidyr', 'ape', 'phytools', 'phangorn', 'geiger'), repos='https://cloud.r-project.org/')"
 
 # Create directory for source scripts
-RUN mkdir -p /opt/phylo_dist
+RUN mkdir -p /opt/zoogle
 
 # Copy src R and C++ scripts from the repository root
-# Note: Docker build context is the repository root, so we reference bin/phylo_dist/ from there
-# This includes time_calibrate_species_tree.R which is now in bin/phylo_dist/
-COPY bin/phylo_dist/*.R /opt/phylo_dist/
-COPY bin/phylo_dist/*.cpp /opt/phylo_dist/
+COPY bin/zoogle/*.R /opt/zoogle/
+COPY bin/zoogle/*.cpp /opt/zoogle/
 
 # Set working directory and compile C++ code
-WORKDIR /opt/phylo_dist
+WORKDIR /opt/zoogle
 RUN R -e "Rcpp::sourceCpp('phylo_correction.cpp')" && \
     R -e "Rcpp::sourceCpp('calculate_dist_stats.cpp')" && \
     R -e "Rcpp::sourceCpp('compute_inverse_covariance.cpp')" && \
@@ -69,7 +67,7 @@ RUN R -e "Rcpp::sourceCpp('phylo_correction.cpp')" && \
     R -e "Rcpp::sourceCpp('perm_test_within_non_ref.cpp')"
 
 # Add scripts to PATH
-ENV PATH="/opt/phylo_dist:${PATH}"
+ENV PATH="/opt/zoogle:${PATH}"
 
 # Set the default command to launch an interactive shell
 CMD ["/bin/bash", "-l"]

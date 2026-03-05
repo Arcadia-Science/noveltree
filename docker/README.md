@@ -39,7 +39,8 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `PHYLO_PROFILES`          | [phylo_profiles v1.0.0](./phylo_profiles/) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
 | `MERGE_PHYLO_PROFILES`    | (uses phylo_profiles image) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
 | `PHYSICOCHEMICAL_PROPS`   | [physicochemical_props v1.0.0](./physicochemical_props/) | [arcadiascience/physicochemical_props:1.0.0](https://hub.docker.com/r/arcadiascience/physicochemical_props) |
-| `PHYLO_DIST`              | [phylo_dist v1.0.0](./phylo_dist/) | [arcadiascience/phylo_dist:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_dist) |
-| `TIME_CALIBRATE_SPECIES_TREE` | (uses phylo_dist image) | [arcadiascience/phylo_dist:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_dist) |
+| `ZOOGLE`                  | [zoogle v1.0.0](./zoogle/) | [arcadiascience/zoogle:1.0.0](https://hub.docker.com/r/arcadiascience/zoogle) |
+| `TIME_CALIBRATE_SPECIES_TREE` | (uses zoogle image) | [arcadiascience/zoogle:1.0.0](https://hub.docker.com/r/arcadiascience/zoogle) |
+| `DATE_GENE_FAMILY_TREES`  | (uses zoogle image) | [arcadiascience/zoogle:1.0.0](https://hub.docker.com/r/arcadiascience/zoogle) |
 | `SUMMARIZE`               | [R summarization packages](./summarize/) | [arcadiascience/summarize](https://hub.docker.com/r/arcadiascience/summarize) |
 | `QUERYUP`                 | [queryup v1.0.5](./queryup/) | [arcadiascience/queryup_1.0.5](https://hub.docker.com/r/arcadiascience/queryup_1.0.5) |
