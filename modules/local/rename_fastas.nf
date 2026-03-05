@@ -5,6 +5,7 @@
 process RENAME_FASTAS {
     tag "${meta.id}"
     label 'process_single'
+    container 'ubuntu:22.04'
 
     input:
     tuple val(meta), path(fasta)
