@@ -327,7 +327,7 @@ workflow NOVELTREE {
 
     PHYLO_PROFILES(
         ch_phylo_profiles_input,
-        ORTHOFINDER_MCL_ALL.out.inflation_dir
+        ORTHOFINDER_MCL_ALL.out.inflation_dir.first()
     )
 
     // Merge per-OG outputs
