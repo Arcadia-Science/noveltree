@@ -2,7 +2,7 @@ process DATE_GENE_FAMILY_TREES {
     tag "$meta.og"
     label 'process_low_cpu'
 
-    container 'arcadiascience/phylo_dist:1.1.0'
+    container 'arcadiascience/zoogle:1.0.0'
 
     input:
     tuple val(meta), path(reconciled_tree), path(alignment), path(species_tree)
@@ -20,7 +20,7 @@ process DATE_GENE_FAMILY_TREES {
     script:
     def args = task.ext.args ?: ''
     """
-    Rscript /opt/phylo_dist/date_gene_family_tree.R \
+    Rscript /opt/zoogle/date_gene_family_tree.R \
         ${reconciled_tree} ${species_tree} ${alignment} \
         ${meta.og} ${max_treepl_tips} ${age_bracket} \
         ${meta.og}_dated.newick ${meta.og}_calibrations.csv
