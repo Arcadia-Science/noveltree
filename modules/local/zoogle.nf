@@ -64,7 +64,6 @@ process ZOOGLE {
         gene_family = gene_family,
         ref_spp = "${ref_species}",
         aa_stat_basedir = "",
-        clinvar = NULL,
         keep_stats = c("molecular_weight", "aromaticity", "instability", "flexibility",
                        "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
                        "sheet_fract", "molar_ext_coef_cysteines"),
