@@ -5,7 +5,9 @@
 process RENAME_FASTAS {
     tag "${meta.id}"
     label 'process_single'
-    container 'ubuntu:22.04'
+    container 'arcadiascience/rbase_4.2.2:1.0.0'
+    maxRetries 0
+    errorStrategy 'terminate'
 
     input:
     tuple val(meta), path(fasta)
