@@ -47,8 +47,8 @@ RUN wget https://www2.math.su.se/PATHd8/PATHd8.zip -O /tmp/PATHd8.zip && \
     cd / && \
     rm -rf /opt/PATHd8_src /tmp/PATHd8.zip
 
-# Install R packages
-RUN R -e "install.packages(c('Rcpp', 'RcppArmadillo', 'dplyr', 'tidyr', 'ape', 'phytools', 'geiger'), repos='https://cloud.r-project.org/')"
+# Install R packages (phangorn needed for date_gene_family_tree.R: Descendants/Ancestors)
+RUN R -e "install.packages(c('Rcpp', 'RcppArmadillo', 'dplyr', 'tidyr', 'ape', 'phytools', 'phangorn', 'geiger'), repos='https://cloud.r-project.org/')"
 
 # Create directory for source scripts
 RUN mkdir -p /opt/phylo_dist

@@ -2,11 +2,10 @@ process PHYLO_DIST {
     tag "${meta.og}"
     label "process_high"
 
-    container 'arcadiascience/phylo_dist:1.0.0'
+    container 'arcadiascience/phylo_dist:1.1.0'
 
     input:
     tuple val(meta), path(gene_tree), path(phys_props_file)
-    path species_tree
     val ref_species
 
     output:
@@ -66,8 +65,6 @@ process PHYLO_DIST {
         gene_family = gene_family,
         ref_spp = "${ref_species}",
         aa_stat_basedir = "",
-        spp_tree = ape::read.tree("${species_tree}"),
-        max_treepl_treesize = 10000,
         clinvar = NULL,
         keep_stats = c("molecular_weight", "aromaticity", "instability", "flexibility",
                        "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",

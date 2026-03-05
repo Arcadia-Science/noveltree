@@ -1,6 +1,5 @@
 # Load the necessary libraries
 require(dplyr)
-require(geiger)
 require(phytools)
 Rcpp::sourceCpp("calculate_dist_stats.cpp")
 # The following function calculates pairwise multivariate distances between
@@ -9,24 +8,14 @@ Rcpp::sourceCpp("calculate_dist_stats.cpp")
 # that each protein or each species is exceptionally similar
 calc_prot_spp_dists <-
   function(gene_family, gf_stats_path,
-           ref_spp, spp_tree,
-           max_treepl_treesize,
+           ref_spp,
            keep_stats, out_dir,
            clinvar) {
     # gf_stats_path: the file path to the file containing protein summary
     # statistics for a single gene family
-    # gf_tree_path: the file path to the corresponding gene family tree
+    # gene_family: named vector with "family" (OG name) and "gft" (tree path)
     # ref_spp: the species name of the "reference" species, the protein of
     # which we will compare all non-reference proteins to
-    # spp_tree: the time-calibrated species tree, that if provided, will be
-    # used to time-calibrate the gene family tree
-    # max_treepl_treesize: the maximum number of proteins in a gene family
-    # tree to use treePL to time calibrate. Larger trees will be
-    # time-calibrated with pathD8
-    # - treePL: more accurate, but slower for larger trees.
-    #   - https://doi.org/10.1093/bioinformatics/bts492
-    # - pathD8: less accurate, but significantly faster for large trees.
-    #   - https://doi.org/10.1080/10635150701613783
     # keep_stats: the AA summary statistics we wish to retain in analyses
     # out_dir: the base directory to write the output files to
     # Prep output directories
@@ -71,31 +60,6 @@ calc_prot_spp_dists <-
     gf_stats <- na.omit(gf_stats)
     gf_tree <- ape::keep.tip(gf_tree, rownames(gf_stats))
 
-    if (!is.null(spp_tree) && ape::is.ultrametric(spp_tree)) {
-      pathd8_path <-
-        paste0(Sys.getenv("CONDA_PREFIX"), "/bin:", Sys.getenv("CONDA_PREFIX"),
-               "/lib64:", Sys.getenv("LD_LIBRARY_PATH"))
-      Sys.setenv(LD_LIBRARY_PATH = pathd8_path)
-      dir.create(paste0(gene_family["family"]))
-      setwd(paste0(gene_family["family"]))
-      # Determine if we're using treePL or PATHd8
-      if (length(gf_tree$tip.label) < max_treepl_treesize) {
-        scale_method <- "treePL"
-      } else {
-        scale_method <- "PATHd8"
-      }
-      taxonomy <-
-        matrix(gsub("_[^_]+$", "", gf_tree$tip.label),
-               dimnames = list(gf_tree$tip.label, NULL),
-               ncol = 1)
-      gf_tree <-
-        suppressWarnings(geiger::congruify.phylo(reference = spp_tree,
-                                                 target = gf_tree,
-                                                 scale = scale_method,
-                                                 taxonomy = taxonomy)$phy)
-      setwd("../")
-      unlink(paste0(gene_family["family"]), recursive = TRUE)
-    }
     # And add a small value to the tree edge lengths to ensure it plays
     # nicely in the case that there are any zero-branch lengths. This
     # number is based on the smallest branch lengths typically inferred
@@ -307,7 +271,7 @@ calc_prot_spp_dists <-
 # family, allowing calculations to be done in parallel.
 genefam_aa_conservation <-
   function(gene_family, ref_spp = ref_spp, aa_stat_basedir = aa_stat_basedir,
-           spp_tree = spp_tree, max_treepl_treesize = 300, clinvar = clinvar,
+           clinvar = clinvar,
            keep_stats =
            c("molecular_weight", "aromaticity", "instability", "flexibility",
              "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
@@ -317,11 +281,6 @@ genefam_aa_conservation <-
     # and "gft", the file path to the corresponding gene family tree
     # ref_spp: the species name of the "reference" species, the protein
     # of which we will compare all non-reference proteins to
-    # spp_tree: the time-calibrated species tree, that if provided, will
-    # be used to time-calibrate the gene family tree
-    # max_treepl_treesize: the maximum number of proteins in a gene family
-    # tree to use treePL to time calibrate. Larger trees will be
-    # time-calibrated with PATHd8
     # keep_stats: the AA summary statistics we wish to retain in analyses
     # out_dir: the base directory to write the output files to
     gf_dist_res <-
@@ -330,9 +289,7 @@ genefam_aa_conservation <-
         gf_stats_path = paste0(aa_stat_basedir,
                                gene_family["family"],
                                "_summary_statistics.csv"),
-        spp_tree = spp_tree,
         ref_spp = ref_spp,
-        max_treepl_treesize = max_treepl_treesize,
         keep_stats = keep_stats,
         out_dir = out_dir,
         clinvar = clinvar
