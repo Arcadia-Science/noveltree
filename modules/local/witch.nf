@@ -3,8 +3,9 @@ process WITCH {
     label 'process_witch'
 
     container 'arcadiascience/witch_0.3.0:1.0.0'
-    // WITCH writes to /WITCH/ internally; Docker defaults to non-root, causing permission errors
-    containerOptions = "--user root"
+    // WITCH writes to /WITCH/ internally, requiring writable container filesystem
+    containerOptions = workflow.containerEngine == 'docker' ? '--user root' : \
+        (workflow.containerEngine == 'singularity' ? '--writable-tmpfs' : '')
 
     stageInMode = 'copy'
     publishDir(
