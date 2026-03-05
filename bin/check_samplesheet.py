@@ -72,9 +72,14 @@ def check_samplesheet(file_in, file_out):
 
                 ## Check sample name entries
                 species, file, taxonomy, shallow_db, broad_db, mode, uniprot, mcl_test = lspl[: len(HEADER)]
-                if species.find(" ") != -1:
-                    print(f"WARNING: Spaces have been replaced by underscores for sample: {species}")
-                    species = species.replace(" ", "_")
+                # Normalize species names to use hyphens (e.g. "Homo sapiens" or
+                # "Homo_sapiens" both become "Homo-sapiens"). This ensures
+                # unambiguous parsing of tip labels (Species-name_ProteinID) since
+                # the only underscore becomes the species-protein delimiter.
+                original_species = species
+                species = species.replace(" ", "-").replace("_", "-")
+                if species != original_species:
+                    print(f"WARNING: Species name normalized to hyphens: {original_species} -> {species}")
                 if not species:
                     print_error("Sample entry has not been specified!", "Line", line)
 

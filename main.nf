@@ -60,6 +60,7 @@ include { INFER_TREES as INFER_REMAINING_TREES  } from './subworkflows/local/inf
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
+include { RENAME_FASTAS                              } from './modules/local/rename_fastas'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from './modules/local/orthofinder_prep'
 include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
 include { ASTEROID                                  } from './modules/local/asteroid'
@@ -137,8 +138,18 @@ workflow NOVELTREE {
     //
     ch_all_data = INPUT_CHECK(ch_input)
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    species_name_list = ch_all_data.complete_prots.collect { it[0].id }
-    complete_prots_list = ch_all_data.complete_prots.collect { it[1] }
+
+    // Normalize ref_species to hyphens (users may pass underscores or spaces)
+    def ref_species = params.ref_species.replace('_', '-').replace(' ', '-')
+
+    // Rename FASTA files so filenames match normalized species names.
+    // OrthoFinder uses filenames as species identifiers, so this ensures
+    // all downstream tip labels use hyphens (e.g. Homo-sapiens_ProteinID).
+    RENAME_FASTAS(ch_all_data.complete_prots)
+    ch_renamed_prots = RENAME_FASTAS.out.renamed
+
+    species_name_list = ch_renamed_prots.collect { it[0].id }
+    complete_prots_list = ch_renamed_prots.collect { it[1] }
 
     //
     // Running steps to find the best mcl_inflation parameter value.
@@ -166,7 +177,7 @@ workflow NOVELTREE {
     if (params.busco) {
         // Shallow taxonomic scale:
         BUSCO_SHALLOW(
-            ch_all_data.complete_prots.filter{ it[0].shallow_db != "NA" },
+            ch_renamed_prots.filter{ it[0].shallow_db != "NA" },
             "shallow",
             [],
             []
@@ -174,7 +185,7 @@ workflow NOVELTREE {
 
         // Broad taxonomic scale (Eukaryotes)
         BUSCO_BROAD(
-            ch_all_data.complete_prots.filter{ it[0].broad_db != "NA" },
+            ch_renamed_prots.filter{ it[0].broad_db != "NA" },
             "broad",
             [],
             []
@@ -194,7 +205,7 @@ workflow NOVELTREE {
     // For the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
     DIAMOND_BLASTP_ALL(
-        ch_all_data.complete_prots,
+        ch_renamed_prots,
         ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
         ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
         "txt",
@@ -409,7 +420,7 @@ workflow NOVELTREE {
                 }
 
                 // Count reference species proteins
-                def refCount = proteinIds.count { it.startsWith("${params.ref_species}_") }
+                def refCount = proteinIds.count { it.startsWith("${ref_species}_") }
 
                 // Count non-reference proteins
                 def nonrefCount = proteinIds.size() - refCount
@@ -419,7 +430,7 @@ workflow NOVELTREE {
                 // Protein labels have format: Species_name_ProteinID
                 // Species names are extracted by removing the last underscore-delimited segment
                 def nonrefProteinsBySpecies = proteinIds
-                    .findAll { !it.startsWith("${params.ref_species}_") }
+                    .findAll { !it.startsWith("${ref_species}_") }
                     .collect { it.replaceFirst(/_[^_]+$/, '') }  // Extract species name (remove protein ID after last underscore)
                     .countBy { it }  // Map of species -> count
 
@@ -438,7 +449,7 @@ workflow NOVELTREE {
 
         ZOOGLE(
             ch_zoogle_input,
-            params.ref_species
+            ref_species
         )
         ch_versions = ch_versions.mix(ZOOGLE.out.versions)
     }
