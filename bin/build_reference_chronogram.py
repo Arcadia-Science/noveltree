@@ -387,8 +387,8 @@ def main():
     with open(args.species_names) as f:
         raw_names = [line.strip() for line in f if line.strip()]
 
-    # Convert Genus_species -> Genus species for API queries
-    species_names = [name.replace("_", " ") for name in raw_names]
+    # Normalize: convert hyphens to underscores, then to spaces for API queries
+    species_names = [name.replace("-", " ").replace("_", " ") for name in raw_names]
     # Keep mapping back to underscore format for output
     underscore_names = [name.replace(" ", "_") for name in species_names]
 
