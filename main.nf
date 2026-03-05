@@ -72,7 +72,7 @@ include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orth
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 include { MERGE_PHYLO_PROFILES                      } from './modules/local/merge_phylo_profiles'
 include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
-include { PHYLO_DIST                                } from './modules/local/phylo_dist'
+include { ZOOGLE                                    } from './modules/local/zoogle'
 include { BUILD_REFERENCE_CHRONOGRAM                } from './modules/local/build_reference_chronogram'
 
 if (params.generax_per_family) {
@@ -394,8 +394,8 @@ workflow NOVELTREE {
         )
         ch_versions = ch_versions.mix(DATE_GENE_FAMILY_TREES.out.versions)
 
-        // Feed dated trees into PHYLO_DIST (replaces raw reconciled trees)
-        ch_phylo_dist_input = DATE_GENE_FAMILY_TREES.out.dated_gft          // [meta, dated_tree]
+        // Feed dated trees into ZOOGLE (replaces raw reconciled trees)
+        ch_zoogle_input = DATE_GENE_FAMILY_TREES.out.dated_gft          // [meta, dated_tree]
             .join(PHYSICOCHEMICAL_PROPS.out.summary_stats)                   // [meta, dated_tree, props]
             .filter { meta, tree, props_file ->
                 // Validate gene family has sufficient proteins for phylo-dist analysis
@@ -436,11 +436,11 @@ workflow NOVELTREE {
                 return isValid
             }
 
-        PHYLO_DIST(
-            ch_phylo_dist_input,
+        ZOOGLE(
+            ch_zoogle_input,
             params.ref_species
         )
-        ch_versions = ch_versions.mix(PHYLO_DIST.out.versions)
+        ch_versions = ch_versions.mix(ZOOGLE.out.versions)
     }
 
     //

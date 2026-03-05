@@ -35,7 +35,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
         2>&1 | tee calibration_log.txt
 
     # Convert species names from underscores to hyphens to match gene family tree naming
-    # This ensures PHYLO_DIST can match species between the calibrated tree and gene family trees
+    # This ensures downstream modules can match species between the calibrated tree and gene family trees
     # Pattern: Match species names (Capitalized_lowercase format) and convert _ to -
     sed 's/\\([A-Z][a-z]*\\)_\\([a-z]\\)/\\1-\\2/g' time_calibrated_species_tree_raw.newick > time_calibrated_species_tree.newick
 
