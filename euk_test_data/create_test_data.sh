@@ -5,9 +5,9 @@ set -euo pipefail
 # Create a small eukaryote test dataset for noveltree pipeline debugging.
 #
 # Strategy: sample ~50 gene families from a previous OrthoFinder run that
-# contain >=80% of our 12 target species, then extract only sequences
-# belonging to those species. This preserves real orthology signal so
-# OrthoFinder can recover meaningful gene families.
+# contain >=80% of our 6 target Opisthokont species, then extract only
+# sequences belonging to those species. This preserves real orthology
+# signal so OrthoFinder can recover meaningful gene families.
 #
 # Prerequisites:
 #   - Previous noveltree results in results-noveltree-model-euks/
@@ -44,20 +44,14 @@ NUM_OGS=50
 MIN_SPECIES_FRAC=0.80
 SEED=42
 
-# 12 target species (hyphenated names matching OrthoFinder column headers)
+# 6 target Opisthokont species (4 animals + 2 fungi)
 SPECIES=(
     "Homo-sapiens"
     "Mus-musculus"
     "Danio-rerio"
     "Drosophila-melanogaster"
-    "Caenorhabditis-elegans"
     "Saccharomyces-cerevisiae"
     "Neurospora-crassa"
-    "Ustilago-maydis"
-    "Chlamydomonas-reinhardtii"
-    "Plasmodium-falciparum"
-    "Tetrahymena-thermophila"
-    "Dictyostelium-discoideum"
 )
 NUM_SPECIES=${#SPECIES[@]}
 MIN_SPECIES=$(python3 -c "import math; print(math.ceil(${NUM_SPECIES} * ${MIN_SPECIES_FRAC}))")
@@ -241,7 +235,7 @@ echo "Step 3: Generating samplesheet..."
 # taxonomy, shallow_db, broad_db use BUSCO lineages
 # mode: proteins for all
 # uniprot: true for all
-# mcl_test: true for 8, false for 3 fungi
+# mcl_test: true for animals, false for fungi
 
 cat > "${OUT_DIR}/samplesheet.csv" <<SAMPLESHEET
 species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test
@@ -249,14 +243,8 @@ Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_od
 Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,Opisthokonta,glires_odb10,eukaryota_odb10,proteins,true,true
 Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,true
 Drosophila-melanogaster,euk_test_data/proteomes/Drosophila-melanogaster.fasta,Opisthokonta,diptera_odb10,eukaryota_odb10,proteins,true,true
-Caenorhabditis-elegans,euk_test_data/proteomes/Caenorhabditis-elegans.fasta,Opisthokonta,nematoda_odb10,eukaryota_odb10,proteins,true,true
 Saccharomyces-cerevisiae,euk_test_data/proteomes/Saccharomyces-cerevisiae.fasta,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,false
 Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,false
-Ustilago-maydis,euk_test_data/proteomes/Ustilago-maydis.fasta,Opisthokonta,basidiomycota_odb10,eukaryota_odb10,proteins,true,false
-Chlamydomonas-reinhardtii,euk_test_data/proteomes/Chlamydomonas-reinhardtii.fasta,Chloroplastida,chlorophyta_odb10,eukaryota_odb10,proteins,true,true
-Plasmodium-falciparum,euk_test_data/proteomes/Plasmodium-falciparum.fasta,Alveolata,plasmodium_odb10,eukaryota_odb10,proteins,true,true
-Tetrahymena-thermophila,euk_test_data/proteomes/Tetrahymena-thermophila.fasta,Alveolata,alveolata_odb10,eukaryota_odb10,proteins,true,true
-Dictyostelium-discoideum,euk_test_data/proteomes/Dictyostelium-discoideum.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true
 SAMPLESHEET
 
 echo "  Samplesheet written to ${OUT_DIR}/samplesheet.csv"
