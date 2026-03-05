@@ -7,7 +7,6 @@ process DATE_GENE_FAMILY_TREES {
     input:
     tuple val(meta), path(reconciled_tree), path(alignment), path(species_tree)
     val max_treepl_tips
-    val age_bracket
 
     output:
     tuple val(meta), path("${meta.og}_dated.newick")      , emit: dated_gft
@@ -22,7 +21,7 @@ process DATE_GENE_FAMILY_TREES {
     """
     Rscript /opt/zoogle/date_gene_family_tree.R \
         ${reconciled_tree} ${species_tree} ${alignment} \
-        ${meta.og} ${max_treepl_tips} ${age_bracket} \
+        ${meta.og} ${max_treepl_tips} \
         ${meta.og}_dated.newick ${meta.og}_calibrations.csv
 
     cat <<-END_VERSIONS > versions.yml

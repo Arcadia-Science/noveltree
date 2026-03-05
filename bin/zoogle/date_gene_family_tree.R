@@ -7,7 +7,7 @@
 #
 # Usage:
 #   Rscript date_gene_family_tree.R <reconciled_tree> <species_tree> \
-#     <alignment> <og_name> <max_treepl_tips> <age_bracket> \
+#     <alignment> <og_name> <max_treepl_tips> \
 #     <out_dated_tree> <out_calibrations_csv>
 
 suppressPackageStartupMessages({
@@ -17,9 +17,9 @@ suppressPackageStartupMessages({
 })
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 8) {
+if (length(args) != 7) {
   stop("Usage: Rscript date_gene_family_tree.R <reconciled_tree> ",
-       "<species_tree> <alignment> <og_name> <max_treepl_tips> <age_bracket> ",
+       "<species_tree> <alignment> <og_name> <max_treepl_tips> ",
        "<out_dated_tree> <out_calibrations_csv>")
 }
 
@@ -28,9 +28,8 @@ spp_tree_path   <- args[2]
 alignment_path  <- args[3]
 og_name         <- args[4]
 max_treepl_tips <- as.integer(args[5])
-age_bracket     <- as.numeric(args[6])
-out_tree_path   <- args[7]
-out_csv_path    <- args[8]
+out_tree_path   <- args[6]
+out_csv_path    <- args[7]
 
 cat("=== date_gene_family_tree.R ===\n")
 cat("OG:", og_name, "\n")
@@ -38,7 +37,6 @@ cat("Reconciled tree:", tree_path, "\n")
 cat("Species tree:", spp_tree_path, "\n")
 cat("Alignment:", alignment_path, "\n")
 cat("Max treePL tips:", max_treepl_tips, "\n")
-cat("Age bracket:", age_bracket, "\n")
 
 # ============================================================================
 # Step 0: Read inputs
@@ -202,12 +200,15 @@ if (nrow(calibrations) > 0) {
 cat("  Final calibrations after dedup/conflict resolution:", nrow(calibrations), "\n")
 
 # ============================================================================
-# Step 4: Apply age brackets
+# Step 4: Set fixed calibration ages
 # ============================================================================
+# Gene tree calibrations use fixed ages from the already-calibrated species
+# tree (age bracket was applied during species tree dating, so using fixed
+# ages here avoids compounding uncertainty).
 
 if (nrow(calibrations) > 0) {
-  calibrations$min_mya <- calibrations$age_mya * (1 - age_bracket)
-  calibrations$max_mya <- calibrations$age_mya * (1 + age_bracket)
+  calibrations$min_mya <- calibrations$age_mya
+  calibrations$max_mya <- calibrations$age_mya
 }
 
 # ============================================================================

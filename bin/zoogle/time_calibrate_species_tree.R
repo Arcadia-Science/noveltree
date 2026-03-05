@@ -14,13 +14,15 @@ suppressPackageStartupMessages({
 # Parse command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) < 4) {
+if (length(args) < 5) {
   stop(paste(
-    "Usage: time_calibrate_species_tree.R <species_tree> <reference_tree> <output_tree> <calibration_method>",
+    "Usage: time_calibrate_species_tree.R <species_tree> <reference_tree>",
+    "  <output_tree> <calibration_method> <age_bracket>",
     "\n  species_tree: Path to species tree (Newick format)",
-    "\n  reference_tree: Path to time-calibrated reference tree (Newick format)",
+    "\n  reference_tree: Path to time-calibrated reference tree",
     "\n  output_tree: Path for output time-calibrated tree",
-    "\n  calibration_method: Method for time calibration (treePL or PATHd8)",
+    "\n  calibration_method: treePL or PATHd8",
+    "\n  age_bracket: Fractional uncertainty (e.g. 0.20 = +/-20%)",
     sep = "\n"
   ))
 }
@@ -29,6 +31,7 @@ species_tree_path <- args[1]
 reference_tree_path <- args[2]
 output_tree_path <- args[3]
 calibration_method <- args[4]
+age_bracket <- as.numeric(args[5])
 
 # Validate calibration method
 if (!calibration_method %in% c("treePL", "PATHd8")) {
@@ -179,18 +182,22 @@ if (nrow(calibrations) < 2) {
 # Step 2: Build calibration lines for treePL config
 # ============================================================================
 
-# Use fixed-point calibrations (min = max = age) since these are known TimeTree ages
+# Apply age bracket: min = age * (1 - bracket), max = age * (1 + bracket)
+# This accounts for uncertainty in reference divergence times.
 cal_lines <- c()
 for (i in seq_len(nrow(calibrations))) {
   cal_name <- paste0("cal", i)
+  age <- calibrations$age_mya[i]
   cal_lines <- c(cal_lines,
-    paste("mrca =", cal_name, calibrations$tipA[i], calibrations$tipB[i]),
-    paste("min =", cal_name, calibrations$age_mya[i]),
-    paste("max =", cal_name, calibrations$age_mya[i])
+    paste("mrca =", cal_name,
+          calibrations$tipA[i], calibrations$tipB[i]),
+    paste("min =", cal_name, age * (1 - age_bracket)),
+    paste("max =", cal_name, age * (1 + age_bracket))
   )
 }
 
-cat("Using", nrow(calibrations), "fixed-point calibrations\n")
+cat("Using", nrow(calibrations), "calibrations (age bracket:",
+    age_bracket, ")\n")
 
 # ============================================================================
 # Step 3: Write species tree for treePL
