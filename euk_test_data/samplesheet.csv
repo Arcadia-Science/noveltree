@@ -1,0 +1,13 @@
+species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test
+Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,true
+Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,Opisthokonta,glires_odb10,eukaryota_odb10,proteins,true,true
+Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,true
+Drosophila-melanogaster,euk_test_data/proteomes/Drosophila-melanogaster.fasta,Opisthokonta,diptera_odb10,eukaryota_odb10,proteins,true,true
+Caenorhabditis-elegans,euk_test_data/proteomes/Caenorhabditis-elegans.fasta,Opisthokonta,nematoda_odb10,eukaryota_odb10,proteins,true,true
+Saccharomyces-cerevisiae,euk_test_data/proteomes/Saccharomyces-cerevisiae.fasta,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,false
+Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,false
+Ustilago-maydis,euk_test_data/proteomes/Ustilago-maydis.fasta,Opisthokonta,basidiomycota_odb10,eukaryota_odb10,proteins,true,false
+Chlamydomonas-reinhardtii,euk_test_data/proteomes/Chlamydomonas-reinhardtii.fasta,Chloroplastida,chlorophyta_odb10,eukaryota_odb10,proteins,true,true
+Plasmodium-falciparum,euk_test_data/proteomes/Plasmodium-falciparum.fasta,Alveolata,plasmodium_odb10,eukaryota_odb10,proteins,true,true
+Tetrahymena-thermophila,euk_test_data/proteomes/Tetrahymena-thermophila.fasta,Alveolata,alveolata_odb10,eukaryota_odb10,proteins,true,true
+Dictyostelium-discoideum,euk_test_data/proteomes/Dictyostelium-discoideum.fasta,Amoebozoa,eukaryota_odb10,eukaryota_odb10,proteins,true,true

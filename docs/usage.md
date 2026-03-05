@@ -36,7 +36,7 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 
 > #### Parameter descriptions:
 >
-> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).<br/> > `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. A single value is also allowed - no testing will occur in this case. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.<br/> > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/> > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/> > `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/> > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/> > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/> > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference.<br/> > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/> > `ref_species`: REQUIRED for zoogle mode. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/> > `reference_time_tree`: REQUIRED for zoogle mode. Path to a reference time-calibrated phylogenetic tree (Newick format) used to calibrate the inferred species tree.<br/> > `time_calibration_method`: DEFAULT: "PATHd8". Method for time calibration of the species tree. Options: "PATHd8" or "treePL".<br/> > `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/> > `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/> > `busco`: DEFAULT: true. Enable/disable BUSCO quality assessment. Set to false in simplified/zoogle modes.<br/> > `generax_per_family`: DEFAULT: true. Enable/disable per-family GeneRax analysis. Set to false in simplified/zoogle modes.<br/>
+> `input`: Complete filepath to input samplesheet. May be locally stored, or remotely stored (again - if remote, provide S3 URI, or hyperlink to other cloud storage).<br/> > `mcl_inflation`: DEFAULT "1.5,2.0,2.5,3.0". Quoted, comma-separated list of MCL inflation parameters to be tested when clustering proteins into orthogroups with OrthoFinder. A single value is also allowed - no testing will occur in this case. Based on our own [analyses](https://doi.org/10.57844/arcadia-z08x-v798), we would suggest using an inflation parameter of `2.5` if you elect to use a singular value.<br/> > `min_ungapped_length`: DEFAULT: 20. The minimum ungapped length of cleaned/trimmed multiple sequence alignments.<br/> > `min_num_spp_per_og`: DEFAULT: 4. Minimum # of species a gene family must contain for phylogenetic inference.<br/> > `aligner`: DEFAULT: "witch". Method used to infer multiple sequence alignments. Options: WITCH (`witch`), MAFFT (`mafft`), or FAMSA (`famsa`).<br/> > `max_copy_num_spp_tree`: DEFAULT: 5. Maximum # of per-species gene copy number a gene family may contain for species-tree inference.<br/> > `min_prop_spp_for_spptree`: DEFAULT: 0.25. Minimum proportion of species a gene family must contain to be used in species tree inference.<br/> > `tree_model`: DEFAULT: "LG+F+G4". Model of amino acid substition to be used for phylogenetic inference.<br/> > `outgroups`: OPTIONAL: A comma separated string of species IDs to be used to manually root Asteroid species tree. If specified, this species tree will have branch lengths estimated with SpeciesRax, and will be used for all GeneRax analyses.<br/> > `ref_species`: REQUIRED for zoogle mode. Reference species name for phylogenetically-corrected protein distance calculations. Must match a species name from the input samplesheet (format: Genus_species). All other species' proteins will be compared to this reference species.<br/> > `ncbi_email`: REQUIRED for zoogle mode when `reference_time_tree` is not provided. Email address for NCBI Entrez queries used when auto-building a reference chronogram from TimeTree.org.<br/> > `reference_time_tree`: OPTIONAL for zoogle mode. Path to a reference time-calibrated phylogenetic tree (Newick format) used to calibrate the inferred species tree. If not provided, a reference chronogram is automatically built from TimeTree.org (requires `ncbi_email`).<br/> > `time_calibration_method`: DEFAULT: "treePL". Method for time calibration of the species tree. Options: "PATHd8" or "treePL".<br/> > `msa_trimmer`: DEFAULT: "none". Method used to clean/trim multiple sequence alignments. The default is "none", which means MSAs are not trimmed. The other options are CLIPKIT (`clipkit`) or CIALIGN (`cialign`).<br/> > `tree_method`: DEFAULT: "fasttree". Method used to infer trees. Either FASTTREE (`fasttree`) or IQTREE (`iqtree`).<br/> > `busco`: DEFAULT: true. Enable/disable BUSCO quality assessment. Set to false in simplified/zoogle modes.<br/> > `generax_per_family`: DEFAULT: true. Enable/disable per-family GeneRax analysis. Set to false in simplified/zoogle modes.<br/>
 >
 > Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/noveltree).
 
@@ -99,10 +99,21 @@ nextflow run . -profile docker,simplified -params-file params.json
 Inherits simplified mode settings and adds analyses for organism prioritization:
 
 - Physicochemical protein properties
-- Time calibration of the species tree
+- Time calibration of the species tree (auto-built from TimeTree.org or user-provided)
 - Phylogenetically-corrected protein distance analysis
 
-Requires additional parameters:
+**Recommended** (auto-build reference chronogram from TimeTree.org):
+
+```bash
+nextflow run . -profile docker,zoogle \
+  -params-file params.json \
+  --ncbi_email user@example.com \
+  --ref_species Genus_species
+```
+
+The pipeline queries TimeTree.org for pairwise divergence times among species in your samplesheet and builds a UPGMA reference chronogram automatically. This is the preferred approach since it always uses the latest data from TimeTree.
+
+**Alternative** (provide your own reference tree):
 
 ```bash
 nextflow run . -profile docker,zoogle \
@@ -110,6 +121,8 @@ nextflow run . -profile docker,zoogle \
   --reference_time_tree /path/to/reference_timetree.newick \
   --ref_species Genus_species
 ```
+
+Use `--reference_time_tree` when you have a curated tree or need reproducibility without network access.
 
 ### Combining Profiles
 
@@ -119,13 +132,13 @@ Profiles can be combined with container engines:
 # Simplified mode with Singularity
 nextflow run . -profile singularity,simplified -params-file params.json
 
-# Zoogle mode on AWS Batch
+# Zoogle mode on AWS Batch (auto-build chronogram)
 nextflow run . -profile awsbatch,zoogle \
   --awsqueue my-queue \
   --awsregion us-east-1 \
   -work-dir s3://bucket/work \
   --outdir s3://bucket/results \
-  --reference_time_tree s3://bucket/timetree.newick \
+  --ncbi_email user@example.com \
   --ref_species Genus_species
 ```
 
@@ -214,7 +227,8 @@ For detailed instructions, see the [Singularity documentation](singularity.md).
 14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
 15. `ORTHOFINDER_PHYLOHOGS`: Infer phylogenetically hierarchical orthologs using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 16. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, transfer, loss, and speciation events across species and gene families
-17. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against a user-provided reference timetree containing (some) overlapping species using congruification
+17. `BUILD_REFERENCE_CHRONOGRAM` _(zoogle mode only, when `--reference_time_tree` not provided)_: Auto-build a reference chronogram by querying TimeTree.org for pairwise divergence times among input species and constructing a UPGMA tree
+17b. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against the reference chronogram (auto-built or user-provided) using congruification
 18. `PHYSICOCHEMICAL_PROPS` _(zoogle mode only)_: Calculate amino acid composition and physicochemical properties for all gene families
 19. `PHYLO_DIST` _(zoogle mode only)_: Calculate phylogenetically-corrected protein distances using Mahalanobis distances and permutation tests
 
@@ -374,12 +388,22 @@ process {
 - No parameters required - processes all GeneRax output files automatically
 - Outputs stored in `gene_family_evolution/` directory
 
-#### 15. [`TIME_CALIBRATE_SPECIES_TREE`](modules/local/time_calibrate_species_tree.nf) _(zoogle mode only)_:
+#### 15a. [`BUILD_REFERENCE_CHRONOGRAM`](modules/local/build_reference_chronogram.nf) _(zoogle mode only)_:
 
-- Time-calibrates the inferred species tree against a user-provided reference timetree
+- Automatically builds a reference chronogram by querying TimeTree.org for pairwise divergence times
+- Queries species-level taxids first, with genus-level fallback for missing pairs
+- Uses greedy-drop to remove species with the most missing pairwise times until a complete distance matrix is obtained (requires ≥4 species)
+- Constructs UPGMA tree via scipy, producing an ultrametric Newick tree
+- **Requires**: `ncbi_email` parameter for NCBI Entrez queries
+- Skipped when `reference_time_tree` is provided
+- Outputs stored in `species_trees/reference_chronogram/` directory
+
+#### 15b. [`TIME_CALIBRATE_SPECIES_TREE`](modules/local/time_calibrate_species_tree.nf) _(zoogle mode only)_:
+
+- Time-calibrates the inferred species tree against the reference chronogram (auto-built or user-provided)
 - Uses congruification to match and transfer divergence times from the reference tree
-- **Requires**: `reference_time_tree` parameter with path to reference timetree (Newick format) with at least some fraction of species overlapping with the species analyzed by NovelTree.
-- `time_calibration_method`: Method for calibration - "PATHd8" (default) or "treePL"
+- **Optional**: `reference_time_tree` parameter with path to reference timetree (Newick format). If not provided, a chronogram is auto-built from TimeTree.org.
+- `time_calibration_method`: Method for calibration - "treePL" (default) or "PATHd8"
 - Outputs stored in `species_trees/time_calibrated/` directory
 
 #### 16. [`PHYSICOCHEMICAL_PROPS`](modules/local/physicochemical_props.nf) _(zoogle mode only)_:

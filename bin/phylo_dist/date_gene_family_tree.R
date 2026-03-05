@@ -1,0 +1,429 @@
+#!/usr/bin/env Rscript
+
+# date_gene_family_tree.R
+# Time-calibrate gene family trees using reconciliation-filtered calibrations.
+# Only speciation (S, SL) nodes from GeneRax NHX trees are used as calibration
+# points. Duplication (D) and transfer (T, TL) nodes are excluded.
+#
+# Usage:
+#   Rscript date_gene_family_tree.R <nhx_tree> <newick_tree> <species_tree> \
+#     <alignment> <og_name> <max_treepl_tips> <age_bracket> \
+#     <out_dated_tree> <out_calibrations_csv>
+
+suppressPackageStartupMessages({
+  library(ape)
+  library(phytools)
+  library(phangorn)
+})
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 9) {
+  stop("Usage: Rscript date_gene_family_tree.R <events_tree> <newick_tree> ",
+       "<species_tree> <alignment> <og_name> <max_treepl_tips> <age_bracket> ",
+       "<out_dated_tree> <out_calibrations_csv>")
+}
+
+events_path     <- args[1]
+newick_path     <- args[2]
+spp_tree_path   <- args[3]
+alignment_path  <- args[4]
+og_name         <- args[5]
+max_treepl_tips <- as.integer(args[6])
+age_bracket     <- as.numeric(args[7])
+out_tree_path   <- args[8]
+out_csv_path    <- args[9]
+
+cat("=== date_gene_family_tree.R ===\n")
+cat("OG:", og_name, "\n")
+cat("Events tree:", events_path, "\n")
+cat("Newick tree:", newick_path, "\n")
+cat("Species tree:", spp_tree_path, "\n")
+cat("Alignment:", alignment_path, "\n")
+cat("Max treePL tips:", max_treepl_tips, "\n")
+cat("Age bracket:", age_bracket, "\n")
+
+# ============================================================================
+# Step 0: Read inputs
+# ============================================================================
+
+# Read the gene family tree (ML branch lengths) for dating
+gf_tree <- read.tree(newick_path)
+
+# Read the time-calibrated species tree
+spp_tree <- read.tree(spp_tree_path)
+
+# ============================================================================
+# Step 1: Parse event annotations from GeneRax events.newick
+# ============================================================================
+
+# GeneRax outputs an _events.newick file with internal node labels
+# indicating event types: S (speciation), D (duplication), T (transfer).
+# ape::read.tree() parses these directly as $node.label.
+events_tree <- read.tree(events_path)
+
+# Extract per-internal-node event types from node labels
+# Node labels may include transfer info like "T@donor@recipient"
+node_events <- events_tree$node.label
+node_events <- sub("@.*", "", node_events)  # strip transfer details
+
+n_tips_ev <- length(events_tree$tip.label)
+n_internal <- events_tree$Nnode
+
+# Classify: S -> speciation (usable for calibration); D, T -> excluded
+is_speciation <- node_events == "S"
+n_spec <- sum(is_speciation, na.rm = TRUE)
+n_dup <- sum(node_events == "D", na.rm = TRUE)
+n_trans <- sum(node_events == "T", na.rm = TRUE)
+cat("  Events found: S =", n_spec, ", D =", n_dup,
+    ", T =", n_trans, "\n")
+
+# ============================================================================
+# Step 2: Extract speciation-only calibrations
+# ============================================================================
+
+extract_speciation_calibrations <- function(events_tree, gf_tree,
+                                            spp_tree, is_speciation) {
+  n_tips_ev <- length(events_tree$tip.label)
+
+  # Get species tree node depths for age calculation
+  spp_depths <- node.depth.edgelength(spp_tree)
+  spp_root_depth <- max(spp_depths)
+
+  calibrations <- data.frame(
+    gf_mrca = integer(0),
+    age_mya = numeric(0),
+    tipA = character(0),
+    tipB = character(0),
+    n_desc_tips = integer(0),
+    events_node = integer(0),
+    stringsAsFactors = FALSE
+  )
+
+  spec_nodes <- which(is_speciation)
+  if (length(spec_nodes) == 0) return(calibrations)
+
+  for (idx in spec_nodes) {
+    ev_node <- n_tips_ev + idx
+
+    # Get descendant tips in the events tree
+    desc_tips <- events_tree$tip.label[unlist(
+      phangorn::Descendants(events_tree, ev_node, type = "tips")
+    )]
+    if (length(desc_tips) < 2) next
+
+    # Map to species names (remove protein ID after last underscore)
+    desc_species <- unique(sub("_[^_]+$", "", desc_tips))
+
+    # Find species shared with the species tree
+    shared_spp <- intersect(desc_species, spp_tree$tip.label)
+    if (length(shared_spp) < 2) next
+
+    # Get MRCA age from species tree
+    spp_mrca <- getMRCA(spp_tree, shared_spp)
+    if (is.null(spp_mrca)) next
+    age_mya <- spp_root_depth - spp_depths[spp_mrca]
+
+    if (is.na(age_mya) || age_mya <= 0) next
+
+    # Find the corresponding MRCA in the gene family tree
+    # Use tips that exist in the gene family tree
+    gf_desc_tips <- intersect(desc_tips, gf_tree$tip.label)
+    if (length(gf_desc_tips) < 2) next
+
+    gf_mrca <- getMRCA(gf_tree, gf_desc_tips)
+    if (is.null(gf_mrca)) next
+
+    # Pick two representative tips for treePL/PATHd8 mrca spec
+    tipA <- gf_desc_tips[1]
+    tipB <- gf_desc_tips[length(gf_desc_tips)]
+
+    calibrations <- rbind(calibrations, data.frame(
+      gf_mrca = gf_mrca,
+      age_mya = age_mya,
+      tipA = tipA,
+      tipB = tipB,
+      n_desc_tips = length(gf_desc_tips),
+      events_node = ev_node,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  calibrations
+}
+
+calibrations <- extract_speciation_calibrations(
+  events_tree, gf_tree, spp_tree, is_speciation
+)
+cat("  Raw speciation calibrations:", nrow(calibrations), "\n")
+
+# ============================================================================
+# Step 3: Deduplicate and resolve conflicts
+# ============================================================================
+
+if (nrow(calibrations) > 0) {
+  # One calibration per gene-tree MRCA node (keep entry with most descendant tips)
+  calibrations <- calibrations[order(-calibrations$n_desc_tips), ]
+  calibrations <- calibrations[!duplicated(calibrations$gf_mrca), ]
+
+  # Remove parent-child age conflicts:
+  # Sort by node depth (root-to-tip), drop calibrations where child age > parent age
+  gf_depths <- node.depth.edgelength(gf_tree)
+  calibrations$node_depth <- gf_depths[calibrations$gf_mrca]
+  calibrations <- calibrations[order(calibrations$node_depth), ]
+
+  dropped <- c()
+  if (nrow(calibrations) > 1) {
+    for (i in 2:nrow(calibrations)) {
+      # Check if any ancestor of this node has a calibration with younger age
+      current_node <- calibrations$gf_mrca[i]
+      current_age <- calibrations$age_mya[i]
+
+      for (j in 1:(i - 1)) {
+        if (j %in% dropped) next
+        ancestor_node <- calibrations$gf_mrca[j]
+        ancestor_age <- calibrations$age_mya[j]
+
+        # Check if j is an ancestor of i
+        if (ancestor_node %in% Ancestors(gf_tree, current_node, type = "all")) {
+          if (current_age > ancestor_age) {
+            cat("  Dropping conflicting calibration: node", current_node,
+                "(age", current_age, ") > ancestor node", ancestor_node,
+                "(age", ancestor_age, ")\n")
+            dropped <- c(dropped, i)
+            break
+          }
+        }
+      }
+    }
+    if (length(dropped) > 0) {
+      calibrations <- calibrations[-dropped, ]
+    }
+  }
+  calibrations$node_depth <- NULL
+}
+
+cat("  Final calibrations after dedup/conflict resolution:", nrow(calibrations), "\n")
+
+# ============================================================================
+# Step 4: Apply age brackets
+# ============================================================================
+
+if (nrow(calibrations) > 0) {
+  calibrations$min_mya <- calibrations$age_mya * (1 - age_bracket)
+  calibrations$max_mya <- calibrations$age_mya * (1 + age_bracket)
+}
+
+# ============================================================================
+# Step 5: Count alignment columns (numsites for treePL/PATHd8)
+# ============================================================================
+
+count_alignment_columns <- function(fasta_path) {
+  lines <- readLines(fasta_path, warn = FALSE)
+  seq_lines <- lines[!grepl("^>", lines)]
+  if (length(seq_lines) == 0) return(0)
+  nchar(paste(seq_lines[1:min(length(seq_lines), 1)], collapse = ""))
+}
+
+numsites <- count_alignment_columns(alignment_path)
+cat("  Alignment columns (numsites):", numsites, "\n")
+
+# ============================================================================
+# Step 6: Run dating
+# ============================================================================
+
+n_cal <- nrow(calibrations)
+n_tips <- length(gf_tree$tip.label)
+cat("  Number of calibrations:", n_cal, "\n")
+cat("  Number of tips:", n_tips, "\n")
+
+if (n_cal >= 2) {
+  if (n_tips < max_treepl_tips) {
+    # --- treePL ---
+    cat("  Using treePL for dating...\n")
+
+    # Write gene tree for treePL
+    tree_file <- paste0(og_name, "_for_treepl.newick")
+    write.tree(gf_tree, file = tree_file)
+
+    # Build calibration lines
+    cal_lines <- c()
+    for (i in 1:n_cal) {
+      cal_name <- paste0("cal", i)
+      cal_lines <- c(cal_lines,
+        paste("mrca =", cal_name, calibrations$tipA[i], calibrations$tipB[i]),
+        paste("min =", cal_name, calibrations$min_mya[i]),
+        paste("max =", cal_name, calibrations$max_mya[i])
+      )
+    }
+
+    # CV pass to find optimal smoothing
+    cv_config_file <- paste0(og_name, "_treepl_cv.config")
+    cv_out_file <- paste0(og_name, "_treepl_cv_out.newick")
+    cv_config <- c(
+      paste("treefile =", tree_file),
+      paste("numsites =", numsites),
+      "smooth = 100",
+      cal_lines,
+      paste("outfile =", cv_out_file),
+      "opt = 1",
+      "optad = 1",
+      "cvstart = 1000",
+      "cvstop = 0.1",
+      "cviter = 3",
+      "cv"
+    )
+    writeLines(cv_config, cv_config_file)
+
+    cv_output <- tryCatch({
+      system2("/opt/conda/bin/treePL", args = cv_config_file,
+              stdout = TRUE, stderr = TRUE)
+    }, error = function(e) {
+      cat("  treePL CV pass failed:", e$message, "\n")
+      NULL
+    })
+
+    # Parse optimal smoothing from CV output
+    optimal_smooth <- 100  # default
+    if (!is.null(cv_output)) {
+      smooth_line <- grep("Optimal smoothing value", cv_output, value = TRUE)
+      if (length(smooth_line) > 0) {
+        smooth_val <- as.numeric(sub(".*: *", "", smooth_line[1]))
+        if (!is.na(smooth_val) && smooth_val > 0) {
+          optimal_smooth <- smooth_val
+          cat("  Optimal smoothing from CV:", optimal_smooth, "\n")
+        }
+      }
+    }
+
+    # Final pass with optimal smoothing
+    final_config_file <- paste0(og_name, "_treepl_final.config")
+    final_out_file <- paste0(og_name, "_treepl_dated.newick")
+    final_config <- c(
+      paste("treefile =", tree_file),
+      paste("numsites =", numsites),
+      paste("smooth =", optimal_smooth),
+      cal_lines,
+      paste("outfile =", final_out_file),
+      "opt = 1",
+      "optad = 1"
+    )
+    writeLines(final_config, final_config_file)
+
+    treepl_result <- tryCatch({
+      system2("/opt/conda/bin/treePL", args = final_config_file,
+              stdout = TRUE, stderr = TRUE)
+    }, error = function(e) {
+      cat("  treePL final pass failed:", e$message, "\n")
+      NULL
+    })
+
+    if (file.exists(final_out_file)) {
+      dated_tree <- read.tree(final_out_file)
+      cat("  treePL dating succeeded\n")
+    } else {
+      cat("  WARNING: treePL output not found, falling back to undated tree\n")
+      dated_tree <- gf_tree
+    }
+
+  } else {
+    # --- PATHd8 ---
+    cat("  Using PATHd8 for dating (tree has", n_tips, "tips)...\n")
+
+    # Write PATHd8 input
+    pathd8_input <- paste0(og_name, "_pathd8_input.txt")
+    tree_string <- write.tree(gf_tree)
+
+    pathd8_lines <- c(tree_string)
+    pathd8_lines <- c(pathd8_lines, paste("Sequence length =", numsites, ";"))
+    for (i in 1:n_cal) {
+      midpoint <- (calibrations$min_mya[i] + calibrations$max_mya[i]) / 2
+      pathd8_lines <- c(pathd8_lines,
+        paste0("mrca: ", calibrations$tipA[i], ", ", calibrations$tipB[i],
+               ", fixage=", midpoint, ";")
+      )
+    }
+    writeLines(pathd8_lines, pathd8_input)
+
+    pathd8_output <- paste0(og_name, "_pathd8_output.txt")
+    pathd8_result <- tryCatch({
+      system2("/usr/local/bin/PATHd8", args = c("-i", pathd8_input,
+                                                 "-o", pathd8_output),
+              stdout = TRUE, stderr = TRUE)
+    }, error = function(e) {
+      cat("  PATHd8 failed:", e$message, "\n")
+      NULL
+    })
+
+    if (file.exists(pathd8_output)) {
+      # Parse PATHd8 output - extract the d8 dated tree
+      pathd8_out_lines <- readLines(pathd8_output, warn = FALSE)
+      d8_line <- grep("^d8 tree", pathd8_out_lines, value = TRUE)
+      if (length(d8_line) > 0) {
+        d8_tree_str <- sub("^d8 tree *: *", "", d8_line[1])
+        dated_tree <- read.tree(text = d8_tree_str)
+        cat("  PATHd8 dating succeeded\n")
+      } else {
+        cat("  WARNING: Could not parse PATHd8 output, using undated tree\n")
+        dated_tree <- gf_tree
+      }
+    } else {
+      cat("  WARNING: PATHd8 output not found, using undated tree\n")
+      dated_tree <- gf_tree
+    }
+  }
+
+} else if (n_cal == 1) {
+  # --- Strict molecular clock with single calibration ---
+  cat("  Using strict molecular clock (1 calibration)...\n")
+
+  # Fix the calibration node age and use chronos with strict clock
+  cal_node <- calibrations$gf_mrca[1]
+  cal_age <- calibrations$age_mya[1]
+
+  dated_tree <- tryCatch({
+    calib <- makeChronosCalib(gf_tree, node = cal_node,
+                               age.min = cal_age, age.max = cal_age)
+    chronos(gf_tree, model = "strict", calibration = calib)
+  }, error = function(e) {
+    cat("  chronos() failed:", e$message, "\n")
+    cat("  Returning undated tree\n")
+    gf_tree
+  })
+
+} else {
+  # --- No calibrations: output undated tree ---
+  cat("  WARNING: No speciation calibrations found. Outputting undated tree.\n")
+  cat("  Tree will still be usable for GLS but without time calibration.\n")
+  dated_tree <- gf_tree
+}
+
+# ============================================================================
+# Step 7: Post-processing
+# ============================================================================
+
+# Force ultrametricity if the tree was dated but isn't perfectly ultrametric
+if (n_cal >= 1 && !is.null(dated_tree$edge.length)) {
+  if (!is.ultrametric(dated_tree, tol = 0.01) && is.ultrametric(dated_tree, tol = 1)) {
+    cat("  Forcing ultrametricity (minor adjustments)...\n")
+    dated_tree <- force.ultrametric(dated_tree, method = "extend")
+  }
+}
+
+# Write outputs
+write.tree(dated_tree, file = out_tree_path)
+cat("  Dated tree written to:", out_tree_path, "\n")
+
+# Write calibrations CSV
+if (nrow(calibrations) > 0) {
+  write.csv(calibrations, file = out_csv_path, row.names = FALSE)
+} else {
+  # Write header-only CSV
+  write.csv(data.frame(
+    gf_mrca = integer(0), age_mya = numeric(0),
+    tipA = character(0), tipB = character(0),
+    n_desc_tips = integer(0), events_node = integer(0),
+    min_mya = numeric(0), max_mya = numeric(0)
+  ), file = out_csv_path, row.names = FALSE)
+}
+cat("  Calibrations CSV written to:", out_csv_path, "\n")
+cat("=== Done ===\n")

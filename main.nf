@@ -34,9 +34,11 @@ if (params.mcl_inflation) {
 } else {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
-// Check if zoogle mode requires a reference time tree
+// Check if zoogle mode has required parameters for time calibration
 if (params.zoogle && (!params.reference_time_tree || params.reference_time_tree == 'none')) {
-    exit 1, 'Zoogle mode requires a reference time tree for phylogenetic distance analysis! Please provide --reference_time_tree'
+    if (!params.ncbi_email || params.ncbi_email == 'none') {
+        exit 1, 'Zoogle mode without --reference_time_tree requires --ncbi_email to auto-build a reference chronogram from TimeTree.org. Please provide --ncbi_email or --reference_time_tree.'
+    }
 }
 
 /*
@@ -64,12 +66,14 @@ include { ASTEROID                                  } from './modules/local/aste
 include { SPECIESRAX                                } from './modules/local/speciesrax'
 include { TIME_CALIBRATE_SPECIES_TREE               } from './modules/local/time_calibrate_species_tree'
 include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
+include { DATE_GENE_FAMILY_TREES                    } from './modules/local/date_gene_family_trees'
 include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 include { MERGE_PHYLO_PROFILES                      } from './modules/local/merge_phylo_profiles'
 include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
 include { PHYLO_DIST                                } from './modules/local/phylo_dist'
+include { BUILD_REFERENCE_CHRONOGRAM                } from './modules/local/build_reference_chronogram'
 
 if (params.generax_per_family) {
     include { GENERAX_PER_FAMILY                    } from './modules/local/generax_per_family'
@@ -366,8 +370,52 @@ workflow NOVELTREE {
         )
         ch_versions = ch_versions.mix(PHYSICOCHEMICAL_PROPS.out.versions)
 
-        ch_phylo_dist_input = GENERAX_PER_SPECIES.out.generax_per_spp_gfts
-            .join(PHYSICOCHEMICAL_PROPS.out.summary_stats)
+        //
+        // MODULE: BUILD_REFERENCE_CHRONOGRAM / TIME_CALIBRATE_SPECIES_TREE
+        // Either auto-build a reference chronogram from TimeTree.org or use user-provided tree,
+        // then time-calibrate the species tree for phylogenetic distance analysis
+        //
+        if (!params.reference_time_tree || params.reference_time_tree == 'none') {
+            // Auto-build reference chronogram from TimeTree.org
+            ch_species_names_file = species_name_list
+                .collectFile(name: 'species_names.txt', newLine: true)
+            BUILD_REFERENCE_CHRONOGRAM(ch_species_names_file, params.ncbi_email)
+            ch_reference_tree = BUILD_REFERENCE_CHRONOGRAM.out.chronogram
+            ch_versions = ch_versions.mix(BUILD_REFERENCE_CHRONOGRAM.out.versions)
+        } else {
+            // Use user-provided reference time tree
+            ch_reference_tree = file(params.reference_time_tree)
+        }
+
+        TIME_CALIBRATE_SPECIES_TREE(
+            ch_speciesrax,
+            ch_reference_tree,
+            params.time_calibration_method
+        )
+        ch_versions = ch_versions.mix(TIME_CALIBRATE_SPECIES_TREE.out.versions)
+
+        //
+        // MODULE: DATE_GENE_FAMILY_TREES
+        // Time-calibrate gene family trees using reconciliation-filtered calibrations.
+        // Only speciation nodes (S, SL) from GeneRax NHX trees are used;
+        // duplication and transfer nodes are excluded.
+        //
+        // Build input: join NHX + Newick + MSA per OG
+        ch_dating_input = GENERAX_PER_SPECIES.out.generax_per_spp_events       // [meta, nhx]
+            .join(GENERAX_PER_SPECIES.out.generax_per_spp_gfts)             // [meta, nhx, newick]
+            .join(ch_all_og_clean_msas)                                      // [meta, nhx, newick, msa]
+
+        DATE_GENE_FAMILY_TREES(
+            ch_dating_input,
+            TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree,
+            params.max_treepl_tips,
+            params.age_bracket
+        )
+        ch_versions = ch_versions.mix(DATE_GENE_FAMILY_TREES.out.versions)
+
+        // Feed dated trees into PHYLO_DIST (replaces raw reconciled trees)
+        ch_phylo_dist_input = DATE_GENE_FAMILY_TREES.out.dated_gft          // [meta, dated_tree]
+            .join(PHYSICOCHEMICAL_PROPS.out.summary_stats)                   // [meta, dated_tree, props]
             .filter { meta, tree, props_file ->
                 // Validate gene family has sufficient proteins for phylo-dist analysis
                 // Read CSV and extract protein IDs (first column, skip header)
@@ -407,20 +455,8 @@ workflow NOVELTREE {
                 return isValid
             }
 
-        //
-        // MODULE: TIME_CALIBRATE_SPECIES_TREE
-        // Time-calibrate the species tree for phylogenetic distance analysis
-        //
-        TIME_CALIBRATE_SPECIES_TREE(
-            ch_speciesrax,
-            file(params.reference_time_tree),
-            params.time_calibration_method
-        )
-        ch_versions = ch_versions.mix(TIME_CALIBRATE_SPECIES_TREE.out.versions)
-
         PHYLO_DIST(
             ch_phylo_dist_input,
-            TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree,
             params.ref_species
         )
         ch_versions = ch_versions.mix(PHYLO_DIST.out.versions)

@@ -2,7 +2,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     tag "Time-calibrate species tree"
     label 'process_single'
 
-    container 'arcadiascience/phylo_dist:1.0.0'
+    container 'arcadiascience/phylo_dist:1.1.0'
 
     publishDir(
         path: "${params.outdir}/species_trees/time_calibrated",
@@ -43,7 +43,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     "${task.process}":
         R: \$(R --version | head -n1 | sed 's/R version //g' | cut -d' ' -f1)
         ape: \$(Rscript -e "cat(as.character(packageVersion('ape')))")
-        geiger: \$(Rscript -e "cat(as.character(packageVersion('geiger')))")
+        phangorn: \$(Rscript -e "cat(as.character(packageVersion('phangorn')))")
     END_VERSIONS
     """
 }
