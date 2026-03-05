@@ -5,7 +5,7 @@ process DATE_GENE_FAMILY_TREES {
     container 'arcadiascience/phylo_dist:1.1.0'
 
     input:
-    tuple val(meta), path(events_tree), path(newick_tree), path(alignment), path(species_tree)
+    tuple val(meta), path(reconciled_tree), path(alignment), path(species_tree)
     val max_treepl_tips
     val age_bracket
 
@@ -21,7 +21,7 @@ process DATE_GENE_FAMILY_TREES {
     def args = task.ext.args ?: ''
     """
     Rscript /opt/phylo_dist/date_gene_family_tree.R \
-        ${events_tree} ${newick_tree} ${species_tree} ${alignment} \
+        ${reconciled_tree} ${species_tree} ${alignment} \
         ${meta.og} ${max_treepl_tips} ${age_bracket} \
         ${meta.og}_dated.newick ${meta.og}_calibrations.csv
 

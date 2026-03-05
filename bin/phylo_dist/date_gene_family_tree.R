@@ -6,7 +6,7 @@
 # points. Duplication (D) and transfer (T, TL) nodes are excluded.
 #
 # Usage:
-#   Rscript date_gene_family_tree.R <nhx_tree> <newick_tree> <species_tree> \
+#   Rscript date_gene_family_tree.R <reconciled_tree> <species_tree> \
 #     <alignment> <og_name> <max_treepl_tips> <age_bracket> \
 #     <out_dated_tree> <out_calibrations_csv>
 
@@ -17,26 +17,24 @@ suppressPackageStartupMessages({
 })
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 9) {
-  stop("Usage: Rscript date_gene_family_tree.R <events_tree> <newick_tree> ",
+if (length(args) != 8) {
+  stop("Usage: Rscript date_gene_family_tree.R <reconciled_tree> ",
        "<species_tree> <alignment> <og_name> <max_treepl_tips> <age_bracket> ",
        "<out_dated_tree> <out_calibrations_csv>")
 }
 
-events_path     <- args[1]
-newick_path     <- args[2]
-spp_tree_path   <- args[3]
-alignment_path  <- args[4]
-og_name         <- args[5]
-max_treepl_tips <- as.integer(args[6])
-age_bracket     <- as.numeric(args[7])
-out_tree_path   <- args[8]
-out_csv_path    <- args[9]
+tree_path       <- args[1]
+spp_tree_path   <- args[2]
+alignment_path  <- args[3]
+og_name         <- args[4]
+max_treepl_tips <- as.integer(args[5])
+age_bracket     <- as.numeric(args[6])
+out_tree_path   <- args[7]
+out_csv_path    <- args[8]
 
 cat("=== date_gene_family_tree.R ===\n")
 cat("OG:", og_name, "\n")
-cat("Events tree:", events_path, "\n")
-cat("Newick tree:", newick_path, "\n")
+cat("Reconciled tree:", tree_path, "\n")
 cat("Species tree:", spp_tree_path, "\n")
 cat("Alignment:", alignment_path, "\n")
 cat("Max treePL tips:", max_treepl_tips, "\n")
@@ -46,28 +44,28 @@ cat("Age bracket:", age_bracket, "\n")
 # Step 0: Read inputs
 # ============================================================================
 
-# Read the gene family tree (ML branch lengths) for dating
-gf_tree <- read.tree(newick_path)
+# Read the reconciled gene family tree — has both ML branch lengths and
+# S/D/T internal node labels from GeneRax reconciliation
+gf_tree <- read.tree(tree_path)
 
 # Read the time-calibrated species tree
 spp_tree <- read.tree(spp_tree_path)
 
 # ============================================================================
-# Step 1: Parse event annotations from GeneRax events.newick
+# Step 1: Parse event annotations from reconciled tree node labels
 # ============================================================================
 
-# GeneRax outputs an _events.newick file with internal node labels
-# indicating event types: S (speciation), D (duplication), T (transfer).
+# The reconciled tree includes internal node labels indicating event types:
+# S (speciation), D (duplication), T@donor@recipient (transfer).
 # ape::read.tree() parses these directly as $node.label.
-events_tree <- read.tree(events_path)
 
 # Extract per-internal-node event types from node labels
 # Node labels may include transfer info like "T@donor@recipient"
-node_events <- events_tree$node.label
+node_events <- gf_tree$node.label
 node_events <- sub("@.*", "", node_events)  # strip transfer details
 
-n_tips_ev <- length(events_tree$tip.label)
-n_internal <- events_tree$Nnode
+n_tips_ev <- length(gf_tree$tip.label)
+n_internal <- gf_tree$Nnode
 
 # Classify: S -> speciation (usable for calibration); D, T -> excluded
 is_speciation <- node_events == "S"
@@ -81,9 +79,8 @@ cat("  Events found: S =", n_spec, ", D =", n_dup,
 # Step 2: Extract speciation-only calibrations
 # ============================================================================
 
-extract_speciation_calibrations <- function(events_tree, gf_tree,
-                                            spp_tree, is_speciation) {
-  n_tips_ev <- length(events_tree$tip.label)
+extract_speciation_calibrations <- function(gf_tree, spp_tree, is_speciation) {
+  n_tips <- length(gf_tree$tip.label)
 
   # Get species tree node depths for age calculation
   spp_depths <- node.depth.edgelength(spp_tree)
@@ -103,11 +100,11 @@ extract_speciation_calibrations <- function(events_tree, gf_tree,
   if (length(spec_nodes) == 0) return(calibrations)
 
   for (idx in spec_nodes) {
-    ev_node <- n_tips_ev + idx
+    ev_node <- n_tips + idx
 
-    # Get descendant tips in the events tree
-    desc_tips <- events_tree$tip.label[unlist(
-      phangorn::Descendants(events_tree, ev_node, type = "tips")
+    # Get descendant tips
+    desc_tips <- gf_tree$tip.label[unlist(
+      phangorn::Descendants(gf_tree, ev_node, type = "tips")
     )]
     if (length(desc_tips) < 2) next
 
@@ -152,7 +149,7 @@ extract_speciation_calibrations <- function(events_tree, gf_tree,
 }
 
 calibrations <- extract_speciation_calibrations(
-  events_tree, gf_tree, spp_tree, is_speciation
+  gf_tree, spp_tree, is_speciation
 )
 cat("  Raw speciation calibrations:", nrow(calibrations), "\n")
 
