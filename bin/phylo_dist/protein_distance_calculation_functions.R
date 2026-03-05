@@ -19,8 +19,6 @@ calc_prot_spp_dists <-
     # keep_stats: the AA summary statistics we wish to retain in analyses
     # out_dir: the base directory to write the output files to
     # Prep output directories
-    dir.create(paste0(out_dir, "/congruified-gfts/"),
-               recursive = TRUE, showWarnings = FALSE)
     dir.create(paste0(out_dir, "/protein-dist-mats/"),
                recursive = TRUE, showWarnings = FALSE)
     dir.create(paste0(out_dir, "/protein-phylo-dist-mats/"),
@@ -255,7 +253,6 @@ calc_prot_spp_dists <-
       list(
         phylo_corrected_data = transf_data,
         protein_dist_mat = dist_mat,
-        congruified_phylo = gf_tree,
         prot_phylo_dists = prot_phylo_dists,
         prot_dists_to_ref = focal_dist_prot_res,
         spp_dists_to_ref = obs_spp_dists,
@@ -294,10 +291,6 @@ genefam_aa_conservation <-
         out_dir = out_dir,
         clinvar = clinvar
       )
-    ape::write.tree(gf_dist_res$congruified_phylo,
-                    file = paste0(out_dir, "/congruified-gfts/",
-                                  gene_family["family"],
-                                  "_congruified.newick"))
     write.table(gf_dist_res$phylo_corrected_data, sep = "\t",
                 file = paste0(out_dir, "/phylo-corrected-data/",
                               gene_family["family"],
