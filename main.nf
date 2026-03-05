@@ -317,38 +317,20 @@ workflow NOVELTREE {
     ch_recon_perspp_gene_trees = GENERAX_PER_SPECIES.out.generax_per_spp_gfts.collect { it[1] }
 
     //
-    // MODULE: PHYLO_PROFILES (batched)
+    // MODULE: PHYLO_PROFILES (per gene family)
     // Generate phylogenetic profiles from GeneRax reconciliation outputs
-    // Batch inputs to avoid staging too many files at once
     //
-    def batch_size = 1000
-
-    // Combine all related data for each orthogroup into a tuple, then batch
     ch_phylo_profiles_input = GENERAX_PER_SPECIES.out.event_counts
         .join(GENERAX_PER_SPECIES.out.species_event_counts)
         .join(GENERAX_PER_SPECIES.out.transfer_event_counts)
         .join(GENERAX_PER_SPECIES.out.species_coverage)
-        .map { meta, event_count, species_event_count, transfer_event_count, species_coverage ->
-            [meta.og, event_count, species_event_count, transfer_event_count, species_coverage]
-        }
-        .toList()
-        .flatMap { items ->
-            items.collate(batch_size).withIndex().collect { batch, idx ->
-                def ogs = batch.collect { it[0] }
-                def event_counts = batch.collect { it[1] }
-                def species_event_counts = batch.collect { it[2] }
-                def transfer_event_counts = batch.collect { it[3] }
-                def species_coverages = batch.collect { it[4] }
-                [idx, event_counts, species_event_counts, transfer_event_counts, species_coverages, ogs]
-            }
-        }
 
     PHYLO_PROFILES(
         ch_phylo_profiles_input,
         ORTHOFINDER_MCL_ALL.out.inflation_dir
     )
 
-    // Merge batched outputs
+    // Merge per-OG outputs
     MERGE_PHYLO_PROFILES(
         PHYLO_PROFILES.out.duplication_count.collect(),
         PHYLO_PROFILES.out.hgt_summed_count.collect(),

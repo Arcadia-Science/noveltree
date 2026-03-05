@@ -1,33 +1,15 @@
 #!/usr/bin/env Rscript
-message("DEBUG: Script starting"); flush(stderr())
 library(data.table)
-message("DEBUG: Loaded data.table"); flush(stderr())
-library(parallel)
-message("DEBUG: Loaded parallel"); flush(stderr())
 library(plyr)
-message("DEBUG: Loaded plyr"); flush(stderr())
 library(purrr)
-message("DEBUG: Loaded purrr"); flush(stderr())
 
 args = commandArgs(trailingOnly=TRUE)
-message("DEBUG: Got args"); flush(stderr())
-event_counts_files <- args[1]
-species_event_counts_files <- args[2]
-transfer_event_counts_files <- args[3]
-species_coverage_files <- args[4]
-ogs <- args[5]
+event_counts_file <- args[1]
+species_event_counts_file <- args[2]
+transfer_event_counts_file <- args[3]
+species_coverage_file <- args[4]
+og <- args[5]
 orthogroup_dir <- args[6]
-batch_id <- args[7]
-message(paste("DEBUG: Parsed args, batch_id:", batch_id)); flush(stderr())
-
-per_og_events <- unlist(strsplit(event_counts_files, " "))
-message(paste("DEBUG: Split event_counts_files, length:", length(per_og_events))); flush(stderr())
-per_spp_og_events <- unlist(strsplit(species_event_counts_files, " "))
-message(paste("DEBUG: Split species_event_counts_files, length:", length(per_spp_og_events))); flush(stderr())
-spp_tranf_rates_fpaths <- unlist(strsplit(transfer_event_counts_files, " "))
-message(paste("DEBUG: Split transfer_event_counts_files, length:", length(spp_tranf_rates_fpaths))); flush(stderr())
-ogs <- unlist(strsplit(ogs, " "))
-message(paste("DEBUG: Split ogs, length:", length(ogs))); flush(stderr())
 
 get_per_spp_og_counts <-
   function(orthogroup_dir){
@@ -44,9 +26,7 @@ get_per_spp_og_counts <-
   }
 
 get_og_event_counts <-
-  function(i, per_spp_og_counts = per_spp_og_counts, per_og_events = per_og_events, ogs = ogs){
-    # Populate an empty dataframe
-    # Create a dataframe to store the per-OG event counts
+  function(per_spp_og_counts, event_counts_file, og){
     per_og_event_counts <-
       data.frame(
         gene_family = NA,
@@ -59,30 +39,21 @@ get_og_event_counts <-
         number_gene_copies = NA,
         number_species = NA)
 
-    # Read in the the orthogroup-wide (across spp) event counts
-    tmp <- read.table(per_og_events[i], sep = ":", check.names = F)
-    gf <- ogs[i]
-    gf_col <- data.frame(gene_family = gf)
+    tmp <- read.table(event_counts_file, sep = ":", check.names = F)
 
-    # Get the per-species gene-count for this gene family
     species <-
       colnames(per_spp_og_counts)[-c(1, c((ncol(per_spp_og_counts)-1):ncol(per_spp_og_counts)))]
 
     counts <-
-      per_spp_og_counts[which(per_spp_og_counts$Orthogroup == gf),]
-    og_spps <- species[which(species %in% colnames(counts))]
+      per_spp_og_counts[which(per_spp_og_counts$Orthogroup == og),]
 
-    # Now fill
-    per_og_event_counts[1,] <- c(gf, tmp$V2, counts$NumSpecies)
+    per_og_event_counts[1,] <- c(og, tmp$V2, counts$NumSpecies)
 
-    # Return these event results as output
     return(per_og_event_counts)
   }
 
 get_tranfer_donor_recips <-
-  function(i, per_spp_og_counts = NULL,
-           spp_tranf_rates_fpaths = NULL,
-           ogs = NULL){
+  function(per_spp_og_counts, transfer_event_counts_file, og){
     species <-
       colnames(per_spp_og_counts)[-c(1,(ncol(per_spp_og_counts)-1):ncol(per_spp_og_counts))]
 
@@ -99,15 +70,14 @@ get_tranfer_donor_recips <-
              dimnames = list(species, species),
              data = 0)
 
-    gf <- ogs[i]
-    # And the species that are in this gene family
-    og_spps <- per_spp_og_counts[which(per_spp_og_counts$Orthogroup == gf),
+    # Species present in this gene family
+    og_spps <- per_spp_og_counts[which(per_spp_og_counts$Orthogroup == og),
                                  -c(1,(ncol(per_spp_og_counts)-1):ncol(per_spp_og_counts))]
     og_spps <- colnames(og_spps[which(og_spps[1,] > 0),])
-    # And then the table of recipient-donor events
-    # But only if transfer events were inferred
-    if(file.size(spp_tranf_rates_fpaths[i]) != 0L){
-      tmp <- read.table(spp_tranf_rates_fpaths[i], check.names = F)
+
+    # Only process if transfer events were inferred
+    if(file.size(transfer_event_counts_file) != 0L){
+      tmp <- read.table(transfer_event_counts_file, check.names = F)
       donor_spps <- og_spps[which(og_spps %in% tmp$V1)]
       donors <- summary(as.factor(tmp$V1))
       donors <- data.frame(as.list(donors[which(names(donors) %in% species)]), check.names = F)
@@ -115,13 +85,9 @@ get_tranfer_donor_recips <-
       recips <- summary(as.factor(tmp$V2))
       recips <- data.frame(as.list(recips[which(names(recips) %in% species)]), check.names = F)
 
-      # And only if the transfer events occurred between tips
-      # Make sure species included in the gene family have integer
-      # counts, all other species NA
       if(nrow(donors) > 0){
-        donors$gene_family <- gf
+        donors$gene_family <- og
         non_donors <- og_spps[-which(og_spps %in% donor_spps)]
-        # If there are species who did not donate gene copies via transfer:
         if(length(non_donors) > 0){
           non_donors <-
             data.frame(matrix(ncol = length(non_donors),
@@ -135,15 +101,14 @@ get_tranfer_donor_recips <-
         non_donors <-
           data.frame(matrix(ncol = length(og_spps)+1,
                             dimnames = list(NULL, c("gene_family", og_spps)),
-                            data = c(gf, rep(0, length(og_spps)))),
+                            data = c(og, rep(0, length(og_spps)))),
                         check.names = F)
         per_spp_og_transfer_donor <-
           plyr::rbind.fill(per_spp_og_transfer_donor, non_donors)
       }
       if(nrow(recips) > 0){
-        recips$gene_family <- gf
+        recips$gene_family <- og
         non_recips <- og_spps[-which(og_spps %in% recip_spps)]
-        # If there are species who did not receive gene copies via transfer:
         if(length(non_recips) > 0){
           non_recips <-
             data.frame(matrix(ncol = length(non_recips),
@@ -157,18 +122,16 @@ get_tranfer_donor_recips <-
         non_recips <-
           data.frame(matrix(ncol = length(og_spps)+1,
                             dimnames = list(NULL, c("gene_family", og_spps)),
-                            data = c(gf, rep(0, length(og_spps)))),
+                            data = c(og, rep(0, length(og_spps)))),
                      check.names = F)
         per_spp_og_transfer_recip <-
           plyr::rbind.fill(per_spp_og_transfer_recip, non_recips)
       }
-      # Now fill in the donor-recipient matrix
+      # Fill in the donor-recipient matrix
       tmp <- tmp[which(tmp$V1 %in% species & tmp$V2 %in% species),]
       for(x in 1:nrow(tmp)){
         donor <- which(species == tmp$V1[x])
         recip <- which(species == tmp$V2[x])
-
-        # y-axis: recipient, x-axis: donor
         transf_count_mat[donor, recip] <-
           transf_count_mat[donor, recip] + 1
       }
@@ -176,12 +139,12 @@ get_tranfer_donor_recips <-
       per_spp_og_transfer_donor <-
         data.frame(matrix(ncol = length(og_spps)+1,
                           dimnames = list(NULL, c("gene_family", og_spps)),
-                          data = c(gf, rep(0, length(og_spps)))),
+                          data = c(og, rep(0, length(og_spps)))),
                    check.names = F)
       per_spp_og_transfer_recip <-
         data.frame(matrix(ncol = length(og_spps)+1,
                           dimnames = list(NULL, c("gene_family", og_spps)),
-                          data = c(gf, rep(0, length(og_spps)))),
+                          data = c(og, rep(0, length(og_spps)))),
                    check.names = F)
     }
     return(list("summed_matrix" = transf_count_mat,
@@ -190,22 +153,15 @@ get_tranfer_donor_recips <-
   }
 
 get_og_events_per_spp <-
-  function(i, per_spp_og_counts = per_spp_og_counts,
-           per_spp_og_events = per_spp_og_events,
-           ogs = ogs){
-    # Get the names of species
+  function(per_spp_og_counts, species_event_counts_file, og){
     species <-
       colnames(per_spp_og_counts)[-c(1, c((ncol(per_spp_og_counts)-1):ncol(per_spp_og_counts)))]
 
-    # Read in table of per-species event counts for this gene family
-    tmp <- read.table(per_spp_og_events[i], row.names = 1, check.names = F, sep = ",")
+    tmp <- read.table(species_event_counts_file, row.names = 1, check.names = F, sep = ",")
     tmp <- data.frame(t(tmp[which(rownames(tmp) %in% species),]), check.names = F)
 
-    # Identify which gene family we"re dealing with
-    gf <- ogs[i]
-    gf_col <- data.frame(gene_family = gf)
+    gf_col <- data.frame(gene_family = og)
 
-    # Create one empty table for each parameter for the per-species counts per OG
     per_spp_og_speciation <-
       data.frame(matrix(ncol = length(species)+1, nrow = 0))
     colnames(per_spp_og_speciation) <- c("gene_family", species)
@@ -219,14 +175,12 @@ get_og_events_per_spp <-
       data.frame(matrix(ncol = length(species)+1, nrow = 0))
     colnames(per_spp_og_loss) <- c("gene_family", species)
 
-    # And populate counts of duplication, transfer and loss
     # Use drop=FALSE to preserve column names when there's only 1 species
     specs <- cbind(gf_col, tmp[1, , drop=FALSE])
     dups <- cbind(gf_col, tmp[2, , drop=FALSE])
     loss <- cbind(gf_col, tmp[3, , drop=FALSE])
     transf <- cbind(gf_col, tmp[4, , drop=FALSE])
 
-    # Now populate, allowing for species to not be present
     per_spp_og_speciation <-
       plyr::rbind.fill(per_spp_og_speciation, specs)
     per_spp_og_duplication <-
@@ -242,113 +196,34 @@ get_og_events_per_spp <-
                 losses = per_spp_og_loss))
   }
 
-# Now some quick helper functions to pull out speciations, duplications,
-# transfers, and losses
-get_speciations <-
-  function(i, per_spp_events = per_spp_events){
-    speciactions <- per_spp_events[[i]]$speciations; return(speciactions)}
-get_duplications <-
-  function(i, per_spp_events = per_spp_events){
-    duplications <- per_spp_events[[i]]$duplications; return(duplications)}
-get_losses <-
-  function(i, per_spp_events = per_spp_events){
-    losses <- per_spp_events[[i]]$losses; return(losses)}
-
-summarize_generax_per_species <-
-  function(per_og_events,
-           per_spp_og_events,
-           spp_tranf_rates_fpaths,
-           ogs,
-           per_spp_og_counts,
-           batch_id,
-           nparallel = detectCores()-1){
-    # Get the counts of each event type (duplications, transfers, losses, etc)
-    # per-og, across all species
-    message("Extracting event counts for each species per gene family.")
-    per_og_event_res <-
-      do.call(rbind, mclapply(X = 1:length(per_og_events),
-                              get_og_event_counts, per_spp_og_counts = per_spp_og_counts,
-                              per_og_events = per_og_events, ogs = ogs,
-                              mc.cores = nparallel))
-
-    # Get the counts of events per species, per orthogroup
-    # Begin by first summarizing these event counts per orthogroup
-    message("Extracting event counts per-species, per-orthogroup.")
-    per_spp_events <-
-      mclapply(1:length(per_spp_og_events),
-               get_og_events_per_spp, per_spp_og_counts = per_spp_og_counts,
-               per_spp_og_events = per_spp_og_events, ogs = ogs,
-               mc.cores = nparallel)
-
-    # And then pull out each event type individually
-    message("Now, pulling out each event type individually.")
-    per_spp_og_speciation <-
-      do.call(rbind, mclapply(1:length(per_spp_events), get_speciations,
-                              per_spp_events = per_spp_events,
-                              mc.cores = nparallel))
-    per_spp_og_duplication <-
-      do.call(rbind, mclapply(1:length(per_spp_events), get_duplications,
-                              per_spp_events = per_spp_events,
-                              mc.cores = nparallel))
-    per_spp_og_loss <-
-      do.call(rbind, mclapply(1:length(per_spp_events), get_losses,
-                              per_spp_events = per_spp_events,
-                              mc.cores = nparallel))
-
-    # Clean up the large interim list
-    rm(per_spp_events)
-
-    # Now, focusing on transfers - get a summed matrix of transfers among species,
-    # with donors along the x-axis, and recipients along the y.
-    # y-axis: recipient, x-axis: donor
-    message("Summarizing gene transfer recipient events.")
-    transf_res <-
-      transpose(mclapply(1:length(spp_tranf_rates_fpaths),
-                         get_tranfer_donor_recips,
-                         per_spp_og_counts = per_spp_og_counts,
-                         spp_tranf_rates_fpaths = spp_tranf_rates_fpaths,
-                         ogs = ogs,
-                         mc.cores = nparallel))
-    message("Summarizing gene transfer events into a matrix of donor-recipient species pairs.")
-    transf_count_mat <- Reduce("+", transf_res$summed_matrix)
-    message("Pulling out the count of transfer-donor events for each species per gene family")
-    transf_donors <- do.call("rbind", transf_res$gf_transfer_donors)
-    message("Pulling out the count of transfer-recipient events for each species per gene family")
-    transf_recips <- do.call("rbind", transf_res$gf_transfer_recips)
-
-    # Write outputs with batch-specific filenames
-    message("Writing output files...")
-    write.table(transf_count_mat,
-                file = paste0("batch_", batch_id, "_hgt_summed_counts.tsv"),
-                sep = "\t", quote = F, row.names = T, col.names = NA)
-    write.table(per_spp_og_speciation,
-                file = paste0("batch_", batch_id, "_speciation_count.tsv"),
-                sep = "\t", quote = F, row.names = F, col.names = T)
-    write.table(per_spp_og_duplication,
-                file = paste0("batch_", batch_id, "_duplication_count.tsv"),
-                sep = "\t", quote = F, row.names = F, col.names = T)
-    write.table(per_spp_og_loss,
-                file = paste0("batch_", batch_id, "_loss_count.tsv"),
-                sep = "\t", quote = F, row.names = F, col.names = T)
-    write.table(transf_donors,
-                file = paste0("batch_", batch_id, "_transfer_donor_count.tsv"),
-                sep = "\t", quote = F, row.names = F, col.names = T)
-    write.table(transf_recips,
-                file = paste0("batch_", batch_id, "_transfer_recipient_count.tsv"),
-                sep = "\t", quote = F, row.names = F, col.names = T)
-  }
-
-message("DEBUG: About to call get_per_spp_og_counts"); flush(stderr())
+# Load OG counts table
 per_spp_og_counts <- get_per_spp_og_counts(orthogroup_dir)
-message(paste("DEBUG: Loaded per_spp_og_counts, dim:", nrow(per_spp_og_counts), "x", ncol(per_spp_og_counts))); flush(stderr())
 
-message("DEBUG: About to call summarize_generax_per_species"); flush(stderr())
-generax_res_per_species <-
-  summarize_generax_per_species(
-    per_og_events,
-    per_spp_og_events,
-    spp_tranf_rates_fpaths,
-    ogs,
-    per_spp_og_counts,
-    batch_id
-  )
+# Get per-OG event counts
+per_og_event_res <- get_og_event_counts(per_spp_og_counts, event_counts_file, og)
+
+# Get per-species event counts
+per_spp_events <- get_og_events_per_spp(per_spp_og_counts, species_event_counts_file, og)
+
+# Get transfer donor-recipient info
+transf_res <- get_tranfer_donor_recips(per_spp_og_counts, transfer_event_counts_file, og)
+
+# Write outputs with OG-specific filenames
+write.table(transf_res$summed_matrix,
+            file = paste0(og, "_hgt_summed_counts.tsv"),
+            sep = "\t", quote = F, row.names = T, col.names = NA)
+write.table(per_spp_events$speciations,
+            file = paste0(og, "_speciation_count.tsv"),
+            sep = "\t", quote = F, row.names = F, col.names = T)
+write.table(per_spp_events$duplications,
+            file = paste0(og, "_duplication_count.tsv"),
+            sep = "\t", quote = F, row.names = F, col.names = T)
+write.table(per_spp_events$losses,
+            file = paste0(og, "_loss_count.tsv"),
+            sep = "\t", quote = F, row.names = F, col.names = T)
+write.table(transf_res$gf_transfer_donors,
+            file = paste0(og, "_transfer_donor_count.tsv"),
+            sep = "\t", quote = F, row.names = F, col.names = T)
+write.table(transf_res$gf_transfer_recips,
+            file = paste0(og, "_transfer_recipient_count.tsv"),
+            sep = "\t", quote = F, row.names = F, col.names = T)
