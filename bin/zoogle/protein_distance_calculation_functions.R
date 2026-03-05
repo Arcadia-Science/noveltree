@@ -9,8 +9,7 @@ Rcpp::sourceCpp("calculate_dist_stats.cpp")
 calc_prot_spp_dists <-
   function(gene_family, gf_stats_path,
            ref_spp,
-           keep_stats, out_dir,
-           clinvar) {
+           keep_stats, out_dir) {
     # gf_stats_path: the file path to the file containing protein summary
     # statistics for a single gene family
     # gene_family: named vector with "family" (OG name) and "gft" (tree path)
@@ -175,8 +174,7 @@ calc_prot_spp_dists <-
         prot_phylo_dists[obs, ref]
       })
 
-    # Assemble into a combined table, populating disease info with
-    # empty entries to start
+    # Assemble into a combined summary table
     final_summary_table <-
       data.frame(
         gene_family = gene_family["family"],
@@ -187,67 +185,9 @@ calc_prot_spp_dists <-
         trait_dist = per_prot_dist_res$distance,
         rank_trait_dist = per_prot_dist_res$rank_distance,
         pvalue_rowwise = per_prot_dist_res$pvalue_across_nonref,
-        pvalue_colwise = per_prot_dist_res$pvalue_within_nonref,
-        associated_gene = NA,
-        disease_mim = NA,
-        disease_name = NA,
-        concept_id = NA,
-        source_name = NA,
-        source_id = NA
+        pvalue_colwise = per_prot_dist_res$pvalue_within_nonref
       )
 
-    # Identify whether there are any disease-associated human genes within
-    # this gene family, and if so, retain this info.
-    target_prots <- unique(ref_prot)
-
-    # Only process clinvar data if it's provided (not NULL)
-    if (!is.null(clinvar)) {
-      disease_info <-
-        clinvar[which(clinvar$uniprot_id %in% target_prots), ]
-      # Make sure there are no lingering semicolons, since we'll be appending
-      # multiple disease entries into a single row.
-      disease_info$disease_name <-
-        gsub(";", ":", disease_info$disease_name)
-    } else {
-      # If clinvar is NULL, create an empty data frame
-      disease_info <- data.frame()
-    }
-
-    # If there are any disease-associated genes in this gene family,
-    # incorporate this info into the table
-    if (nrow(disease_info) > 0) {
-      # Store the names of clinvar columns we'll be accessing
-      # and in the appropriate order
-      clinvar_columns <-
-        c(
-          "disease_mim",
-          "disease_name",
-          "concept_id",
-          "source_name",
-          "source_id"
-        )
-
-      for (d in unique(disease_info$uniprot_id)) {
-        # Pull out the focal disease gene
-        idx <-
-          which(disease_info$uniprot_id == d)
-        diseases <- disease_info[idx, ]
-        associated_gene <- unique(disease_info$associated_genes[idx])
-        # Collapse column entries for this gene, appending with a semicolon
-        diseases <-
-          sapply(diseases, function(x) {
-            paste(x, collapse = ";")
-          })
-        # Add to the combined table
-        idx <-
-          which(final_summary_table$ref_protein == d)
-        final_summary_table[idx, "associated_gene"] <- associated_gene
-        final_summary_table[idx, 11:15] <-
-          matrix(rep(diseases[clinvar_columns], length(idx)),
-                 ncol = 5,
-                 byrow = TRUE)
-      }
-    }
     # And return all outputs
     return(
       list(
@@ -268,7 +208,6 @@ calc_prot_spp_dists <-
 # family, allowing calculations to be done in parallel.
 genefam_aa_conservation <-
   function(gene_family, ref_spp = ref_spp, aa_stat_basedir = aa_stat_basedir,
-           clinvar = clinvar,
            keep_stats =
            c("molecular_weight", "aromaticity", "instability", "flexibility",
              "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
@@ -288,8 +227,7 @@ genefam_aa_conservation <-
                                "_summary_statistics.csv"),
         ref_spp = ref_spp,
         keep_stats = keep_stats,
-        out_dir = out_dir,
-        clinvar = clinvar
+        out_dir = out_dir
       )
     write.table(gf_dist_res$phylo_corrected_data, sep = "\t",
                 file = paste0(out_dir, "/phylo-corrected-data/",
