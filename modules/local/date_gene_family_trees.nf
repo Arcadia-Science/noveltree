@@ -29,6 +29,7 @@ process DATE_GENE_FAMILY_TREES {
     "${task.process}":
         R: \$(R --version | head -n1 | sed 's/R version //g' | cut -d' ' -f1)
         ape: \$(Rscript -e "cat(as.character(packageVersion('ape')))")
+        phangorn: \$(Rscript -e "cat(as.character(packageVersion('phangorn')))")
         phytools: \$(Rscript -e "cat(as.character(packageVersion('phytools')))")
     END_VERSIONS
     """
