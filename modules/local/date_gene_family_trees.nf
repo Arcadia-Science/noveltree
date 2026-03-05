@@ -5,8 +5,7 @@ process DATE_GENE_FAMILY_TREES {
     container 'arcadiascience/phylo_dist:1.1.0'
 
     input:
-    tuple val(meta), path(events_tree), path(newick_tree), path(alignment)
-    path species_tree
+    tuple val(meta), path(events_tree), path(newick_tree), path(alignment), path(species_tree)
     val max_treepl_tips
     val age_bracket
 

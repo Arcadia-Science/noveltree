@@ -382,14 +382,14 @@ workflow NOVELTREE {
         // Only speciation nodes (S, SL) from GeneRax NHX trees are used;
         // duplication and transfer nodes are excluded.
         //
-        // Build input: join NHX + Newick + MSA per OG
-        ch_dating_input = GENERAX_PER_SPECIES.out.generax_per_spp_events       // [meta, nhx]
-            .join(GENERAX_PER_SPECIES.out.generax_per_spp_gfts)             // [meta, nhx, newick]
-            .join(ch_all_og_clean_msas)                                      // [meta, nhx, newick, msa]
+        // Build input: join events + reconciled tree + MSA per OG, then combine with species tree
+        ch_dating_input = GENERAX_PER_SPECIES.out.generax_per_spp_events       // [meta, events]
+            .join(GENERAX_PER_SPECIES.out.generax_per_spp_gfts)             // [meta, events, newick]
+            .join(ch_all_og_clean_msas)                                      // [meta, events, newick, msa]
+            .combine(TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree)        // [meta, events, newick, msa, spp_tree]
 
         DATE_GENE_FAMILY_TREES(
             ch_dating_input,
-            TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree,
             params.max_treepl_tips,
             params.age_bracket
         )
