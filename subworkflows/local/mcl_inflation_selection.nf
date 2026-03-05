@@ -41,7 +41,6 @@ workflow MCL_INFLATION_SELECTION {
             "true"
         )
 
-        // TODO: Fix the output_dir determination logic
         // First determine the optimal MCL inflation parameter, and then
         // subsequently use this for full orthogroup inference.
         ORTHOFINDER_MCL_TEST(
