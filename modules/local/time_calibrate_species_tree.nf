@@ -2,7 +2,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     tag "Time-calibrate species tree"
     label 'process_single'
 
-    container 'arcadiascience/phylo_dist:1.1.0'
+    container 'arcadiascience/zoogle:1.0.0'
 
     publishDir(
         path: "${params.outdir}/species_trees/time_calibrated",
