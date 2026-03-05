@@ -11,7 +11,6 @@ process PHYLO_DIST {
     output:
     path "gf-aa-multivar-distances/phylo-corrected-data/${meta.og}_phylo_corr_dat.tsv"           , emit: phylo_corrected_data
     path "gf-aa-multivar-distances/protein-dist-mats/${meta.og}_protein_dists.tsv"               , emit: protein_dist_mat
-    path "gf-aa-multivar-distances/congruified-gfts/${meta.og}_congruified.newick"               , emit: congruified_tree
     path "gf-aa-multivar-distances/protein-phylo-dist-mats/${meta.og}_phylo_dists.tsv"           , emit: prot_phylo_dists
     path "gf-aa-multivar-distances/protein-dists-to-reference/${meta.og}_protein_dists.tsv"      , emit: prot_dists_to_ref
     path "gf-aa-multivar-distances/species-dists-to-reference/${meta.og}_species_dists.tsv"      , emit: spp_dists_to_ref
