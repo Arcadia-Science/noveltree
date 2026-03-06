@@ -27,8 +27,8 @@ process TRANSDECODER {
     # Nucleotide sequences should be almost entirely ACGTN; protein sequences
     # contain amino acid letters (D, E, F, H, I, K, L, M, P, Q, R, W, Y) that
     # are absent or very rare in nucleotide data.
-    aa_chars=\$(grep -v '^>' "\${input_file}" | head -1000 | tr -d '\\n ' | grep -o '[DEFHIKLMPQRWYdefhiklmpqrwy]' | wc -c)
-    total_chars=\$(grep -v '^>' "\${input_file}" | head -1000 | tr -d '\\n ' | wc -c)
+    aa_chars=\$(grep -v '^>' "\${input_file}" | head -1000 | tr -d '\\n ' | grep -o '[DEFHIKLMPQRWYdefhiklmpqrwy]' | wc -c || echo 0)
+    total_chars=\$(grep -v '^>' "\${input_file}" | head -1000 | tr -d '\\n ' | wc -c || echo 0)
 
     if [ "\${total_chars}" -gt 0 ]; then
         aa_frac=\$(awk "BEGIN {printf \\"%.2f\\", \${aa_chars}/\${total_chars}}")
