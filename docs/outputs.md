@@ -10,7 +10,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - Batch summary results for each species, to each lineage dataset.  
 - Directory for each species' busco analysis with more detailed output.  
 
-**2.** `protein_annotations/`: protein annotations (InterPro domain and OMA orthology group ID) obtained per each species for which uniprot accessions (i.e. those corresponding to RefSeq protein accessions) are available.  
+**2.** `protein_annotations/`: InterPro domain annotations obtained per each species for which UniProt accessions are available. Used by COGEQC to assess orthogroup quality during MCL inflation parameter selection.
 
 **3.** `diamond/`: contains the results of all pairwise comparisons of sequence similarity, between and within species using diamond BLASTP.  
 
@@ -42,7 +42,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 
 - `original/`: Gene family trees as inferred by FastTree2 or IQ-TREE. Files are named `{alignment_prefix}_{method}.newick` where method is `ft` (FastTree) or `iqt` (IQ-TREE), and the alignment prefix encodes the aligner and trimmer used (e.g., `OG0000001_witch_clipkit_iqt.newick`).
 - `reconciled/`: Gene family trees reconciled with the species tree by GeneRax. Contains `generax_per_species/` (per-species rate model) and `generax_per_family/` *(full mode only)* (per-family rate model). Files are named `{OG}_reconciled_gft.newick`.
-- `time_calibrated/` *(zoogle mode only)*: Gene family trees congruified with the time-calibrated species tree. Files are named `{OG}_congruified.newick`.
+- `time_calibrated/` *(zoogle mode only)*: Time-calibrated gene family trees dated using speciation node ages from the species tree. Files are named `{OG}_dated.newick`.
 
 **9.** `species_trees/`: Species trees organized by inference method.
 
@@ -76,7 +76,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - `aa-summary-stats/per-family-summaries/`: Per-family directories containing property summaries for each protein.
   - Contains CSV files with 20 amino acid frequencies and physicochemical properties (molecular weight, aromaticity, instability, flexibility, GRAVY, isoelectric point, charge at pH 3/5/7/9, helix/sheet fractions, extinction coefficients).
 
-**13.** `phylo_dist/` *(zoogle mode only)*: Phylogenetically-corrected protein distance analyses from PHYLO_DIST module. Only produced for gene families containing at least one protein from the reference species (`ref_species`) and sufficient non-reference proteins for statistical testing.
+**13.** `zoogle/` *(zoogle mode only)*: Phylogenetically-corrected protein distance analyses from ZOOGLE module. Only produced for gene families containing at least one protein from the reference species (`ref_species`) and sufficient non-reference proteins for statistical testing.
 
 - `phylo-corrected-data/`: Physicochemical property data after phylogenetic correction.
 - `protein-dist-mats/`: Raw protein-protein distance matrices based on physicochemical properties.
