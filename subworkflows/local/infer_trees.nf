@@ -1,3 +1,5 @@
+include { PREQUAL } from '../../modules/local/prequal'
+
 if (params.aligner == "witch") {
     include { WITCH as ALIGN_SEQS             } from '../../modules/local/witch'
 } else if (params.aligner == "famsa") {
@@ -30,7 +32,11 @@ workflow INFER_TREES {
     main:
     versions = Channel.empty()
 
-    ALIGN_SEQS(fas)
+    // Pre-alignment masking of non-homologous segments
+    PREQUAL(fas)
+    versions = versions.mix(PREQUAL.out.versions)
+
+    ALIGN_SEQS(PREQUAL.out.masked)
     versions = versions.mix(ALIGN_SEQS.out.versions)
 
     if (params.msa_trimmer != 'none') {

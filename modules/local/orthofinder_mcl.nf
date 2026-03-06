@@ -50,6 +50,13 @@ process ORTHOFINDER_MCL {
         tar -czvf Sequences_ids.tar.gz Sequences_ids
         rm -r Sequences_ids
         cd \$dir
+
+        # Flag and remove cross-OG chimeric proteins
+        flag_cross_og_chimeras.py \
+            --orthogroups OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.tsv \
+            --blast_dir ./ \
+            --og_seqs_dir OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/ \
+            --report OrthoFinder/Results_Inflation_${mcl_inflation}/chimera_report.tsv
     fi
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
