@@ -101,7 +101,6 @@ orthogroups$Gene <- gsub('^[^|]*\\|([^|]+)\\|.*$', '\\1', orthogroups$Gene)
 
 # Initialize
 interpro <- list()
-oma <- list()
 
 for(i in 1:length(spps)){
     spp <- spps[i] # So we can name the entry
@@ -112,35 +111,25 @@ for(i in 1:length(spps)){
     # Identify which we have annotations for this species.
     # Check if ALL annotations are either NA, empty strings, or just whitespace
     non_missing <-
-        c(all(is.na(annotations$xref_interpro) | annotations$xref_interpro == "" | grepl("^\\s*$", annotations$xref_interpro)),
-        all(is.na(annotations$xref_oma) | annotations$xref_oma == "" | grepl("^\\s*$", annotations$xref_oma)))
+        all(is.na(annotations$xref_interpro) | annotations$xref_interpro == "" | grepl("^\\s*$", annotations$xref_interpro))
 
     # Pull out the InterPro annotations
     interpro[[i]] <-
-        if(non_missing[1] == FALSE){
+        if(non_missing == FALSE){
             interpro[[i]] <- get_annots(spp, annotations$accession, annotations$xref_interpro)
         }else{
             interpro[[i]] <- NA
-        }
-    oma[[i]] <-
-        if(non_missing[2] == FALSE){
-            oma[[i]] <- get_annots(spp, annotations$accession, annotations$xref_oma)
-        }else{
-            oma[[i]] <- NA
         }
 }
 
 # Now name all the entries according to their OrthoFinder species ID (second column)
 names(interpro) <- spps
-names(oma) <- spps
 
-# And drop species for each that are missing the annotations
+# And drop species that are missing the annotations
 interpro <- Filter(function(a) any(!is.na(a)), interpro)
-oma <- Filter(function(a) any(!is.na(a)), oma)
 
 # And lastly intersect these with the species used for MCL-testing
 interpro <- interpro[which(names(interpro) %in% species)]
-oma <- oma[which(names(oma) %in% species)]
 
 # Filter out species that don't have sufficient annotation coverage
 # assess_orthogroups requires at least 1 orthogroup with >=2 unique annotated genes
@@ -167,48 +156,20 @@ check_min_annotations <- function(spp_name, ann_df, og_df) {
 interpro_valid <- sapply(names(interpro), function(s) {
     check_min_annotations(s, interpro[[s]], orthogroups)
 })
-oma_valid <- sapply(names(oma), function(s) {
-    check_min_annotations(s, oma[[s]], orthogroups)
-})
 
 interpro <- interpro[interpro_valid]
-oma <- oma[oma_valid]
 
 # Great, now we can pair these annotations with the orthogroups, assessing how
 # well each inflation parameter infers sensible orthogroups with respect to the
-# homogeneity and dispersal of annotations
-# Count the number of species for which we have each summary statistic - we can
-# only calculate these if there is >= 2 species.
-og_assess_list <- list(
-    list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(interpro)),],
-        ann_set = interpro, spp_count = length(names(interpro))),
-    list(
-        og_set = orthogroups[which(orthogroups$Species %in% names(oma)),],
-        ann_set = oma, spp_count = length(names(oma)))
-)
-
-# A quick function to run the assessment in parallel, checking that there are
-# enough species
-get_assessments <-
-    function(i){
-        if(og_assess_list[[i]]$spp_count > 1){
-            assess <- assess_orthogroups(og_assess_list[[i]]$og_set, og_assess_list[[i]]$ann_set)
-            assess <- mean(assess$Mean_score)
-        }else{
-            assess <- NA
-        }
-        return(assess)
-    }
-
-# First identify for which we have enough species
-target_anns <- which(c(length(interpro), length(oma)) > 1)
-
-# Now, run each assessment (if relevant) simultaneously to save time
-if(length(target_anns) >= 1){
-    assessment_res <- mclapply(target_anns, get_assessments, mc.cores = 2)
+# homogeneity and dispersal of InterPro domain annotations
+if(length(interpro) > 1){
+    og_sub <- orthogroups[which(orthogroups$Species %in% names(interpro)),]
+    interpro_score <- tryCatch({
+        assess <- assess_orthogroups(og_sub, interpro)
+        mean(assess$Mean_score)
+    }, error = function(e) return(NA))
 }else{
-    stop(paste0("No orthogroups include >= 2 species with annotations! Reconsider sampling!"))
+    interpro_score <- NA
 }
 
 # Read in the orthofinder orthogroup statistics
@@ -236,8 +197,7 @@ og_quality <-
         num_ogs = num_ogs,
         perc_ogs_gt_min_spp = length(which(og_freqs >= min_spp)) / num_ogs,
         per_spp_og_counts = mean(per_spp_og_counts),
-        interpro_score = tryCatch(assessment_res[[1]], error = function(e) return(NA)),
-        oma_score = tryCatch(assessment_res[[2]], error = function(e) return(NA)),
+        interpro_score = interpro_score,
         perc_genes_in_ss_ogs = mean(ortho_stats$stats$perc_genes_in_ss_ogs),
         mean_num_ss_ogs = mean(ortho_stats$stats$n_ss_ogs),
         pairwise_overlap = mean(overlap) / 100

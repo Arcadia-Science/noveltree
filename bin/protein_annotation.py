@@ -18,11 +18,11 @@ import concurrent.futures
 import pandas as pd
 
 # Columns (query fields) that we will use when accessing UniProt protein annotations
-COLUMNS = ['organism_name', 'organism_id', 'accession', 'xref_interpro', 'xref_oma']
+COLUMNS = ['organism_name', 'organism_id', 'accession', 'xref_interpro']
 
     # Now define the different annotation sets - we will pull out tables for each.
 ANNOTATION_SETS = {
-    'cogeqc': ['organism_name', 'organism_id', 'accession', 'xref_interpro', 'xref_oma']
+    'cogeqc': ['organism_name', 'organism_id', 'accession', 'xref_interpro']
 }
 
 MIN_PROP_RETRIEVED = 0.5  # Minimum proportion of accessions that must be retrieved
