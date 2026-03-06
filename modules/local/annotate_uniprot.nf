@@ -36,25 +36,14 @@ process ANNOTATE_UNIPROT {
         # Handle both colon-delimited (>Species:Accession) and pipe-delimited (>Species|Accession|Entry) formats
         grep ">" $fasta | cut -d" " -f1 | awk -F'[:|]' '{print \$2}' > ${spp}_protein_accessions.txt
 
-        # Now run the script to pull down annotations for the protein accessions in this species.
-        # This Python script uses the bioservices python package to accomplish this.
-        # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
+        # Retrieve InterPro annotations from UniProt REST API.
         protein_annotation.py $spp ${spp}_protein_accessions.txt
-
-        # Organize results so that the cogeqc annotations are in the current
-        # directory, and all others are moved into a single directory for the
-        # species
-        mkdir $spp
-        for f in \$(ls *.tsv | grep -v "cogeqc")
-        do
-            mv \$f ${spp}/
-        done
     fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         Python: \$( python --version | sed "s/Python //g" | sed "s/ (.*//g" )
-        bioservices: \$(python -c "import pkg_resources; print(pkg_resources.get_distribution('bioservices').version)")
+        requests: \$(python -c "import requests; print(requests.__version__)")
     END_VERSIONS
     """
 }
