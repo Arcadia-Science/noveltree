@@ -47,6 +47,10 @@ SELECT_INFLATION_IMAGE := $(DOCKER_ORG)/select_mcl_inflation_params_08302023
 SELECT_INFLATION_TAG := 1.0.0
 WITCH_IMAGE := $(DOCKER_ORG)/witch_0.3.0
 WITCH_TAG := 1.0.0
+PREPROCESS_PROTEOMES_IMAGE := $(DOCKER_ORG)/preprocess_proteomes
+PREPROCESS_PROTEOMES_TAG := 1.0.0
+PREQUAL_IMAGE := $(DOCKER_ORG)/prequal
+PREQUAL_TAG := 1.0.0
 
 # =============================================================================
 # Phony targets
@@ -58,11 +62,13 @@ WITCH_TAG := 1.0.0
 	docker-cogeqc docker-famsa docker-fasttree docker-generax \
 	docker-iqtree docker-orthofinder \
 	docker-phylo-profiles docker-rbase docker-select-inflation docker-witch \
+	docker-preprocess-proteomes docker-prequal \
 	push-all push-physicochemical-props push-zoogle \
 	push-asteroid push-bioservices push-cialign push-clipkit \
 	push-cogeqc push-famsa push-fasttree push-generax \
 	push-iqtree push-orthofinder \
 	push-phylo-profiles push-rbase push-select-inflation push-witch \
+	push-preprocess-proteomes push-prequal \
 	clean
 
 # =============================================================================
@@ -93,6 +99,8 @@ help:
 	@echo "  make docker-rbase                  - R base image"
 	@echo "  make docker-select-inflation       - MCL inflation selection"
 	@echo "  make docker-witch                  - WITCH"
+	@echo "  make docker-preprocess-proteomes   - Proteome preprocessing"
+	@echo "  make docker-prequal                - PREQUAL"
 	@echo ""
 	@echo "Push images:"
 	@echo "  make push-all                      - Push all images to Docker Hub"
@@ -112,7 +120,8 @@ docker-all: docker-physicochemical-props docker-zoogle \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
 	docker-cogeqc docker-famsa docker-fasttree docker-generax \
 	docker-iqtree docker-orthofinder docker-phylo-profiles \
-	docker-rbase docker-select-inflation docker-witch
+	docker-rbase docker-select-inflation docker-witch \
+	docker-preprocess-proteomes docker-prequal
 	@echo ""
 	@echo "All Docker images built successfully!"
 
@@ -252,6 +261,22 @@ docker-witch:
 		.
 	@echo "Built successfully!"
 
+docker-preprocess-proteomes:
+	@echo "Building $(PREPROCESS_PROTEOMES_IMAGE):$(PREPROCESS_PROTEOMES_TAG)..."
+	cd docker/preprocess_proteomes && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(PREPROCESS_PROTEOMES_IMAGE):$(PREPROCESS_PROTEOMES_TAG) \
+		.
+	@echo "Built successfully!"
+
+docker-prequal:
+	@echo "Building $(PREQUAL_IMAGE):$(PREQUAL_TAG)..."
+	cd docker/prequal && docker build \
+		--platform $(DOCKER_PLATFORM) \
+		-t $(PREQUAL_IMAGE):$(PREQUAL_TAG) \
+		.
+	@echo "Built successfully!"
+
 # =============================================================================
 # Push all images
 # =============================================================================
@@ -260,7 +285,8 @@ push-all: push-physicochemical-props push-zoogle \
 	push-asteroid push-bioservices push-cialign push-clipkit \
 	push-cogeqc push-famsa push-fasttree push-generax \
 	push-iqtree push-orthofinder push-phylo-profiles \
-	push-rbase push-select-inflation push-witch
+	push-rbase push-select-inflation push-witch \
+	push-preprocess-proteomes push-prequal
 	@echo ""
 	@echo "All images pushed to Docker Hub successfully!"
 
@@ -346,6 +372,16 @@ push-select-inflation: docker-select-inflation
 push-witch: docker-witch
 	@echo "Pushing $(WITCH_IMAGE):$(WITCH_TAG)..."
 	docker push $(WITCH_IMAGE):$(WITCH_TAG)
+	@echo "Pushed successfully!"
+
+push-preprocess-proteomes: docker-preprocess-proteomes
+	@echo "Pushing $(PREPROCESS_PROTEOMES_IMAGE):$(PREPROCESS_PROTEOMES_TAG)..."
+	docker push $(PREPROCESS_PROTEOMES_IMAGE):$(PREPROCESS_PROTEOMES_TAG)
+	@echo "Pushed successfully!"
+
+push-prequal: docker-prequal
+	@echo "Pushing $(PREQUAL_IMAGE):$(PREQUAL_TAG)..."
+	docker push $(PREQUAL_IMAGE):$(PREQUAL_TAG)
 	@echo "Pushed successfully!"
 
 # =============================================================================
