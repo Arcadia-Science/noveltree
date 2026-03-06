@@ -55,6 +55,10 @@ include { MCL_INFLATION_SELECTION               } from './subworkflows/local/mcl
 include { INFER_TREES as INFER_SPECIES_TREES    } from './subworkflows/local/infer_trees'
 include { INFER_TREES as INFER_REMAINING_TREES  } from './subworkflows/local/infer_trees'
 
+if (params.preprocess) {
+    include { PREPROCESS_PROTEOMES              } from './subworkflows/local/preprocess_proteomes'
+}
+
 //
 // MODULE
 //
@@ -142,11 +146,20 @@ workflow NOVELTREE {
     // Normalize ref_species to hyphens (users may pass underscores or spaces)
     def ref_species = params.ref_species.replace('_', '-').replace(' ', '-')
 
+    // Optional proteome preprocessing (TransDecoder, isoform filtering, quality cleanup)
+    if (params.preprocess) {
+        PREPROCESS_PROTEOMES(ch_all_data.complete_prots, params.min_protein_length)
+        ch_versions = ch_versions.mix(PREPROCESS_PROTEOMES.out.versions)
+        ch_to_rename = PREPROCESS_PROTEOMES.out.preprocessed
+    } else {
+        ch_to_rename = ch_all_data.complete_prots
+    }
+
     // Rename FASTA files so filenames match normalized species names.
     // OrthoFinder uses filenames as species identifiers, so this ensures
     // all downstream tip labels use hyphens (e.g. Homo-sapiens_ProteinID).
     // Must run before everything else for consistent naming.
-    RENAME_FASTAS(ch_all_data.complete_prots)
+    RENAME_FASTAS(ch_to_rename)
     ch_renamed_prots = RENAME_FASTAS.out.renamed
 
     // Derive MCL test and annotation subsets from renamed files

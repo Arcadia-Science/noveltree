@@ -50,6 +50,9 @@ def create_prots_channel(LinkedHashMap row) {
         meta.uniprot = row.uniprot
         meta.mcl_test = row.mcl_test
         meta.annotate = (row.uniprot == "true") && (row.mcl_test == "true")
+        meta.transdecoder = row.transdecoder ?: 'no'
+        meta.isoform = row.isoform ?: 'no'
+        meta.reference = row.reference ?: 'no'
 
     // add path(s) of the proteome file to the meta map
     def prots_meta = []
