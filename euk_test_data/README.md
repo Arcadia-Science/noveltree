@@ -36,7 +36,7 @@ nextflow run . -profile test,docker --preprocess true \
 | Homo sapiens | Local file | no | no | yes | Skip CD-HIT (UniProt reference) |
 | Mus musculus | Local file | no | no | yes | Skip CD-HIT (UniProt reference) |
 | Danio rerio | Local file | no | yes | no | Isoform filter → CD-HIT 100% (exact dedup) |
-| S. pombe | NCBI FTP URL (.fna.gz) | yes | yes | no | TransDecoder → isoform filter → CD-HIT 97% |
+| S. pombe | NCBI FTP URL (rna .fna.gz) | yes | yes | no | TransDecoder → isoform filter → CD-HIT 97% |
 | S. cerevisiae | UniProt REST URL | no | yes | yes | Isoform filter → skip CD-HIT |
 | N. crassa | UniProt REST URL | no | no | yes | URL download → skip CD-HIT |
 
@@ -44,7 +44,7 @@ nextflow run . -profile test,docker --preprocess true \
 
 - **Homo sapiens, Mus musculus**: Local files with `reference=yes` — verifies CD-HIT is skipped for UniProt reference proteomes.
 - **Danio rerio**: Local file with `isoform=yes` — verifies isoform filtering runs, then CD-HIT at 100% (exact duplicate removal only).
-- **S. pombe**: NCBI FTP download of gzipped CDS nucleotide file (`.fna.gz`) with `transdecoder=yes` — verifies gzip decompression, TransDecoder ORF prediction, isoform filtering (auto-triggered by transdecoder), and CD-HIT at 97% (collapse assembly/prediction artifacts).
+- **S. pombe**: NCBI FTP download of gzipped RNA/transcript nucleotide file (`rna_from_genomic.fna.gz`) with `transdecoder=yes` — verifies gzip decompression, TransDecoder ORF prediction, isoform filtering (auto-triggered by transdecoder), and CD-HIT at 97% (collapse assembly/prediction artifacts). Note: TransDecoder requires raw transcript sequences, not pre-extracted CDS.
 - **S. cerevisiae**: UniProt REST API download with `isoform=yes` + `reference=yes` — verifies URL download, isoform filtering, and CD-HIT skip.
 - **N. crassa**: UniProt REST API download with `reference=yes` — verifies URL download and CD-HIT skip with no other preprocessing.
 
