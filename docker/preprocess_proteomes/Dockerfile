@@ -8,6 +8,8 @@ RUN apt-get update && \
         build-essential \
         wget \
         zlib1g-dev \
+        perl \
+        liburi-perl \
         python3 \
         python3-pip && \
     apt-get clean && \

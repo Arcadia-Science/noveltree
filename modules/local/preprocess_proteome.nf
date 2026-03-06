@@ -1,6 +1,6 @@
 process PREPROCESS_PROTEOME {
     tag "${meta.id}"
-    label 'process_single'
+    label 'process_medium'
 
     container 'arcadiascience/preprocess_proteomes:1.0.0'
 
