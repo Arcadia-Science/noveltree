@@ -134,13 +134,16 @@ def check_samplesheet(file_in, file_out):
                     if fasta:
                         if fasta.find(" ") != -1:
                             print_error("fasta file contains spaces!", "Line", line)
-                        # For URLs, validate extension from basename (strip query params)
-                        check_name = fasta
-                        if any(fasta.startswith(p) for p in ("http://", "https://", "ftp://", "s3://")):
+                        is_url = any(fasta.startswith(p) for p in ("http://", "https://", "ftp://", "s3://"))
+                        if is_url:
+                            # For URLs, try to validate from basename but skip if no recognizable extension
                             check_name = fasta.split("?")[0].split("/")[-1]
+                        else:
+                            check_name = fasta
                         # Determine valid extensions based on transdecoder flag
                         valid_exts = ALL_EXTENSIONS if transdecoder == "yes" else PROTEIN_EXTENSIONS
-                        if not any(check_name.endswith(ext) for ext in valid_exts):
+                        has_valid_ext = any(check_name.endswith(ext) for ext in valid_exts)
+                        if not has_valid_ext and not is_url:
                             ext_str = "', '".join(valid_exts)
                             print_error(
                                 f"File does not have a valid extension ('{ext_str}')!",
