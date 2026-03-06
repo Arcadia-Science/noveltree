@@ -115,6 +115,20 @@
                     "help_text": "Species name to use as reference for calculating phylogenetically-corrected protein distances. All other species' proteins will be compared to this reference species. Must match a species name from the input samplesheet (format: Genus-species). Underscores and spaces are auto-converted to hyphens.",
                     "fa_icon": "fas fa-bullseye"
                 },
+                "preprocess": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable optional proteome preprocessing (TransDecoder, isoform filtering, quality cleanup).",
+                    "help_text": "When enabled, NovelTree runs preprocessing steps before the main pipeline. Per-species flags in the samplesheet (transdecoder, isoform, reference columns) control which steps run for each species.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "min_protein_length": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Minimum protein sequence length (aa) to retain during preprocessing.",
+                    "help_text": "Proteins shorter than this length are removed during the preprocessing step. Only applies when --preprocess is enabled.",
+                    "fa_icon": "fas fa-ruler"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
