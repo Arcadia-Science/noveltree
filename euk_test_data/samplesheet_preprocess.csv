@@ -2,6 +2,6 @@ species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test,transdecoder,iso
 Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,true,no,no,yes
 Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,Opisthokonta,glires_odb10,eukaryota_odb10,proteins,true,true,no,no,yes
 Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,true,no,yes,no
-Schizosaccharomyces-pombe,https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/945/GCF_000002945.2_ASM294v3/GCF_000002945.2_ASM294v3_cds_from_genomic.fna.gz,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,false,false,yes,yes,no
+Schizosaccharomyces-pombe,https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/945/GCF_000002945.2_ASM294v3/GCF_000002945.2_ASM294v3_rna_from_genomic.fna.gz,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,false,false,yes,yes,no
 Saccharomyces-cerevisiae,https://rest.uniprot.org/uniprotkb/stream?query=proteome:UP000002311+AND+reviewed:true&format=fasta,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,false,no,yes,yes
 Neurospora-crassa,https://rest.uniprot.org/uniprotkb/stream?query=proteome:UP000001805&format=fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,false,no,no,yes
