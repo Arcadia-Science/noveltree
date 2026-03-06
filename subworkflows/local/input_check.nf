@@ -15,13 +15,24 @@ workflow INPUT_CHECK {
         .csv
         .splitCsv (header:true, sep:',')
         .map { create_prots_channel(it) }
-        .set { complete_prots }
+        .branch {
+            urls:  it[0].is_url == true
+            local: true
+        }
+        .set { ch_branched }
 
-    complete_prots.filter {
+    // Local file entries: [ val(meta), path(fasta) ]
+    ch_local = ch_branched.local
+
+    // URL entries: [ val(meta), val(url_string) ]
+    ch_urls = ch_branched.urls
+
+    // Subset channels (from local files only — URL species join after download)
+    ch_local.filter {
         it[0].mcl_test == 'true'
     }.set { mcl_test_prots }
 
-    complete_prots.filter {
+    ch_local.filter {
         it[0].uniprot == 'true'
     }.set { uniprot_prots }
 
@@ -30,15 +41,16 @@ workflow INPUT_CHECK {
     }.set { annotation_prots }
 
     emit:
-    complete_prots                            // channel: [ val(meta), [ complete_prots ] ]
-    mcl_test_prots                            // channel: [ val(meta), [ mcl_test_prots ] ]
-    uniprot_prots                             // channel: [ val(meta), [ uniprot_prots ] ]
-    annotation_prots                          // channel: [ val(meta), [ annotation_prots ] ]
+    local_prots    = ch_local                    // channel: [ val(meta), path(fasta) ]
+    url_prots      = ch_urls                     // channel: [ val(meta), val(url_string) ]
+    mcl_test_prots                               // channel: [ val(meta), path(fasta) ]
+    uniprot_prots                                // channel: [ val(meta), path(fasta) ]
+    annotation_prots                             // channel: [ val(meta), path(fasta) ]
     complete_samplesheet = SAMPLESHEET_CHECK.out.csv
-    versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
+    versions = SAMPLESHEET_CHECK.out.versions    // channel: [ versions.yml ]
 }
 
-// Function to get list of [meta, [file]]
+// Function to get list of [meta, file_or_url]
 def create_prots_channel(LinkedHashMap row) {
     // create meta map
     def meta  = [:]
@@ -54,8 +66,14 @@ def create_prots_channel(LinkedHashMap row) {
         meta.isoform = row.isoform ?: 'no'
         meta.reference = row.reference ?: 'no'
 
-    // add path(s) of the proteome file to the meta map
-    def prots_meta = []
-        prots_meta = [meta, [file(row.file)]]
-    return prots_meta
+    // Detect URLs — don't call file() on them to avoid Nextflow auto-staging
+    def is_url = row.file.startsWith('http://') || row.file.startsWith('https://') ||
+                 row.file.startsWith('ftp://') || row.file.startsWith('s3://')
+    meta.is_url = is_url
+
+    if (is_url) {
+        return [meta, row.file]
+    } else {
+        return [meta, file(row.file)]
+    }
 }

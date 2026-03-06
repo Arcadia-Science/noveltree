@@ -64,6 +64,7 @@ if (params.preprocess) {
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
+include { DOWNLOAD_INPUT                              } from './modules/local/download_input'
 include { RENAME_FASTAS                              } from './modules/local/rename_fastas'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from './modules/local/orthofinder_prep'
 include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
@@ -146,13 +147,18 @@ workflow NOVELTREE {
     // Normalize ref_species to hyphens (users may pass underscores or spaces)
     def ref_species = params.ref_species.replace('_', '-').replace(' ', '-')
 
+    // Download any URL-based inputs, then merge with local files
+    DOWNLOAD_INPUT(ch_all_data.url_prots)
+    ch_versions = ch_versions.mix(DOWNLOAD_INPUT.out.versions)
+    ch_complete_prots = ch_all_data.local_prots.mix(DOWNLOAD_INPUT.out.downloaded)
+
     // Optional proteome preprocessing (TransDecoder, isoform filtering, quality cleanup)
     if (params.preprocess) {
-        PREPROCESS_PROTEOMES(ch_all_data.complete_prots, params.min_protein_length)
+        PREPROCESS_PROTEOMES(ch_complete_prots, params.min_protein_length)
         ch_versions = ch_versions.mix(PREPROCESS_PROTEOMES.out.versions)
         ch_to_rename = PREPROCESS_PROTEOMES.out.preprocessed
     } else {
-        ch_to_rename = ch_all_data.complete_prots
+        ch_to_rename = ch_complete_prots
     }
 
     // Rename FASTA files so filenames match normalized species names.
