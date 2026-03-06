@@ -19,7 +19,7 @@ plts <- list()
 
 ylabs <-
   c('Number of Orthogroups', paste0('% Orthogroups with\n>= ', min_spp, ' Species'),
-    'Mean Species Copy\nNumber Per-OG', 'InterPro Score', 'OMA Score', 
+    'Mean Species Copy\nNumber Per-OG', 'InterPro Score',
     '% Genes in ssOGs', 'Mean Number of\nPer-Species ssOGs', 'Mean Pairwise\n% Species Overlap')
 
 # In some cases we want to identify the inflation parameter that is the best
@@ -35,17 +35,17 @@ for(i in 1:length(vars)){
   # As a safety, check if the values are constant for all inflation parameters:
   # If so, we'll ignore these
   invariant[i] <- var(res$variable == vars[i]) == 0
-  
-  # Get the results for this summary stat  
+
+  # Get the results for this summary stat
   tmp.res <- res[which(res$variable == vars[i]),]
   # A check to make sure that we are not dealing with missing values only
   if(sum(is.na(tmp.res$value)) != length(tmp.res$value)){
-    if(i %in% c(4,5)){
-      # A check to make sure that we are not dealing with missing values only
+    if(i == 4){
+      # InterPro score - use elbow detection
       inflect <-
         elbow(tmp.res[,c(1,3)])$inflation_param_selected
       best <- c(best, inflect)
-    
+
       plts[[i]] <-
         ggplot(data = tmp.res,
                aes(x = inflation_param, y = value)) +
@@ -54,7 +54,7 @@ for(i in 1:length(vars)){
         geom_point(size = 3) +
         geom_line() +
         ylab(ylabs[i])
-    }else{      
+    }else{
       plts[[i]] <-
         ggplot(data = tmp.res,
                aes(x = inflation_param, y = value)) +
@@ -75,8 +75,7 @@ for(i in 1:length(vars)){
 }
 
 og_summs <-
-  plot_grid(plts[[1]], plts[[2]], plts[[3]], plts[[4]],
-            plts[[5]], plts[[6]], plts[[7]], plts[[8]],
+  plot_grid(plotlist = plts,
             ncol = 4, nrow = 2)
 
 best_i <- mean(best)
