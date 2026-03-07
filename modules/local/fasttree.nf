@@ -33,10 +33,6 @@ process FASTTREE {
         $args \\
         $alignment > ${prefix}_ft.newick
 
-    # prevent zero-length branches (sometimes inferred with fasttree)
-    resolve_polytomies.R ${prefix}_ft.newick resolved.tree
-    mv resolved.tree ${prefix}_ft.newick
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         FastTree: \$(FastTreeDblMP 2>&1 | head -n1 | cut -d" " -f5)

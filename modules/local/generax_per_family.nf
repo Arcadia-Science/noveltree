@@ -3,6 +3,11 @@ process GENERAX_PER_FAMILY {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
+    // Exit code 10 = "no valid families" (e.g. invalid starting tree).
+    // Skip the OG gracefully rather than crashing the pipeline.
+    errorStrategy { task.exitStatus == 10 ? 'ignore' : (task.attempt <= 5 ? 'retry' : 'terminate') }
+    maxRetries 5
+
     container 'arcadiascience/generax_56f3ed0:1.1.3'
 
     publishDir(
