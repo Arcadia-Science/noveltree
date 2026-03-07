@@ -2,8 +2,8 @@ process WITCH {
     tag "$meta.og"
     label 'process_witch'
 
-    container 'arcadiascience/witch_0.3.0:1.0.0'
-    // WITCH writes to /WITCH/ internally, requiring writable container filesystem
+    container 'arcadiascience/witch_1.0.10:1.0.0'
+    // WITCH may write to its install directory, requiring writable container filesystem
     containerOptions = workflow.containerEngine == 'docker' ? '--user root' : \
         (workflow.containerEngine == 'singularity' ? '--writable-tmpfs' : '')
 
@@ -57,7 +57,7 @@ process WITCH {
     sed -E -i '/>/!s/U/X/g' ${fasta} # selenocysteine
     sed -E -i '/>/!s/O/X/g' ${fasta} # pyrrolysine
 
-    python3 /WITCH/witch.py \\
+    witch-msa \\
         -i ${fasta} \\
         -d alignments \\
         -t ${task.cpus} \\
@@ -116,7 +116,7 @@ process WITCH {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        witch: v\$(python3 /WITCH/witch.py -v | cut -f2 -d " ")
+        witch: \$(witch-msa -v 2>&1 | tail -1 || echo 'unknown')
     END_VERSIONS
     """
 }
