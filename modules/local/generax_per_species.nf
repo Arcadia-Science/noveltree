@@ -31,6 +31,7 @@ process GENERAX_PER_SPECIES {
     tuple val(meta), path("${meta.og}/${meta.og}_speciesEventCounts.txt")       , emit: species_event_counts
     tuple val(meta), path("${meta.og}/${meta.og}_transfers.txt")                , emit: transfer_event_counts
     tuple val(meta), path("${meta.og}/${meta.og}_perSpeciesCoverage.txt")       , emit: species_coverage
+    tuple val(meta), path("${meta.og}/${meta.og}_reconciliated.nhx")            , emit: generax_nhx
     path "${meta.og}/${meta.og}_full_output.tar.gz"                             , emit: archive
     path "versions.yml"                                                         , emit: versions
 
@@ -95,6 +96,7 @@ process GENERAX_PER_SPECIES {
     cp $og/reconciliations/${og}_eventCounts.txt .
     cp $og/reconciliations/${og}_speciesEventCounts.txt .
     cp $og/reconciliations/${og}_transfers.txt .
+    cp $og/reconciliations/${og}_reconciliated.nhx .
     mv $og/${og}_perSpeciesCoverage.txt .
 
     # Archive full GeneRax output, then replace with flat structure
@@ -106,6 +108,7 @@ process GENERAX_PER_SPECIES {
     mv ${og}_speciesEventCounts.txt $og/
     mv ${og}_transfers.txt $og/
     mv ${og}_perSpeciesCoverage.txt $og/
+    mv ${og}_reconciliated.nhx $og/
     mv ${og}_full_output.tar.gz $og/
 
     cat <<-END_VERSIONS > versions.yml

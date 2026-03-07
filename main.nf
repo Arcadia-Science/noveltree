@@ -76,7 +76,7 @@ include { SPECIESRAX                                } from './modules/local/spec
 include { TIME_CALIBRATE_SPECIES_TREE               } from './modules/local/time_calibrate_species_tree'
 include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
 include { DATE_GENE_FAMILY_TREES                    } from './modules/local/date_gene_family_trees'
-include { ORTHOFINDER_PHYLOHOGS                     } from './modules/local/orthofinder_phylohogs'
+include { ORTHOXML_PHYLOHOGS                        } from './modules/local/orthoxml_phylohogs'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 include { MERGE_PHYLO_PROFILES                      } from './modules/local/merge_phylo_profiles'
@@ -344,8 +344,6 @@ workflow NOVELTREE {
     GENERAX_PER_SPECIES(ch_generax_input)
     ch_versions = ch_versions.mix(GENERAX_PER_SPECIES.out.versions)
 
-    ch_recon_perspp_gene_trees = GENERAX_PER_SPECIES.out.generax_per_spp_gfts.collect { it[1] }
-
     //
     // MODULE: PHYLO_PROFILES (per gene family)
     // Generate phylogenetic profiles from GeneRax reconciliation outputs
@@ -490,21 +488,27 @@ workflow NOVELTREE {
     }
 
     //
-    // MODULE: ORTHOFINDER_PHYLOHOGS
-    // Now using the reconciled gene family trees and rooted species tree,
-    // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
-    // to identify orthologs and output orthogroup-level summary stats.
+    // MODULE: ORTHOXML_PHYLOHOGS
+    // Convert GeneRax NHX reconciliations into hierarchical orthogroups (HOGs),
+    // ortholog/paralog/xenolog pair tables, and HOG membership — per OG,
+    // fully parallelized, using orthoxml-tools.
     //
-    ORTHOFINDER_PHYLOHOGS(
-        ch_speciesrax,
-        ORTHOFINDER_MCL_ALL.out.inflation_dir,
-        ORTHOFINDER_PREP_ALL.out.fastas,
-        ORTHOFINDER_PREP_ALL.out.sppIDs,
-        ORTHOFINDER_PREP_ALL.out.seqIDs,
-        ch_recon_perspp_gene_trees,
-        DIAMOND_BLASTP_ALL.out.txt.collect()
-    )
-    ch_versions = ch_versions.mix(ORTHOFINDER_PHYLOHOGS.out.versions)
+    ORTHOXML_PHYLOHOGS(GENERAX_PER_SPECIES.out.generax_nhx)
+    ch_versions = ch_versions.mix(ORTHOXML_PHYLOHOGS.out.versions)
+
+    // Aggregate per-OG pairwise relationship and HOG membership tables
+    ORTHOXML_PHYLOHOGS.out.orthologs
+        .collectFile(name: 'all_ortholog_pairs.tsv',
+                     storeDir: "${params.outdir}/orthology", keepHeader: true)
+    ORTHOXML_PHYLOHOGS.out.paralogs
+        .collectFile(name: 'all_paralog_pairs.tsv',
+                     storeDir: "${params.outdir}/orthology", keepHeader: true)
+    ORTHOXML_PHYLOHOGS.out.xenologs
+        .collectFile(name: 'all_xenolog_pairs.tsv',
+                     storeDir: "${params.outdir}/orthology", keepHeader: true)
+    ORTHOXML_PHYLOHOGS.out.hog_membership
+        .collectFile(name: 'hog_membership.tsv',
+                     storeDir: "${params.outdir}/orthology", keepHeader: true)
 }
 
 //
