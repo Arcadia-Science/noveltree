@@ -27,25 +27,9 @@ workflow INPUT_CHECK {
     // Remote entries (URLs, NCBI accessions, UniProt IDs): [ val(meta), val(source_string) ]
     ch_remote = ch_branched.remote
 
-    // Subset channels (from local files only — URL species join after download)
-    ch_local.filter {
-        it[0].mcl_test == 'true'
-    }.set { mcl_test_prots }
-
-    ch_local.filter {
-        it[0].uniprot == 'true'
-    }.set { uniprot_prots }
-
-    mcl_test_prots.filter {
-        it[0].uniprot == 'true'
-    }.set { annotation_prots }
-
     emit:
     local_prots    = ch_local                    // channel: [ val(meta), path(fasta) ]
     remote_prots   = ch_remote                   // channel: [ val(meta), val(source_string) ]
-    mcl_test_prots                               // channel: [ val(meta), path(fasta) ]
-    uniprot_prots                                // channel: [ val(meta), path(fasta) ]
-    annotation_prots                             // channel: [ val(meta), path(fasta) ]
     complete_samplesheet = SAMPLESHEET_CHECK.out.csv
     versions = SAMPLESHEET_CHECK.out.versions    // channel: [ versions.yml ]
 }
@@ -61,7 +45,6 @@ def create_prots_channel(LinkedHashMap row) {
         meta.mode = row.mode
         meta.uniprot = row.uniprot
         meta.mcl_test = row.mcl_test
-        meta.annotate = (row.uniprot == "true") && (row.mcl_test == "true")
         meta.transdecoder = row.transdecoder ?: 'no'
         meta.isoform = row.isoform ?: 'no'
         meta.reference = row.reference ?: 'no'

@@ -72,3 +72,26 @@ nextflow run . -profile test,docker --preprocess true \
 - **N. crassa**: UniProt REST API URL with `reference=yes` — verifies URL download and CD-HIT skip with no other preprocessing.
 
 All six species also go through stop codon removal, rare amino acid handling (U->C, J/B/Z->X), and minimum length filtering (default 50 aa).
+
+## Opt-In Features
+
+### MCL Inflation Testing
+
+By default, the pipeline uses a fixed MCL inflation value of `1.5` without testing alternatives. To enable inflation optimization (tests multiple values using COGEQC + InterPro annotations), pass `--test_mcl true` along with multiple inflation values:
+
+```bash
+nextflow run . -profile test,docker --outdir tests/results \
+    --test_mcl true --mcl_inflation '1.1,1.3,1.5,2.0,3.0'
+```
+
+Note: `--test_mcl true` requires at least two `--mcl_inflation` values; the pipeline will exit with an error otherwise.
+
+### BUSCO
+
+BUSCO quality assessment is off by default. Enable it with `--busco true`:
+
+```bash
+nextflow run . -profile test,docker --outdir tests/results --busco true
+```
+
+This runs both shallow and broad taxonomic scale BUSCO analyses. BUSCO results are not used by downstream modules.
