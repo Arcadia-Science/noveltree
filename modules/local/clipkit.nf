@@ -40,19 +40,32 @@ process CLIPKIT {
     # Trim the MSAs for each orthogroup containing at least 4 species.
     clipkit ${fasta} -o \${prefix}_tmp.fa $args
 
-    # Remove sequences with a minimum non-gapped length less than the specified length.
-    seqmagick convert \\
-        --min-ungapped-length $min_ungapped_length \\
-        \${prefix}_tmp.fa \\
-        \${prefix}_clipkit.fa
+    # Check if the trimmed alignment has fewer columns than min_ungapped_length.
+    # If so, no sequence can pass the filter — skip seqmagick entirely.
+    n_cols=\$(awk '!/^>/{print length; exit}' \${prefix}_tmp.fa)
+    if [ "\$n_cols" -lt "$min_ungapped_length" ]; then
+        # Alignment too short after trimming — discard this OG
+        rm \${prefix}_tmp.fa
+    else
+        # Remove sequences with a minimum non-gapped length less than the specified length.
+        seqmagick convert \\
+            --min-ungapped-length $min_ungapped_length \\
+            \${prefix}_tmp.fa \\
+            \${prefix}_clipkit.fa
+    fi
 
     # Verify the trimmed alignment still meets minimum sequence/species thresholds.
     # Trimming can remove sequences, potentially dropping an OG below the filters
     # that were applied to the raw FASTA files.
-    n_seq=\$(grep -c ">" \${prefix}_clipkit.fa || true)
-    n_spp=\$(grep ">" \${prefix}_clipkit.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    if [ -f \${prefix}_clipkit.fa ]; then
+        n_seq=\$(grep -c ">" \${prefix}_clipkit.fa || true)
+        n_spp=\$(grep ">" \${prefix}_clipkit.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    else
+        n_seq=0
+        n_spp=0
+    fi
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
-        rm \${prefix}_clipkit.fa
+        rm -f \${prefix}_clipkit.fa
     else
         # Now, create a protein-species map-file:
         # Pull out the sequences, and split into a TreeRecs format mapping
