@@ -360,14 +360,29 @@ workflow NOVELTREE {
         ORTHOFINDER_MCL_ALL.out.inflation_dir.first()
     )
 
-    // Merge per-OG outputs
+    // Merge per-OG phylo profile outputs.
+    // Use collectFile() for simple TSV concatenation — avoids staging hundreds
+    // of small files from S3 into a single process. Only the HGT matrix
+    // summation (element-wise addition) requires an actual process.
+    PHYLO_PROFILES.out.duplication_count
+        .collectFile(name: 'duplication_count_per_species_per_gene_family.tsv',
+                     storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
+    PHYLO_PROFILES.out.loss_count
+        .collectFile(name: 'loss_count_per_per_species_gene_family.tsv',
+                     storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
+    PHYLO_PROFILES.out.speciation_count
+        .collectFile(name: 'speciation_count_per_species_per_gene_family.tsv',
+                     storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
+    PHYLO_PROFILES.out.transfer_donor_count
+        .collectFile(name: 'transfer_donor_count_per_species_per_gene_family.tsv',
+                     storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
+    PHYLO_PROFILES.out.transfer_recipient_count
+        .collectFile(name: 'transfer_recipient_count_per_species_per_gene_family.tsv',
+                     storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
+
+    // HGT matrices need element-wise summation — requires a process
     MERGE_PHYLO_PROFILES(
-        PHYLO_PROFILES.out.duplication_count.collect(),
-        PHYLO_PROFILES.out.hgt_summed_count.collect(),
-        PHYLO_PROFILES.out.loss_count.collect(),
-        PHYLO_PROFILES.out.speciation_count.collect(),
-        PHYLO_PROFILES.out.transfer_donor_count.collect(),
-        PHYLO_PROFILES.out.transfer_recipient_count.collect()
+        PHYLO_PROFILES.out.hgt_summed_count.collect()
     )
     ch_versions = ch_versions.mix(PHYLO_PROFILES.out.versions)
     ch_versions = ch_versions.mix(MERGE_PHYLO_PROFILES.out.versions)
