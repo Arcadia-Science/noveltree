@@ -31,6 +31,8 @@ process CLIPKIT {
     script:
     def args = task.ext.args ?: ''
     def min_ungapped_length = params.min_ungapped_length
+    def min_seq = params.min_num_seq_per_og
+    def min_spp = params.min_num_spp_per_og
     """
     # Get the alignment prefix (strip .fa extension, preserving aligner provenance)
     prefix=\$(basename "$fasta" .fa)
@@ -44,15 +46,24 @@ process CLIPKIT {
         \${prefix}_tmp.fa \\
         \${prefix}_clipkit.fa
 
-    # Now, create a protein-species map-file:
-    # Pull out the sequences, and split into a TreeRecs format mapping
-    # file, where each protein in the tree is a new line, listing species
-    # and then the protein
-    mkdir species_protein_maps
-    grep ">" \${prefix}_clipkit.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-    sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-    paste prot spp > species_protein_maps/\${prefix}_map.link
-    rm prot && rm spp
+    # Verify the trimmed alignment still meets minimum sequence/species thresholds.
+    # Trimming can remove sequences, potentially dropping an OG below the filters
+    # that were applied to the raw FASTA files.
+    n_seq=\$(grep -c ">" \${prefix}_clipkit.fa || true)
+    n_spp=\$(grep ">" \${prefix}_clipkit.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
+        rm \${prefix}_clipkit.fa
+    else
+        # Now, create a protein-species map-file:
+        # Pull out the sequences, and split into a TreeRecs format mapping
+        # file, where each protein in the tree is a new line, listing species
+        # and then the protein
+        mkdir species_protein_maps
+        grep ">" \${prefix}_clipkit.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        paste prot spp > species_protein_maps/\${prefix}_map.link
+        rm prot && rm spp
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

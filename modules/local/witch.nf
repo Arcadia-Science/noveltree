@@ -44,6 +44,8 @@ process WITCH {
     def args    = task.ext.args ?: ''
     def og      = "${meta.og}"
     def min_len = params.min_ungapped_length ?: '20'
+    def min_seq = params.min_num_seq_per_og
+    def min_spp = params.min_num_spp_per_og
     """
     # If we are resuming a run, do some cleanup:
     if [ -d "alignments/" ]; then
@@ -96,11 +98,10 @@ process WITCH {
     mv final_masked.fasta cleaned_alignments/${og}_witch_cleaned.fa
     rm -r alignments/ && rm tmp.fasta
 
-    # In the rare case that this filtering reduces sequences down to < 4
-    # sequences, delete the output cleaned alignments to exclude them from
-    # downstream phylogenetic analyses.
-    n_remain=\$(grep ">" cleaned_alignments/${og}_witch_cleaned.fa | wc -l)
-    if [ \$n_remain -lt 4 ]; then
+    # Verify the trimmed alignment still meets minimum sequence/species thresholds.
+    n_seq=\$(grep -c ">" cleaned_alignments/${og}_witch_cleaned.fa || true)
+    n_spp=\$(grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
         rm cleaned_alignments/${og}_witch_cleaned.fa
     else
         # Now pull out the sequences, and split into a TreeRecs format mapping
