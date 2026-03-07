@@ -209,9 +209,19 @@ per_spp_events <- get_og_events_per_spp(per_spp_og_counts, species_event_counts_
 transf_res <- get_tranfer_donor_recips(per_spp_og_counts, transfer_event_counts_file, og)
 
 # Write outputs with OG-specific filenames
-write.table(transf_res$summed_matrix,
-            file = paste0(og, "_hgt_summed_counts.tsv"),
-            sep = "\t", quote = F, row.names = T, col.names = NA)
+# Write HGT counts in flat long format (donor, recipient, count)
+# for efficient collectFile() concatenation downstream.
+# Only non-zero entries are written to keep files small.
+hgt_mat <- transf_res$summed_matrix
+hgt_long <- data.frame(
+    donor = rep(rownames(hgt_mat), ncol(hgt_mat)),
+    recipient = rep(colnames(hgt_mat), each = nrow(hgt_mat)),
+    count = as.vector(hgt_mat)
+)
+hgt_long <- hgt_long[hgt_long$count > 0, ]
+write.table(hgt_long,
+            file = paste0(og, "_hgt_counts_long.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
 write.table(per_spp_events$speciations,
             file = paste0(og, "_speciation_count.tsv"),
             sep = "\t", quote = F, row.names = F, col.names = T)

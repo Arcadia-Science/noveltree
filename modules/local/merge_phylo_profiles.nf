@@ -1,14 +1,13 @@
-// Sum HGT matrices element-wise across per-OG outputs.
-// TSV concatenation is handled upstream via collectFile() to avoid
-// staging hundreds of small files from S3 into a single process.
+// Pivot the concatenated long-format HGT counts into a species × species matrix.
+// All other phylo profile merges are handled by collectFile() in the workflow.
 process MERGE_PHYLO_PROFILES {
-    tag "Sum HGT matrices"
+    tag "Pivot HGT matrix"
     label "process_single"
 
     container 'arcadiascience/phylo_profiles:1.0.0'
 
     input:
-    path 'hgt_matrices/*'
+    path hgt_long_file
 
     output:
     path "hgt_summed_counts_recip_donor.tsv" , emit: hgt_summed_count
@@ -19,7 +18,7 @@ process MERGE_PHYLO_PROFILES {
 
     script:
     """
-    sum_hgt_matrices.py hgt_matrices hgt_summed_counts_recip_donor.tsv
+    pivot_hgt_matrix.py ${hgt_long_file} hgt_summed_counts_recip_donor.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
