@@ -1,7 +1,9 @@
-// Rename FASTA files so their filename matches the normalized species name.
-// OrthoFinder uses filenames as species identifiers, so this ensures
-// all downstream tip labels use the hyphenated species name convention
-// (e.g. Homo-sapiens_ProteinID).
+// Rename FASTA files and normalize sequence headers.
+// OrthoFinder uses filenames as species identifiers, so filenames are set
+// to the normalized species name. Headers are rewritten as
+// >{species_name}_{sanitized_id} where underscores in the protein ID are
+// replaced with hyphens. This ensures all downstream tools can extract the
+// species name by stripping everything after the last underscore.
 process RENAME_FASTAS {
     tag "${meta.id}"
     label 'process_single'
@@ -17,6 +19,27 @@ process RENAME_FASTAS {
 
     script:
     """
-    cp ${fasta} ${meta.id}.fa
+    awk -v species="${meta.id}" '
+    /^>/ {
+        # Extract first word (sequence ID)
+        id = \$1
+        sub(/^>/, "", id)
+
+        # If already prefixed with species name, strip it
+        prefix = species "_"
+        if (index(id, prefix) == 1) {
+            prot = substr(id, length(prefix) + 1)
+        } else {
+            prot = id
+        }
+
+        # Replace underscores with hyphens in protein part
+        gsub(/_/, "-", prot)
+
+        print ">" species "_" prot
+        next
+    }
+    { print }
+    ' ${fasta} > ${meta.id}.fa
     """
 }
