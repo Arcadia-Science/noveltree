@@ -67,7 +67,6 @@ if (params.preprocess) {
 include { DOWNLOAD_INPUT                              } from './modules/local/download_input'
 include { RENAME_FASTAS                              } from './modules/local/rename_fastas'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from './modules/local/orthofinder_prep'
-include { FILTER_ORTHOGROUPS                        } from './modules/local/filter_orthogroups'
 include { ASTEROID                                  } from './modules/local/asteroid'
 include { SPECIESRAX                                } from './modules/local/speciesrax'
 include { TIME_CALIBRATE_SPECIES_TREE               } from './modules/local/time_calibrate_species_tree'
@@ -238,7 +237,8 @@ workflow NOVELTREE {
     ch_versions = ch_versions.mix(DIAMOND_BLASTP_ALL.out.versions)
 
     // Using this best-performing inflation parameter, infer orthogroups for
-    // all samples.
+    // all samples. Also runs chimera detection and orthogroup filtering
+    // (for complete_dataset only) to avoid an extra S3 round-trip.
     ORTHOFINDER_MCL_ALL(
         ch_best_inflation,
         DIAMOND_BLASTP_ALL.out.txt.collect(),
@@ -246,18 +246,8 @@ workflow NOVELTREE {
         ORTHOFINDER_PREP_ALL.out.diamonds,
         ORTHOFINDER_PREP_ALL.out.sppIDs,
         ORTHOFINDER_PREP_ALL.out.seqIDs,
-        "complete_dataset"
-    )
-
-    //
-    // MODULE: FILTER_ORTHOGROUPS
-    // Subset orthogroups based on their copy number and distribution
-    // across species and taxonomic group.
-    // The conservative subset will be used for species tree inference,
-    // and the remainder will be used to infer gene family trees only.
-    FILTER_ORTHOGROUPS(
+        "complete_dataset",
         INPUT_CHECK.out.complete_samplesheet,
-        ORTHOFINDER_MCL_ALL.out.inflation_dir,
         params.min_num_seq_per_og,
         params.min_num_spp_per_og,
         params.min_prop_spp_for_spptree,
@@ -265,14 +255,14 @@ workflow NOVELTREE {
     )
 
     // Create meta maps for the two sets by just providing the simple name of each orthogroup:
-    spptree_og_names = FILTER_ORTHOGROUPS.out.spptree_fas.map { file -> file.simpleName }
+    spptree_og_names = ORTHOFINDER_MCL_ALL.out.spptree_fas.map { file -> file.simpleName }
     spptree_og_map = spptree_og_names.map { create_og_channel(it) }.flatten()
-    genetree_og_names = FILTER_ORTHOGROUPS.out.genetree_fas.map { file -> file.simpleName }
+    genetree_og_names = ORTHOFINDER_MCL_ALL.out.genetree_fas.map { file -> file.simpleName }
     genetree_og_map = genetree_og_names.map { create_og_channel(it) }.flatten()
 
     // And now create the tuple of these output fastas paired with the meta map
-    ch_spptree_fas = spptree_og_map.merge(FILTER_ORTHOGROUPS.out.spptree_fas.flatten())
-    ch_genetree_fas = genetree_og_map.merge(FILTER_ORTHOGROUPS.out.genetree_fas.flatten())
+    ch_spptree_fas = spptree_og_map.merge(ORTHOFINDER_MCL_ALL.out.spptree_fas.flatten())
+    ch_genetree_fas = genetree_og_map.merge(ORTHOFINDER_MCL_ALL.out.genetree_fas.flatten())
 
     //
     // TREE INFERENCE: Alignment → Trimming → Phylogeny

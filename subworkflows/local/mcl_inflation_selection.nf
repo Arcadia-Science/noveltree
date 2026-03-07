@@ -50,7 +50,12 @@ workflow MCL_INFLATION_SELECTION {
             ORTHOFINDER_PREP_TEST.out.diamonds,
             ORTHOFINDER_PREP_TEST.out.sppIDs,
             ORTHOFINDER_PREP_TEST.out.seqIDs,
-            "mcl_test_dataset"
+            "mcl_test_dataset",
+            [],   // samplesheet — not used for mcl_test_dataset
+            0,    // min_num_seqs — not used for mcl_test_dataset
+            0,    // min_num_spp — not used for mcl_test_dataset
+            0,    // min_prop_spp_for_spptree — not used for mcl_test_dataset
+            0     // max_copy_num — not used for mcl_test_dataset
         )
 
         COGEQC(
