@@ -361,9 +361,8 @@ workflow NOVELTREE {
     )
 
     // Merge per-OG phylo profile outputs.
-    // Use collectFile() for simple TSV concatenation — avoids staging hundreds
-    // of small files from S3 into a single process. Only the HGT matrix
-    // summation (element-wise addition) requires an actual process.
+    // collectFile() concatenates TSVs natively in Nextflow, avoiding the need
+    // to stage hundreds/thousands of small files from S3 into a single process.
     PHYLO_PROFILES.out.duplication_count
         .collectFile(name: 'duplication_count_per_species_per_gene_family.tsv',
                      storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
@@ -380,10 +379,12 @@ workflow NOVELTREE {
         .collectFile(name: 'transfer_recipient_count_per_species_per_gene_family.tsv',
                      storeDir: "${params.outdir}/gene_family_evolution", keepHeader: true)
 
-    // HGT matrices need element-wise summation — requires a process
-    MERGE_PHYLO_PROFILES(
-        PHYLO_PROFILES.out.hgt_summed_count.collect()
-    )
+    // HGT counts are emitted in long format (donor, recipient, count).
+    // collectFile() concatenates them, then a lightweight process pivots
+    // the single file into the final species × species matrix.
+    ch_hgt_long = PHYLO_PROFILES.out.hgt_counts_long
+        .collectFile(name: 'hgt_counts_long_all.tsv', keepHeader: true)
+    MERGE_PHYLO_PROFILES(ch_hgt_long)
     ch_versions = ch_versions.mix(PHYLO_PROFILES.out.versions)
     ch_versions = ch_versions.mix(MERGE_PHYLO_PROFILES.out.versions)
 

@@ -10,7 +10,7 @@ process PHYLO_PROFILES {
 
     output:
     path "${meta.og}_duplication_count.tsv"        , emit: duplication_count
-    path "${meta.og}_hgt_summed_counts.tsv"        , emit: hgt_summed_count
+    path "${meta.og}_hgt_counts_long.tsv"           , emit: hgt_counts_long
     path "${meta.og}_loss_count.tsv"               , emit: loss_count
     path "${meta.og}_speciation_count.tsv"         , emit: speciation_count
     path "${meta.og}_transfer_donor_count.tsv"     , emit: transfer_donor_count
