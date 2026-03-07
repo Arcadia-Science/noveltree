@@ -69,7 +69,9 @@ if (params.preprocess) {
 include { DOWNLOAD_INPUT                              } from './modules/local/download_input'
 include { RENAME_FASTAS                              } from './modules/local/rename_fastas'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from './modules/local/orthofinder_prep'
-include { ASTEROID                                  } from './modules/local/asteroid'
+if (params.outgroups != 'none') {
+    include { ASTEROID                              } from './modules/local/asteroid'
+}
 include { SPECIESRAX                                } from './modules/local/speciesrax'
 include { TIME_CALIBRATE_SPECIES_TREE               } from './modules/local/time_calibrate_species_tree'
 include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
@@ -300,14 +302,12 @@ workflow NOVELTREE {
     // MODULE: ASTEROID
     // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
     //
-    ASTEROID(species_name_list, core_gene_tree_list, params.outgroups)
-        .rooted_spp_tree
-        .set { ch_asteroid }
-    ch_versions = ch_versions.mix(ASTEROID.out.versions)
-
-    // If no outgroups are provided (and thus no rooted species tree output
-    // by Asteroid), define ch_asteroid as a null/empty channel
-    if (params.outgroups == "none") {
+    if (params.outgroups != "none") {
+        ASTEROID(species_name_list, core_gene_tree_list, params.outgroups)
+            .rooted_spp_tree
+            .set { ch_asteroid }
+        ch_versions = ch_versions.mix(ASTEROID.out.versions)
+    } else {
         ch_asteroid = Channel.value("none")
     }
 
