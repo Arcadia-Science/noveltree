@@ -35,6 +35,8 @@ process CIALIGN {
     script:
     def args = task.ext.args ?: ''
     def remove_short = params.min_ungapped_length ? "--remove_short --remove_min_length=${params.min_ungapped_length}" : ''
+    def min_seq = params.min_num_seq_per_og
+    def min_spp = params.min_num_spp_per_og
     """
     # Get the alignment prefix (strip .fa extension, preserving aligner provenance)
     prefix=\$(basename "${fasta}" .fa)
@@ -58,10 +60,10 @@ process CIALIGN {
     mkdir log_files
     mv *log.txt log_files
 
-    # Now, create a protein-species map-file, assuming that trimming didn't lead
-    # to the focal MSA being comprised of < 4 sequences.
-    n_remain=\$(grep ">" \${prefix}_cialign.fa | wc -l)
-    if [ \$n_remain -lt 4 ]; then
+    # Verify the trimmed alignment still meets minimum sequence/species thresholds.
+    n_seq=\$(grep -c ">" \${prefix}_cialign.fa || true)
+    n_spp=\$(grep ">" \${prefix}_cialign.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
         rm \${prefix}_cialign.fa
     else
         # Now pull out the sequences, and split into a TreeRecs format mapping
