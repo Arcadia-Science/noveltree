@@ -2,7 +2,7 @@ process TRANSDECODER {
     tag "${meta.id}"
     label 'process_medium'
 
-    container 'arcadiascience/preprocess_proteomes:1.0.0'
+    container 'arcadiascience/preprocess_proteomes:1.1.0'
 
     input:
     tuple val(meta), path(fasta)

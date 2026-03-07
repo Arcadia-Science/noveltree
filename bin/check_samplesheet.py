@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 import errno
 import argparse
 
@@ -135,6 +136,9 @@ def check_samplesheet(file_in, file_out):
                         if fasta.find(" ") != -1:
                             print_error("fasta file contains spaces!", "Line", line)
                         is_url = any(fasta.startswith(p) for p in ("http://", "https://", "ftp://", "s3://"))
+                        is_ncbi = bool(re.match(r'^GCF_\d+(\.\d+)?$', fasta))
+                        is_uniprot = bool(re.match(r'^UP\d{9,}$', fasta))
+                        is_remote = is_url or is_ncbi or is_uniprot
                         if is_url:
                             # For URLs, try to validate from basename but skip if no recognizable extension
                             check_name = fasta.split("?")[0].split("/")[-1]
@@ -143,7 +147,7 @@ def check_samplesheet(file_in, file_out):
                         # Determine valid extensions based on transdecoder flag
                         valid_exts = ALL_EXTENSIONS if transdecoder == "yes" else PROTEIN_EXTENSIONS
                         has_valid_ext = any(check_name.endswith(ext) for ext in valid_exts)
-                        if not has_valid_ext and not is_url:
+                        if not has_valid_ext and not is_remote:
                             ext_str = "', '".join(valid_exts)
                             print_error(
                                 f"File does not have a valid extension ('{ext_str}')!",
