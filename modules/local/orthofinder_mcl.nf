@@ -12,9 +12,20 @@ process ORTHOFINDER_MCL {
     file(sppIDs)
     file(seqIDs)
     val output_directory
+    file samplesheet
+    val min_num_seqs
+    val min_num_spp
+    val min_prop_spp_for_spptree
+    val max_copy_num
 
     output:
-    path("*/Results_Inflation*"), emit: inflation_dir
+    path("*/Results_Inflation*"),           emit: inflation_dir
+    path("species_tree_og_msas/*.fa"),      emit: spptree_fas, optional: true
+    path("gene_tree_og_msas/*.fa"),         emit: genetree_fas, optional: true
+    path("all_ogs_counts.csv"),             emit: all_ogs, optional: true
+    path("spptree_core_ogs_counts.csv"),    emit: spptree_core_ogs, optional: true
+    path("genetree_core_ogs_counts.csv"),   emit: genetree_core_ogs, optional: true
+    path("chimera_report.tsv"),             emit: chimera_report, optional: true
 
     when:
     task.ext.when == null || task.ext.when
@@ -52,11 +63,34 @@ process ORTHOFINDER_MCL {
         cd \$dir
 
         # Flag and remove cross-OG chimeric proteins
-        flag_cross_og_chimeras.py \
-            --orthogroups OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.tsv \
-            --blast_dir ./ \
-            --og_seqs_dir OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/ \
-            --report OrthoFinder/Results_Inflation_${mcl_inflation}/chimera_report.tsv
+        flag_cross_og_chimeras.py \\
+            --orthogroups OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.tsv \\
+            --blast_dir ./ \\
+            --og_seqs_dir OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/ \\
+            --report chimera_report.tsv
+
+        # Filter orthogroups into species tree and gene tree sets
+        og_tax_summary.py \\
+            OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.GeneCount.tsv \\
+            ${samplesheet} \\
+            ${min_num_seqs} ${min_num_spp} ${min_prop_spp_for_spptree} ${max_copy_num}
+
+        # Move filtered FASTAs into separate directories
+        msa_dir=OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences
+
+        mkdir -p species_tree_og_msas gene_tree_og_msas
+
+        tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | while read og; do
+            if [ -f "\${msa_dir}/\${og}.fa" ]; then
+                mv "\${msa_dir}/\${og}.fa" species_tree_og_msas/
+            fi
+        done
+
+        tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | while read og; do
+            if [ -f "\${msa_dir}/\${og}.fa" ]; then
+                mv "\${msa_dir}/\${og}.fa" gene_tree_og_msas/
+            fi
+        done
     fi
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
