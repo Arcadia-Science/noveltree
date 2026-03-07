@@ -146,8 +146,8 @@ workflow NOVELTREE {
     // Normalize ref_species to hyphens (users may pass underscores or spaces)
     def ref_species = params.ref_species.replace('_', '-').replace(' ', '-')
 
-    // Download any URL-based inputs, then merge with local files
-    DOWNLOAD_INPUT(ch_all_data.url_prots)
+    // Download any remote inputs (URLs, NCBI accessions, UniProt IDs), then merge with local files
+    DOWNLOAD_INPUT(ch_all_data.remote_prots)
     ch_versions = ch_versions.mix(DOWNLOAD_INPUT.out.versions)
     ch_complete_prots = ch_all_data.local_prots.mix(DOWNLOAD_INPUT.out.downloaded)
 

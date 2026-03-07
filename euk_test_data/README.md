@@ -2,6 +2,29 @@
 
 This directory contains test samplesheets and small proteome files for testing the NovelTree pipeline.
 
+## Samplesheet `file` Column Formats
+
+The `file` column in the samplesheet accepts four formats:
+
+| Format | Example | Description |
+|---|---|---|
+| Local path | `data/Species.fasta` | Path to a local FASTA file |
+| URL | `https://rest.uniprot.org/uniprotkb/stream?query=(proteome:UP000005640)&format=fasta` | Direct download URL (http/https/ftp/s3) |
+| UniProt proteome ID | `UP000005640` | Auto-downloaded via UniProt REST API |
+| NCBI RefSeq accession | `GCF_000001405.40` | Auto-downloaded via NCBI `datasets` CLI |
+
+### Auto-set flags by source type
+
+| Source type | `isoform` | `reference` | `transdecoder` |
+|---|---|---|---|
+| UniProt reference (`UP*`) | User-set | `yes` | `no` |
+| UniProt representative (`UP*`) | User-set | `no` | `no` |
+| NCBI RefSeq (`GCF_*`) | **Auto-set to `yes`** | `no` | `no` |
+| URL | User-set | User-set | User-set |
+| Local file | User-set | User-set | User-set |
+
+NCBI RefSeq proteomes always include isoforms, so `isoform` is automatically overridden to `yes` regardless of what is specified in the samplesheet.
+
 ## Samplesheets
 
 ### `samplesheet.csv` — Default test (fast, no internet required)
@@ -23,7 +46,7 @@ nextflow run . -profile test,docker --outdir tests/results
 
 ### `samplesheet_preprocess.csv` — Preprocessing test (requires internet)
 
-Exercises all preprocessing code paths: TransDecoder, isoform filtering, CD-HIT logic, URL downloads, and gzipped input handling. Downloads full proteomes from UniProt and NCBI, so runs are slower and require network access.
+Exercises all preprocessing code paths: TransDecoder, isoform filtering, CD-HIT logic, URL downloads, accession-based downloads, and gzipped input handling. Downloads full proteomes from UniProt and NCBI, so runs are slower and require network access.
 
 ```bash
 nextflow run . -profile test,docker --preprocess true \
@@ -35,17 +58,17 @@ nextflow run . -profile test,docker --preprocess true \
 |---|---|---|---|---|---|
 | Homo sapiens | Local file | no | no | yes | Skip CD-HIT (UniProt reference) |
 | Mus musculus | Local file | no | no | yes | Skip CD-HIT (UniProt reference) |
-| Danio rerio | Local file | no | yes | no | Isoform filter → CD-HIT 100% (exact dedup) |
-| S. pombe | NCBI FTP URL (rna .fna.gz) | yes | yes | no | TransDecoder → isoform filter → CD-HIT 97% |
-| S. cerevisiae | UniProt REST URL | no | yes | yes | Isoform filter → skip CD-HIT |
-| N. crassa | UniProt REST URL | no | no | yes | URL download → skip CD-HIT |
+| Danio rerio | Local file | no | yes | no | Isoform filter -> CD-HIT 100% (exact dedup) |
+| S. pombe | NCBI RefSeq accession | yes | **auto: yes** | no | NCBI download -> TransDecoder -> isoform filter -> CD-HIT 97% |
+| S. cerevisiae | UniProt proteome ID | no | yes | yes | UniProt download -> isoform filter -> skip CD-HIT |
+| N. crassa | UniProt REST URL | no | no | yes | URL download -> skip CD-HIT |
 
 #### What each species tests
 
 - **Homo sapiens, Mus musculus**: Local files with `reference=yes` — verifies CD-HIT is skipped for UniProt reference proteomes.
 - **Danio rerio**: Local file with `isoform=yes` — verifies isoform filtering runs, then CD-HIT at 100% (exact duplicate removal only).
-- **S. pombe**: NCBI FTP download of gzipped RNA/transcript nucleotide file (`rna_from_genomic.fna.gz`) with `transdecoder=yes` — verifies gzip decompression, TransDecoder ORF prediction, isoform filtering (auto-triggered by transdecoder), and CD-HIT at 97% (collapse assembly/prediction artifacts). Note: TransDecoder requires raw transcript sequences, not pre-extracted CDS.
-- **S. cerevisiae**: UniProt REST API download with `isoform=yes` + `reference=yes` — verifies URL download, isoform filtering, and CD-HIT skip.
-- **N. crassa**: UniProt REST API download with `reference=yes` — verifies URL download and CD-HIT skip with no other preprocessing.
+- **S. pombe**: NCBI RefSeq accession (`GCF_000002945.2`) with `transdecoder=yes` — verifies NCBI datasets download, TransDecoder ORF prediction, auto-isoform filtering (triggered by both RefSeq auto-override and transdecoder), and CD-HIT at 97%.
+- **S. cerevisiae**: UniProt proteome ID (`UP000002311`) with `isoform=yes` + `reference=yes` — verifies UniProt REST download, isoform filtering, and CD-HIT skip.
+- **N. crassa**: UniProt REST API URL with `reference=yes` — verifies URL download and CD-HIT skip with no other preprocessing.
 
-All six species also go through stop codon removal, rare amino acid handling (U→C, J/B/Z→X), and minimum length filtering (default 50 aa).
+All six species also go through stop codon removal, rare amino acid handling (U->C, J/B/Z->X), and minimum length filtering (default 50 aa).

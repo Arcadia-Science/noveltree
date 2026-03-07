@@ -7,6 +7,8 @@ RUN apt-get update && \
     apt-get install -y \
         build-essential \
         wget \
+        unzip \
+        curl \
         zlib1g-dev \
         perl \
         liburi-perl \
@@ -37,5 +39,10 @@ RUN wget -q https://github.com/TransDecoder/TransDecoder/archive/refs/tags/Trans
     rm TransDecoder-v5.7.1.tar.gz && \
     ln -s /opt/TransDecoder/TransDecoder.LongOrfs /usr/local/bin/ && \
     ln -s /opt/TransDecoder/TransDecoder.Predict /usr/local/bin/
+
+# Install NCBI datasets CLI v2 (static binary, ~25MB)
+RUN wget -q "https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/linux-amd64/datasets" \
+        -O /usr/local/bin/datasets && \
+    chmod +x /usr/local/bin/datasets
 
 CMD ["/bin/bash", "-l"]
