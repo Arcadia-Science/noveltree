@@ -51,7 +51,9 @@ if (params.zoogle && (!params.reference_time_tree || params.reference_time_tree 
 // SUBWORKFLOW
 //
 include { INPUT_CHECK                           } from './subworkflows/local/input_check'
-include { MCL_INFLATION_SELECTION               } from './subworkflows/local/mcl_inflation_selection'
+if (params.test_mcl) {
+    include { MCL_INFLATION_SELECTION           } from './subworkflows/local/mcl_inflation_selection'
+}
 include { INFER_TREES as INFER_SPECIES_TREES    } from './subworkflows/local/infer_trees'
 include { INFER_TREES as INFER_REMAINING_TREES  } from './subworkflows/local/infer_trees'
 
@@ -167,19 +169,22 @@ workflow NOVELTREE {
     RENAME_FASTAS(ch_to_rename)
     ch_renamed_prots = RENAME_FASTAS.out.renamed
 
-    // Derive MCL test and annotation subsets from renamed files
-    ch_renamed_mcl_test = ch_renamed_prots.filter { it[0].mcl_test == 'true' }
-    ch_renamed_annotation = ch_renamed_mcl_test.filter { it[0].uniprot == 'true' }
-
     species_name_list = ch_renamed_prots.collect { it[0].id }
     complete_prots_list = ch_renamed_prots.collect { it[1] }
 
     //
     // Running steps to find the best mcl_inflation parameter value.
-    // These steps will only run if more than one value was provided.
+    // Only runs when --test_mcl true is set (opt-in).
     //
-    if (mcl_inflation.size() > 1) {
-        // Use MCL_INFLATION_SELECTION subworkflow for both modes
+    if (params.test_mcl) {
+        // Ensure multiple inflation values are provided when testing
+        if (mcl_inflation.size() < 2) {
+            exit 1, '--test_mcl requires multiple --mcl_inflation values (e.g. --mcl_inflation "1.1,1.3,1.5,2.0,3.0")'
+        }
+        // Derive MCL test and annotation subsets from renamed files
+        ch_renamed_mcl_test = ch_renamed_prots.filter { it[0].mcl_test == 'true' }
+        ch_renamed_annotation = ch_renamed_mcl_test.filter { it[0].uniprot == 'true' }
+
         MCL_INFLATION_SELECTION(
             ch_renamed_mcl_test,
             ch_renamed_annotation,
