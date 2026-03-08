@@ -138,7 +138,8 @@ def check_samplesheet(file_in, file_out):
                         is_url = any(fasta.startswith(p) for p in ("http://", "https://", "ftp://", "s3://"))
                         is_ncbi = bool(re.match(r'^GCF_\d+(\.\d+)?$', fasta))
                         is_uniprot = bool(re.match(r'^UP\d{9,}$', fasta))
-                        is_remote = is_url or is_ncbi or is_uniprot
+                        is_tsa = bool(re.match(r'^[A-Z]{4}\d{8}$', fasta))
+                        is_remote = is_url or is_ncbi or is_uniprot or is_tsa
                         if is_url:
                             # For URLs, try to validate from basename but skip if no recognizable extension
                             check_name = fasta.split("?")[0].split("/")[-1]

@@ -54,10 +54,16 @@ def create_prots_channel(LinkedHashMap row) {
                  row.file.startsWith('ftp://') || row.file.startsWith('s3://')
     def is_ncbi = row.file ==~ /^GCF_\d+(\.\d+)?$/
     def is_uniprot = row.file ==~ /^UP\d{9,}$/
+    def is_tsa = row.file ==~ /^[A-Z]{4}\d{8}$/
 
     if (is_ncbi) {
         meta.source_type = 'ncbi_refseq'
         // RefSeq proteomes always include isoforms — auto-override
+        meta.isoform = 'yes'
+    } else if (is_tsa) {
+        meta.source_type = 'ncbi_tsa'
+        // TSA transcriptomes are nucleotide — auto-enable TransDecoder and isoform filtering
+        meta.transdecoder = 'yes'
         meta.isoform = 'yes'
     } else if (is_uniprot) {
         meta.source_type = 'uniprot'
@@ -67,6 +73,15 @@ def create_prots_channel(LinkedHashMap row) {
         meta.source_type = 'local'
     }
     meta.needs_download = (meta.source_type != 'local')
+
+    // Guard: TransDecoder is for nucleotide inputs only. If the input mode
+    // is 'proteins', running ORF prediction will produce garbage. Auto-fix
+    // and warn so the pipeline doesn't silently lose an entire species.
+    if (meta.transdecoder == 'yes' && meta.mode == 'proteins') {
+        log.warn "Samplesheet has transdecoder=yes for '${meta.id}' but mode=proteins. " +
+                 "TransDecoder requires nucleotide input — overriding to transdecoder=no."
+        meta.transdecoder = 'no'
+    }
 
     if (meta.needs_download) {
         return [meta, row.file]
