@@ -48,30 +48,11 @@ process DOWNLOAD_INPUT {
             curl: \$(curl --version 2>&1 | head -1 | grep -oP '\\d+\\.\\d+\\.\\d+' || echo "unknown")
         END_VERSIONS
         """
-    } else if (meta.source_type == 'ncbi_tsa') {
-        // TSA accession — construct WGS/TSA FTP URL and download nucleotide FASTA
-        def chars = source.replaceAll(/\d+$/, '')  // e.g. GKVO01000000 -> GKVO
-        def prefix = source[0..5]  // e.g. GKVO01
-        def d1 = source[0..1]      // e.g. GK
-        def d2 = source[2..3]      // e.g. VO
-        """
-        wget -q -O "${meta.id}_downloaded.fna.gz" \
-            "https://sra-download.ncbi.nlm.nih.gov/traces/wgs01/wgs_aux/${d1}/${d2}/${prefix}/${prefix}.1.fsa_nt.gz"
-
-        if [ ! -s "${meta.id}_downloaded.fna.gz" ]; then
-            echo "ERROR: Download failed for TSA accession ${source}. Check that the accession is valid." >&2
-            exit 1
-        fi
-
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            wget: \$(wget --version 2>&1 | head -1 | grep -oP '\\d+\\.\\d+' || echo "1.21")
-        END_VERSIONS
-        """
     } else {
         // URL download — existing logic
         def url_basename = source.split('\\?')[0].split('/')[-1]
-        def ext = url_basename.endsWith('.fna.gz') ? '.fna.gz' :
+        def ext = url_basename.endsWith('.fsa_nt.gz') ? '.fna.gz' :
+                  url_basename.endsWith('.fna.gz') ? '.fna.gz' :
                   url_basename.endsWith('.fa.gz')  ? '.fa.gz' :
                   url_basename.endsWith('.fasta.gz') ? '.fasta.gz' :
                   url_basename.endsWith('.fna') ? '.fna' :
