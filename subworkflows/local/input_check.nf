@@ -52,7 +52,7 @@ def create_prots_channel(LinkedHashMap row) {
     // Detect source type from file column value
     def is_url = row.file.startsWith('http://') || row.file.startsWith('https://') ||
                  row.file.startsWith('ftp://') || row.file.startsWith('s3://')
-    def is_ncbi = row.file ==~ /^GCF_\d+(\.\d+)?$/
+    def is_ncbi = row.file ==~ /^GC[AF]_\d+(\.\d+)?$/
     def is_uniprot = row.file ==~ /^UP\d{9,}$/
     def is_tsa = row.file ==~ /^[A-Z]{4}\d{8}$/
 

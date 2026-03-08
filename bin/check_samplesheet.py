@@ -49,14 +49,14 @@ def check_samplesheet(file_in, file_out):
     ALL_EXTENSIONS = PROTEIN_EXTENSIONS + NUCLEOTIDE_EXTENSIONS
 
     # Optional columns and their defaults
-    OPTIONAL_COLS = ["transdecoder", "isoform", "reference"]
+    OPTIONAL_COLS = ["mcl_test", "transdecoder", "isoform", "reference"]
     VALID_YES_NO = {"yes", "no"}
 
     species_mapping_dict = {}
     with open(file_in, "r", encoding="utf-8-sig") as fin:
         ## Check header
-        MIN_COLS = 8
-        HEADER = ["species", "file", "taxonomy", "shallow_db", "broad_db", "mode", "uniprot", "mcl_test"]
+        MIN_COLS = 7
+        HEADER = ["species", "file", "taxonomy", "shallow_db", "broad_db", "mode", "uniprot"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
             print(f"ERROR: Please check samplesheet header -> {','.join(header)} != {','.join(HEADER)}")
@@ -90,7 +90,7 @@ def check_samplesheet(file_in, file_out):
                     )
 
                 ## Check sample name entries
-                species, file, taxonomy, shallow_db, broad_db, mode, uniprot, mcl_test = lspl[: len(HEADER)]
+                species, file, taxonomy, shallow_db, broad_db, mode, uniprot = lspl[: len(HEADER)]
                 # Normalize species names to use hyphens (e.g. "Homo sapiens" or
                 # "Homo_sapiens" both become "Homo-sapiens"). This ensures
                 # unambiguous parsing of tip labels (Species-name_ProteinID) since
@@ -118,6 +118,7 @@ def check_samplesheet(file_in, file_out):
                         )
                     optional_values[col] = val
 
+                mcl_test = optional_values["mcl_test"]
                 transdecoder = optional_values["transdecoder"]
                 isoform = optional_values["isoform"]
                 reference = optional_values["reference"]
@@ -136,7 +137,7 @@ def check_samplesheet(file_in, file_out):
                         if fasta.find(" ") != -1:
                             print_error("fasta file contains spaces!", "Line", line)
                         is_url = any(fasta.startswith(p) for p in ("http://", "https://", "ftp://", "s3://"))
-                        is_ncbi = bool(re.match(r'^GCF_\d+(\.\d+)?$', fasta))
+                        is_ncbi = bool(re.match(r'^GC[AF]_\d+(\.\d+)?$', fasta))
                         is_uniprot = bool(re.match(r'^UP\d{9,}$', fasta))
                         is_tsa = bool(re.match(r'^[A-Z]{4}\d{8}$', fasta))
                         is_remote = is_url or is_ncbi or is_uniprot or is_tsa
