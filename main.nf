@@ -267,9 +267,33 @@ workflow NOVELTREE {
     genetree_og_names = ORTHOFINDER_MCL_ALL.out.genetree_fas.map { file -> file.simpleName }
     genetree_og_map = genetree_og_names.map { create_og_channel(it) }.flatten()
 
-    // And now create the tuple of these output fastas paired with the meta map
+    // And now create the tuple of these output fastas paired with the meta map,
+    // injecting n_seq and max_len for downstream dynamic resource allocation.
+    // max_len = longest sequence in the OG (needed for PREQUAL O(L^2) memory).
     ch_spptree_fas = spptree_og_map.merge(ORTHOFINDER_MCL_ALL.out.spptree_fas.flatten())
+        .map { meta, fasta ->
+            def text = fasta.text
+            def n_seq = text.count('>')
+            def cur = 0; def maxL = 0
+            text.eachLine { line ->
+                if (line.startsWith('>')) { if (cur > maxL) maxL = cur; cur = 0 }
+                else { cur += line.trim().length() }
+            }
+            if (cur > maxL) maxL = cur
+            [meta + [n_seq: n_seq, max_len: maxL], fasta]
+        }
     ch_genetree_fas = genetree_og_map.merge(ORTHOFINDER_MCL_ALL.out.genetree_fas.flatten())
+        .map { meta, fasta ->
+            def text = fasta.text
+            def n_seq = text.count('>')
+            def cur = 0; def maxL = 0
+            text.eachLine { line ->
+                if (line.startsWith('>')) { if (cur > maxL) maxL = cur; cur = 0 }
+                else { cur += line.trim().length() }
+            }
+            if (cur > maxL) maxL = cur
+            [meta + [n_seq: n_seq, max_len: maxL], fasta]
+        }
 
     //
     // TREE INFERENCE: Alignment → Trimming → Phylogeny
