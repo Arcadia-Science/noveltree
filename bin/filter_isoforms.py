@@ -2,11 +2,12 @@
 """
 Filter FASTA to keep the longest isoform per gene.
 
-Supports four header patterns:
-1. NCBI RefSeq: gene=GENENAME in header → group by gene name
-2. NCBI eukaryotic: [gene=LOC...] [protein_id=XP_...] → group by gene
-3. Trinity assemblies: TRINITY_DN*_c*_g*_i* → group by gene (before _i)
-4. TransDecoder output: GENE.X~~Y.pN → group by gene (before .p)
+Supports five header patterns (checked in order):
+1. UniProt: GN=GENENAME in header → group by gene name
+2. NCBI RefSeq: gene=GENENAME in header → group by gene name
+3. NCBI eukaryotic: [gene=LOC...] [protein_id=XP_...] → group by gene
+4. Trinity assemblies: TRINITY_DN*_c*_g*_i* → group by gene (before _i)
+5. TransDecoder output: GENE.X~~Y.pN → group by gene (before .p)
 
 If no pattern matches, each sequence is treated as its own group (all kept).
 """
@@ -38,22 +39,28 @@ def extract_gene_id(header):
     seqid = header.split()[0]
     full_header = header
 
-    # Pattern 1: gene=GENENAME (NCBI RefSeq style)
+    # Pattern 1: UniProt — GN=GENENAME (checked first; won't interfere with
+    # NCBI patterns since UniProt headers never contain bare "gene=")
+    m = re.search(r"\bGN=(\S+)", full_header)
+    if m:
+        return m.group(1)
+
+    # Pattern 2: gene=GENENAME (NCBI RefSeq style)
     m = re.search(r"\bgene=(\S+)", full_header)
     if m:
         return m.group(1)
 
-    # Pattern 2: [gene=LOC...] (NCBI eukaryotic)
+    # Pattern 3: [gene=LOC...] (NCBI eukaryotic)
     m = re.search(r"\[gene=([^\]]+)\]", full_header)
     if m:
         return m.group(1)
 
-    # Pattern 3: Trinity — TRINITY_DN{d}_c{d}_g{d}_i{d}
+    # Pattern 4: Trinity — TRINITY_DN{d}_c{d}_g{d}_i{d}
     m = re.match(r"(TRINITY_DN\d+_c\d+_g\d+)_i\d+", seqid)
     if m:
         return m.group(1)
 
-    # Pattern 4: TransDecoder — GENE.X~~Y.pN
+    # Pattern 5: TransDecoder — GENE.X~~Y.pN
     m = re.match(r"(.+)\.p\d+$", seqid)
     if m:
         return m.group(1)
