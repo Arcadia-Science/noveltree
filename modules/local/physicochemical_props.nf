@@ -1,6 +1,17 @@
 process PHYSICOCHEMICAL_PROPS {
     tag "${meta.og}"
-    label "process_high"
+
+    cpus 1
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def estimated_gb = Math.max(2L, (long)(n * L * 32L / (1024L * 1024L * 1024L)) + 1L)
+        def capped_gb = (int) Math.min(estimated_gb, 8L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container 'arcadiascience/physicochemical_props:1.0.0'
 

@@ -1,6 +1,19 @@
 process FASTTREE {
     tag "$meta.og"
-    label 'process_fasttree'
+
+    cpus { 16 * task.attempt }
+    time { 3.h * Math.pow(3, task.attempt - 1) }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def profile_bytes = n * L * 165L
+        def nj_bytes = (long)(16.0 * Math.pow(n, 1.5))
+        def estimated_gb = Math.max(2L, (long)((profile_bytes + nj_bytes) / (1024L * 1024L * 1024L)) + 1L)
+        def capped_gb = (int) Math.min(estimated_gb, 72L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container 'arcadiascience/fasttree_2.1.11:1.0.0'
 
