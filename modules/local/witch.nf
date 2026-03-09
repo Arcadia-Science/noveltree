@@ -5,7 +5,7 @@ process WITCH {
     time { 6.h * task.attempt }
     memory {
         def L = (meta?.max_len ?: 500) as long
-        def estimated_gb = Math.max(8L, L * 20L / 1024L + 4L)
+        def estimated_gb = Math.max(8L, (long)(L * 20L / 1024L) + 4L)
         def capped_gb = (int) Math.min(estimated_gb, 64L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
