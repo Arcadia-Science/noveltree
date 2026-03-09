@@ -6,8 +6,11 @@ process FAMSA {
     memory {
         def n = (meta?.n_seq ?: 5000) as long
         def L = (meta?.max_len ?: 500) as long
-        def L_aln = L * 3L
-        def estimated_gb = Math.max(4L, (long)(n * L_aln * 16L / (1024L * 1024L * 1024L)) + 2L)
+        def L_aln = L * 3L  // gap expansion for divergent families
+        // Progressive alignment: O(n × L_aln) profiles + O(L_aln²) DP matrix per merge step
+        def profile_bytes = n * L_aln * 16L
+        def dp_bytes = L_aln * L_aln * 16L
+        def estimated_gb = Math.max(4L, (long)((profile_bytes + dp_bytes) / (1024L * 1024L * 1024L)) + 2L)
         def capped_gb = (int) Math.min(estimated_gb, 96L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
