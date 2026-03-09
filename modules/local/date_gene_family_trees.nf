@@ -1,6 +1,16 @@
 process DATE_GENE_FAMILY_TREES {
     tag "$meta.og"
-    label 'process_low_cpu'
+
+    cpus 1
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 200) as long
+        def estimated_gb = Math.max(2L, (long)(n * 4L / 1000L) + 1L)
+        def capped_gb = (int) Math.min(estimated_gb, 12L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container 'arcadiascience/zoogle:1.0.0'
 

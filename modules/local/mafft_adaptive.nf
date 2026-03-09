@@ -1,6 +1,19 @@
 process MAFFT_ADAPTIVE {
     tag "$meta.og"
-    label 'process_mafft'
+
+    cpus { 12 * task.attempt }
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def library_gb = n * n * L * 16L / (1024L * 1024L * 1024L)
+        def dp_gb = L * L * 24L / (1024L * 1024L * 1024L)
+        def estimated_gb = Math.max(4L, (long)(library_gb + dp_gb) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 48L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

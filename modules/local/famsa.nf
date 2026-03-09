@@ -1,6 +1,18 @@
 process FAMSA {
     tag "$meta.og"
-    label 'process_high'
+
+    cpus { 36 * task.attempt }
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 5000) as long
+        def L = (meta?.max_len ?: 500) as long
+        def L_aln = L * 3L
+        def estimated_gb = Math.max(4L, (long)(n * L_aln * 16L / (1024L * 1024L * 1024L)) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 96L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container 'arcadiascience/famsa_2.0.0:1.0.0'
 

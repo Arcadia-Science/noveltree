@@ -1,6 +1,20 @@
 process GENERAX_PER_SPECIES {
     tag "$meta.og"
-    label 'process_generax'
+
+    cpus { 16 * task.attempt }
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def clv_bytes = n * L * 640L
+        def mpi_overhead = task.cpus * 250L * 1024L * 1024L
+        def estimated_gb = Math.max(8L, (long)((clv_bytes * 2.5 + mpi_overhead) / (1024L * 1024L * 1024L)) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 96L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
+
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
     // Exit code 10 = "no valid families" (e.g. invalid starting tree).

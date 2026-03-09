@@ -5,8 +5,20 @@ process IQTREE {
     // 3) correctly handle "task.memory" specification for memory handling by iqtree
     // 4) update the Docker container to use iqtree v2.2.0.5
     // 6) input/output files in appropriate tuple format
-    tag "$alignment"
-    label 'process_iqtree'
+    tag "${meta.og}"
+
+    cpus { 6 * task.attempt }
+    time { 3.h * Math.pow(3, task.attempt - 1) }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def clv_bytes = n * L * 640L
+        def estimated_gb = Math.max(4L, (long)(clv_bytes * 1.5 / (1024L * 1024L * 1024L)) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 96L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
         '' }"
