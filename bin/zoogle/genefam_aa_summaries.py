@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 import argparse
-from Bio import AlignIO
+from Bio import SeqIO
 from Bio.SeqUtils import ProtParam
 from itertools import product
 
@@ -156,7 +156,7 @@ def calculate_stats(df, gene_family_name):
 # Function to process each MSA file
 def process_msa(msa_file):
     # Read in the MSA file in FASTA format
-    alignment = AlignIO.read(msa_file, "fasta")
+    alignment = list(SeqIO.parse(msa_file, "fasta"))
 
     sequence_stats = []
 

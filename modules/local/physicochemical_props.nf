@@ -16,7 +16,7 @@ process PHYSICOCHEMICAL_PROPS {
     container 'arcadiascience/physicochemical_props:1.0.0'
 
     input:
-    tuple val(meta), path(msa_file)
+    tuple val(meta), path(original_fasta), path(cleaned_msa)
 
     output:
     tuple val(meta), path("aa-summary-stats/per-family-summaries/aa-physical-properties/${meta.og}_summary_statistics.csv"), emit: summary_stats
@@ -29,9 +29,15 @@ process PHYSICOCHEMICAL_PROPS {
 
     script:
     """
-    # Run the physicochemical properties calculation script
-    # Script processes a single MSA file and outputs with gene family name in filename
-    genefam_aa_summaries.py ${msa_file}
+    # Extract survivor protein IDs from the cleaned MSA headers
+    grep ">" ${cleaned_msa} | sed 's/>//' | cut -d' ' -f1 > survivors.txt
+
+    # Filter original FASTA to only proteins that survived alignment trimming
+    awk 'BEGIN{while((getline line < "survivors.txt") > 0) ids[line]=1}
+         /^>/{p=ids[substr(\$1,2)]} p' ${original_fasta} > filtered_full_length.fa
+
+    # Run property calculation on filtered full-length sequences
+    genefam_aa_summaries.py filtered_full_length.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -413,10 +413,17 @@ workflow NOVELTREE {
     //
     // MODULE: PHYSICOCHEMICAL_PROPS
     // Calculate physicochemical properties for all gene families
+    // Uses full-length (pre-alignment) sequences filtered to survivors of
+    // alignment trimming, so biophysical properties reflect the entire protein.
     //
     if (params.zoogle) {
+        ch_all_og_original_fas = ch_spptree_fas.concat(ch_genetree_fas)
+
+        ch_physchem_input = ch_all_og_original_fas
+            .join(ch_all_og_clean_msas)    // [meta, original_fasta, cleaned_msa]
+
         PHYSICOCHEMICAL_PROPS(
-            ch_all_og_clean_msas
+            ch_physchem_input
         )
         ch_versions = ch_versions.mix(PHYSICOCHEMICAL_PROPS.out.versions)
 
