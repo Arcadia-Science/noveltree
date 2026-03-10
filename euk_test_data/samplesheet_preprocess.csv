@@ -1,7 +1,7 @@
 species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test,transdecoder,isoform,reference
-Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,true,no,no,yes
-Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,Opisthokonta,glires_odb10,eukaryota_odb10,proteins,true,true,no,no,yes
-Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,true,no,yes,no
-Aspergillus-ochraceus,GKVO01000000,Opisthokonta,eurotiomycetes_odb10,eukaryota_odb10,transcriptome,false,false,yes,yes,no
-Saccharomyces-cerevisiae,UP000002311,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,false,no,yes,yes
-Neurospora-crassa,https://rest.uniprot.org/uniprotkb/stream?query=proteome:UP000001805&format=fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,false,no,no,yes
+Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,yes,no,no,yes
+Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,yes,no,yes,no
+Nannochloropsis-sp,GCF_000240725.1,Stramenopiles,stramenopiles_odb10,eukaryota_odb10,proteins,false,no,no,yes,no
+Isochrysis-galbana,https://sra-download.ncbi.nlm.nih.gov/traces/wgs01/wgs_aux/HB/OM/HBOM01/HBOM01.1.fsa_nt.gz,Haptophyta,eukaryota_odb10,eukaryota_odb10,transcriptome,false,no,yes,yes,no
+Saccharomyces-cerevisiae,UP000002311,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,no,no,yes,yes
+Neurospora-crassa,https://rest.uniprot.org/uniprotkb/stream?query=proteome:UP000001805&format=fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,no,no,no,yes
