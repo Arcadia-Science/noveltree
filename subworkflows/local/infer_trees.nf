@@ -1,5 +1,3 @@
-include { PREQUAL } from '../../modules/local/prequal'
-
 // Legacy single-aligner includes (used when adaptive_align = false)
 if (!params.adaptive_align) {
     if (params.aligner == "witch") {
@@ -43,21 +41,10 @@ workflow INFER_TREES {
     main:
     versions = Channel.empty()
 
-    // Pre-alignment masking of non-homologous segments
-    PREQUAL(fas)
-    versions = versions.mix(PREQUAL.out.versions)
-
     if (params.adaptive_align) {
         // ── Size-adaptive alignment routing ──────────────────────────────
-        // Count sequences per OG and branch by tier thresholds
-        prequal_with_count = PREQUAL.out.masked
-            .map { meta, fasta ->
-                def n_seq = fasta.text.count('>')
-                [meta + [n_seq: n_seq], fasta]
-            }
-
-        // Branch into tiers based on sequence count
-        prequal_with_count.branch {
+        // Branch into tiers based on sequence count (meta.n_seq set in main.nf)
+        fas.branch {
             tier1: it[0].n_seq <= params.align_tier1_max
             tier2: it[0].n_seq <= params.align_tier2_max
             tier3: true
@@ -112,7 +99,7 @@ workflow INFER_TREES {
 
     } else {
         // ── Legacy single-aligner path ──────────────────────────────────
-        ALIGN_SEQS(PREQUAL.out.masked)
+        ALIGN_SEQS(fas)
         versions = versions.mix(ALIGN_SEQS.out.versions)
 
         all_msas = ALIGN_SEQS.out.msas

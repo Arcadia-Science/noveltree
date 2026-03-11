@@ -4,8 +4,11 @@ process WITCH {
     cpus 16
     time { 6.h * task.attempt }
     memory {
+        def n = (meta?.n_seq ?: 1000) as long
         def L = (meta?.max_len ?: 500) as long
-        def estimated_gb = Math.max(8L, (long)(L * 20L / 1024L) + 4L)
+        def backbone_gb = (long)(Math.sqrt(n) * Math.sqrt(n) * L * 16L / (1024L * 1024L * 1024L))
+        def hmm_gb = (long)(n * L * 8L / (1024L * 1024L * 1024L))
+        def estimated_gb = Math.max(8L, backbone_gb + hmm_gb + 4L)
         def capped_gb = (int) Math.min(estimated_gb, 64L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
