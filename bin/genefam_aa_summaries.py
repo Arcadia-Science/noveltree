@@ -158,6 +158,18 @@ def process_msa(msa_file):
     # Read in the MSA file in FASTA format
     alignment = list(SeqIO.parse(msa_file, "fasta"))
 
+    if len(alignment) == 0:
+        import sys
+        print(f"WARNING: No sequences found in {msa_file}. Producing empty output files.", file=sys.stderr)
+        gene_family_name = os.path.splitext(os.path.basename(msa_file))[0].split("_")[0]
+        pd.DataFrame(columns=aa_counts_columns).to_csv(
+            os.path.join(per_fam_basedir, "aa-counts", f"{gene_family_name}_aa_composition_counts.csv"), index=False)
+        pd.DataFrame(columns=aa_perc_columns).to_csv(
+            os.path.join(per_fam_basedir, "aa-proportions", f"{gene_family_name}_aa_composition_percentages.csv"), index=False)
+        pd.DataFrame(columns=summary_columns).to_csv(
+            os.path.join(per_fam_basedir, "aa-physical-properties", f"{gene_family_name}_summary_statistics.csv"), index=False)
+        return
+
     sequence_stats = []
 
     # Define the properties to calculate
