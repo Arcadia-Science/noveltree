@@ -2,6 +2,6 @@ species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test,transdecoder,iso
 Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,yes,no,no,yes
 Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,yes,no,yes,no
 Nannochloropsis-sp,GCF_000240725.1,Stramenopiles,stramenopiles_odb10,eukaryota_odb10,proteins,false,no,no,yes,no
-Encephalitozoon-cuniculi,https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/091/225/GCF_000091225.1_ASM9122v1/GCF_000091225.1_ASM9122v1_rna_from_genomic.fna.gz,Opisthokonta,microsporidia_odb10,eukaryota_odb10,transcriptome,false,no,yes,yes,no
+Schizosaccharomyces-pombe,https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/945/GCF_000002945.1_ASM294v2/GCF_000002945.1_ASM294v2_rna_from_genomic.fna.gz,Opisthokonta,ascomycota_odb10,eukaryota_odb10,transcriptome,false,no,yes,yes,no
 Saccharomyces-cerevisiae,UP000002311,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,no,no,yes,yes
 Neurospora-crassa,https://rest.uniprot.org/uniprotkb/stream?query=proteome:UP000001805&format=fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,no,no,no,yes
