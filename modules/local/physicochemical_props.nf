@@ -34,10 +34,10 @@ process PHYSICOCHEMICAL_PROPS {
 
     # Filter original FASTA to only proteins that survived alignment trimming
     awk 'BEGIN{while((getline line < "survivors.txt") > 0) ids[line]=1}
-         /^>/{p=ids[substr(\$1,2)]} p' ${original_fasta} > filtered_full_length.fa
+         /^>/{p=ids[substr(\$1,2)]} p' ${original_fasta} > ${meta.og}.fa
 
     # Run property calculation on filtered full-length sequences
-    genefam_aa_summaries.py filtered_full_length.fa
+    genefam_aa_summaries.py ${meta.og}.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
