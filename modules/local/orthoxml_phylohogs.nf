@@ -1,6 +1,17 @@
 process ORTHOXML_PHYLOHOGS {
     tag "$meta.og"
-    label 'process_single'
+
+    cpus 1
+    time { 4.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 100) as long
+        // NHX→OrthoXML DOM is O(n); pair export buffers scale ~O(n²)
+        def base_gb = Math.max(2L, (long)(n / 50L) + 2L)
+        def capped_gb = (int) Math.min(base_gb, 64L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container 'arcadiascience/orthoxml_phylohogs:1.0.0'
 
