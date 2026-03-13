@@ -46,6 +46,7 @@ process GENERAX_PER_SPECIES {
     tuple val(meta), path("${meta.og}/${meta.og}_transfers.txt")                , emit: transfer_event_counts
     tuple val(meta), path("${meta.og}/${meta.og}_perSpeciesCoverage.txt")       , emit: species_coverage
     tuple val(meta), path("${meta.og}/${meta.og}_reconciliated.nhx")            , emit: generax_nhx
+    path "generax_labeled_species_tree.newick"                                  , emit: labeled_species_tree
     path "${meta.og}/${meta.og}_full_output.tar.gz"                             , emit: archive
     path "versions.yml"                                                         , emit: versions
 
@@ -112,6 +113,9 @@ process GENERAX_PER_SPECIES {
     cp $og/reconciliations/${og}_transfers.txt .
     cp $og/reconciliations/${og}_reconciliated.nhx .
     mv $og/${og}_perSpeciesCoverage.txt .
+
+    # Extract GeneRax-labeled species tree (has Node_X_Y_0 internal labels, identical across all OGs)
+    cp $og/species_trees/inferred_species_tree.newick generax_labeled_species_tree.newick
 
     # Archive full GeneRax output, then replace with flat structure
     tar -czf ${og}_full_output.tar.gz $og/

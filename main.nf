@@ -76,7 +76,7 @@ include { SPECIESRAX                                } from './modules/local/spec
 include { TIME_CALIBRATE_SPECIES_TREE               } from './modules/local/time_calibrate_species_tree'
 include { GENERAX_PER_SPECIES                       } from './modules/local/generax_per_species'
 include { DATE_GENE_FAMILY_TREES                    } from './modules/local/date_gene_family_trees'
-include { ORTHOXML_PHYLOHOGS                        } from './modules/local/orthoxml_phylohogs'
+include { PARSE_PHYLOHOGS                            } from './modules/local/parse_phylohogs'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 include { MERGE_PHYLO_PROFILES                      } from './modules/local/merge_phylo_profiles'
@@ -519,27 +519,17 @@ workflow NOVELTREE {
     }
 
     //
-    // MODULE: ORTHOXML_PHYLOHOGS
-    // Convert GeneRax NHX reconciliations into hierarchical orthogroups (HOGs),
-    // ortholog/paralog/xenolog pair tables, and HOG membership — per OG,
-    // fully parallelized, using orthoxml-tools.
+    // MODULE: PARSE_PHYLOHOGS
+    // Extract ortholog/paralog/xenolog pairs and hierarchical HOG membership
+    // directly from GeneRax NHX reconciliations — per OG, fully parallelized.
     //
-    ORTHOXML_PHYLOHOGS(GENERAX_PER_SPECIES.out.generax_nhx)
-    ch_versions = ch_versions.mix(ORTHOXML_PHYLOHOGS.out.versions)
+    ch_labeled_spp_tree = GENERAX_PER_SPECIES.out.labeled_species_tree.first()
+    PARSE_PHYLOHOGS(GENERAX_PER_SPECIES.out.generax_nhx, ch_labeled_spp_tree)
+    ch_versions = ch_versions.mix(PARSE_PHYLOHOGS.out.versions)
 
-    // Aggregate per-OG pairwise relationship and HOG membership tables
-    ORTHOXML_PHYLOHOGS.out.orthologs
-        .collectFile(name: 'all_ortholog_pairs.tsv',
-                     storeDir: "${params.outdir}/orthology", keepHeader: true)
-    ORTHOXML_PHYLOHOGS.out.paralogs
-        .collectFile(name: 'all_paralog_pairs.tsv',
-                     storeDir: "${params.outdir}/orthology", keepHeader: true)
-    ORTHOXML_PHYLOHOGS.out.xenologs
-        .collectFile(name: 'all_xenolog_pairs.tsv',
-                     storeDir: "${params.outdir}/orthology", keepHeader: true)
-    ORTHOXML_PHYLOHOGS.out.hog_membership
-        .collectFile(name: 'hog_membership.tsv',
-                     storeDir: "${params.outdir}/orthology", keepHeader: true)
+    // Per-OG outputs are published by the module's publishDir directives
+    // to ${outdir}/orthology/{OG}/{OG}_*.tsv
+    // The species tree node lookup is published once to ${outdir}/orthology/
 }
 
 //
