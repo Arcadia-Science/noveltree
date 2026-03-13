@@ -91,7 +91,7 @@ process ORTHOFINDER_MCL {
                 mv "\${msa_dir}/\${og}.fa" gene_tree_og_msas/
             fi
         done
-        # Remove directories no longer needed (ORTHOFINDER_PHYLOHOGS replaced by ORTHOXML_PHYLOHOGS)
+        # Remove directories no longer needed (orthology derived from GeneRax reconciliations in PARSE_PHYLOHOGS)
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Single_Copy_Orthologue_Sequences/
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Orthologues/
