@@ -4,7 +4,7 @@ process ORTHOFINDER_PREP {
 
     container 'arcadiascience/orthofinder_2.5.4:1.0.0'
 
-    storeDir "${params.outdir}/orthofinder_prep"
+    storeDir "${params.outdir}/orthofinder/prep"
 
     input:
     file(fasta)

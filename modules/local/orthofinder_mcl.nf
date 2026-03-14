@@ -2,7 +2,7 @@ process ORTHOFINDER_MCL {
     tag "MCL clustering"
     label 'process_highcpu'
 
-    storeDir "${params.outdir}/orthofinder_mcl"
+    storeDir "${params.outdir}/orthofinder/mcl"
 
     container 'arcadiascience/orthofinder_2.5.4:1.0.0'
 

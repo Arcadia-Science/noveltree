@@ -4,7 +4,13 @@ process DIAMOND_BLASTP {
     tag "$meta.id"
     label 'process_diamond'
 
-    storeDir { "${params.outdir}/blast/${fasta.simpleName}_vs_${db.simpleName}" }
+    storeDir {
+        def queryNum = (fasta.name =~ /Species(\d+)/)[0][1]
+        def dbNum = (db.name =~ /diamondDBSpecies(\d+)/)[0][1]
+        def queryName = spp_id_map[queryNum] ?: fasta.simpleName
+        def dbName = spp_id_map[dbNum] ?: db.simpleName
+        "${params.outdir}/blast/${queryName}_vs_${dbName}"
+    }
 
     conda (params.enable_conda ? "bioconda::diamond=2.0.15" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -17,6 +23,7 @@ process DIAMOND_BLASTP {
     each file(db)
     val output_extension
     val mcl_test
+    val spp_id_map
 
     output:
     path('*.blast*')    , optional: true, emit: blast
