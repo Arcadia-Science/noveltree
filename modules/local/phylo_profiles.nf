@@ -4,6 +4,8 @@ process PHYLO_PROFILES {
 
     container 'arcadiascience/phylo_profiles:1.0.0'
 
+    storeDir "${params.outdir}/phylo_profiles"
+
     input:
     tuple val(meta), path(event_counts), path(species_event_counts), path(transfer_event_counts), path(species_coverage)
     path 'orthogroups'
@@ -15,7 +17,6 @@ process PHYLO_PROFILES {
     path "${meta.og}_speciation_count.tsv"         , emit: speciation_count
     path "${meta.og}_transfer_donor_count.tsv"     , emit: transfer_donor_count
     path "${meta.og}_transfer_recipient_count.tsv" , emit: transfer_recipient_count
-    path "versions.yml"                            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

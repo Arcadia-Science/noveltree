@@ -21,25 +21,14 @@ process FAMSA {
 
     container 'arcadiascience/famsa_2.0.0:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/alignments/original",
-        mode: params.publish_dir_mode,
-        pattern: "*_famsa.fa",
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/species_protein_maps",
-        mode: params.publish_dir_mode,
-        pattern: "species_protein_maps/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
+    storeDir "${params.outdir}/alignments/original"
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*_famsa.fa")          , emit: msas
-    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
-    path "versions.yml"                          , emit: versions
+    tuple val(meta), path("${fasta.baseName}_famsa.fa")          , emit: msas
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
     task.ext.when == null || task.ext.when

@@ -4,12 +4,13 @@ process TRANSDECODER {
 
     container 'arcadiascience/preprocess_proteomes:1.1.0'
 
+    storeDir "${params.outdir}/preprocessing/transdecoder"
+
     input:
     tuple val(meta), path(fasta)
 
     output:
     tuple val(meta), path("${meta.id}_translated.fasta"), emit: translated
-    path "versions.yml",                                   emit: versions
 
     when:
     task.ext.when == null || task.ext.when

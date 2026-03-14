@@ -21,34 +21,15 @@ process WITCH {
         (workflow.containerEngine == 'singularity' ? '--writable-tmpfs' : '')
 
     stageInMode = 'copy'
-    publishDir(
-        path: "${params.outdir}/alignments/original",
-        mode: params.publish_dir_mode,
-        pattern: "original_alignments/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/trimmed",
-        mode: params.publish_dir_mode,
-        pattern: "cleaned_alignments/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/species_protein_maps",
-        mode: params.publish_dir_mode,
-        pattern: "species_protein_maps/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
+    storeDir "${params.outdir}/alignments"
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("cleaned_alignments/*_witch_cleaned.fa"), emit: msas, optional: true
-    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
-    path "original_alignments/*"                 , emit: original_alignments
-    path "cleaned_alignments/*"                  , emit: cleaned_alignments, optional: true
-    path "versions.yml"                          , emit: versions
+    tuple val(meta), path("trimmed/${fasta.baseName}_witch_cleaned.fa"), emit: msas, optional: true
+    tuple val(meta), path("trimmed/species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
+    path "original/${fasta.baseName}_witch.fa"   , emit: original_alignments
 
     when:
     task.ext.when == null || task.ext.when
@@ -104,32 +85,27 @@ process WITCH {
           for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
         }' tmp.fasta > final_masked.fasta
 
-    # Reorganize results for publishing
-    mkdir original_alignments
-    mkdir cleaned_alignments
-    mv alignments/merged.fasta original_alignments/${og}_witch.fa
-    mv final_masked.fasta cleaned_alignments/${og}_witch_cleaned.fa
+    # Reorganize results for storeDir
+    mkdir -p original
+    mkdir -p trimmed
+    mv alignments/merged.fasta original/${og}_witch.fa
+    mv final_masked.fasta trimmed/${og}_witch_cleaned.fa
     rm -r alignments/ && rm tmp.fasta
 
     # Verify the trimmed alignment still meets minimum sequence/species thresholds.
-    n_seq=\$(grep -c ">" cleaned_alignments/${og}_witch_cleaned.fa || true)
-    n_spp=\$(grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    n_seq=\$(grep -c ">" trimmed/${og}_witch_cleaned.fa || true)
+    n_spp=\$(grep ">" trimmed/${og}_witch_cleaned.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
-        rm cleaned_alignments/${og}_witch_cleaned.fa
+        rm trimmed/${og}_witch_cleaned.fa
     else
         # Now pull out the sequences, and split into a TreeRecs format mapping
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
-        mkdir species_protein_maps
-        grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        mkdir -p trimmed/species_protein_maps
+        grep ">" trimmed/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/${og}_map.link
+        paste prot spp > trimmed/species_protein_maps/${og}_map.link
         rm prot && rm spp
     fi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        witch: \$(witch-msa -v 2>&1 | tail -1 || echo 'unknown')
-    END_VERSIONS
     """
 }

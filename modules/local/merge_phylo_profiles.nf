@@ -6,12 +6,13 @@ process MERGE_PHYLO_PROFILES {
 
     container 'arcadiascience/phylo_profiles:1.0.0'
 
+    storeDir "${params.outdir}/gene_family_evolution"
+
     input:
     path hgt_long_file
 
     output:
     path "hgt_summed_counts_recip_donor.tsv" , emit: hgt_summed_count
-    path "versions.yml"                      , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

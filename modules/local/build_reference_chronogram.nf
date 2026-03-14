@@ -4,6 +4,8 @@ process BUILD_REFERENCE_CHRONOGRAM {
 
     container 'arcadiascience/build_reference_chronogram:1.0.0'
 
+    storeDir "${params.outdir}/species_trees/reference_chronogram"
+
     input:
     path species_names    // one species per line, Genus_species format
     val ncbi_email
@@ -13,7 +15,6 @@ process BUILD_REFERENCE_CHRONOGRAM {
     path "taxid_cache.json"      , emit: taxid_cache
     path "timetree_cache.json"   , emit: timetree_cache
     path "dropped_species.txt"   , emit: dropped_species
-    path "versions.yml"          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

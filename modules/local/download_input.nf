@@ -4,12 +4,13 @@ process DOWNLOAD_INPUT {
 
     container 'arcadiascience/preprocess_proteomes:1.1.0'
 
+    storeDir "${params.outdir}/downloads"
+
     input:
     tuple val(meta), val(source)
 
     output:
     tuple val(meta), path("${meta.id}_downloaded.*"), emit: downloaded
-    path "versions.yml",                               emit: versions
 
     when:
     task.ext.when == null || task.ext.when

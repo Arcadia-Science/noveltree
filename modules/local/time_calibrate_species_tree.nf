@@ -4,11 +4,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
 
     container 'arcadiascience/zoogle:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/species_trees/time_calibrated",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/species_trees/time_calibrated"
 
     input:
     path species_tree       // Species tree from SpeciesRax (Newick format)
@@ -19,7 +15,6 @@ process TIME_CALIBRATE_SPECIES_TREE {
     output:
     path "time_calibrated_species_tree.newick", emit: calibrated_tree
     path "calibration_log.txt"                , emit: log
-    path "versions.yml"                       , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

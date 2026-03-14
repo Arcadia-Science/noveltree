@@ -20,25 +20,14 @@ process MAFFT_ADAPTIVE {
         'https://depot.galaxyproject.org/singularity/mafft:7.490--h779adbc_0':
         'quay.io/biocontainers/mafft:7.490--h779adbc_0' }"
 
-    publishDir(
-        path: "${params.outdir}/alignments/original",
-        mode: params.publish_dir_mode,
-        pattern: "*_{einsi,linsi}.fa",
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/species_protein_maps",
-        mode: params.publish_dir_mode,
-        pattern: "species_protein_maps/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
+    storeDir "${params.outdir}/alignments/original"
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*_{einsi,linsi}.fa")    , emit: msas
-    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
-    path "versions.yml"                            , emit: versions
+    tuple val(meta), path("${fasta.baseName}_${(meta.n_seq as int) <= (params.align_tier1_max as int) ? 'einsi' : 'linsi'}.fa"), emit: msas
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
     task.ext.when == null || task.ext.when

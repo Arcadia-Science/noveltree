@@ -139,26 +139,22 @@ def create_og_channel(Object inputs) {
 // WORKFLOW: Run main Arcadia-Science/noveltree analysis pipeline
 //
 workflow NOVELTREE {
-    ch_versions = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     ch_all_data = INPUT_CHECK(ch_input)
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     // Normalize ref_species to hyphens (users may pass underscores or spaces)
     def ref_species = params.ref_species.replace('_', '-').replace(' ', '-')
 
     // Download any remote inputs (URLs, NCBI accessions, UniProt IDs), then merge with local files
     DOWNLOAD_INPUT(ch_all_data.remote_prots)
-    ch_versions = ch_versions.mix(DOWNLOAD_INPUT.out.versions)
     ch_complete_prots = ch_all_data.local_prots.mix(DOWNLOAD_INPUT.out.downloaded)
 
     // Optional proteome preprocessing (TransDecoder, isoform filtering, quality cleanup)
     if (params.preprocess) {
         PREPROCESS_PROTEOMES(ch_complete_prots, params.min_protein_length)
-        ch_versions = ch_versions.mix(PREPROCESS_PROTEOMES.out.versions)
         ch_to_rename = PREPROCESS_PROTEOMES.out.preprocessed
     } else {
         ch_to_rename = ch_complete_prots
@@ -193,7 +189,6 @@ workflow NOVELTREE {
             mcl_inflation
         )
         ch_best_inflation = MCL_INFLATION_SELECTION.out.best_inflation
-        ch_versions = ch_versions.mix(MCL_INFLATION_SELECTION.out.versions)
     } else {
         ch_best_inflation = Channel.of(mcl_inflation.first())
     }
@@ -227,7 +222,6 @@ workflow NOVELTREE {
     //         OrthoFinder's preferred format for downstream MCL clustering
     //
     ORTHOFINDER_PREP_ALL(complete_prots_list, "complete_dataset")
-    ch_versions = ch_versions.mix(ORTHOFINDER_PREP_ALL.out.versions)
 
     //
     // MODULE: All-v-All diamond/blastp
@@ -241,7 +235,6 @@ workflow NOVELTREE {
         "txt",
         "false"
     )
-    ch_versions = ch_versions.mix(DIAMOND_BLASTP_ALL.out.versions)
 
     // Using this best-performing inflation parameter, infer orthogroups for
     // all samples. Also runs chimera detection and orthogroup filtering
@@ -301,10 +294,8 @@ workflow NOVELTREE {
     //
 
     INFER_SPECIES_TREES(ch_spptree_fas)
-    ch_versions = ch_versions.mix(INFER_SPECIES_TREES.out.versions)
 
     INFER_REMAINING_TREES(ch_genetree_fas)
-    ch_versions = ch_versions.mix(INFER_REMAINING_TREES.out.versions)
 
     // Set output channels for downstream use
     ch_core_og_maplinks = INFER_SPECIES_TREES.out.map_link
@@ -330,7 +321,6 @@ workflow NOVELTREE {
         ASTEROID(species_name_list, core_gene_tree_list, params.outgroups)
             .rooted_spp_tree
             .set { ch_asteroid }
-        ch_versions = ch_versions.mix(ASTEROID.out.versions)
     } else {
         ch_asteroid = Channel.value("none")
     }
@@ -344,7 +334,6 @@ workflow NOVELTREE {
     SPECIESRAX(core_og_maplink_list, core_gene_tree_list, core_og_clean_msa_list, ch_asteroid)
         .speciesrax_tree
         .set { ch_speciesrax }
-    ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
 
     // Now prepare for analysis with GeneRax
     ch_all_map_links = ch_core_og_maplinks.concat(ch_rem_og_maplinks)
@@ -361,12 +350,10 @@ workflow NOVELTREE {
     // GENERAX_PER_FAMILY: full mode only
     if (params.generax_per_family) {
         GENERAX_PER_FAMILY(ch_generax_input)
-        ch_versions = ch_versions.mix(GENERAX_PER_FAMILY.out.versions)
     }
 
     // GENERAX_PER_SPECIES: both modes
     GENERAX_PER_SPECIES(ch_generax_input)
-    ch_versions = ch_versions.mix(GENERAX_PER_SPECIES.out.versions)
 
     //
     // MODULE: PHYLO_PROFILES (per gene family)
@@ -407,8 +394,6 @@ workflow NOVELTREE {
     ch_hgt_long = PHYLO_PROFILES.out.hgt_counts_long
         .collectFile(name: 'hgt_counts_long_all.tsv', keepHeader: true)
     MERGE_PHYLO_PROFILES(ch_hgt_long)
-    ch_versions = ch_versions.mix(PHYLO_PROFILES.out.versions)
-    ch_versions = ch_versions.mix(MERGE_PHYLO_PROFILES.out.versions)
 
     //
     // MODULE: PHYSICOCHEMICAL_PROPS
@@ -425,7 +410,6 @@ workflow NOVELTREE {
         PHYSICOCHEMICAL_PROPS(
             ch_physchem_input
         )
-        ch_versions = ch_versions.mix(PHYSICOCHEMICAL_PROPS.out.versions)
 
         //
         // MODULE: BUILD_REFERENCE_CHRONOGRAM / TIME_CALIBRATE_SPECIES_TREE
@@ -438,7 +422,6 @@ workflow NOVELTREE {
                 .collectFile(name: 'species_names.txt', newLine: true)
             BUILD_REFERENCE_CHRONOGRAM(ch_species_names_file, params.ncbi_email)
             ch_reference_tree = BUILD_REFERENCE_CHRONOGRAM.out.chronogram
-            ch_versions = ch_versions.mix(BUILD_REFERENCE_CHRONOGRAM.out.versions)
         } else {
             // Use user-provided reference time tree
             ch_reference_tree = file(params.reference_time_tree)
@@ -450,7 +433,6 @@ workflow NOVELTREE {
             params.time_calibration_method,
             params.age_bracket
         )
-        ch_versions = ch_versions.mix(TIME_CALIBRATE_SPECIES_TREE.out.versions)
 
         //
         // MODULE: DATE_GENE_FAMILY_TREES
@@ -467,7 +449,6 @@ workflow NOVELTREE {
             ch_dating_input,
             params.max_treepl_tips
         )
-        ch_versions = ch_versions.mix(DATE_GENE_FAMILY_TREES.out.versions)
 
         // Feed dated trees into ZOOGLE (replaces raw reconciled trees)
         ch_zoogle_input = DATE_GENE_FAMILY_TREES.out.dated_gft          // [meta, dated_tree]
@@ -515,7 +496,6 @@ workflow NOVELTREE {
             ch_zoogle_input,
             ref_species
         )
-        ch_versions = ch_versions.mix(ZOOGLE.out.versions)
     }
 
     //
@@ -525,11 +505,9 @@ workflow NOVELTREE {
     //
     ch_labeled_spp_tree = GENERAX_PER_SPECIES.out.labeled_species_tree.first()
     PARSE_PHYLOHOGS(GENERAX_PER_SPECIES.out.generax_nhx, ch_labeled_spp_tree)
-    ch_versions = ch_versions.mix(PARSE_PHYLOHOGS.out.versions)
 
-    // Per-OG outputs are published by the module's publishDir directives
-    // to ${outdir}/orthology/{OG}/{OG}_*.tsv
-    // The species tree node lookup is published once to ${outdir}/orthology/
+    // Per-OG outputs are stored by storeDir to ${outdir}/orthology/{OG}/{OG}_*.tsv
+    // The species tree node lookup is stored to ${outdir}/orthology/
 }
 
 //

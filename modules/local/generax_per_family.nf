@@ -10,15 +10,12 @@ process GENERAX_PER_FAMILY {
 
     container 'arcadiascience/generax_56f3ed0:1.1.3'
 
+    storeDir "${params.outdir}/generax/per_family_rates"
     publishDir(
-        path: "${params.outdir}/generax/per_family_rates",
-        mode: params.publish_dir_mode,
-    )
-    publishDir(
-        path: "${params.outdir}/gene_family_trees/reconciled/generax_per_family",
+        path: "${params.outdir}/gene_family_trees/reconciled",
         mode: params.publish_dir_mode,
         pattern: "*/*_reconciled_gft.newick",
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/') + 1) },
+        saveAs: { fn -> fn.split('/')[-1].replace('_reconciled_gft', '_gpf_reconciled') },
     )
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
@@ -27,7 +24,6 @@ process GENERAX_PER_FAMILY {
     output:
     tuple val(meta), path("${meta.og}/${meta.og}_reconciled_gft.newick"), emit: generax_per_fam_gfts
     path "${meta.og}/${meta.og}_full_output.tar.gz"                     , emit: archive
-    path "versions.yml"                                                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

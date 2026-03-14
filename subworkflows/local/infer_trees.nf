@@ -39,7 +39,6 @@ workflow INFER_TREES {
     fas
 
     main:
-    versions = Channel.empty()
 
     if (params.adaptive_align) {
         // ── Size-adaptive alignment routing ──────────────────────────────
@@ -52,15 +51,12 @@ workflow INFER_TREES {
 
         // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤300 seqs)
         MAFFT_ADAPTIVE(tiered.tier1)
-        versions = versions.mix(MAFFT_ADAPTIVE.out.versions)
 
         // Tier 2: WITCH (medium families, 301–3000 seqs)
         WITCH_TIER2(tiered.tier2)
-        versions = versions.mix(WITCH_TIER2.out.versions)
 
         // Tier 3: FAMSA2 with accuracy flags (large families, >3000 seqs)
         FAMSA_TIER3(tiered.tier3)
-        versions = versions.mix(FAMSA_TIER3.out.versions)
 
         // Detect tier 1 failures: inputs that didn't produce alignments
         tier1_failed = tiered.tier1
@@ -84,7 +80,6 @@ workflow INFER_TREES {
 
         // Run FAMSA fallback on all tier 1/2 failures
         FAMSA_FALLBACK(tier1_failed.mix(tier2_failed))
-        versions = versions.mix(FAMSA_FALLBACK.out.versions)
 
         // Combine all alignment outputs
         all_msas = MAFFT_ADAPTIVE.out.msas
@@ -100,7 +95,6 @@ workflow INFER_TREES {
     } else {
         // ── Legacy single-aligner path ──────────────────────────────────
         ALIGN_SEQS(fas)
-        versions = versions.mix(ALIGN_SEQS.out.versions)
 
         all_msas = ALIGN_SEQS.out.msas
         all_map_links = ALIGN_SEQS.out.map_link
@@ -108,7 +102,6 @@ workflow INFER_TREES {
 
     if (params.msa_trimmer != 'none') {
         TRIM_MSAS(all_msas)
-        versions = versions.mix(TRIM_MSAS.out.versions)
         map_link = TRIM_MSAS.out.map_link
         cleaned_msas = TRIM_MSAS.out.cleaned_msas
     } else {
@@ -118,7 +111,6 @@ workflow INFER_TREES {
 
     // Run primary tree inference (IQTREE in fallback mode, otherwise based on tree_method)
     TREES(cleaned_msas, params.tree_model)
-    versions = versions.mix(TREES.out.versions)
 
     if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
         // Detect failed alignments by finding inputs that didn't produce trees
@@ -133,7 +125,6 @@ workflow INFER_TREES {
 
         // Run FastTree on failed alignments
         FASTTREE_FALLBACK(failed_alignments, params.tree_model)
-        versions = versions.mix(FASTTREE_FALLBACK.out.versions)
 
         // Combine successful IQ-TREE trees with FastTree fallback trees
         phylogeny = TREES.out.phylogeny.mix(FASTTREE_FALLBACK.out.phylogeny)
@@ -145,5 +136,4 @@ workflow INFER_TREES {
     phylogeny
     map_link
     cleaned_msas
-    versions
 }

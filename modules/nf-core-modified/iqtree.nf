@@ -23,19 +23,14 @@ process IQTREE {
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
         '' }"
 
-    publishDir(
-        path: "${params.outdir}/gene_family_trees/original",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/gene_family_trees/original"
 
     input:
     tuple val(meta), file(alignment)
     val model
 
     output:
-    tuple val(meta), path("*_iqt.newick") , emit: phylogeny
-    path "versions.yml"                   , emit: versions
+    tuple val(meta), path("${alignment.baseName}_iqt.newick") , emit: phylogeny
 
     when:
     task.ext.when == null || task.ext.when

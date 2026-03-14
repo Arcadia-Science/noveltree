@@ -4,6 +4,8 @@ process ZOOGLE {
 
     container 'arcadiascience/zoogle:1.0.0'
 
+    storeDir "${params.outdir}/zoogle"
+
     input:
     tuple val(meta), path(gene_tree), path(phys_props_file)
     val ref_species
@@ -18,7 +20,6 @@ process ZOOGLE {
     path "species-pvals/${meta.og}_species_reference_dist_pvals.tsv"    , emit: species_pvals
     path "pairwise-protein-dist-perm-test/${meta.og}_protein_protein_dist_permutation_test.tsv" , emit: per_protein_dist_res
     path "final_protein_pair_summary_tables/${meta.og}_final_summary_table.tsv" , emit: final_summary_table
-    path "versions.yml"                                                                           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

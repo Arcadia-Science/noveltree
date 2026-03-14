@@ -4,11 +4,7 @@ process ASTEROID {
 
     container 'arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/species_trees/asteroid",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/species_trees/asteroid"
 
     input:
     val species_names  // Names of all species
@@ -22,7 +18,6 @@ process ASTEROID {
     path "*bsTrees.newick"                 , emit: asteroid_bs_trees
     path "*scores.txt"                     , emit: asteroid_scores
     path "disco*.newick"                   , emit: disco_trees
-    path "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

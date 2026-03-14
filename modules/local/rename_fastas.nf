@@ -11,6 +11,8 @@ process RENAME_FASTAS {
     maxRetries 0
     errorStrategy 'terminate'
 
+    storeDir "${params.outdir}/preprocessing/renamed"
+
     input:
     tuple val(meta), path(fasta)
 

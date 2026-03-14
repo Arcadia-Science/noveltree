@@ -15,25 +15,14 @@ process CLIPKIT {
 
     container 'arcadiascience/clipkit_2.1.1-seqmagick_0.8.4:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/alignments/trimmed",
-        mode: params.publish_dir_mode,
-        pattern: "*_clipkit.fa",
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/species_protein_maps",
-        mode: params.publish_dir_mode,
-        pattern: "species_protein_maps/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
+    storeDir "${params.outdir}/alignments/trimmed"
 
     input:
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("*_clipkit.fa")  , emit: cleaned_msas, optional: true
-    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
-    path "versions.yml"                    , emit: versions
+    tuple val(meta), path("${fasta.baseName}_clipkit.fa")  , emit: cleaned_msas, optional: true
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
     task.ext.when == null || task.ext.when

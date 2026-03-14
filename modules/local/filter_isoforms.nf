@@ -4,12 +4,13 @@ process FILTER_ISOFORMS {
 
     container 'arcadiascience/preprocess_proteomes:1.1.0'
 
+    storeDir "${params.outdir}/preprocessing/isofiltered"
+
     input:
     tuple val(meta), path(fasta)
 
     output:
     tuple val(meta), path("${meta.id}_isofiltered.fasta"), emit: filtered
-    path "versions.yml",                                    emit: versions
 
     when:
     task.ext.when == null || task.ext.when
