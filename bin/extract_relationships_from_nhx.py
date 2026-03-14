@@ -312,12 +312,11 @@ def main():
     cache_leaves(tree)
 
     # Extract pairs and HOG membership — streaming to files
-    with (
-        open(f"{prefix}_orthologs.tsv", "w") as ortho_fh,
-        open(f"{prefix}_paralogs.tsv", "w") as para_fh,
-        open(f"{prefix}_xenologs.tsv", "w") as xeno_fh,
-        open(f"{prefix}_hog_membership.tsv", "w") as hog_fh,
-    ):
+    ortho_fh = open(f"{prefix}_orthologs.tsv", "w")
+    para_fh = open(f"{prefix}_paralogs.tsv", "w")
+    xeno_fh = open(f"{prefix}_xenologs.tsv", "w")
+    hog_fh = open(f"{prefix}_hog_membership.tsv", "w")
+    try:
         # Headers
         ortho_fh.write("gene1\tgene2\tog\n")
         para_fh.write("gene1\tgene2\tog\n")
@@ -332,6 +331,11 @@ def main():
         hog_rows.sort(key=lambda r: (r[2], r[1], r[0]))  # sort by hog_id, species, protein
         for protein_id, species, hog_id, og_name in hog_rows:
             hog_fh.write(f"{protein_id}\t{species}\t{hog_id}\t{og_name}\n")
+    finally:
+        ortho_fh.close()
+        para_fh.close()
+        xeno_fh.close()
+        hog_fh.close()
 
 
 if __name__ == "__main__":
