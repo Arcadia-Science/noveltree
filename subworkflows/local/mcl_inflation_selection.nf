@@ -31,6 +31,18 @@ workflow MCL_INFLATION_SELECTION {
 
         ORTHOFINDER_PREP_TEST(mcl_test_prots_list, "mcl_test_dataset")
 
+        // Build species ID → name map for descriptive blast directory names
+        ch_test_spp_id_map = ORTHOFINDER_PREP_TEST.out.sppIDs
+            .map { file ->
+                def nameMap = [:]
+                file.text.trim().split('\n').each { line ->
+                    def parts = line.split(': ')
+                    nameMap[parts[0].trim()] = parts[1].replace('.fa', '')
+                }
+                nameMap
+            }
+            .first()
+
         // Run for the test set (used to determine the best value of the MCL
         // inflation parameter)
         DIAMOND_BLASTP_TEST(
@@ -38,7 +50,8 @@ workflow MCL_INFLATION_SELECTION {
             ORTHOFINDER_PREP_TEST.out.fastas.flatten(),
             ORTHOFINDER_PREP_TEST.out.diamonds.flatten(),
             "txt",
-            "true"
+            "true",
+            ch_test_spp_id_map
         )
 
         // First determine the optimal MCL inflation parameter, and then

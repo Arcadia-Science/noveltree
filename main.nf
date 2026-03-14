@@ -228,12 +228,26 @@ workflow NOVELTREE {
     //
     // For the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
+    // Build species ID → name map from OrthoFinder's SpeciesIDs.txt
+    // e.g. "0" → "Danio-rerio", "1" → "Homo-sapiens"
+    ch_spp_id_map = ORTHOFINDER_PREP_ALL.out.sppIDs
+        .map { file ->
+            def nameMap = [:]
+            file.text.trim().split('\n').each { line ->
+                def parts = line.split(': ')
+                nameMap[parts[0].trim()] = parts[1].replace('.fa', '')
+            }
+            nameMap
+        }
+        .first()
+
     DIAMOND_BLASTP_ALL(
         ch_renamed_prots,
         ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
         ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
         "txt",
-        "false"
+        "false",
+        ch_spp_id_map
     )
 
     // Using this best-performing inflation parameter, infer orthogroups for
