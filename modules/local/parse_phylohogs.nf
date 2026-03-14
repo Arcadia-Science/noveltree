@@ -13,7 +13,7 @@ process PARSE_PHYLOHOGS {
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }
 
-    container 'python:3.11-slim'
+    container 'arcadiascience/phylo_profiles:1.0.0'
 
     storeDir "${params.outdir}/orthology"
 
