@@ -36,18 +36,28 @@ process DOWNLOAD_INPUT {
         """
     } else if (meta.source_type == 'uniprot') {
         """
-        curl -sL "https://rest.uniprot.org/uniprotkb/stream?query=(proteome:${source})&format=fasta" \
-            -o "${meta.id}_downloaded.fasta"
+        # Query UniProt proteomes API to get taxon ID and superkingdom for FTP path
+        PROTEOME_JSON=\$(curl -sL "https://rest.uniprot.org/proteomes/${source}")
 
-        if [ ! -s "${meta.id}_downloaded.fasta" ]; then
-            echo "ERROR: Empty result for UniProt proteome ${source}. Check that the proteome ID is valid." >&2
+        TAXID=\$(echo "\${PROTEOME_JSON}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['taxonomy']['taxonId'])")
+        KINGDOM=\$(echo "\${PROTEOME_JSON}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['superkingdom'].capitalize())")
+
+        if [ -z "\${TAXID}" ] || [ -z "\${KINGDOM}" ]; then
+            echo "ERROR: Could not resolve taxon ID or kingdom for proteome ${source}." >&2
             exit 1
         fi
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            curl: \$(curl --version 2>&1 | head -1 | grep -oP '\\d+\\.\\d+\\.\\d+' || echo "unknown")
-        END_VERSIONS
+        # Download one-protein-per-gene FASTA from UniProt FTP
+        FTP_URL="https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/\${KINGDOM}/${source}/${source}_\${TAXID}.fasta.gz"
+        echo "Downloading one-protein-per-gene FASTA from: \${FTP_URL}"
+        curl -sL "\${FTP_URL}" -o "${meta.id}_downloaded.fasta.gz"
+
+        if [ ! -s "${meta.id}_downloaded.fasta.gz" ]; then
+            echo "ERROR: Empty result from UniProt FTP for proteome ${source}. URL: \${FTP_URL}" >&2
+            exit 1
+        fi
+
+        gunzip "${meta.id}_downloaded.fasta.gz"
         """
     } else {
         // URL download — existing logic
