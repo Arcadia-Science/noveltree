@@ -22,6 +22,8 @@ process PHYSICOCHEMICAL_PROPS {
 
     output:
     tuple val(meta), path("aa-summary-stats/per-family-summaries/aa-physical-properties/${meta.og}_summary_statistics.csv"), emit: summary_stats
+    tuple val(meta), path("aa-summary-stats/per-family-summaries/aa-physical-property-sds/${meta.og}_summary_statistics_sd.csv"), emit: summary_stats_sd
+    tuple val(meta), path("aa-summary-stats/per-family-summaries/aa-physical-property-autocorr/${meta.og}_summary_statistics_autocorr.csv"), emit: summary_stats_autocorr
     path "aa-summary-stats/per-family-summaries/aa-counts/${meta.og}_aa_composition_counts.csv"           , emit: aa_counts
     path "aa-summary-stats/per-family-summaries/aa-proportions/${meta.og}_aa_composition_percentages.csv" , emit: aa_proportions
 
