@@ -15,28 +15,18 @@ process PARSE_PHYLOHOGS {
 
     container 'python:3.11-slim'
 
-    publishDir(
-        path: "${params.outdir}/orthology/${meta.og}",
-        mode: params.publish_dir_mode,
-        pattern: "${meta.og}_*.tsv",
-    )
-    publishDir(
-        path: "${params.outdir}/orthology",
-        mode: params.publish_dir_mode,
-        pattern: "spp_tree_node_lookup.tsv",
-    )
+    storeDir "${params.outdir}/orthology"
 
     input:
     tuple val(meta), path(nhx_file)
     path species_tree
 
     output:
-    path "${meta.og}_orthologs.tsv"                   , emit: orthologs
-    path "${meta.og}_paralogs.tsv"                    , emit: paralogs
-    path "${meta.og}_xenologs.tsv"                    , emit: xenologs
-    path "${meta.og}_hog_membership.tsv"              , emit: hog_membership
+    path "${meta.og}/${meta.og}_orthologs.tsv"         , emit: orthologs
+    path "${meta.og}/${meta.og}_paralogs.tsv"          , emit: paralogs
+    path "${meta.og}/${meta.og}_xenologs.tsv"          , emit: xenologs
+    path "${meta.og}/${meta.og}_hog_membership.tsv"    , emit: hog_membership
     path "spp_tree_node_lookup.tsv"                   , emit: node_lookup
-    path "versions.yml"                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -44,11 +34,7 @@ process PARSE_PHYLOHOGS {
     script:
     def og = "${meta.og}"
     """
-    extract_relationships_from_nhx.py ${nhx_file} ${species_tree} ${og} ${og}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version | sed 's/Python //')
-    END_VERSIONS
+    mkdir -p ${og}
+    extract_relationships_from_nhx.py ${nhx_file} ${species_tree} ${og} ${og}/${og}
     """
 }

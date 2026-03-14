@@ -4,13 +4,14 @@ process PREPROCESS_PROTEOME {
 
     container 'arcadiascience/preprocess_proteomes:1.1.0'
 
+    storeDir "${params.outdir}/preprocessing/preprocessed_proteomes"
+
     input:
     tuple val(meta), path(fasta)
     val min_protein_length
 
     output:
     tuple val(meta), path("${meta.id}_preprocessed.fasta"), emit: preprocessed
-    path "versions.yml",                                     emit: versions
 
     when:
     task.ext.when == null || task.ext.when

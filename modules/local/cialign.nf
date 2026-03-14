@@ -4,33 +4,16 @@ process CIALIGN {
 
     container 'arcadiascience/cialign_1.1.0:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/alignments/trimmed",
-        mode: params.publish_dir_mode,
-        pattern: "*_cialign.fa",
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/species_protein_maps",
-        mode: params.publish_dir_mode,
-        pattern: "species_protein_maps/*",
-        saveAs: { fn -> fn.split('/')[-1] },
-    )
-    publishDir(
-        path: "${params.outdir}/alignments/trimmed",
-        mode: params.publish_dir_mode,
-        pattern: "{removed_sites,log_files}/*",
-        saveAs: { fn -> fn },
-    )
+    storeDir "${params.outdir}/alignments/trimmed"
 
     input:
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("*_cialign.fa")  , emit: cleaned_msas, optional: true
-    tuple val(meta), path("species_protein_maps/*_map.link"), emit: map_link, optional: true
+    tuple val(meta), path("${fasta.baseName}_cialign.fa")  , emit: cleaned_msas, optional: true
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
     path "removed_sites/*"                 , emit: removed_sites
     path "log_files/*"                     , emit: log_files
-    path "versions.yml"                    , emit: versions
 
     script:
     def args = task.ext.args ?: ''

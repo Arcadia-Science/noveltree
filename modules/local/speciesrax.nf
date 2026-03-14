@@ -5,10 +5,7 @@ process SPECIESRAX {
 
     container 'arcadiascience/generax_56f3ed0:1.1.3'
 
-    publishDir(
-        path: "${params.outdir}/species_trees/speciesrax",
-        mode: params.publish_dir_mode,
-    )
+    storeDir "${params.outdir}/species_trees/speciesrax"
 
     input:
     file map_links       // Filepath to the generax gene-species map file
@@ -23,7 +20,6 @@ process SPECIESRAX {
     path "*.txt"
     path "generax.log"
     path "speciesrax_orthogroup.families"
-    path "versions.yml"                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

@@ -17,19 +17,14 @@ process FASTTREE {
 
     container 'arcadiascience/fasttree_2.1.11:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/gene_family_trees/original",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/gene_family_trees/original"
 
     input:
     tuple val(meta), file(alignment)
     val model // not used
 
     output:
-    tuple val(meta), path("*_ft.newick") , emit: phylogeny
-    path "versions.yml"                  , emit: versions
+    tuple val(meta), path("${alignment.baseName}_ft.newick") , emit: phylogeny
 
     when:
     task.ext.when == null || task.ext.when

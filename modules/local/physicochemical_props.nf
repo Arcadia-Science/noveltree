@@ -15,6 +15,8 @@ process PHYSICOCHEMICAL_PROPS {
 
     container 'arcadiascience/physicochemical_props:1.0.0'
 
+    storeDir "${params.outdir}/physicochemical_properties"
+
     input:
     tuple val(meta), path(original_fasta), path(cleaned_msa)
 
@@ -22,7 +24,6 @@ process PHYSICOCHEMICAL_PROPS {
     tuple val(meta), path("aa-summary-stats/per-family-summaries/aa-physical-properties/${meta.og}_summary_statistics.csv"), emit: summary_stats
     path "aa-summary-stats/per-family-summaries/aa-counts/${meta.og}_aa_composition_counts.csv"           , emit: aa_counts
     path "aa-summary-stats/per-family-summaries/aa-proportions/${meta.og}_aa_composition_percentages.csv" , emit: aa_proportions
-    path "versions.yml"                                                                                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
