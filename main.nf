@@ -239,7 +239,6 @@ workflow NOVELTREE {
             }
             nameMap
         }
-        .first()
 
     DIAMOND_BLASTP_ALL(
         ch_renamed_prots,
@@ -380,7 +379,7 @@ workflow NOVELTREE {
 
     PHYLO_PROFILES(
         ch_phylo_profiles_input,
-        ORTHOFINDER_MCL_ALL.out.inflation_dir.first()
+        ORTHOFINDER_MCL_ALL.out.inflation_dir
     )
 
     // Merge per-OG phylo profile outputs.
@@ -517,7 +516,7 @@ workflow NOVELTREE {
     // Extract ortholog/paralog/xenolog pairs and hierarchical HOG membership
     // directly from GeneRax NHX reconciliations — per OG, fully parallelized.
     //
-    ch_labeled_spp_tree = GENERAX_PER_SPECIES.out.labeled_species_tree.first()
+    ch_labeled_spp_tree = GENERAX_PER_SPECIES.out.labeled_species_tree
     PARSE_PHYLOHOGS(GENERAX_PER_SPECIES.out.generax_nhx, ch_labeled_spp_tree)
 
     // Per-OG outputs are stored by storeDir to ${outdir}/orthology/{OG}/{OG}_*.tsv
