@@ -25,7 +25,7 @@ workflow RECONCILIATION_SUMMARIES {
         .join(transfer_event_counts)
         .join(species_coverage)
 
-    PHYLO_PROFILES(ch_phylo_profiles_input, inflation_dir)
+    PHYLO_PROFILES(ch_phylo_profiles_input, inflation_dir.first())
 
     // Merge per-OG phylo profile outputs.
     // collectFile() concatenates TSVs natively in Nextflow, avoiding the need
@@ -56,7 +56,7 @@ workflow RECONCILIATION_SUMMARIES {
     //
     // PARSE_PHYLOHOGS: extract ortholog/paralog/xenolog pairs and HOG membership
     //
-    PARSE_PHYLOHOGS(generax_nhx, labeled_species_tree)
+    PARSE_PHYLOHOGS(generax_nhx, labeled_species_tree.first())
 
     emit:
     hgt_summed_count = MERGE_PHYLO_PROFILES.out.hgt_summed_count
