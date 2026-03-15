@@ -133,6 +133,35 @@ workflow INFER_ORTHOGROUPS {
             [meta + [n_seq: n_seq, max_len: maxL], fasta]
         }
 
+    // --test mode: keep only gene families that contain ALL species in the dataset.
+    // This dramatically reduces the number of OGs for quick end-to-end smoke tests.
+    if (params.test) {
+        ch_total_species = renamed_prots.collect { it[0].id }
+            .map { ids -> ids.unique().size() }
+
+        ch_spptree_fas = ch_spptree_fas
+            .combine(ch_total_species)
+            .filter { meta, fasta, n_spp ->
+                def species = fasta.text.readLines()
+                    .findAll { it.startsWith('>') }
+                    .collect { it.substring(1).replaceFirst(/_[^_]+$/, '') }
+                    .toSet()
+                species.size() >= n_spp
+            }
+            .map { meta, fasta, n_spp -> [meta, fasta] }
+
+        ch_genetree_fas = ch_genetree_fas
+            .combine(ch_total_species)
+            .filter { meta, fasta, n_spp ->
+                def species = fasta.text.readLines()
+                    .findAll { it.startsWith('>') }
+                    .collect { it.substring(1).replaceFirst(/_[^_]+$/, '') }
+                    .toSet()
+                species.size() >= n_spp
+            }
+            .map { meta, fasta, n_spp -> [meta, fasta] }
+    }
+
     emit:
     spptree_fas   = ch_spptree_fas
     genetree_fas  = ch_genetree_fas
