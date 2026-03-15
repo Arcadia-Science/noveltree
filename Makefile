@@ -13,8 +13,8 @@ DOCKER_ORG := arcadiascience
 # =============================================================================
 
 # Images requiring root context (COPY files from outside their docker/ directory)
-PHYSICOCHEMICAL_PROPS_IMAGE := $(DOCKER_ORG)/physicochemical_props
-PHYSICOCHEMICAL_PROPS_TAG := 1.0.0
+PROTEIN_PROPERTIES_IMAGE := $(DOCKER_ORG)/protein_properties
+PROTEIN_PROPERTIES_TAG := 1.0.0
 ZOOGLE_IMAGE := $(DOCKER_ORG)/zoogle
 ZOOGLE_TAG := 1.0.0
 
@@ -57,13 +57,13 @@ PREQUAL_TAG := 1.0.0
 # =============================================================================
 
 .PHONY: help docker-all \
-	docker-physicochemical-props docker-zoogle \
+	docker-protein-properties docker-zoogle \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
 	docker-cogeqc docker-famsa docker-fasttree docker-generax \
 	docker-iqtree docker-orthofinder \
 	docker-phylo-profiles docker-rbase docker-select-inflation docker-witch \
 	docker-preprocess-proteomes docker-prequal \
-	push-all push-physicochemical-props push-zoogle \
+	push-all push-protein-properties push-zoogle \
 	push-asteroid push-bioservices push-cialign push-clipkit \
 	push-cogeqc push-famsa push-fasttree push-generax \
 	push-iqtree push-orthofinder \
@@ -83,7 +83,7 @@ help:
 	@echo "  make docker-all                    - Build all Docker images"
 	@echo ""
 	@echo "Build individual images:"
-	@echo "  make docker-physicochemical-props  - Physicochemical properties"
+	@echo "  make docker-protein-properties  - Protein properties"
 	@echo "  make docker-zoogle             - Zoogle"
 	@echo "  make docker-asteroid               - Asteroid"
 	@echo "  make docker-bioservices            - Bioservices"
@@ -116,7 +116,7 @@ help:
 # Build all images
 # =============================================================================
 
-docker-all: docker-physicochemical-props docker-zoogle \
+docker-all: docker-protein-properties docker-zoogle \
 	docker-asteroid docker-bioservices docker-cialign docker-clipkit \
 	docker-cogeqc docker-famsa docker-fasttree docker-generax \
 	docker-iqtree docker-orthofinder docker-phylo-profiles \
@@ -130,12 +130,12 @@ docker-all: docker-physicochemical-props docker-zoogle \
 # =============================================================================
 
 # Images requiring root context
-docker-physicochemical-props:
-	@echo "Building $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG) from root context..."
+docker-protein-properties:
+	@echo "Building $(PROTEIN_PROPERTIES_IMAGE):$(PROTEIN_PROPERTIES_TAG) from root context..."
 	docker build \
 		--platform $(DOCKER_PLATFORM) \
-		-t $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG) \
-		-f docker/physicochemical_props/Dockerfile \
+		-t $(PROTEIN_PROPERTIES_IMAGE):$(PROTEIN_PROPERTIES_TAG) \
+		-f docker/protein_properties/Dockerfile \
 		.
 	@echo "Built successfully!"
 
@@ -281,7 +281,7 @@ docker-prequal:
 # Push all images
 # =============================================================================
 
-push-all: push-physicochemical-props push-zoogle \
+push-all: push-protein-properties push-zoogle \
 	push-asteroid push-bioservices push-cialign push-clipkit \
 	push-cogeqc push-famsa push-fasttree push-generax \
 	push-iqtree push-orthofinder push-phylo-profiles \
@@ -294,9 +294,9 @@ push-all: push-physicochemical-props push-zoogle \
 # Push individual images
 # =============================================================================
 
-push-physicochemical-props: docker-physicochemical-props
-	@echo "Pushing $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)..."
-	docker push $(PHYSICOCHEMICAL_PROPS_IMAGE):$(PHYSICOCHEMICAL_PROPS_TAG)
+push-protein-properties: docker-protein-properties
+	@echo "Pushing $(PROTEIN_PROPERTIES_IMAGE):$(PROTEIN_PROPERTIES_TAG)..."
+	docker push $(PROTEIN_PROPERTIES_IMAGE):$(PROTEIN_PROPERTIES_TAG)
 	@echo "Pushed successfully!"
 
 push-zoogle: docker-zoogle

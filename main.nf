@@ -80,7 +80,7 @@ include { PARSE_PHYLOHOGS                            } from './modules/local/par
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from './modules/local/orthofinder_mcl'
 include { PHYLO_PROFILES                            } from './modules/local/phylo_profiles'
 include { MERGE_PHYLO_PROFILES                      } from './modules/local/merge_phylo_profiles'
-include { PHYSICOCHEMICAL_PROPS                     } from './modules/local/physicochemical_props'
+include { PROTEIN_PROPERTIES                        } from './modules/local/protein_properties'
 include { ZOOGLE                                    } from './modules/local/zoogle'
 include { BUILD_REFERENCE_CHRONOGRAM                } from './modules/local/build_reference_chronogram'
 
@@ -410,8 +410,8 @@ workflow NOVELTREE {
     MERGE_PHYLO_PROFILES(ch_hgt_long)
 
     //
-    // MODULE: PHYSICOCHEMICAL_PROPS
-    // Calculate physicochemical properties for all gene families
+    // MODULE: PROTEIN_PROPERTIES
+    // Calculate physicochemical properties and AA composition for all gene families
     // Uses full-length (pre-alignment) sequences filtered to survivors of
     // alignment trimming, so biophysical properties reflect the entire protein.
     //
@@ -421,7 +421,7 @@ workflow NOVELTREE {
         ch_physchem_input = ch_all_og_original_fas
             .join(ch_all_og_clean_msas)    // [meta, original_fasta, cleaned_msa]
 
-        PHYSICOCHEMICAL_PROPS(
+        PROTEIN_PROPERTIES(
             ch_physchem_input
         )
 
@@ -466,7 +466,7 @@ workflow NOVELTREE {
 
         // Feed dated trees into ZOOGLE (replaces raw reconciled trees)
         ch_zoogle_input = DATE_GENE_FAMILY_TREES.out.dated_gft          // [meta, dated_tree]
-            .join(PHYSICOCHEMICAL_PROPS.out.summary_stats)                   // [meta, dated_tree, props]
+            .join(PROTEIN_PROPERTIES.out.summary_stats)                   // [meta, dated_tree, props]
             .filter { meta, tree, props_file ->
                 // Validate gene family has sufficient proteins for phylo-dist analysis
                 // Read CSV and extract protein IDs (first column, skip header)
