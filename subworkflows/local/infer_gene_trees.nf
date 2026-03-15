@@ -34,7 +34,7 @@ if (params.iqtree_fasttree_fallback) {
     include { FASTTREE as FASTTREE_FALLBACK   } from '../../modules/local/fasttree'
 }
 
-workflow INFER_TREES {
+workflow INFER_GENE_TREES {
     take:
     fas
 
