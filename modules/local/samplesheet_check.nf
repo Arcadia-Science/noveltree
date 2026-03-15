@@ -1,5 +1,7 @@
 process SAMPLESHEET_CHECK {
     tag "$complete_samplesheet"
+    errorStrategy 'terminate'
+    maxRetries 0
 
     container 'arcadiascience/python_3.9'
 
