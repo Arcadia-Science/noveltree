@@ -22,8 +22,8 @@ process ORTHOFINDER_MCL {
 
     output:
     path("*/Results_Inflation*"),           emit: inflation_dir
-    path("species_tree_og_msas/*.fa"),      emit: spptree_fas, optional: true
-    path("gene_tree_og_msas/*.fa"),         emit: genetree_fas, optional: true
+    path("species_tree_og_fas/*.fa"),      emit: spptree_fas, optional: true
+    path("gene_tree_og_fas/*.fa"),         emit: genetree_fas, optional: true
     path("all_ogs_counts.csv"),             emit: all_ogs, optional: true
     path("spptree_core_ogs_counts.csv"),    emit: spptree_core_ogs, optional: true
     path("genetree_core_ogs_counts.csv"),   emit: genetree_core_ogs, optional: true
@@ -80,17 +80,17 @@ process ORTHOFINDER_MCL {
         # Move filtered FASTAs into separate directories
         msa_dir=OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences
 
-        mkdir -p species_tree_og_msas gene_tree_og_msas
+        mkdir -p species_tree_og_fas gene_tree_og_fas
 
         tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | while read og; do
             if [ -f "\${msa_dir}/\${og}.fa" ]; then
-                mv "\${msa_dir}/\${og}.fa" species_tree_og_msas/
+                mv "\${msa_dir}/\${og}.fa" species_tree_og_fas/
             fi
         done
 
         tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | while read og; do
             if [ -f "\${msa_dir}/\${og}.fa" ]; then
-                mv "\${msa_dir}/\${og}.fa" gene_tree_og_msas/
+                mv "\${msa_dir}/\${og}.fa" gene_tree_og_fas/
             fi
         done
         # Remove directories no longer needed (orthology derived from GeneRax reconciliations in PARSE_PHYLOHOGS)
