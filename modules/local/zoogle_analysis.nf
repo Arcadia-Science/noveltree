@@ -1,4 +1,4 @@
-process ZOOGLE {
+process ZOOGLE_ANALYSIS {
     tag "${meta.og}"
     label "process_high"
 
