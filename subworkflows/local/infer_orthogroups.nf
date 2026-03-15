@@ -2,7 +2,7 @@
 // Orthogroup inference: MCL inflation selection, OrthoFinder prep, DIAMOND, MCL clustering
 //
 
-if (params.test_mcl) {
+if (params.test_run_mcl) {
     include { MCL_INFLATION_SELECTION } from './mcl_inflation_selection'
 }
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL } from '../../modules/local/orthofinder_prep'
@@ -34,7 +34,7 @@ workflow INFER_ORTHOGROUPS {
     //
     // MCL inflation parameter selection (opt-in via --test_mcl)
     //
-    if (params.test_mcl) {
+    if (params.test_run_mcl) {
         // Ensure multiple inflation values are provided when testing
         if (mcl_inflation.size() < 2) {
             exit 1, '--test_mcl requires multiple --mcl_inflation values (e.g. --mcl_inflation "1.1,1.3,1.5,2.0,3.0")'
@@ -135,7 +135,7 @@ workflow INFER_ORTHOGROUPS {
 
     // --test mode: keep only gene families that contain ALL species in the dataset.
     // This dramatically reduces the number of OGs for quick end-to-end smoke tests.
-    if (params.test) {
+    if (params.test_run) {
         ch_total_species = renamed_prots.collect { it[0].id }
             .map { ids -> ids.unique().size() }
 

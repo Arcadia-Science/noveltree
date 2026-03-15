@@ -102,8 +102,8 @@ workflow NOVELTREE {
         )
     }
 
-    // 4. Orthogroup inference (--test filters to all-species OGs only)
-    if (params.test) {
+    // 4. Orthogroup inference (--test_run filters to all-species OGs only)
+    if (params.test_run) {
         log.info "── TEST MODE: only gene families containing ALL species will be processed ──"
     }
     INFER_ORTHOGROUPS(
