@@ -41,7 +41,6 @@ workflow MCL_INFLATION_SELECTION {
                 }
                 nameMap
             }
-            .first()
 
         // Run for the test set (used to determine the best value of the MCL
         // inflation parameter)
