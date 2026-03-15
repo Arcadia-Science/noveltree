@@ -23,8 +23,8 @@ process FILTER_ORTHOGROUPS {
     path "all_ogs_counts.csv"           , emit: all_ogs
     path "spptree_core_ogs_counts.csv"  , emit: spptree_core_ogs
     path "genetree_core_ogs_counts.csv" , emit: genetree_core_ogs
-    path "species_tree_og_msas/*.fa"    , emit: spptree_fas
-    path "gene_tree_og_msas/*.fa"       , emit: genetree_fas
+    path "species_tree_og_fas/*.fa"    , emit: spptree_fas
+    path "gene_tree_og_fas/*.fa"       , emit: genetree_fas
 
     when:
     task.ext.when == null || task.ext.when
@@ -49,18 +49,18 @@ process FILTER_ORTHOGROUPS {
     tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msa_dir}/&.fa|g" > spptree_core_og_fpaths.txt
     tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msa_dir}/&.fa|g" > genetree_core_og_fpaths.txt
 
-    mkdir species_tree_og_msas
-    mkdir gene_tree_og_msas
+    mkdir species_tree_og_fas
+    mkdir gene_tree_og_fas
 
     while IFS= read -r trees
     do
         # Copy the file to the destination directory
-        mv "\$trees" species_tree_og_msas/
+        mv "\$trees" species_tree_og_fas/
     done < spptree_core_og_fpaths.txt
     while IFS= read -r trees
     do
         # Copy the file to the destination directory
-        mv "\$trees" gene_tree_og_msas/
+        mv "\$trees" gene_tree_og_fas/
     done < genetree_core_og_fpaths.txt
 
     # Remove these intermediate files
