@@ -10,7 +10,7 @@ process GENERAX_PER_FAMILY {
 
     container 'arcadiascience/generax_56f3ed0:1.1.3'
 
-    storeDir "${params.outdir}/generax/per_family_rates"
+    storeDir "${params.outdir}/reconciliations/generax_per_family"
     publishDir(
         path: "${params.outdir}/gene_family_trees/reconciled",
         mode: params.publish_dir_mode,
@@ -22,8 +22,11 @@ process GENERAX_PER_FAMILY {
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
-    tuple val(meta), path("${meta.og}/${meta.og}_reconciled_gft.newick"), emit: generax_per_fam_gfts
-    path "${meta.og}/${meta.og}_full_output.tar.gz"                     , emit: archive
+    tuple val(meta), path("${meta.og}/${meta.og}_reconciled_gft.newick")                       , emit: generax_per_fam_gfts
+    path "${meta.og}/${meta.og}_full_output.tar.gz"                                            , emit: archive
+    path "${meta.og}/_intermediate/${meta.og}_eventCounts.txt"
+    path "${meta.og}/_intermediate/${meta.og}_speciesEventCounts.txt"
+    path "${meta.og}/_intermediate/${meta.og}_transfers.txt"
 
     when:
     task.ext.when == null || task.ext.when
@@ -84,15 +87,15 @@ process GENERAX_PER_FAMILY {
     cp $og/reconciliations/${og}_speciesEventCounts.txt .
     cp $og/reconciliations/${og}_transfers.txt .
 
-    # Archive full GeneRax output, then replace with flat structure
+    # Archive full GeneRax output, then replace with clean structure
     tar -czf ${og}_full_output.tar.gz $og/
     rm -rf $og/
-    mkdir $og
+    mkdir -p $og/_intermediate
     mv ${og}_reconciled_gft.newick $og/
-    mv ${og}_eventCounts.txt $og/
-    mv ${og}_speciesEventCounts.txt $og/
-    mv ${og}_transfers.txt $og/
     mv ${og}_full_output.tar.gz $og/
+    mv ${og}_eventCounts.txt $og/_intermediate/
+    mv ${og}_speciesEventCounts.txt $og/_intermediate/
+    mv ${og}_transfers.txt $og/_intermediate/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
