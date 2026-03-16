@@ -7,7 +7,7 @@ process IQTREE {
     // 6) input/output files in appropriate tuple format
     tag "${meta.og}"
 
-    cpus { 6 * task.attempt }
+    cpus 12
     time { 3.h * Math.pow(3, task.attempt - 1) }
     memory {
         def n = (meta?.n_seq ?: 50) as long
