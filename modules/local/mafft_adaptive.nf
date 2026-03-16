@@ -8,8 +8,8 @@ process MAFFT_ADAPTIVE {
         def L = (meta?.max_len ?: 500) as long
         def library_gb = n * n * L * 16L / (1024L * 1024L * 1024L)
         def dp_gb = L * L * 24L / (1024L * 1024L * 1024L)
-        def estimated_gb = Math.max(4L, (long)(library_gb + dp_gb) + 2L)
-        def capped_gb = (int) Math.min(estimated_gb, 48L)
+        def estimated_gb = Math.max(16L, (long)(library_gb + dp_gb) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 96L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
