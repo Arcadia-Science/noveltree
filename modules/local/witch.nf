@@ -68,7 +68,7 @@ process WITCH {
         /^>/ { if (s >= N || seq == "") { if (header != "") print header; if (seq != "") print seq } header=\$0; seq=""; s=0 } \
         !/^>/ { seq = seq \$0 } \
         END { if (s >= N) { print header; print seq } }' \
-        alignments/merged.fasta.masked > tmp.fasta
+        alignments/aligned.masked.fasta > tmp.fasta
 
     # And remove any columns that are now comprised exclusively of gaps following the exclusion
     # of (if any) sequences in the above step.
@@ -87,7 +87,7 @@ process WITCH {
     # Reorganize results for storeDir
     mkdir -p original
     mkdir -p trimmed
-    mv alignments/merged.fasta original/${og}_witch.fa
+    mv alignments/aligned.fasta original/${og}_witch.fa
     mv final_masked.fasta trimmed/${og}_witch_cleaned.fa
     rm -r alignments/ && rm tmp.fasta
 

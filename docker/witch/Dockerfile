@@ -14,7 +14,8 @@ RUN apt-get update && \
         git \
         pip \
         python3.9 \
-        python-is-python3
+        python-is-python3 \
+        rsync
 
 # Install WITCH v1.0.10 via pip (includes MAGUS backbone aligner and FastTree2)
 RUN pip install --no-cache-dir witch-msa==1.0.10
