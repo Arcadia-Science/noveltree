@@ -12,8 +12,8 @@ process FAMSA {
         def profile_bytes = n * L_aln * 96L          // 24 symbols × 4 bytes
         def dp_bytes = L_aln * L_aln * 16L
         def parallel_merges = (long) Math.min(nCpus, Math.max(1L, (long) Math.sqrt(n as double)))
-        def estimated_gb = Math.max(4L, (long)((profile_bytes + dp_bytes * parallel_merges) / (1024L * 1024L * 1024L)) + 2L)
-        def capped_gb = (int) Math.min(estimated_gb, 128L)
+        def estimated_gb = Math.max(32L, (long)((profile_bytes + dp_bytes * parallel_merges) / (1024L * 1024L * 1024L)) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 256L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested

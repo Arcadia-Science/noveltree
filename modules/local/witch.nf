@@ -13,8 +13,8 @@ process WITCH {
         def mafft_gb = (long)(backbone_n * backbone_n * L * 8L / (1024L * 1024L * 1024L))
         def hmm_gb = (long)(n * L * 16L / (1024L * 1024L * 1024L))
         // Base overhead: Python, MAGUS, FastTree, MCL, HMMER processes
-        def estimated_gb = Math.max(16L, mafft_gb + hmm_gb + 8L)
-        def capped_gb = (int) Math.min(estimated_gb, 128L)
+        def estimated_gb = Math.max(32L, mafft_gb + hmm_gb + 8L)
+        def capped_gb = (int) Math.min(estimated_gb, 256L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
