@@ -10,8 +10,8 @@ process CIALIGN {
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("${fasta.baseName}_cialign.fa")  , emit: cleaned_msas, optional: true
-    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
+    tuple val(meta), path("${fasta.baseName}_cialign.fa")  , emit: cleaned_msas
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link
     path "removed_sites/*"                 , emit: removed_sites
     path "log_files/*"                     , emit: log_files
 
@@ -46,13 +46,17 @@ process CIALIGN {
     # Verify the trimmed alignment still meets minimum sequence/species thresholds.
     n_seq=\$(grep -c ">" \${prefix}_cialign.fa || true)
     n_spp=\$(grep ">" \${prefix}_cialign.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    mkdir -p species_protein_maps
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
+        # QC failed — produce empty outputs so storeDir can distinguish
+        # "task ran, alignment discarded" from "task never ran"
         rm \${prefix}_cialign.fa
+        touch \${prefix}_cialign.fa
+        touch species_protein_maps/\${prefix}_map.link
     else
         # Now pull out the sequences, and split into a TreeRecs format mapping
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
-        mkdir species_protein_maps
         grep ">" \${prefix}_cialign.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
         paste prot spp > species_protein_maps/\${prefix}_map.link
