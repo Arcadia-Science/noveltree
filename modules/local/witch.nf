@@ -55,7 +55,6 @@ process WITCH {
         -i ${fasta} \\
         -d alignments \\
         -t ${task.cpus} \\
-        --graphtraceoptimize true \\
         --molecule amino \\
         $args
 
