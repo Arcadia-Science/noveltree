@@ -21,8 +21,8 @@ process CLIPKIT {
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("${fasta.baseName}_clipkit.fa")  , emit: cleaned_msas, optional: true
-    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
+    tuple val(meta), path("${fasta.baseName}_clipkit.fa")  , emit: cleaned_msas
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link
 
     when:
     task.ext.when == null || task.ext.when
@@ -44,7 +44,7 @@ process CLIPKIT {
     # If so, no sequence can pass the filter — skip seqmagick entirely.
     n_cols=\$(awk '!/^>/{print length; exit}' \${prefix}_tmp.fa)
     if [ "\$n_cols" -lt "$min_ungapped_length" ]; then
-        # Alignment too short after trimming — discard this OG
+        # Alignment too short after trimming — will produce empty outputs below
         rm \${prefix}_tmp.fa
     else
         # Remove sequences with a minimum non-gapped length less than the specified length.
@@ -64,14 +64,18 @@ process CLIPKIT {
         n_seq=0
         n_spp=0
     fi
+    mkdir -p species_protein_maps
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
+        # QC failed — produce empty outputs so storeDir can distinguish
+        # "task ran, alignment discarded" from "task never ran"
         rm -f \${prefix}_clipkit.fa
+        touch \${prefix}_clipkit.fa
+        touch species_protein_maps/\${prefix}_map.link
     else
-        # Now, create a protein-species map-file:
+        # Create a protein-species map-file:
         # Pull out the sequences, and split into a TreeRecs format mapping
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
-        mkdir species_protein_maps
         grep ">" \${prefix}_clipkit.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
         paste prot spp > species_protein_maps/\${prefix}_map.link

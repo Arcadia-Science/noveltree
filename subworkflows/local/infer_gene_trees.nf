@@ -102,8 +102,9 @@ workflow INFER_GENE_TREES {
 
     if (params.msa_trimmer != 'none') {
         TRIM_MSAS(all_msas)
-        map_link = TRIM_MSAS.out.map_link
-        cleaned_msas = TRIM_MSAS.out.cleaned_msas
+        // Filter out empty files (QC-failed OGs produce empty placeholders for storeDir)
+        map_link = TRIM_MSAS.out.map_link.filter { meta, f -> f.size() > 0 }
+        cleaned_msas = TRIM_MSAS.out.cleaned_msas.filter { meta, f -> f.size() > 0 }
     } else {
         map_link = all_map_links
         cleaned_msas = all_msas
