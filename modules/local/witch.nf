@@ -6,10 +6,15 @@ process WITCH {
     memory {
         def n = (meta?.n_seq ?: 1000) as long
         def L = (meta?.max_len ?: 500) as long
-        def backbone_gb = (long)(Math.sqrt(n) * Math.sqrt(n) * L * 16L / (1024L * 1024L * 1024L))
-        def hmm_gb = (long)(n * L * 8L / (1024L * 1024L * 1024L))
-        def estimated_gb = Math.max(8L, backbone_gb + hmm_gb + 4L)
-        def capped_gb = (int) Math.min(estimated_gb, 64L)
+        // WITCH internally runs MAGUS which runs MAFFT on a backbone of up to 1000 seqs.
+        // MAFFT E-INS-i is O(N^2 * L) — the dominant memory cost.
+        // Then WITCH runs HMMER searches (O(N * L)) and stores extended alignment (O(N * L)).
+        def backbone_n = Math.min(n, 1000L)
+        def mafft_gb = (long)(backbone_n * backbone_n * L * 8L / (1024L * 1024L * 1024L))
+        def hmm_gb = (long)(n * L * 16L / (1024L * 1024L * 1024L))
+        // Base overhead: Python, MAGUS, FastTree, MCL, HMMER processes
+        def estimated_gb = Math.max(16L, mafft_gb + hmm_gb + 8L)
+        def capped_gb = (int) Math.min(estimated_gb, 128L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
