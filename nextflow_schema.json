@@ -111,8 +111,8 @@
                 "ref_species": {
                     "type": "string",
                     "default": "Homo-sapiens",
-                    "description": "Reference species name for Zoogle physicochemical distance analysis. Required when running with -profile zoogle.",
-                    "help_text": "Species name to use as reference for calculating phylogenetically-corrected protein distances. All other species' proteins will be compared to this reference species. Must match a species name from the input samplesheet (format: Genus-species). Underscores and spaces are auto-converted to hyphens.",
+                    "description": "Reference species for distance comparisons. Set to 'none' for centroid-only analysis.",
+                    "help_text": "When set to a species name, both centroid-based and reference-based analyses are produced. When set to 'none', only universal centroid-based analyses are produced for all gene families. Must match a species name from the input samplesheet (format: Genus-species). Underscores and spaces are auto-converted to hyphens.",
                     "fa_icon": "fas fa-bullseye"
                 },
                 "preprocess": {

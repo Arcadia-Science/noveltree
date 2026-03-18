@@ -2,39 +2,20 @@
 require(dplyr)
 require(phytools)
 Rcpp::sourceCpp("calculate_dist_stats.cpp")
-# The following function calculates pairwise multivariate distances between
-# species, pulls out the distances between each species and the reference
-# species (i.e. human) and conducts statistical tests of the hypothesis
-# that each protein or each species is exceptionally similar
-calc_prot_spp_dists <-
-  function(gene_family, gf_stats_path,
-           ref_spp,
-           keep_stats, out_dir) {
-    # gf_stats_path: the file path to the file containing protein summary
-    # statistics for a single gene family
-    # gene_family: named vector with "family" (OG name) and "gft" (tree path)
-    # ref_spp: the species name of the "reference" species, the protein of
-    # which we will compare all non-reference proteins to
-    # keep_stats: the AA summary statistics we wish to retain in analyses
-    # out_dir: the base directory to write the output files to
-    # Prep output directories
+source("centroid_distance_functions.R")
+
+# calc_universal_dists:
+# Compute phylo-GLS transformed data, pairwise Mahalanobis distances,
+# inverse covariance, centroid distances, and cophenetic distances.
+# Runs on ALL gene families regardless of reference species.
+calc_universal_dists <-
+  function(gene_family, gf_stats_path, keep_stats, out_dir) {
+    # Prep output directories for universal outputs
     dir.create(paste0(out_dir, "/protein-dist-mats/"),
                recursive = TRUE, showWarnings = FALSE)
     dir.create(paste0(out_dir, "/protein-phylo-dist-mats/"),
                recursive = TRUE, showWarnings = FALSE)
     dir.create(paste0(out_dir, "/phylo-corrected-data/"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(paste0(out_dir, "/protein-dists-to-reference/"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(paste0(out_dir, "/species-dists-to-reference/"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(paste0(out_dir, "/protein-pvals/"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(paste0(out_dir, "/species-pvals/"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(paste0(out_dir, "/pairwise-protein-dist-perm-test/"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(paste0(out_dir, "/final_protein_pair_summary_tables/"),
                recursive = TRUE, showWarnings = FALSE)
 
     # Read in the gene family protein stats and tree
@@ -77,7 +58,49 @@ calc_prot_spp_dists <-
     dist_mat <-
       pairwise_mahalanobis(transf_data) # nolint
 
-    # Now, pull out the distances between each species and our reference species
+    # Compute inverse covariance for centroid distance calculation
+    inv_cov <- compute_inverse_covariance(transf_data) # nolint
+
+    # Compute centroid distances for all proteins
+    centroid_results <- calc_centroid_dists(transf_data, inv_cov, gf_tree)
+
+    # Get the phylogenetic distance matrix
+    prot_phylo_dists <- ape::cophenetic.phylo(gf_tree)
+
+    return(list(
+      transf_data = transf_data,
+      dist_mat = dist_mat,
+      prot_phylo_dists = prot_phylo_dists,
+      inv_cov = inv_cov,
+      centroid_results = centroid_results,
+      gf_tree = gf_tree
+    ))
+  }
+
+# calc_ref_dists:
+# Compute reference-specific distances, permutation tests, z-scores,
+# Wilcoxon tests, and final summary table. Only called when the
+# reference species has proteins in the gene family.
+calc_ref_dists <-
+  function(universal_results, ref_spp, gene_family, out_dir) {
+    # Prep output directories for reference-specific outputs
+    dir.create(paste0(out_dir, "/protein-dists-to-reference/"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(paste0(out_dir, "/species-dists-to-reference/"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(paste0(out_dir, "/protein-pvals/"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(paste0(out_dir, "/species-pvals/"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(paste0(out_dir, "/pairwise-protein-dist-perm-test/"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(paste0(out_dir, "/final_protein_pair_summary_tables/"),
+               recursive = TRUE, showWarnings = FALSE)
+
+    dist_mat <- universal_results$dist_mat
+    prot_phylo_dists <- universal_results$prot_phylo_dists
+
+    # Pull out the distances between each species and our reference species
     focal_dists_idx <- which(grepl(ref_spp, rownames(dist_mat)))
     focal_dists <-
       matrix(dist_mat[-focal_dists_idx, focal_dists_idx],
@@ -87,13 +110,13 @@ calc_prot_spp_dists <-
                              colnames(dist_mat)[focal_dists_idx]))
     focal_prots <- rownames(focal_dists)
 
-    # Now, on a protein-by-protein basis, conduct permutation tests to assess
-    # whether individual non-reference species / reference species protein pairs
-    # are significantly less dissimilar than expected.
+    # Conduct permutation tests to assess whether individual non-reference
+    # species / reference species protein pairs are significantly less
+    # dissimilar than expected.
     per_prot_dist_res <-
       dist_permute_test(dist_mat, focal_dists, n_permutations = 10000) # nolint
 
-    # Now, for each gene family, obtain the mean, median, and SD of the
+    # For each gene family, obtain the mean, median, and SD of the
     # distances to reference proteins
     stats_list <-
       calculate_dist_stats(focal_dists) # nolint
@@ -124,49 +147,22 @@ calc_prot_spp_dists <-
     per_spp_signif <-
       per_spp_wilcox(focal_dist_spp_res) # nolint
 
-    # Get the phylogenetic distance matrix
-    prot_phylo_dists <- ape::cophenetic.phylo(gf_tree)
-
-    # Now pull together into a "final" summary table containing key bits
-    # of information and are useful for handing off to translation.
-
     # Identify the non-reference species for each protein pair
-    # Protein labels have format: Species_name_ProteinID
-    # Species names are extracted by removing the last underscore-delimited segment
     nonref_spp <-
       gsub("_[^_]+$", "", per_prot_dist_res$observation)
 
-    # And get the UniProt protein IDs for each protein
-    # Additional substitutions needed to handle exceptions for
-    # non-human proteins (i.e. not from uniprot).
-    # Some example proteins are shown below:
-
-    # Examp. 1: "Nematostella-vectensis_tr|A7RG13|A7RG13-NEMVE"
-    # - This is from UniProt - we want the middle identifier between pipes
-    # - Human proteins will always match this format
-    # - For these we simply need to remove everything before/including the
-    #   first pipe, and then everything after/including the last
-    # Examp 2: "Mnemiopsis-leidyi_gb|GFAT01090803.1|.p1"
-    # - This is an oddball transcriptome - we want "GFAT01090803.1.p1" and so
-    #   will start out by replacing instances of "|.p" with ".p" and then
-    #   proceed as we did before.
-    # - Some non-human proteins don't include pipes, we we start by removing
-    #   the species names (everything before "_")
-
-    # First the non-human proteins with the extra step
+    # Extract protein IDs
     nonref_prot <-
       gsub(".*\\_", "", per_prot_dist_res$observation) |>
       gsub(pattern = "\\|\\.p", replacement = "\\.p") |>
       gsub(pattern = "^[^|]*\\|", replacement = "") |>
       gsub(pattern = "\\|.*", replacement = "")
-    # Then for humans
     ref_prot <-
       gsub(pattern = "^[^|]*\\|", replacement = "",
            per_prot_dist_res$reference) |>
       gsub(pattern = "\\|.*", replacement = "")
 
-    # Get a vector containing the pairwise phylogenetic distances among
-    # proteins
+    # Get pairwise phylogenetic distances among proteins
     phyl_dists <-
       apply(per_prot_dist_res[, 1:2], 1, function(x) {
         obs <- x[1]
@@ -188,24 +184,20 @@ calc_prot_spp_dists <-
         pvalue_colwise = per_prot_dist_res$pvalue_within_nonref
       )
 
-    # And return all outputs
-    return(
-      list(
-        phylo_corrected_data = transf_data,
-        protein_dist_mat = dist_mat,
-        prot_phylo_dists = prot_phylo_dists,
-        prot_dists_to_ref = focal_dist_prot_res,
-        spp_dists_to_ref = obs_spp_dists,
-        protein_pvals = per_prot_signif,
-        species_pvals = per_spp_signif,
-        per_protein_dist_res = per_prot_dist_res,
-        final_summary_table = final_summary_table
-      )
-    )
+    return(list(
+      prot_dists_to_ref = focal_dist_prot_res,
+      spp_dists_to_ref = obs_spp_dists,
+      protein_pvals = per_prot_signif,
+      species_pvals = per_spp_signif,
+      per_protein_dist_res = per_prot_dist_res,
+      final_summary_table = final_summary_table
+    ))
   }
 
-# The following function calls the above function for a single gene
-# family, allowing calculations to be done in parallel.
+# genefam_aa_conservation:
+# Main wrapper function for a single gene family.
+# Always runs universal + centroid analysis on all families.
+# Conditionally runs reference-specific analysis when ref_spp is present.
 genefam_aa_conservation <-
   function(gene_family, ref_spp = ref_spp, aa_stat_basedir = aa_stat_basedir,
            keep_stats =
@@ -213,65 +205,79 @@ genefam_aa_conservation <-
              "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
              "sheet_fract", "molar_ext_coef_cysteines"),
            out_dir = "gf-aa-multivar-distances") {
-    # gene_family: a named vector containing "family", the gene family ID/name,
-    # and "gft", the file path to the corresponding gene family tree
-    # ref_spp: the species name of the "reference" species, the protein
-    # of which we will compare all non-reference proteins to
-    # keep_stats: the AA summary statistics we wish to retain in analyses
-    # out_dir: the base directory to write the output files to
-    gf_dist_res <-
-      calc_prot_spp_dists(
+
+    # --- Tier 1: Universal analysis (all gene families) ---
+    universal_res <-
+      calc_universal_dists(
         gene_family = gene_family,
         gf_stats_path = paste0(aa_stat_basedir,
                                gene_family["family"],
                                "_summary_statistics.csv"),
-        ref_spp = ref_spp,
         keep_stats = keep_stats,
         out_dir = out_dir
       )
-    write.table(gf_dist_res$phylo_corrected_data, sep = "\t",
+
+    # Write universal outputs
+    write.table(universal_res$transf_data, sep = "\t",
                 file = paste0(out_dir, "/phylo-corrected-data/",
                               gene_family["family"],
                               "_phylo_corr_dat.tsv"),
                 quote = FALSE, row.names = TRUE, col.names = TRUE)
-    write.table(gf_dist_res$protein_dist_mat, sep = "\t",
+    write.table(universal_res$dist_mat, sep = "\t",
                 file = paste0(out_dir, "/protein-dist-mats/",
                               gene_family["family"],
                               "_protein_dists.tsv"),
                 quote = FALSE, row.names = TRUE, col.names = TRUE)
-    write.table(gf_dist_res$prot_phylo_dists, sep = "\t",
+    write.table(universal_res$prot_phylo_dists, sep = "\t",
                 file = paste0(out_dir, "/protein-phylo-dist-mats/",
                               gene_family["family"],
                               "_phylo_dists.tsv"),
                 quote = FALSE, row.names = TRUE, col.names = TRUE)
-    write.table(gf_dist_res$prot_dists_to_ref, sep = "\t",
-                file = paste0(out_dir, "/protein-dists-to-reference/",
-                              gene_family["family"],
-                              "_protein_dists.tsv"),
-                quote = FALSE, row.names = FALSE, col.names = TRUE)
-    write.table(gf_dist_res$spp_dists_to_ref, sep = "\t",
-                file = paste0(out_dir, "/species-dists-to-reference/",
-                              gene_family["family"],
-                              "_species_dists.tsv"),
-                quote = FALSE, row.names = FALSE, col.names = TRUE)
-    write.table(gf_dist_res$protein_pvals, sep = "\t",
-                file = paste0(out_dir, "/protein-pvals/",
-                              gene_family["family"],
-                              "_protein_reference_dist_pvals.tsv"),
-                quote = FALSE, row.names = FALSE, col.names = TRUE)
-    write.table(gf_dist_res$species_pvals, sep = "\t",
-                file = paste0(out_dir, "/species-pvals/",
-                              gene_family["family"],
-                              "_species_reference_dist_pvals.tsv"),
-                quote = FALSE, row.names = FALSE, col.names = TRUE)
-    write.table(gf_dist_res$per_protein_dist_res, sep = "\t",
-                file = paste0(out_dir, "/pairwise-protein-dist-perm-test/",
-                              gene_family["family"],
-                              "_protein_protein_dist_permutation_test.tsv"),
-                quote = FALSE, row.names = FALSE, col.names = TRUE)
-    write.table(gf_dist_res$final_summary_table, sep = "\t",
-                file = paste0(out_dir, "/final_protein_pair_summary_tables/",
-                              gene_family["family"],
-                              "_final_summary_table.tsv"),
-                quote = FALSE, row.names = FALSE, col.names = TRUE)
+
+    # Write centroid outputs (always)
+    write_centroid_outputs(universal_res$centroid_results,
+                          gene_family, out_dir)
+
+    # --- Tier 2: Reference-specific analysis (conditional) ---
+    if (ref_spp != "none" &&
+        any(grepl(ref_spp, rownames(universal_res$dist_mat)))) {
+      ref_res <-
+        calc_ref_dists(
+          universal_results = universal_res,
+          ref_spp = ref_spp,
+          gene_family = gene_family,
+          out_dir = out_dir
+        )
+
+      write.table(ref_res$prot_dists_to_ref, sep = "\t",
+                  file = paste0(out_dir, "/protein-dists-to-reference/",
+                                gene_family["family"],
+                                "_protein_dists.tsv"),
+                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+      write.table(ref_res$spp_dists_to_ref, sep = "\t",
+                  file = paste0(out_dir, "/species-dists-to-reference/",
+                                gene_family["family"],
+                                "_species_dists.tsv"),
+                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+      write.table(ref_res$protein_pvals, sep = "\t",
+                  file = paste0(out_dir, "/protein-pvals/",
+                                gene_family["family"],
+                                "_protein_reference_dist_pvals.tsv"),
+                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+      write.table(ref_res$species_pvals, sep = "\t",
+                  file = paste0(out_dir, "/species-pvals/",
+                                gene_family["family"],
+                                "_species_reference_dist_pvals.tsv"),
+                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+      write.table(ref_res$per_protein_dist_res, sep = "\t",
+                  file = paste0(out_dir, "/pairwise-protein-dist-perm-test/",
+                                gene_family["family"],
+                                "_protein_protein_dist_permutation_test.tsv"),
+                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+      write.table(ref_res$final_summary_table, sep = "\t",
+                  file = paste0(out_dir, "/final_protein_pair_summary_tables/",
+                                gene_family["family"],
+                                "_final_summary_table.tsv"),
+                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+    }
   }
