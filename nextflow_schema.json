@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/Arcadia-Science/noveltree/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/Arcadia-Science/noveltree/main/nextflow_schema.json",
     "title": "Arcadia-Science/noveltree pipeline parameters",
     "description": "taking proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree",
     "type": "object",
@@ -52,12 +52,12 @@
                 },
                 "min_num_spp_per_og": {
                     "type": "integer",
-                    "default": 4,
+                    "default": 2,
                     "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
                 },
                 "min_prop_spp_for_spptree": {
                     "type": "number",
-                    "default": 0.25,
+                    "default": 0.75,
                     "description": "Minimum proportion of all species in orthogroup for inclusion in species tree inference."
                 },
                 "max_copy_num_spp_tree": {
@@ -67,23 +67,23 @@
                 },
                 "aligner": {
                     "type": "string",
-                    "default": "witch",
-                    "description": "Option specifying the method used to infer multiple sequence alignments. Options: WITCH ('witch'), MAFFT ('mafft'), or FAMSA ('famsa'). Additional params for each method should be provided in modules.config.",
-                    "enum": ["witch", "mafft", "famsa"]
+                    "default": "adaptive",
+                    "description": "Alignment method. 'adaptive' (default) uses three-tier routing: MAFFT_TIER1 for ≤200 seqs → WITCH_TIER2 for ≤3000 → FAMSA_TIER3 for larger, with automatic fallback. 'mafft', 'witch', and 'famsa' use a single aligner for all families.",
+                    "enum": ["adaptive", "mafft", "witch", "famsa"]
                 },
                 "msa_trimmer": {
                     "type": "string",
-                    "default": "none",
+                    "default": "clipkit",
                     "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign ('cialign') or ClipKIT ('clipkit'). Additional params for either method should be provided in modules.config."
                 },
                 "min_ungapped_length": {
                     "type": "integer",
-                    "default": 20,
+                    "default": 50,
                     "description": "Option specifying the minimum ungapped length of cleaned/trimmed multiple sequence alignments. Prevents ClipKIT from removing all non-gap characters. Specify as null (no quotes) if you do not want to remove short sequences with CIAlign."
                 },
                 "tree_method": {
                     "type": "string",
-                    "default": "fasttree",
+                    "default": "iqtree",
                     "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is fasttree, alternative is iqtree."
                 },
                 "tree_model": {
@@ -104,7 +104,7 @@
                 },
                 "busco": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "description": "Run BUSCO completeness assessment on input proteomes.",
                     "fa_icon": "fas fa-check-circle"
                 },
@@ -129,6 +129,32 @@
                     "help_text": "Proteins shorter than this length are removed during the preprocessing step. Only applies when --preprocess is enabled.",
                     "fa_icon": "fas fa-ruler"
                 },
+                "mafft_mode": {
+                    "type": "string",
+                    "default": "einsi",
+                    "description": "MAFFT algorithm for tier-1 alignment. E-INS-i for sequences with conserved motifs, L-INS-i for globally alignable sequences.",
+                    "enum": ["einsi", "linsi"]
+                },
+                "align_tier1_max": {
+                    "type": "integer",
+                    "default": 200,
+                    "description": "Maximum sequences for tier-1 MAFFT alignment. Families above this use WITCH."
+                },
+                "align_tier2_max": {
+                    "type": "integer",
+                    "default": 3000,
+                    "description": "Maximum sequences for tier-2 WITCH alignment. Families above this use FAMSA."
+                },
+                "test_run": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Restrict to gene families containing ALL species (fast smoke test)."
+                },
+                "test_mcl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Test multiple MCL inflation values on species with UniProt accessions."
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
@@ -148,7 +174,7 @@
                 "max_cpus": {
                     "type": "integer",
                     "description": "Maximum number of CPUs that can be requested for any single job.",
-                    "default": 16,
+                    "default": 72,
                     "fa_icon": "fas fa-microchip",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
@@ -237,8 +263,8 @@
                 "time_calibration_method": {
                     "type": "string",
                     "default": "treePL",
-                    "description": "Method for time-calibrating trees. Currently only 'treePL' is supported.",
-                    "enum": ["treePL"]
+                    "description": "Method for time-calibrating trees. treePL (penalized likelihood) is default; PATHd8 is used automatically as fallback for large trees or on retry.",
+                    "enum": ["treePL", "PATHd8"]
                 },
                 "max_treepl_tips": {
                     "type": "integer",
