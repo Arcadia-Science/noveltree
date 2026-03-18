@@ -76,11 +76,18 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - `aa-summary-stats/per-family-summaries/`: Per-family directories containing property summaries for each protein.
   - Contains CSV files with 20 amino acid frequencies and physicochemical properties (molecular weight, aromaticity, instability, flexibility, GRAVY, isoelectric point, charge at pH 3/5/7/9, helix/sheet fractions, extinction coefficients).
 
-**13.** `zoogle/` *(zoogle mode only)*: Phylogenetically-corrected protein distance analyses from ZOOGLE module. Only produced for gene families containing at least one protein from the reference species (`ref_species`) and sufficient non-reference proteins for statistical testing.
+**13.** `zoogle/` *(zoogle mode only)*: Phylogenetically-corrected protein distance analyses from ZOOGLE module. Produced for all gene families with at least 4 proteins from at least 2 species (each with ≥2 proteins).
+
+*Universal outputs (always produced):*
 
 - `phylo-corrected-data/`: Physicochemical property data after phylogenetic correction.
 - `protein-dist-mats/`: Raw protein-protein distance matrices based on physicochemical properties.
 - `protein-phylo-dist-mats/`: Phylogenetically-corrected Mahalanobis distance matrices.
+- `centroid-dists/`: Mahalanobis distance from each protein to the family centroid (column means of GLS-transformed data). Includes rank and empirical protein-level p-values.
+- `centroid-summary-tables/`: Comprehensive centroid summary tables with gene family, protein, species, centroid distance, rank, protein-level p-value, and species-level permutation p-value.
+
+*Reference-specific outputs (only when `ref_species` is set and present in the gene family):*
+
 - `protein-dists-to-reference/`: Distances from each protein to reference species proteins.
 - `species-dists-to-reference/`: Species-level average distances to reference.
 - `protein-pvals/`: Statistical significance (p-values) of protein distances to reference species.

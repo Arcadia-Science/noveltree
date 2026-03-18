@@ -64,7 +64,8 @@ RUN R -e "Rcpp::sourceCpp('phylo_correction.cpp')" && \
     R -e "Rcpp::sourceCpp('compute_inverse_covariance.cpp')" && \
     R -e "Rcpp::sourceCpp('compute_chunk_distances.cpp')" && \
     R -e "Rcpp::sourceCpp('perm_test_across_non_ref.cpp')" && \
-    R -e "Rcpp::sourceCpp('perm_test_within_non_ref.cpp')"
+    R -e "Rcpp::sourceCpp('perm_test_within_non_ref.cpp')" && \
+    R -e "Rcpp::sourceCpp('centroid_species_perm_test.cpp')"
 
 # Add scripts to PATH
 ENV PATH="/opt/zoogle:${PATH}"

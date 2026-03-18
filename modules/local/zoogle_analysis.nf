@@ -11,15 +11,19 @@ process ZOOGLE_ANALYSIS {
     val ref_species
 
     output:
+    // Universal outputs (always produced)
     path "phylo-corrected-data/${meta.og}_phylo_corr_dat.tsv"           , emit: phylo_corrected_data
     path "protein-dist-mats/${meta.og}_protein_dists.tsv"               , emit: protein_dist_mat
     path "protein-phylo-dist-mats/${meta.og}_phylo_dists.tsv"           , emit: prot_phylo_dists
-    path "protein-dists-to-reference/${meta.og}_protein_dists.tsv"      , emit: prot_dists_to_ref
-    path "species-dists-to-reference/${meta.og}_species_dists.tsv"      , emit: spp_dists_to_ref
-    path "protein-pvals/${meta.og}_protein_reference_dist_pvals.tsv"    , emit: protein_pvals
-    path "species-pvals/${meta.og}_species_reference_dist_pvals.tsv"    , emit: species_pvals
-    path "pairwise-protein-dist-perm-test/${meta.og}_protein_protein_dist_permutation_test.tsv" , emit: per_protein_dist_res
-    path "final_protein_pair_summary_tables/${meta.og}_final_summary_table.tsv" , emit: final_summary_table
+    path "centroid-dists/${meta.og}_centroid_dists.tsv"                  , emit: centroid_dists
+    path "centroid-summary-tables/${meta.og}_centroid_summary_table.tsv" , emit: centroid_summary
+    // Reference-specific outputs (only when ref species is present in family)
+    path "protein-dists-to-reference/${meta.og}_protein_dists.tsv"      , emit: prot_dists_to_ref, optional: true
+    path "species-dists-to-reference/${meta.og}_species_dists.tsv"      , emit: spp_dists_to_ref, optional: true
+    path "protein-pvals/${meta.og}_protein_reference_dist_pvals.tsv"    , emit: protein_pvals, optional: true
+    path "species-pvals/${meta.og}_species_reference_dist_pvals.tsv"    , emit: species_pvals, optional: true
+    path "pairwise-protein-dist-perm-test/${meta.og}_protein_protein_dist_permutation_test.tsv" , emit: per_protein_dist_res, optional: true
+    path "final_protein_pair_summary_tables/${meta.og}_final_summary_table.tsv" , emit: final_summary_table, optional: true
 
     when:
     task.ext.when == null || task.ext.when

@@ -66,37 +66,31 @@ workflow ZOOGLE {
             def lines = props_file.readLines()
             def proteinIds = lines.drop(1).collect { it.split(',')[0] }
 
-            if (proteinIds.size() == 0) {
-                log.info "Skipping ${meta.og}: No proteins found in CSV"
+            if (proteinIds.size() < 4) {
+                log.info "Skipping ${meta.og}: fewer than 4 proteins"
                 return false
             }
 
-            // Count reference species proteins
-            def refCount = proteinIds.count { it.startsWith("${ref_species}_") }
-
-            // Count non-reference proteins
-            def nonrefCount = proteinIds.size() - refCount
-
-            // Count proteins per non-reference species
-            // NOTE: Must match R script's species extraction logic (line 145 of protein_distance_calculation_functions.R)
+            // Count proteins per species (all species, not just non-reference)
             // Protein labels have format: Species_name_ProteinID
             // Species names are extracted by removing the last underscore-delimited segment
-            def nonrefProteinsBySpecies = proteinIds
-                .findAll { !it.startsWith("${ref_species}_") }
-                .collect { it.replaceFirst(/_[^_]+$/, '') }  // Extract species name (remove protein ID after last underscore)
-                .countBy { it }  // Map of species -> count
+            def speciesCounts = proteinIds
+                .collect { it.replaceFirst(/_[^_]+$/, '') }
+                .countBy { it }
 
-            // Count unique non-reference species
-            def nonrefSpeciesCount = nonrefProteinsBySpecies.size()
+            if (speciesCounts.size() < 2) {
+                log.info "Skipping ${meta.og}: fewer than 2 species"
+                return false
+            }
 
-            // Count how many non-reference species have at least 2 proteins
-            // (Wilcoxon test requires at least 2 observations per group)
-            def speciesWithEnoughProteins = nonrefProteinsBySpecies.count { species, count -> count >= 2 }
+            // Count how many species have at least 2 proteins
+            def speciesWithEnoughProteins = speciesCounts.count { species, count -> count >= 2 }
+            if (speciesWithEnoughProteins < 2) {
+                log.info "Skipping ${meta.og}: fewer than 2 species with >= 2 proteins"
+                return false
+            }
 
-            // Apply validation criteria (maps directly to the 3 observed errors)
-            def isValid = (refCount >= 1) && (nonrefCount >= 2) && (speciesWithEnoughProteins >= 2)
-
-            return isValid
+            return true
         }
 
     ZOOGLE_ANALYSIS(ch_zoogle_input, ref_species)

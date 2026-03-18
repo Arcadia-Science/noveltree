@@ -76,7 +76,10 @@ workflow NOVELTREE {
     ch_all_data = INPUT_CHECK(ch_input)
 
     // Normalize ref_species to hyphens (users may pass underscores or spaces)
-    def ref_species = params.ref_species.replace('_', '-').replace(' ', '-')
+    // Set to 'none' for centroid-only analysis (no reference species)
+    def ref_species = (params.ref_species && params.ref_species != 'none')
+        ? params.ref_species.replace('_', '-').replace(' ', '-')
+        : 'none'
 
     // 2. Download, preprocess, rename
     PREPARE_INPUTS(ch_all_data.remote_prots, ch_all_data.local_prots)
@@ -85,6 +88,16 @@ workflow NOVELTREE {
     // These value channels are consumed by multiple downstream subworkflows
     species_name_list   = ch_renamed_prots.collect { it[0].id }
     complete_prots_list = ch_renamed_prots.collect { it[1] }
+
+    // Warn if ref_species is set but not found in the dataset
+    if (params.zoogle && ref_species != 'none') {
+        species_name_list.collect().subscribe { names ->
+            if (!names.contains(ref_species)) {
+                log.warn "WARNING: ref_species '${ref_species}' not found in input dataset. " +
+                         "Reference-based analyses will be skipped. Only centroid-based outputs will be produced."
+            }
+        }
+    }
 
     // 3. BUSCO (optional, independent — no downstream consumers)
     if (params.busco) {
