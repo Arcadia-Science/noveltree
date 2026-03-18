@@ -16,7 +16,7 @@ DOCKER_ORG := arcadiascience
 PROTEIN_PROPERTIES_IMAGE := $(DOCKER_ORG)/protein_properties
 PROTEIN_PROPERTIES_TAG := 1.0.0
 ZOOGLE_IMAGE := $(DOCKER_ORG)/zoogle
-ZOOGLE_TAG := 1.0.0
+ZOOGLE_TAG := 1.1.0
 
 # Images built from their docker/ subdirectory
 ASTEROID_IMAGE := $(DOCKER_ORG)/asteroid_3aae117d-disco_20e10c33

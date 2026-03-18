@@ -239,8 +239,16 @@ genefam_aa_conservation <-
                           gene_family, out_dir)
 
     # --- Tier 2: Reference-specific analysis (conditional) ---
+    # Check that there are enough non-reference species with ≥2 proteins
+    # for the per-species Wilcoxon test (needs ≥2 non-ref species to compare)
+    all_prots <- rownames(universal_res$dist_mat)
+    nonref_prots <- all_prots[!grepl(ref_spp, all_prots)]
+    nonref_spp_counts <- table(gsub("_[^_]+$", "", nonref_prots))
+    n_nonref_with_enough <- sum(nonref_spp_counts >= 2)
+
     if (ref_spp != "none" &&
-        any(grepl(ref_spp, rownames(universal_res$dist_mat)))) {
+        any(grepl(ref_spp, rownames(universal_res$dist_mat))) &&
+        n_nonref_with_enough >= 2) {
       ref_res <-
         calc_ref_dists(
           universal_results = universal_res,

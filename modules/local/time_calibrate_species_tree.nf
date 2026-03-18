@@ -2,7 +2,7 @@ process TIME_CALIBRATE_SPECIES_TREE {
     tag "Time-calibrate species tree"
     label 'process_single'
 
-    container 'arcadiascience/zoogle:1.0.0'
+    container 'arcadiascience/zoogle:1.1.0'
 
     storeDir "${params.outdir}/species_trees/time_calibrated"
 
