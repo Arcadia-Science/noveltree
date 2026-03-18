@@ -77,7 +77,31 @@ cat("  Events found: S =", n_spec, ", D =", n_dup,
 # Step 2: Extract speciation-only calibrations
 # ============================================================================
 
-extract_speciation_calibrations <- function(gf_tree, spp_tree, is_speciation) {
+# Collect descendant tips reachable only through S (speciation) and D
+# (duplication) events.  Traversal stops at T (transfer) nodes so that
+# species introduced by horizontal transfer do not inflate the MRCA age
+# used for calibration.
+get_native_tips <- function(tree, start_node, node_events, n_tips) {
+  tips  <- character(0)
+  queue <- start_node
+  while (length(queue) > 0) {
+    node  <- queue[1]
+    queue <- queue[-1]
+    if (node <= n_tips) {
+      tips <- c(tips, tree$tip.label[node])
+    } else {
+      ev <- node_events[node - n_tips]
+      # Stop traversal at transfer nodes (but always enter start_node itself)
+      if (!is.na(ev) && ev == "T" && node != start_node) next
+      children <- tree$edge[tree$edge[, 1] == node, 2]
+      queue <- c(queue, children)
+    }
+  }
+  tips
+}
+
+extract_speciation_calibrations <- function(gf_tree, spp_tree,
+                                            is_speciation, node_events) {
   n_tips <- length(gf_tree$tip.label)
 
   # Get species tree node depths for age calculation
@@ -100,14 +124,12 @@ extract_speciation_calibrations <- function(gf_tree, spp_tree, is_speciation) {
   for (idx in spec_nodes) {
     ev_node <- n_tips + idx
 
-    # Get descendant tips
-    desc_tips <- gf_tree$tip.label[unlist(
-      phangorn::Descendants(gf_tree, ev_node, type = "tips")
-    )]
-    if (length(desc_tips) < 2) next
+    # Get descendant tips reachable through S/D only (stop at T nodes)
+    native_tips <- get_native_tips(gf_tree, ev_node, node_events, n_tips)
+    if (length(native_tips) < 2) next
 
     # Map to species names (remove protein ID after last underscore)
-    desc_species <- unique(sub("_[^_]+$", "", desc_tips))
+    desc_species <- unique(sub("_[^_]+$", "", native_tips))
 
     # Find species shared with the species tree
     shared_spp <- intersect(desc_species, spp_tree$tip.label)
@@ -120,24 +142,29 @@ extract_speciation_calibrations <- function(gf_tree, spp_tree, is_speciation) {
 
     if (is.na(age_mya) || age_mya <= 0) next
 
-    # Find the corresponding MRCA in the gene family tree
-    # Use tips that exist in the gene family tree
-    gf_desc_tips <- intersect(desc_tips, gf_tree$tip.label)
-    if (length(gf_desc_tips) < 2) next
+    # The calibration only makes sense if the S node's two children each
+    # contribute at least one native tip (otherwise, all tips are from one
+    # daughter lineage and the calibration would duplicate a descendant node).
+    children <- gf_tree$edge[gf_tree$edge[, 1] == ev_node, 2]
+    left_tips  <- intersect(native_tips, gf_tree$tip.label[unlist(
+      Descendants(gf_tree, children[1], type = "tips"))])
+    right_tips <- intersect(native_tips, gf_tree$tip.label[unlist(
+      Descendants(gf_tree, children[2], type = "tips"))])
+    if (length(left_tips) == 0 || length(right_tips) == 0) next
 
-    gf_mrca <- getMRCA(gf_tree, gf_desc_tips)
-    if (is.null(gf_mrca)) next
+    # gf_mrca must be ev_node since tips span both children
+    gf_mrca <- ev_node
 
-    # Pick two representative tips for treePL/PATHd8 mrca spec
-    tipA <- gf_desc_tips[1]
-    tipB <- gf_desc_tips[length(gf_desc_tips)]
+    # Pick one representative tip from each child for treePL mrca specification
+    tipA <- left_tips[1]
+    tipB <- right_tips[1]
 
     calibrations <- rbind(calibrations, data.frame(
       gf_mrca = gf_mrca,
       age_mya = age_mya,
       tipA = tipA,
       tipB = tipB,
-      n_desc_tips = length(gf_desc_tips),
+      n_desc_tips = length(native_tips),
       events_node = ev_node,
       stringsAsFactors = FALSE
     ))
@@ -147,7 +174,7 @@ extract_speciation_calibrations <- function(gf_tree, spp_tree, is_speciation) {
 }
 
 calibrations <- extract_speciation_calibrations(
-  gf_tree, spp_tree, is_speciation
+  gf_tree, spp_tree, is_speciation, node_events
 )
 cat("  Raw speciation calibrations:", nrow(calibrations), "\n")
 
