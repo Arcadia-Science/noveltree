@@ -1,7 +1,7 @@
 process FASTTREE {
     tag "$meta.og"
 
-    cpus { 16 * task.attempt }
+    cpus { Math.min( 16 * task.attempt, params.max_cpus as int ) }
     time { 3.h * Math.pow(3, task.attempt - 1) }
     memory {
         def n = (meta?.n_seq ?: 50) as long

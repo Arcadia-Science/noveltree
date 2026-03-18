@@ -1,7 +1,7 @@
 process WITCH {
     tag "$meta.og"
 
-    cpus 16
+    cpus { Math.min( 16, params.max_cpus as int ) }
     time { 6.h * task.attempt }
     memory {
         def n = (meta?.n_seq ?: 1000) as long

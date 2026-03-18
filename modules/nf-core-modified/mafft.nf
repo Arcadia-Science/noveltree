@@ -5,7 +5,7 @@ process MAFFT {
     // 3) create protein/species map file within module
     tag "${meta.og}"
 
-    cpus { 12 * task.attempt }
+    cpus { Math.min( 12 * task.attempt, params.max_cpus as int ) }
     time { 6.h * task.attempt }
     memory {
         def n = (meta?.n_seq ?: 50) as long
