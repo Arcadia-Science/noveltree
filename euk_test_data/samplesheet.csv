@@ -1,7 +1,7 @@
 species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test
-Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,true
-Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,Opisthokonta,glires_odb10,eukaryota_odb10,proteins,true,true
-Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,true,true
-Drosophila-melanogaster,euk_test_data/proteomes/Drosophila-melanogaster.fasta,Opisthokonta,diptera_odb10,eukaryota_odb10,proteins,true,true
-Saccharomyces-cerevisiae,euk_test_data/proteomes/Saccharomyces-cerevisiae.fasta,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,false
-Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,false
+Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,yes,yes
+Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,Opisthokonta,glires_odb10,eukaryota_odb10,proteins,yes,yes
+Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,yes,yes
+Drosophila-melanogaster,euk_test_data/proteomes/Drosophila-melanogaster.fasta,Opisthokonta,diptera_odb10,eukaryota_odb10,proteins,yes,yes
+Saccharomyces-cerevisiae,euk_test_data/proteomes/Saccharomyces-cerevisiae.fasta,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,yes,no
+Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,yes,no
