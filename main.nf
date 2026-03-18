@@ -161,7 +161,10 @@ workflow NOVELTREE {
             RECONCILE_TREES.out.generax_per_spp_gfts,
             RECONCILE_TREES.out.speciesrax_tree,
             species_name_list,
-            ref_species
+            ref_species,
+            RECONCILIATION_SUMMARIES.out.orthologs,
+            RECONCILIATION_SUMMARIES.out.paralogs,
+            RECONCILIATION_SUMMARIES.out.xenologs
         )
     }
 }

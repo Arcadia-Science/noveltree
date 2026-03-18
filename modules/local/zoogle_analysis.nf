@@ -7,7 +7,8 @@ process ZOOGLE_ANALYSIS {
     storeDir "${params.outdir}/zoogle"
 
     input:
-    tuple val(meta), path(gene_tree), path(phys_props_file)
+    tuple val(meta), path(gene_tree), path(phys_props_file),
+          path(orthologs_file), path(paralogs_file), path(xenologs_file)
     val ref_species
 
     output:
@@ -72,7 +73,10 @@ process ZOOGLE_ANALYSIS {
         keep_stats = c("molecular_weight", "aromaticity", "instability", "flexibility",
                        "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
                        "sheet_fract", "molar_ext_coef_cysteines"),
-        out_dir = "."
+        out_dir = ".",
+        orthologs_path = "${orthologs_file}",
+        paralogs_path  = "${paralogs_file}",
+        xenologs_path  = "${xenologs_file}"
     )
 
     # Create versions file
