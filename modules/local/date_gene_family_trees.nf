@@ -42,5 +42,13 @@ process DATE_GENE_FAMILY_TREES {
         ${reconciled_tree} ${species_tree} ${alignment} \
         ${meta.og} ${effective_max_tips} \
         ${meta.og}_dated.newick ${meta.og}_calibrations.csv
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        R: \$( R --version | head -n1 | sed 's/R version //g' | cut -d' ' -f1 )
+        ape: \$( Rscript -e "cat(as.character(packageVersion('ape')))" )
+        phytools: \$( Rscript -e "cat(as.character(packageVersion('phytools')))" )
+        phangorn: \$( Rscript -e "cat(as.character(packageVersion('phangorn')))" )
+    END_VERSIONS
     """
 }
