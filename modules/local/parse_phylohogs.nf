@@ -36,5 +36,10 @@ process PARSE_PHYLOHOGS {
     """
     mkdir -p ${og}
     extract_relationships_from_nhx.py ${nhx_file} ${species_tree} ${og} ${og}/${og}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( python3 --version | cut -d' ' -f2 )
+    END_VERSIONS
     """
 }
