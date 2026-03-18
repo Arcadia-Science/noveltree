@@ -44,18 +44,22 @@ process MAFFT_TIER1 {
     sed -E -i '/>/!s/U/X/g' ${fasta} # selenocysteine
     sed -E -i '/>/!s/O/X/g' ${fasta} # pyrrolysine
 
-    mafft \\
+    if mafft \\
         --thread ${task.cpus} \\
         ${mafft_args} \\
-        ${fasta} > ${prefix}_${mafft_mode}.fa
+        ${fasta} > ${prefix}_${mafft_mode}.fa; then
 
-    # Create protein-species map files if we are not doing any alignment cleaning
-    if [ "${aln_trimmer}" == "none" ]; then
-        mkdir species_protein_maps
-        grep ">" ${prefix}_${mafft_mode}.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/${prefix}_map.link
-        rm prot && rm spp
+        # Create protein-species map files if we are not doing any alignment cleaning
+        if [ "${aln_trimmer}" == "none" ]; then
+            mkdir species_protein_maps
+            grep ">" ${prefix}_${mafft_mode}.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+            sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+            paste prot spp > species_protein_maps/${prefix}_map.link
+            rm prot && rm spp
+        fi
+    else
+        # Sentinel: 0-byte file signals fallback to FAMSA
+        : > ${prefix}_${mafft_mode}.fa
     fi
 
     cat <<-END_VERSIONS > versions.yml
