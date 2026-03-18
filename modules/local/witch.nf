@@ -2,7 +2,7 @@ process WITCH {
     tag "$meta.og"
 
     cpus { Math.min( 16, params.max_cpus as int ) }
-    time { 6.h * task.attempt }
+    time { 12.h * task.attempt }
     memory {
         def n = (meta?.n_seq ?: 1000) as long
         def L = (meta?.max_len ?: 500) as long
@@ -26,15 +26,14 @@ process WITCH {
         (workflow.containerEngine == 'singularity' ? '--writable-tmpfs' : '')
 
     stageInMode = 'copy'
-    storeDir "${params.outdir}/alignments"
+    storeDir "${params.outdir}/alignments/original"
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("trimmed/${fasta.baseName}_witch_cleaned.fa"), emit: msas, optional: true
-    tuple val(meta), path("trimmed/species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
-    path "original/${fasta.baseName}_witch.fa"   , emit: original_alignments
+    tuple val(meta), path("${fasta.baseName}_witch.fa"), emit: msas, optional: true
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
     task.ext.when == null || task.ext.when
@@ -89,26 +88,21 @@ process WITCH {
           for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
         }' tmp.fasta > final_masked.fasta
 
-    # Reorganize results for storeDir
-    mkdir -p original
-    mkdir -p trimmed
-    mv alignments/aligned.fasta original/${og}_witch.fa
-    mv final_masked.fasta trimmed/${og}_witch_cleaned.fa
-    rm -r alignments/ && rm tmp.fasta
+    # Clean up WITCH working directory
+    mv final_masked.fasta ${og}_witch.fa
+    rm -rf alignments/ tmp.fasta
 
-    # Verify the trimmed alignment still meets minimum sequence/species thresholds.
-    n_seq=\$(grep -c ">" trimmed/${og}_witch_cleaned.fa || true)
-    n_spp=\$(grep ">" trimmed/${og}_witch_cleaned.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    # Verify the cleaned alignment still meets minimum sequence/species thresholds.
+    n_seq=\$(grep -c ">" ${og}_witch.fa || true)
+    n_spp=\$(grep ">" ${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
-        rm trimmed/${og}_witch_cleaned.fa
+        rm ${og}_witch.fa
     else
-        # Now pull out the sequences, and split into a TreeRecs format mapping
-        # file, where each protein in the tree is a new line, listing species
-        # and then the protein
-        mkdir -p trimmed/species_protein_maps
-        grep ">" trimmed/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        # Build species-protein mapping file
+        mkdir -p species_protein_maps
+        grep ">" ${og}_witch.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > trimmed/species_protein_maps/${og}_map.link
+        paste prot spp > species_protein_maps/${og}_map.link
         rm prot && rm spp
     fi
     """

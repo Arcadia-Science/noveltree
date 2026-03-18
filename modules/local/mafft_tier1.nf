@@ -2,7 +2,7 @@ process MAFFT_TIER1 {
     tag "$meta.og"
 
     cpus { Math.min( 12 * task.attempt, params.max_cpus as int ) }
-    time { 6.h * task.attempt }
+    time { 12.h * task.attempt }
     memory {
         def n = (meta?.n_seq ?: 50) as long
         def L = (meta?.max_len ?: 500) as long
