@@ -1,5 +1,5 @@
-// Legacy single-aligner includes (used when adaptive_align = false)
-if (!params.adaptive_align) {
+// Legacy single-aligner includes (used when aligner != 'adaptive')
+if (params.aligner != 'adaptive') {
     if (params.aligner == "witch") {
         include { WITCH as ALIGN_SEQS             } from '../../modules/local/witch'
     } else if (params.aligner == "famsa") {
@@ -9,9 +9,9 @@ if (!params.adaptive_align) {
     }
 }
 
-// Adaptive alignment includes (used when adaptive_align = true)
-if (params.adaptive_align) {
-    include { MAFFT_ADAPTIVE                      } from '../../modules/local/mafft_adaptive'
+// Adaptive alignment includes (used when aligner == 'adaptive')
+if (params.aligner == 'adaptive') {
+    include { MAFFT_TIER1                         } from '../../modules/local/mafft_tier1'
     include { WITCH as WITCH_TIER2                } from '../../modules/local/witch'
     include { FAMSA as FAMSA_TIER3                } from '../../modules/local/famsa'
     include { FAMSA as FAMSA_FALLBACK             } from '../../modules/local/famsa'
@@ -40,7 +40,7 @@ workflow INFER_GENE_TREES {
 
     main:
 
-    if (params.adaptive_align) {
+    if (params.aligner == 'adaptive') {
         // ── Size-adaptive alignment routing ──────────────────────────────
         // Branch into tiers based on sequence count (meta.n_seq set in main.nf)
         fas.branch {
@@ -50,7 +50,7 @@ workflow INFER_GENE_TREES {
         }.set { tiered }
 
         // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤300 seqs)
-        MAFFT_ADAPTIVE(tiered.tier1)
+        MAFFT_TIER1(tiered.tier1)
 
         // Tier 2: WITCH (medium families, 301–3000 seqs)
         WITCH_TIER2(tiered.tier2)
@@ -62,7 +62,7 @@ workflow INFER_GENE_TREES {
         tier1_failed = tiered.tier1
             .map { meta, fasta -> [meta.og, meta, fasta] }
             .join(
-                MAFFT_ADAPTIVE.out.msas.map { meta, aln -> [meta.og, aln] },
+                MAFFT_TIER1.out.msas.map { meta, aln -> [meta.og, aln] },
                 remainder: true
             )
             .filter { it[3] == null }  // No alignment = MAFFT failed
@@ -82,12 +82,12 @@ workflow INFER_GENE_TREES {
         FAMSA_FALLBACK(tier1_failed.mix(tier2_failed))
 
         // Combine all alignment outputs
-        all_msas = MAFFT_ADAPTIVE.out.msas
+        all_msas = MAFFT_TIER1.out.msas
             .mix(WITCH_TIER2.out.msas)
             .mix(FAMSA_TIER3.out.msas)
             .mix(FAMSA_FALLBACK.out.msas)
 
-        all_map_links = MAFFT_ADAPTIVE.out.map_link
+        all_map_links = MAFFT_TIER1.out.map_link
             .mix(WITCH_TIER2.out.map_link)
             .mix(FAMSA_TIER3.out.map_link)
             .mix(FAMSA_FALLBACK.out.map_link)
