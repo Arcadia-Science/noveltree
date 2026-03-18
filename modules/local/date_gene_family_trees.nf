@@ -19,7 +19,7 @@ process DATE_GENE_FAMILY_TREES {
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }
 
-    container 'arcadiascience/zoogle:1.0.0'
+    container 'arcadiascience/zoogle:1.1.0'
 
     storeDir "${params.outdir}/gene_family_trees/time_calibrated"
 

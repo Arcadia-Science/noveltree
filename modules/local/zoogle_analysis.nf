@@ -2,7 +2,7 @@ process ZOOGLE_ANALYSIS {
     tag "${meta.og}"
     label "process_high"
 
-    container 'arcadiascience/zoogle:1.0.0'
+    container 'arcadiascience/zoogle:1.1.0'
 
     storeDir "${params.outdir}/zoogle"
 
