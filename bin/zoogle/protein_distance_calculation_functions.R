@@ -4,6 +4,27 @@ require(phytools)
 Rcpp::sourceCpp("calculate_dist_stats.cpp")
 source("centroid_distance_functions.R")
 
+# build_relationship_lookup:
+# Read ortholog/paralog/xenolog TSV files and build a lookup table
+# keyed by gene1|||gene2 pairs (both orderings) for fast matching.
+build_relationship_lookup <- function(orthologs_path, paralogs_path, xenologs_path) {
+  read_rel <- function(path, label) {
+    df <- read.delim(path, stringsAsFactors = FALSE)
+    if (nrow(df) == 0) return(data.frame(key = character(0), relationship = character(0)))
+    data.frame(
+      key = c(paste(df$gene1, df$gene2, sep = "|||"),
+              paste(df$gene2, df$gene1, sep = "|||")),
+      relationship = label,
+      stringsAsFactors = FALSE
+    )
+  }
+  rbind(
+    read_rel(orthologs_path, "ortholog"),
+    read_rel(paralogs_path, "paralog"),
+    read_rel(xenologs_path, "xenolog")
+  )
+}
+
 # calc_universal_dists:
 # Compute phylo-GLS transformed data, pairwise Mahalanobis distances,
 # inverse covariance, centroid distances, and cophenetic distances.
@@ -82,7 +103,8 @@ calc_universal_dists <-
 # Wilcoxon tests, and final summary table. Only called when the
 # reference species has proteins in the gene family.
 calc_ref_dists <-
-  function(universal_results, ref_spp, gene_family, out_dir) {
+  function(universal_results, ref_spp, gene_family, out_dir,
+           orthologs_path = NULL, paralogs_path = NULL, xenologs_path = NULL) {
     # Prep output directories for reference-specific outputs
     dir.create(paste0(out_dir, "/protein-dists-to-reference/"),
                recursive = TRUE, showWarnings = FALSE)
@@ -170,6 +192,16 @@ calc_ref_dists <-
         prot_phylo_dists[obs, ref]
       })
 
+    # Look up evolutionary relationship for each protein pair
+    if (!is.null(orthologs_path) && !is.null(paralogs_path) && !is.null(xenologs_path)) {
+      rel_lookup <- build_relationship_lookup(orthologs_path, paralogs_path, xenologs_path)
+      pair_keys <- paste(per_prot_dist_res$observation, per_prot_dist_res$reference, sep = "|||")
+      relationship <- rel_lookup$relationship[match(pair_keys, rel_lookup$key)]
+      relationship[is.na(relationship)] <- "unknown"
+    } else {
+      relationship <- rep("unknown", nrow(per_prot_dist_res))
+    }
+
     # Assemble into a combined summary table
     final_summary_table <-
       data.frame(
@@ -177,6 +209,7 @@ calc_ref_dists <-
         nonref_species = nonref_spp,
         nonref_protein = nonref_prot,
         ref_protein = ref_prot,
+        relationship = relationship,
         phylo_dist = phyl_dists,
         trait_dist = per_prot_dist_res$distance,
         rank_trait_dist = per_prot_dist_res$rank_distance,
@@ -204,7 +237,8 @@ genefam_aa_conservation <-
            c("molecular_weight", "aromaticity", "instability", "flexibility",
              "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
              "sheet_fract", "molar_ext_coef_cysteines"),
-           out_dir = "gf-aa-multivar-distances") {
+           out_dir = "gf-aa-multivar-distances",
+           orthologs_path = NULL, paralogs_path = NULL, xenologs_path = NULL) {
 
     # --- Tier 1: Universal analysis (all gene families) ---
     universal_res <-
@@ -254,7 +288,10 @@ genefam_aa_conservation <-
           universal_results = universal_res,
           ref_spp = ref_spp,
           gene_family = gene_family,
-          out_dir = out_dir
+          out_dir = out_dir,
+          orthologs_path = orthologs_path,
+          paralogs_path = paralogs_path,
+          xenologs_path = xenologs_path
         )
 
       write.table(ref_res$prot_dists_to_ref, sep = "\t",

@@ -60,4 +60,7 @@ workflow RECONCILIATION_SUMMARIES {
 
     emit:
     hgt_summed_count = MERGE_PHYLO_PROFILES.out.hgt_summed_count
+    orthologs        = PARSE_PHYLOHOGS.out.orthologs
+    paralogs         = PARSE_PHYLOHOGS.out.paralogs
+    xenologs         = PARSE_PHYLOHOGS.out.xenologs
 }
