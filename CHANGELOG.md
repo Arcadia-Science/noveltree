@@ -7,37 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Zoogle analysis mode (`-profile zoogle`): end-to-end physicochemical protein distance analysis with time-calibrated gene family trees, phylogenetic correction, Mahalanobis distances, and permutation tests
-  - ZOOGLE, PHYSICOCHEMICAL_PROPS, DATE_GENE_FAMILY_TREES, TIME_CALIBRATE_SPECIES_TREE, BUILD_REFERENCE_CHRONOGRAM modules
-- Simplified execution mode (`-profile simplified`): streamlined pipeline for large datasets (FAMSA, no BUSCO, per-species GeneRax only)
+  - PROTEIN_PROPERTIES, DATE_GENE_FAMILY_TREES, TIME_CALIBRATE_SPECIES_TREE, BUILD_REFERENCE_CHRONOGRAM, ZOOGLE_ANALYSIS modules
+- Simplified execution mode (`-profile simplified`): streamlined pipeline for large datasets (FAMSA default, no BUSCO, per-species GeneRax EVAL strategy only)
+- Arcadia production profile (`-profile arcadia`): combines zoogle + AWS Batch
+- Adaptive three-tier alignment routing (`--aligner adaptive`): MAFFT_TIER1 (≤200 seqs) → WITCH_TIER2 (≤3000) → FAMSA_TIER3 (larger), with automatic fallback between tiers
 - FAMSA aligner option (`--aligner famsa`)
-- IQ-TREE with FastTree fallback (`--iqtree_fasttree_fallback`)
-- PHYLO_PROFILES and MERGE_PHYLO_PROFILES modules for summarizing gene duplication, transfer, loss events
-- ORTHOFINDER_PHYLOHOGS module for hierarchical ortholog inference
+- IQ-TREE with automatic FastTree fallback (`--iqtree_fasttree_fallback`)
+- PARSE_PHYLOHOGS module: per-OG ortholog/paralog/xenolog inference and HOG membership directly from GeneRax NHX reconciliation (`extract_relationships_from_nhx.py`)
+- PHYLO_PROFILES and MERGE_PHYLO_PROFILES modules for summarizing gene duplication, transfer, loss, and HGT events per species per gene family
+- Optional proteome preprocessing (`--preprocess`): TransDecoder for transcriptomes, isoform filtering, minimum protein length filtering
+- Dynamic resource allocation for GeneRax, WITCH, IQ-TREE, and MAFFT based on gene family size (sequence count and max length)
 - RENAME_FASTAS process to standardize FASTA filenames before all downstream processes
 - AWS Batch support (`-profile awsbatch`) with `--awsqueue` and `--awsregion` parameters
-- Singularity support (`-profile singularity`) with automatic Docker-to-Singularity conversion
-- Eukaryote test dataset (6 Opisthokont species, 50 orthogroups)
+- Singularity support (`-profile singularity`) with automatic Docker-to-Singularity conversion and image caching
+- `--test_run` flag: restrict analysis to gene families containing all species (fast smoke test)
+- Eukaryote test dataset (6 Opisthokont species)
 - `Makefile` for Docker image builds, `CITATIONS.md`, `docs/singularity.md`
 
 ### Changed
+- Main workflow refactored from monolithic `main.nf` (~500 lines) to 7 focused subworkflows (INPUT_CHECK, PREPARE_INPUTS, INFER_ORTHOGROUPS, INFER_GENE_TREES, RECONCILE_TREES, RECONCILIATION_SUMMARIES, ZOOGLE)
+- Default aligner: `witch` → `mafft` (with adaptive routing enabled by default)
+- Default tree method: `fasttree` → `iqtree`
 - Default MSA trimmer: `none` → `clipkit`
+- `min_ungapped_length` default: 20 → 50
+- `min_num_spp_per_og` default: 4 → 2
+- `min_prop_spp_for_spptree` default: 0.25 → 0.75
 - `max_copy_num_spp_tree` default: 5 → 10
-- Aligner and tree inference refactored into subworkflows
+- `mcl_inflation` default: `'1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0'` → `'1.5'`
+- FastTree arguments updated to evidence-based maximum accuracy settings (`-lg -gamma -bionj -pseudo -spr 4 -mlacc 2 -slownni`; Zhou et al. 2018)
 - GeneRax container updated to `generax_56f3ed0:1.1.3`
-- Improved rare amino acid handling (U→X, O→X before alignment)
-- Standardized species name handling: hyphens used throughout (underscores/spaces auto-converted)
+- Rare amino acid handling: selenocysteine (U) and pyrrolysine (O) recoded as X before alignment and reconciliation
+- Species name handling standardized: hyphens used throughout (underscores/spaces auto-converted)
 - UniProt annotation retrieval rewritten to use ID Mapping API (replaces bioservices)
 - MCL inflation selection uses only InterPro scoring (OMA removed — Sorensen-Dice incompatible with 1:1 OMA group IDs)
 - Gene family tree dating uses speciation-only calibrations from GeneRax reconciliation (replaces congruification)
+- `MAFFT_ADAPTIVE` renamed to `MAFFT_TIER1` for consistency with WITCH_TIER2 and FAMSA_TIER3
 
 ### Removed
-- PMSF two-pass tree inference
+- ORTHOFINDER_PHYLOHOGS module (replaced by PARSE_PHYLOHOGS using GeneRax NHX directly)
+- `bin/translate_gene_trees.py` (was used by ORTHOFINDER_PHYLOHOGS)
+- PMSF two-pass tree inference (`iqtree_pmsf.nf`)
 - `min_num_grp_per_og`, `max_copy_num_gene_trees`, `tree_model_pmsf` parameters
 - `species_tree_prep` module
 - OMA annotation collection and scoring from cogeqc analysis
 - `bin/protein_annotation.R` (dead code; only Python version was used)
 - `bioservices` dependency (replaced by `requests` for UniProt ID Mapping API)
-- Congruification approach for gene family tree dating
+- Congruification approach for gene family tree dating (replaced by reconciliation-filtered speciation-only calibrations)
 
 ## v1.0.1-alpha - 09/28/2023
 
