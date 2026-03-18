@@ -70,7 +70,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - `transfer_donor_count_per_species_per_gene_family.tsv`: HGT events where each species acted as donor.
 - `transfer_recipient_count_per_species_per_gene_family.tsv`: HGT events where each species acted as recipient.
 
-**12.** `physicochemical_properties/` *(zoogle mode only)*: Amino acid composition and physicochemical property summaries from PHYSICOCHEMICAL_PROPS module.
+**12.** `protein_properties/` *(zoogle mode only)*: Amino acid composition and physicochemical property summaries from PROTEIN_PROPERTIES module.
 
 - `aa-summary-stats/across-family-summaries/`: Aggregated statistics across all gene families.
 - `aa-summary-stats/per-family-summaries/`: Per-family directories containing property summaries for each protein.

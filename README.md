@@ -35,13 +35,13 @@ make docker-phylo-dist
 **4.** Download the pipeline and our minimal test dataset with a single command run in the root of this repository:
 
 ```bash
-nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json
+nextflow run . -profile docker,test --outdir results
 ```
 
 In cases where you need to specify resource usage limits to NovelTree (e.g. you are running it on a local desktop or laptop), you can specify the maximum available CPU and memory resources as follows:
 
 ```bash
-nextflow run . -profile docker -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json  --max_cpus 12 --max_memory 16GB
+nextflow run . -profile docker,test --outdir results --max_cpus 12 --max_memory 16GB
 ```
 
 Nextflow requires some memory resources to be allocated for overhead - consequently, we suggest reducing the specified `--max_memory` by ~2GB or more below the amount available to your particular compute environment.
@@ -84,14 +84,28 @@ nextflow run . -profile docker,simplified --input samplesheet.csv --outdir resul
 
 ### Zoogle Mode
 
-Inherits simplified mode settings and adds analyses for organism prioritization: physicochemical protein properties, time calibration of the species tree, and phylogenetically-corrected protein distance analysis. Requires a reference time-calibrated tree and specification of a reference species.
+Inherits simplified mode settings and adds analyses for organism prioritization: physicochemical protein properties, time calibration of the species tree, and phylogenetically-corrected protein distance analysis. Requires specification of a reference species.
+
+**Recommended** (auto-build reference chronogram from TimeTree.org):
 
 ```bash
 nextflow run . -profile docker,zoogle \
   --input samplesheet.csv \
   --outdir results \
-  --reference_time_tree reference_timetree.newick \
-  --ref_species Genus_species
+  --ncbi_email user@example.com \
+  --ref_species Genus-species
+```
+
+The pipeline queries TimeTree.org for pairwise divergence times among species in your samplesheet and builds a UPGMA reference chronogram automatically.
+
+**Alternative** (provide your own reference tree):
+
+```bash
+nextflow run . -profile docker,zoogle \
+  --input samplesheet.csv \
+  --outdir results \
+  --reference_time_tree /path/to/reference_timetree.newick \
+  --ref_species Genus-species
 ```
 
 ---
@@ -189,13 +203,13 @@ Once the first round of MCL clustering has completed, `NovelTree` summarizes ort
 
 With orthogroups/gene families inferred, `NovelTree` will summarize each gene family on the basis of their taxonomic and copy number distribution, quantifying the number of species/clades included in each, as well as the mean per-species copy number. These summaries facilitate 'filtering' for sufficiently conserved/computationally tractable gene families for downstream phylogenetic analysis. In other words, it may be best, depending on use-case, to avoid excessively small (e.g. < 4 species) or large gene families (e.g. > 50 species and mean copy # of 20 - this upper limit will depend on available computational resources) for the purpose of this workflow. We filter to produce two subsets: a conservative set for species tree inference (e.g. >= 4 species, mean copy \# <= 5), and one for which only gene family trees will be inferred (e.g. >= 4 species, mean copy \# <= 10).
 
-For both subsets, `NovelTree` subsequently infers cleaned multiple sequences alignments (using [`WITCH`](https://github.com/c5shen/WITCH) by default, with [`MAFFT`](https://mafft.cbrc.jp/alignment/software/) or [`FAMSA`](https://github.com/refresh-bio/FAMSA) as alternatives) and gene-family trees using [`FastTree2`](http://www.microbesonline.org/fasttree/).
+For both subsets, `NovelTree` subsequently infers cleaned multiple sequence alignments using an adaptive three-tier strategy ([`MAFFT`](https://mafft.cbrc.jp/alignment/software/) for small families, [`WITCH`](https://github.com/c5shen/WITCH) for medium, [`FAMSA`](https://github.com/refresh-bio/FAMSA) for large), with [`ClipKIT`](https://jlsteenwyk.com/ClipKIT/) trimming, and gene-family trees using [`IQ-TREE`](http://www.iqtree.org/) (with [`FastTree2`](http://www.microbesonline.org/fasttree/) as automatic fallback).
 
 Using the first conservatively sized subset of gene family trees, `NovelTree` infers a starting, unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid), a highly computationally efficient method. In parallel, a second species tree is inferred using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax), which roots the species tree reconciling the topology of the species tree with each gene family tree under a model of gene duplication, loss and transfer.
 
 Using this improved species tree, `NovelTree` then uses [`GeneRax`](https://github.com/BenoitMorel/GeneRax) for both subsets of gene families, reconciling them with the species tree and inferring rates (and per-species event counts) of gene duplication, transfer and loss for each gene family and each species, using both the per-family, and per-species models.
 
-With the rooted species tree inferred, `NovelTree` uses [`OrthoFinder`](https://github.com/davidemms/OrthoFinder) one final time to parse each orthogroup/gene family into phylogenetically hierarchical orthogroups.
+With the rooted species tree inferred, `NovelTree` parses each gene family into hierarchical orthogroups (HOGs) and infers ortholog/paralog/xenolog relationships directly from the GeneRax reconciliation output.
 
 ### Phylogenetic Profiles
 
@@ -216,7 +230,7 @@ When running with the `zoogle` profile, NovelTree performs additional analyses d
 
 1. **Physicochemical Properties**: Calculates amino acid composition and physicochemical properties (molecular weight, aromaticity, instability index, flexibility, hydropathy, isoelectric point, charge, and secondary structure fractions) for all proteins in each gene family.
 
-2. **Time Calibration**: Calibrates the inferred species tree against a user-provided reference timetree using congruification, enabling evolutionary rate comparisons across lineages.
+2. **Time Calibration**: Time-calibrates the inferred species tree using treePL penalized likelihood against a reference chronogram (auto-built from TimeTree.org or user-provided). Gene family trees are then dated using speciation-only calibration points from GeneRax reconciliation.
 
 3. **Phylogenetically-Corrected Protein Distances**: For each gene family, computes multivariate distances between proteins based on their physicochemical properties, correcting for phylogenetic non-independence. Statistical tests identify proteins that are exceptionally (dis)similar to a reference species, which may be indicative of unusual evolutionary divergence, convergence, or conservatism.
 
