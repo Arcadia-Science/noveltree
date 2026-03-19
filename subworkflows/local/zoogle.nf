@@ -86,13 +86,6 @@ workflow ZOOGLE {
                 return false
             }
 
-            // Count how many species have at least 2 proteins
-            def speciesWithEnoughProteins = speciesCounts.count { species, count -> count >= 2 }
-            if (speciesWithEnoughProteins < 2) {
-                log.info "Skipping ${meta.og}: fewer than 2 species with >= 2 proteins"
-                return false
-            }
-
             return true
         }
 

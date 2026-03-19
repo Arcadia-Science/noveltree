@@ -161,13 +161,22 @@ calc_ref_dists <-
                                  mean))[c(2, 1, 3:6)],
                  row.names = NULL)
 
-    # Test how significantly similar proteins are to reference versions:
-    per_prot_signif <-
+    # Test how significantly similar proteins are to reference versions
+    # (needs >= 3 non-ref proteins for meaningful z-scores):
+    per_prot_signif <- if (nrow(focal_dist_prot_res) >= 3) {
       get_prot_zscore_pvals(focal_dist_prot_res) # nolint
+    } else {
+      NULL
+    }
 
-    # Test the extent to which species are unusually similar to reference:
-    per_spp_signif <-
+    # Test the extent to which species are unusually similar to reference
+    # (needs >= 2 non-ref species with >= 2 proteins each for Wilcoxon):
+    nonref_spp_counts <- table(focal_dist_spp_res$species)
+    per_spp_signif <- if (sum(nonref_spp_counts >= 2) >= 2) {
       per_spp_wilcox(focal_dist_spp_res) # nolint
+    } else {
+      NULL
+    }
 
     # Identify the non-reference species for each protein pair
     nonref_spp <-
@@ -273,16 +282,10 @@ genefam_aa_conservation <-
                           gene_family, out_dir)
 
     # --- Tier 2: Reference-specific analysis (conditional) ---
-    # Check that there are enough non-reference species with ≥2 proteins
-    # for the per-species Wilcoxon test (needs ≥2 non-ref species to compare)
-    all_prots <- rownames(universal_res$dist_mat)
-    nonref_prots <- all_prots[!grepl(ref_spp, all_prots)]
-    nonref_spp_counts <- table(gsub("_[^_]+$", "", nonref_prots))
-    n_nonref_with_enough <- sum(nonref_spp_counts >= 2)
-
+    # Requires ref species present and at least 1 non-ref protein
     if (ref_spp != "none" &&
         any(grepl(ref_spp, rownames(universal_res$dist_mat))) &&
-        n_nonref_with_enough >= 2) {
+        sum(!grepl(ref_spp, rownames(universal_res$dist_mat))) >= 1) {
       ref_res <-
         calc_ref_dists(
           universal_results = universal_res,
@@ -304,16 +307,20 @@ genefam_aa_conservation <-
                                 gene_family["family"],
                                 "_species_dists.tsv"),
                   quote = FALSE, row.names = FALSE, col.names = TRUE)
-      write.table(ref_res$protein_pvals, sep = "\t",
-                  file = paste0(out_dir, "/protein-pvals/",
-                                gene_family["family"],
-                                "_protein_reference_dist_pvals.tsv"),
-                  quote = FALSE, row.names = FALSE, col.names = TRUE)
-      write.table(ref_res$species_pvals, sep = "\t",
-                  file = paste0(out_dir, "/species-pvals/",
-                                gene_family["family"],
-                                "_species_reference_dist_pvals.tsv"),
-                  quote = FALSE, row.names = FALSE, col.names = TRUE)
+      if (!is.null(ref_res$protein_pvals)) {
+        write.table(ref_res$protein_pvals, sep = "\t",
+                    file = paste0(out_dir, "/protein-pvals/",
+                                  gene_family["family"],
+                                  "_protein_reference_dist_pvals.tsv"),
+                    quote = FALSE, row.names = FALSE, col.names = TRUE)
+      }
+      if (!is.null(ref_res$species_pvals)) {
+        write.table(ref_res$species_pvals, sep = "\t",
+                    file = paste0(out_dir, "/species-pvals/",
+                                  gene_family["family"],
+                                  "_species_reference_dist_pvals.tsv"),
+                    quote = FALSE, row.names = FALSE, col.names = TRUE)
+      }
       write.table(ref_res$per_protein_dist_res, sep = "\t",
                   file = paste0(out_dir, "/pairwise-protein-dist-perm-test/",
                                 gene_family["family"],
