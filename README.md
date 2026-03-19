@@ -52,9 +52,9 @@ NovelTree supports three workflow modes to accommodate different use cases and c
 
 _Adaptive mode routes families through MAFFT (≤200 seqs), WITCH (≤3000), and FAMSA (>3000)._
 
-**Which mode should I use?** Use **full** mode for smaller datasets (≤30 species) where accuracy is prioritized. Use **simplified** for large datasets where speed matters. Use **zoogle** when you need physicochemical distance analysis for organism prioritization.
+**Which mode should I use?** Use **simplified** mode (the default) for most analyses. Use **full** for smaller datasets (≤30 species) where you want additional analyses (BUSCO, per-family GeneRax). Use **zoogle** when you need physicochemical distance analysis for organism prioritization.
 
-### Full Mode (Default)
+### Full Mode
 
 The complete pipeline with all optional analyses enabled. Best for comprehensive phylogenomic studies where accuracy is prioritized over speed.
 
@@ -62,7 +62,7 @@ The complete pipeline with all optional analyses enabled. Best for comprehensive
 nextflow run . -profile docker --input samplesheet.csv --outdir results
 ```
 
-### Simplified Mode
+### Simplified Mode (Default)
 
 A streamlined variant optimized for large datasets. Skips BUSCO quality assessment, runs only per-species GeneRax with the faster EVAL strategy, and skips per-family GeneRax analysis.
 
@@ -72,7 +72,7 @@ nextflow run . -profile docker,simplified --input samplesheet.csv --outdir resul
 
 ### Zoogle Mode
 
-Inherits simplified mode settings and adds analyses for organism prioritization: physicochemical protein properties, time calibration of the species tree, and phylogenetically-corrected protein distance analysis. Requires specification of a reference species.
+Inherits simplified mode settings and adds analyses for organism prioritization: physicochemical protein properties, time calibration of the species tree, and phylogenetically-corrected protein distance analysis. Optionally specify a reference species for pairwise distance analysis, or use `--ref_species none` for centroid-only analysis.
 
 **Recommended** (auto-build reference chronogram from TimeTree.org):
 

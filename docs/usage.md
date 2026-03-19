@@ -15,20 +15,125 @@ nextflow run . -profile docker,test --outdir test_results
 **1.** Prepare a samplesheet following the required format:
 
 ```
-species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test
-Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,eukaryota_odb10,proteins,true,true
+species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test,transdecoder,isoform,reference
+Homo-sapiens,UP000005640,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,yes,no,no,yes
 ```
 
-| Column | Description |
-|--------|-------------|
-| `species` | Species name |
-| `file` | Path to FASTA (local path, S3 URI, or URL) |
-| `taxonomy` | Higher-rank taxonomy (e.g., supergroup, class). Used for orthogroup filtering |
-| `shallow_db` | BUSCO lineage for shallow taxonomic analysis. `NA` to skip |
-| `broad_db` | BUSCO lineage for broad taxonomic analysis. `NA` to skip |
-| `mode` | BUSCO analysis mode |
-| `uniprot` | `true`/`false` — whether the proteome has UniProt accessions |
-| `mcl_test` | `true`/`false` — include in MCL inflation testing (requires UniProt accessions) |
+The first 7 columns are required. The last 4 (`mcl_test`, `transdecoder`, `isoform`, `reference`) are optional and default to `no` if omitted.
+
+### Column Reference
+
+| Column | Required | Allowed Values | Description |
+|--------|----------|----------------|-------------|
+| `species` | yes | `Genus-species` | Species name. Spaces and underscores are auto-converted to hyphens |
+| `file` | yes | See [Data Sources](#data-sources) | Protein FASTA, nucleotide FASTA, URL, NCBI accession, or UniProt proteome ID |
+| `taxonomy` | yes | e.g. `Opisthokonta` | Higher-rank taxonomy for orthogroup filtering |
+| `shallow_db` | yes | BUSCO lineage or `NA` | e.g. `primates_odb10`. Set `NA` to skip |
+| `broad_db` | yes | BUSCO lineage or `NA` | e.g. `eukaryota_odb10`. Set `NA` to skip |
+| `mode` | yes | `proteins` / `transcriptome` | `proteins` for amino acid input; `transcriptome` for nucleotide input |
+| `uniprot` | yes | `true` / `false` | Whether FASTA headers contain UniProt accessions (enables annotation + MCL testing) |
+| `mcl_test` | no | `yes` / `no` | Include in MCL inflation parameter testing. Requires `uniprot=true` |
+| `transdecoder` | no | `yes` / `no` | Run TransDecoder ORF prediction. Only valid with `mode=transcriptome`. Auto-disabled if `mode=proteins` |
+| `isoform` | no | `yes` / `no` | Filter to longest isoform per gene. Auto-set to `yes` for NCBI accessions |
+| `reference` | no | `yes` / `no` | Curated reference proteome — skips redundancy removal. Requires `uniprot=true` |
+
+### Data Sources
+
+How to fill the `file` column:
+
+**a) UniProt proteome ID** — e.g. `UP000005640`
+
+Preferred for model organisms with curated reference proteomes. The pipeline queries the UniProt Proteomes API, resolves the taxonomy, and downloads the one-protein-per-gene FASTA from UniProt's FTP server.
+
+- **When to use:** The organism has a reference proteome on [UniProt Proteomes](https://www.uniprot.org/proteomes/)
+- **Format:** `UP` followed by 9+ digits
+- **Recommended flags:** `mode=proteins`, `uniprot=true`, `reference=yes`
+- **Finding IDs:** Search UniProt Proteomes for your organism. Look for entries marked "Reference proteome"
+
+**b) NCBI genome accession** — e.g. `GCA_030068145.1` or `GCF_000240725.1`
+
+For organisms with annotated genomes on NCBI. The pipeline uses the NCBI `datasets` CLI to download and extract the `protein.faa` file. Isoform filtering is auto-enabled since NCBI proteomes typically include multiple isoforms per gene.
+
+- **When to use:** The organism has an annotated genome on NCBI with protein predictions
+- **Format:** `GCA_` or `GCF_` followed by digits, optionally with version (e.g. `.1`)
+- **Recommended flags:** `mode=proteins` (isoform filtering is auto-set to `yes`)
+- **Verifying annotations:** Check the genome page on NCBI — the "Protein-coding genes" count should be > 0
+
+**c) Direct URL to protein FASTA** — full URL to `.fasta.gz`, `.fa.gz`, etc.
+
+For explicit control over which file to download. Works with any HTTP/HTTPS/FTP/S3 URL pointing to a protein FASTA.
+
+- **When to use:** You have a specific URL to a protein FASTA file
+- **Recommended flags:** `mode=proteins`, `isoform=yes` if the source includes multiple isoforms
+
+**d) Direct URL to nucleotide transcriptome** — full URL to `.fsa_nt.gz` or `.fna.gz`
+
+For organisms with only transcriptome data (e.g., Transcriptome Shotgun Assembly). The pipeline downloads the file and runs TransDecoder to predict ORFs.
+
+- **When to use:** The organism has a transcriptome assembly but no annotated genome
+- **Format:** URL ending in `.fsa_nt.gz` or `.fna.gz`
+- **Recommended flags:** `mode=transcriptome`, `transdecoder=yes`, `isoform=yes`
+- **Warning:** TransDecoder is designed for transcripts, NOT genome assemblies. Introns in genomic sequences will break ORF prediction
+
+**e) Local file path** — absolute or relative path to a FASTA file
+
+For files already on disk. Set flags based on the content type (protein vs. nucleotide).
+
+- **Accepted extensions:** `.fasta`, `.fa`, `.fasta.gz`, `.fa.gz` (protein); additionally `.fna`, `.fna.gz` (nucleotide, with `transdecoder=yes`)
+
+### Choosing a Data Source
+
+```
+Does the organism have a UniProt reference proteome?
+  YES → Use UniProt ID, mode=proteins, reference=yes
+  NO  ↓
+Does it have an annotated genome on NCBI (protein.faa available)?
+  YES → Use NCBI accession, mode=proteins
+  NO  ↓
+Does it have a Transcriptome Shotgun Assembly (TSA)?
+  YES → Use URL to .fsa_nt.gz, mode=transcriptome, transdecoder=yes
+  NO  ↓
+Do you have a local FASTA (protein or nucleotide)?
+  → Use local path, set mode accordingly
+```
+
+### Example Samplesheet
+
+```csv
+species,file,taxonomy,shallow_db,broad_db,mode,uniprot,mcl_test,transdecoder,isoform,reference
+Homo-sapiens,UP000005640,Opisthokonta,primates_odb10,eukaryota_odb10,proteins,true,yes,no,no,yes
+Danio-rerio,GCF_000002035.6,Opisthokonta,actinopterygii_odb10,eukaryota_odb10,proteins,false,no,no,yes,no
+Nannochloropsis-sp,GCF_000240725.1,Stramenopiles,stramenopiles_odb10,eukaryota_odb10,proteins,false,no,no,yes,no
+Schizosaccharomyces-pombe,https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/945/GCF_000002945.1_ASM294v2/GCF_000002945.1_ASM294v2_rna_from_genomic.fna.gz,Opisthokonta,ascomycota_odb10,eukaryota_odb10,transcriptome,false,no,yes,yes,no
+Saccharomyces-cerevisiae,UP000002311,Opisthokonta,saccharomycetes_odb10,eukaryota_odb10,proteins,true,no,no,yes,yes
+Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,Opisthokonta,sordariomycetes_odb10,eukaryota_odb10,proteins,true,no,no,no,no
+```
+
+| Species | Source Type | Notes |
+|---------|-------------|-------|
+| Homo sapiens | UniProt ID | Reference proteome, MCL testing enabled |
+| Danio rerio | NCBI accession | Annotated genome, isoform filtering |
+| Nannochloropsis sp. | NCBI accession | Annotated genome, isoform filtering |
+| S. pombe | URL (nucleotide) | Transcriptome, TransDecoder + isoform filtering |
+| S. cerevisiae | UniProt ID | Reference proteome |
+| N. crassa | Local file | Pre-existing protein FASTA |
+
+### Preprocessing Behavior (when `--preprocess true`)
+
+| `reference` | `transdecoder` | `isoform` | What Happens |
+|-------------|---------------|-----------|--------------|
+| `yes` | `no` | any | Quality cleanup only (no CD-HIT) |
+| `no` | `yes` | `yes` | TransDecoder → isoform filter → CD-HIT 97% |
+| `no` | `no` | `yes` | Isoform filter → CD-HIT 100% (exact dedup) |
+| `no` | `no` | `no` | Quality cleanup → CD-HIT 100% (exact dedup) |
+
+Quality cleanup always runs: removes stop codons, replaces rare amino acids (U→C, J/B/Z→X), and filters sequences shorter than `--min_protein_length` (default: 50 aa).
+
+### FASTA Headers
+
+When using NCBI/UniProt sources or `--preprocess`, the pipeline's `RENAME_FASTAS` module auto-standardizes headers to `Species-name_ProteinID`. Manual header formatting is only needed for local files used without `--preprocess`.
+
+For local files without `--preprocess`, proteins must follow this convention: `Species-name:ProteinID`. If `uniprot=true`, the protein ID must be a UniProt accession.
 
 **2.** Create a parameter file (see [Parameters](#parameters) for all options):
 
@@ -48,25 +153,6 @@ Entamoeba_histolytica,Entamoeba_histolytica-test-proteome.fasta,Amoebozoa,NA,euk
 
 ```bash
 nextflow run . -profile docker -params-file <PARAMS.JSON>
-```
-
-### FASTA naming convention
-
-Proteins must be named following this convention: `Species_genus:GeneID`
-
-```
-# Example:
->Entamoeba_histolytica:C4M6M9 NGG1-interacting factor 3
-
-# Everything prior to the colon (:) is a constant identifier unique to that species/lineage
-# and can be whatever you would like, but must not include a colon.
-
-# Everything that follows the colon is what must be a unique protein/gene identifier.
-# Additional sequence info may be included following a space.
-
-# If you intend to download annotations for a proteome, the sequence identifier must
-# be the UniProt protein accession. NovelTree uses the string that follows the colon
-# to extract the uniprot accession and annotate proteins.
 ```
 
 Alternatively, you can use the test dataset provided by Arcadia Science [here](https://github.com/Arcadia-Science/test-datasets/noveltree).
