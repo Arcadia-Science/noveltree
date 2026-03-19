@@ -170,6 +170,171 @@ The `bin/zoogle/` directory contains code vendored from the [2024-organismal-sel
 
 The pipeline distributes tasks in a highly parallel manner across available computational resources, supporting local execution, [AWS Batch](#running-on-aws-batch), and SLURM schedulers ([see Nextflow executor documentation](https://www.nextflow.io/docs/latest/executor.html)).
 
+### Pipeline overview
+
+```mermaid
+flowchart TD
+    INPUT["Samplesheet + Proteomes"] --> PREP["PREPARE_INPUTS<br/>Download · Preprocess · Rename"]
+
+    PREP --> BUSCO_Q{"BUSCO?<br/>(full mode)"}
+    BUSCO_Q -.->|yes| BUSCO["BUSCO<br/>Shallow + Broad QC"]
+    PREP --> ORTHO
+
+    subgraph ORTHO["INFER_ORTHOGROUPS"]
+        direction LR
+        MCL_SEL["MCL inflation<br/>selection<br/><i>(optional)</i>"] --> OF_PREP["OrthoFinder Prep<br/>+ DIAMOND"] --> MCL["MCL Clustering<br/>+ Filtering"]
+    end
+
+    ORTHO -->|"conservative subset<br/>(high coverage, low copy #)"| GT1["INFER_GENE_TREES<br/>species-tree families"]
+    ORTHO -->|"remaining subset<br/>(≥4 species)"| GT2["INFER_GENE_TREES<br/>remaining families"]
+
+    GT1 --> RECON
+    GT2 --> RECON
+    subgraph RECON["RECONCILE_TREES"]
+        direction LR
+        AST["Asteroid<br/><i>(optional)</i>"] --> SRAX["SpeciesRax"] --> GRAX["GeneRax<br/>per-species<br/>(+ per-family<br/>in full mode)"]
+    end
+
+    RECON --> SUMM
+    subgraph SUMM["RECONCILIATION_SUMMARIES"]
+        direction LR
+        PP["Phylo Profiles"] ~~~ HOG["Parse PhyloHOGs"]
+    end
+
+    SUMM -.->|zoogle mode| ZOOG
+    RECON -.->|zoogle mode| ZOOG
+    ORTHO -.->|zoogle mode| ZOOG
+    subgraph ZOOG["ZOOGLE"]
+        direction LR
+        PHYSCHEM["Protein<br/>Properties"] ~~~ TCAL["Time<br/>Calibration"] --> DATE["Date Gene<br/>Family Trees"] --> PDIST["Phylo-dist<br/>Analysis"]
+    end
+
+    style BUSCO_Q fill:none,stroke:#999
+    style BUSCO fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5
+    style ZOOG fill:#e8f4e8,stroke:#2d8a2d
+```
+
+<details>
+<summary><b>Detailed subworkflow diagrams</b> (click to expand)</summary>
+
+#### Orthogroup Inference
+
+```mermaid
+flowchart TD
+    PROTS["Renamed Proteomes"] --> MCL_Q{"MCL testing<br/>enabled?"}
+
+    MCL_Q -->|"yes<br/>(multiple inflation values)"| ANNOT["ANNOTATE_UNIPROT<br/>InterPro domains"]
+    MCL_Q -->|"no<br/>(single value)"| USE_DEFAULT["Use provided<br/>inflation value"]
+
+    ANNOT --> PREP_TEST["ORTHOFINDER_PREP<br/>(test subset)"]
+    PREP_TEST --> BLAST_TEST["DIAMOND_BLASTP<br/>(test subset)"]
+    BLAST_TEST --> MCL_TEST["ORTHOFINDER_MCL<br/>(per inflation value)"]
+    MCL_TEST --> COGEQC["COGEQC<br/>Domain coherence scoring"]
+    COGEQC --> SELECT["SELECT_INFLATION<br/>Best parameter"]
+    SELECT --> BEST["Best inflation"]
+    USE_DEFAULT --> BEST
+
+    PROTS --> PREP_ALL["ORTHOFINDER_PREP<br/>(all species)"]
+    PREP_ALL --> BLAST_ALL["DIAMOND_BLASTP<br/>(all-vs-all)"]
+    BLAST_ALL --> MCL_ALL["ORTHOFINDER_MCL"]
+    BEST --> MCL_ALL
+    MCL_ALL --> FILTER["FILTER_ORTHOGROUPS"]
+    FILTER -->|"conservative set<br/>(high coverage, low copy #)"| SPP_FAMS["Species-tree<br/>families"]
+    FILTER -->|"remaining set<br/>(≥4 species)"| GEN_FAMS["Gene-tree<br/>families"]
+```
+
+#### Gene Tree Inference (per subset)
+
+```mermaid
+flowchart TD
+    FAS["Gene Family FASTAs"] --> MODE{"Aligner?"}
+
+    MODE -->|adaptive| BRANCH{"Family size?"}
+    BRANCH -->|"≤200 seqs"| MAFFT["MAFFT<br/>(E-INS-i / L-INS-i)"]
+    BRANCH -->|"201–3000"| WITCH["WITCH"]
+    BRANCH -->|">3000"| FAMSA["FAMSA"]
+    MAFFT -.->|failure| FAMSA_FB["FAMSA<br/>(fallback)"]
+    WITCH -.->|failure| FAMSA_FB
+    MODE -->|single| SINGLE["Selected Aligner"]
+
+    MAFFT --> MSA["All MSAs"]
+    WITCH --> MSA
+    FAMSA --> MSA
+    FAMSA_FB --> MSA
+    SINGLE --> MSA
+
+    MSA --> TRIM{"Trimmer?"}
+    TRIM -->|clipkit| CLIPKIT["ClipKIT"]
+    TRIM -->|cialign| CIALIGN["CIAlign"]
+    TRIM -->|none| NOTRIM["No trimming"]
+    CLIPKIT --> CLEAN["Cleaned MSAs"]
+    CIALIGN --> CLEAN
+    NOTRIM --> CLEAN
+
+    CLEAN --> TREEQ{"Tree method?"}
+    TREEQ -->|iqtree| IQTREE["IQ-TREE"]
+    IQTREE -.->|failure| FT_FB["FastTree<br/>(fallback)"]
+    TREEQ -->|fasttree| FT["FastTree"]
+    IQTREE --> TREES["Gene Family Trees"]
+    FT_FB --> TREES
+    FT --> TREES
+```
+
+#### Species Tree & Reconciliation
+
+```mermaid
+flowchart TD
+    CORE["Core gene trees<br/>(species-tree families)"] --> OGQ{"Outgroups<br/>specified?"}
+    OGQ -->|yes| AST["ASTEROID<br/>Unrooted species tree"]
+    OGQ -->|no| SRAX
+    AST --> SRAX["SPECIESRAX<br/>Rooted species tree<br/>(DTL model)"]
+    CORE --> SRAX
+
+    SRAX --> SPP["Rooted Species Tree"]
+
+    CORE --> ALL["All gene families"]
+    REM["Remaining gene trees"] --> ALL
+
+    SPP --> GRAX_F
+    ALL --> GRAX_F{"Per-family<br/>GeneRax?<br/>(full mode)"}
+    GRAX_F -.->|yes| PF["GENERAX_PER_FAMILY<br/>SPR strategy"]
+
+    SPP --> GRAX_S["GENERAX_PER_SPECIES<br/>SPR (full) / EVAL (simplified)"]
+    ALL --> GRAX_S
+
+    GRAX_S --> OUT["Reconciled trees<br/>Event counts · Species rates<br/>NHX files · Labeled species tree"]
+```
+
+#### Zoogle Analyses
+
+```mermaid
+flowchart TD
+    OG_FAS["Original FASTAs<br/>+ Cleaned MSAs"] --> PHYSCHEM["PROTEIN_PROPERTIES<br/>AA composition · MW · pI<br/>GRAVY · Aromaticity · ..."]
+
+    REFQ{"Reference tree<br/>provided?"}
+    REFQ -->|no| BUILD["BUILD_REFERENCE_CHRONOGRAM<br/>TimeTree.org → UPGMA"]
+    REFQ -->|yes| USER["User-provided tree"]
+    BUILD --> REF["Reference Chronogram"]
+    USER --> REF
+
+    SPP["SpeciesRax<br/>species tree"] --> TCAL["TIME_CALIBRATE_SPECIES_TREE<br/>treePL penalized likelihood"]
+    REF --> TCAL
+    TCAL --> DATED_SPP["Dated species tree"]
+
+    GFT["GeneRax gene<br/>family trees"] --> DATE["DATE_GENE_FAMILY_TREES<br/>Speciation-only calibrations"]
+    DATED_SPP --> DATE
+    DATE --> DATED_GFT["Dated gene family trees"]
+
+    DATED_GFT --> ZOOG["ZOOGLE_ANALYSIS<br/>Mahalanobis distances<br/>Permutation tests"]
+    PHYSCHEM --> ZOOG
+    RELS["Ortholog / Paralog / Xenolog<br/>relationships"] --> ZOOG
+
+    ZOOG --> CENT["Centroid-based distances<br/>(all families)"]
+    ZOOG --> REFD["Reference-based distances<br/>(families with ref species)"]
+```
+
+</details>
+
 ---
 
 ## Usage
