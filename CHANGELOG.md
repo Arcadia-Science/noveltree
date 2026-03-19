@@ -3,12 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v2.0.0-alpha - 2026-03-06
+## v2.0.0-alpha - 2026-03-19
 
 ### Added
 - Zoogle analysis mode (`-profile zoogle`): end-to-end physicochemical protein distance analysis with time-calibrated gene family trees, phylogenetic correction, Mahalanobis distances, and permutation tests
   - PROTEIN_PROPERTIES, DATE_GENE_FAMILY_TREES, TIME_CALIBRATE_SPECIES_TREE, BUILD_REFERENCE_CHRONOGRAM, ZOOGLE_ANALYSIS modules
-- Simplified execution mode (`-profile simplified`): streamlined pipeline for large datasets (FAMSA default, no BUSCO, per-species GeneRax EVAL strategy only)
+- Simplified execution mode (`-profile simplified`): streamlined pipeline for large datasets (adaptive alignment default, no BUSCO, per-species GeneRax EVAL strategy only)
 - Arcadia production profile (`-profile arcadia`): combines zoogle + AWS Batch
 - Adaptive three-tier alignment routing (`--aligner adaptive`): MAFFT_TIER1 (≤200 seqs) → WITCH_TIER2 (≤3000) → FAMSA_TIER3 (larger), with automatic fallback between tiers
 - FAMSA aligner option (`--aligner famsa`)
@@ -23,10 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--test_run` flag: restrict analysis to gene families containing all species (fast smoke test)
 - Eukaryote test dataset (6 Opisthokont species)
 - `Makefile` for Docker image builds, `CITATIONS.md`, `docs/singularity.md`
+- New dependencies: treePL, PATHd8, phangorn
 
 ### Changed
 - Main workflow refactored from monolithic `main.nf` (~500 lines) to 7 focused subworkflows (INPUT_CHECK, PREPARE_INPUTS, INFER_ORTHOGROUPS, INFER_GENE_TREES, RECONCILE_TREES, RECONCILIATION_SUMMARIES, ZOOGLE)
-- Default aligner: `witch` → `mafft` (with adaptive routing enabled by default)
+- Default aligner: `witch` → `adaptive` (three-tier routing enabled by default)
 - Default tree method: `fasttree` → `iqtree`
 - Default MSA trimmer: `none` → `clipkit`
 - `min_ungapped_length` default: 20 → 50
