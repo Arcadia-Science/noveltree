@@ -84,7 +84,7 @@
                 "tree_method": {
                     "type": "string",
                     "default": "iqtree",
-                    "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is fasttree, alternative is iqtree."
+                    "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is iqtree, alternative is fasttree."
                 },
                 "tree_model": {
                     "type": "string",
@@ -174,7 +174,7 @@
                 "max_cpus": {
                     "type": "integer",
                     "description": "Maximum number of CPUs that can be requested for any single job.",
-                    "default": 72,
+                    "default": 192,
                     "fa_icon": "fas fa-microchip",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"

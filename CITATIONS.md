@@ -18,10 +18,6 @@
 
   > The UniProt Consortium. (2023). UniProt: the universal protein knowledgebase in 2023. https://doi.org/10.1093/nar/gkac1052
 
-- [BioServices](https://doi.org/10.1093/bioinformatics/btt547)
-
-  > Cokelaer, T, Pultz, D, Harder, LM, Serra-Musach, J, Saez-Rodriguez, J. (2013). BioServices: a common Python package to access biological Web Services programmatically. https://doi.org/10.1093/bioinformatics/btt547
-
 - [Biopython](https://doi.org/10.1093/bioinformatics/btp163)
 
   > Cock PJ, Antao T, Chang JT, Chapman BA, Cox CJ, Dalke A, Friedberg I, Hamelryck T, Kauff F, Wilczynski B, de Hoon MJ. (2009). Biopython: freely available Python tools for computational molecular biology and bioinformatics. https://doi.org/10.1093/bioinformatics/btp163
@@ -89,6 +85,34 @@
 - [SpeciesRax](https://doi.org/10.1093/molbev/msab365)
 
   > Morel B, Schade P, Lutteropp S, Williams TA, Szöllősi GJ, Stamatakis A. (2022). SpeciesRax: a tool for maximum likelihood species tree inference from gene family trees under duplication, transfer, and loss. https://doi.org/10.1093/molbev/msab365
+
+- [treePL](https://doi.org/10.1093/bioinformatics/bts492)
+
+  > Smith SA, O'Meara BC. (2012). treePL: divergence time estimation using penalized likelihood for large phylogenies. Bioinformatics 28(20):2689-2690. https://doi.org/10.1093/bioinformatics/bts492
+
+- [PATHd8](https://doi.org/10.1080/10635150701613783)
+
+  > Britton T, Anderson CL, Jacquet D, Lundqvist S, Bremer K. (2007). Estimating divergence times in large phylogenetic trees. Systematic Biology 56(5):741-752. https://doi.org/10.1080/10635150701613783
+
+- [phangorn](https://doi.org/10.1093/bioinformatics/btq706)
+
+  > Schliep KP. (2011). phangorn: phylogenetic analysis in R. Bioinformatics 27(4):592-593. https://doi.org/10.1093/bioinformatics/btq706
+
+- [SciPy](https://doi.org/10.1038/s41592-019-0686-2)
+
+  > Virtanen P et al. (2020). SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python. Nature Methods 17:261-272. https://doi.org/10.1038/s41592-019-0686-2
+
+- [TransDecoder](https://github.com/TransDecoder/TransDecoder)
+
+  > Haas BJ et al. TransDecoder. https://github.com/TransDecoder/TransDecoder
+
+- [CD-HIT](https://doi.org/10.1093/bioinformatics/bts565)
+
+  > Fu L, Niu B, Zhu Z, Wu S, Li W. (2012). CD-HIT: accelerated for clustering the next-generation sequencing data. Bioinformatics 28(23):3150-3152. https://doi.org/10.1093/bioinformatics/bts565
+
+- [SeqKit](https://doi.org/10.1371/journal.pone.0163962)
+
+  > Shen W, Le S, Li Y, Hu F. (2016). SeqKit: A Cross-Platform and Ultrafast Toolkit for FASTA/Q File Manipulation. PLoS ONE 11(10):e0163962. https://doi.org/10.1371/journal.pone.0163962
 
 - [tidyverse](https://doi.org/10.21105/joss.01686)
 

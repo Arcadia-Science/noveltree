@@ -1,3 +1,5 @@
+**STATUS: Proposal / Future Roadmap — These improvements are not yet implemented in the current pipeline.**
+
 # Proposed improvements to phylogenetic distance analysis
 
 ## Background
@@ -5,7 +7,7 @@
 The `PHYLO_DIST` module computes phylogenetically-corrected protein distances within each gene family. The current pipeline:
 
 1. Calculates physicochemical properties for each protein (molecular weight, aromaticity, instability, flexibility, GRAVY, isoelectric point, charge at pH 7, helix/sheet fractions, molar extinction coefficient).
-2. Time-calibrates gene family trees by congruifying them with the time-calibrated species tree.
+2. Time-calibrates gene family trees using speciation-only calibrations from GeneRax reconciliation.
 3. Applies a phylogenetic GLS transformation (Butler et al., 2000) to remove trait variance explained by shared evolutionary history, using a Brownian motion covariance model.
 4. Computes pairwise Mahalanobis distances on the transformed data to obtain phylogenetically-corrected protein distances.
 5. Tests whether individual proteins or species are significantly more similar to a reference species than expected by chance.
