@@ -44,7 +44,6 @@ process WITCH {
     def min_len  = params.min_ungapped_length ?: '20'
     def min_seq  = params.min_num_seq_per_og
     def min_spp  = params.min_num_spp_per_og
-    def sentinel = task.ext.sentinel ?: false
     """
     # If we are resuming a run, do some cleanup:
     if [ -d "alignments/" ]; then
@@ -56,65 +55,52 @@ process WITCH {
     sed -E -i '/>/!s/U/X/g' ${fasta} # selenocysteine
     sed -E -i '/>/!s/O/X/g' ${fasta} # pyrrolysine
 
-    if (
-        witch-msa \\
-            -i ${fasta} \\
-            -d alignments \\
-            -t ${task.cpus} \\
-            --molecule amino \\
-            $args
+    # Run WITCH alignment (failure exits non-zero → Nextflow ignores, routes to fallback)
+    witch-msa \\
+        -i ${fasta} \\
+        -d alignments \\
+        -t ${task.cpus} \\
+        --molecule amino \\
+        $args
 
-        # By default, witch only masks (and removes) singleton columns - we still would
-        # like to make sure that we are removing sequences with too many positions removed.
-        # So, here we're using awk to remove sequences with fewer than params.min_ungapped_length
-        # AA remaining once masked.
-        awk -v N=${min_len} -F "" \
-            'BEGIN { getline; header=\$0; seq="" } \
-            !/^>/ { for (i=1; i<=NF; i++) if (\$i != "-") s++ } \
-            /^>/ { if (s >= N || seq == "") { if (header != "") print header; if (seq != "") print seq } header=\$0; seq=""; s=0 } \
-            !/^>/ { seq = seq \$0 } \
-            END { if (s >= N) { print header; print seq } }' \
-            alignments/aligned.masked.fasta > tmp.fasta
+    # Remove sequences with fewer than min_ungapped_length AAs remaining once masked.
+    awk -v N=${min_len} -F "" \
+        'BEGIN { getline; header=\$0; seq="" } \
+        !/^>/ { for (i=1; i<=NF; i++) if (\$i != "-") s++ } \
+        /^>/ { if (s >= N || seq == "") { if (header != "") print header; if (seq != "") print seq } header=\$0; seq=""; s=0 } \
+        !/^>/ { seq = seq \$0 } \
+        END { if (s >= N) { print header; print seq } }' \
+        alignments/aligned.masked.fasta > tmp.fasta
 
-        # And remove any columns that are now comprised exclusively of gaps following the exclusion
-        # of (if any) sequences in the above step.
-        awk 'BEGIN {seq_count=0} \
-            /^>/ {seq_count++; headers[seq_count]=\$0; next} \
-            {sequences[seq_count]=sequences[seq_count]\$0} \
-            END {for(i=1;i<=length(sequences[1]);i++){ \
-                column=""; \
-                for(j=1;j<=seq_count;j++){column=column substr(sequences[j],i,1)} \
-                if(column!~/^-+\$/){ \
-                  for(j=1;j<=seq_count;j++){new_sequences[j]=new_sequences[j] substr(sequences[j],i,1)}}\
-              } \
-              for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
-            }' tmp.fasta > final_masked.fasta
+    # Remove gap-only columns following the exclusion of (if any) sequences above.
+    awk 'BEGIN {seq_count=0} \
+        /^>/ {seq_count++; headers[seq_count]=\$0; next} \
+        {sequences[seq_count]=sequences[seq_count]\$0} \
+        END {for(i=1;i<=length(sequences[1]);i++){ \
+            column=""; \
+            for(j=1;j<=seq_count;j++){column=column substr(sequences[j],i,1)} \
+            if(column!~/^-+\$/){ \
+              for(j=1;j<=seq_count;j++){new_sequences[j]=new_sequences[j] substr(sequences[j],i,1)}}\
+          } \
+          for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
+        }' tmp.fasta > final_masked.fasta
 
-        # Clean up WITCH working directory
-        mv final_masked.fasta ${og}_witch.fa
-        rm -rf alignments/ tmp.fasta
-    ); then
-        # WITCH succeeded — verify the cleaned alignment still meets minimum thresholds.
-        n_seq=\$(grep -c ">" ${og}_witch.fa || true)
-        n_spp=\$(grep ">" ${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
-        if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
-            if [ "${sentinel}" = "true" ]; then
-                : > ${og}_witch.fa        # sentinel for FAMSA fallback
-            else
-                rm ${og}_witch.fa          # original behavior
-            fi
-        else
-            # Build species-protein mapping file
-            mkdir -p species_protein_maps
-            grep ">" ${og}_witch.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-            sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-            paste prot spp > species_protein_maps/${og}_map.link
-            rm prot && rm spp
-        fi
-    elif [ "${sentinel}" = "true" ]; then
-        touch ${og}_witch.fa               # sentinel for FAMSA fallback
+    mv final_masked.fasta ${og}_witch.fa
+    rm -rf alignments/ tmp.fasta
+
+    # Verify the cleaned alignment meets minimum thresholds.
+    # If QC fails, remove the output so nothing is emitted (optional: true handles it).
+    n_seq=\$(grep -c ">" ${og}_witch.fa || true)
+    n_spp=\$(grep ">" ${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
+        rm ${og}_witch.fa
     else
-        exit 1                             # original behavior: fail the process
+        # Build species-protein mapping file
+        mkdir -p species_protein_maps
+        grep ">" ${og}_witch.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        paste prot spp > species_protein_maps/${og}_map.link
+        rm prot && rm spp
     fi
     """
 }

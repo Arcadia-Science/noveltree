@@ -39,26 +39,20 @@ process IQTREE {
     def args     = task.ext.args ?: ''
     def memory   = task.memory.toString().replaceAll(' ', '')
     def prefix   = alignment.baseName
-    def sentinel = task.ext.sentinel ?: false
-
     """
     memory=\$(echo ${task.memory} | sed "s/.G/G/g")
 
     # Infer the phylogeny
-    if iqtree2 \\
+    iqtree2 \\
         -s $alignment \\
         -nt AUTO \\
         -ntmax ${task.cpus} \\
         -mem \$memory \\
         -m $model \\
-        $args; then
-        # Rename to standardized output format
-        mv ${alignment}.treefile ${prefix}_iqt.newick
-    elif [ "${sentinel}" = "true" ]; then
-        touch ${prefix}_iqt.newick         # sentinel for FastTree fallback
-    else
-        exit 1                             # original behavior: fail the process
-    fi
+        $args
+
+    # Rename to standardized output format
+    mv ${alignment}.treefile ${prefix}_iqt.newick
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

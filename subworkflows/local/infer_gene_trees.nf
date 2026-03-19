@@ -58,29 +58,33 @@ workflow INFER_GENE_TREES {
         // Tier 3: FAMSA2 with accuracy flags (large families, >3000 seqs)
         FAMSA_TIER3(tiered.tier3)
 
-        // Filter real alignments (non-empty) from sentinels (0-byte)
-        tier1_ok = MAFFT_TIER1.out.msas.filter { meta, aln -> aln.size() > 0 }
-        tier2_ok = WITCH_TIER2.out.msas.filter { meta, aln -> aln.size() > 0 }
-
-        // Detect failures: 0-byte sentinels, rejoin with input FASTA for fallback
-        tier1_failed = MAFFT_TIER1.out.msas
-            .filter { meta, aln -> aln.size() == 0 }
-            .map { meta, aln -> [meta.og, meta] }
-            .join(tiered.tier1.map { meta, fasta -> [meta.og, fasta] })
+        // Detect vanished OGs: present in input but absent from output.
+        // Any failure (tool or infrastructure) is ignored by Nextflow,
+        // producing no output for that OG — route it to FAMSA_FALLBACK.
+        tier1_produced = MAFFT_TIER1.out.msas.map { meta, aln -> [meta.og, true] }
+        tier1_failed = tiered.tier1
+            .map { meta, fasta -> [meta.og, true] }
+            .join(tier1_produced, remainder: true)
+            .filter { it[2] == null }          // no match in output → vanished
+            .map { it[0] }                     // OG id
+            .join(tiered.tier1.map { meta, fasta -> [meta.og, meta, fasta] })
             .map { og, meta, fasta -> [meta, fasta] }
 
-        tier2_failed = WITCH_TIER2.out.msas
-            .filter { meta, aln -> aln.size() == 0 }
-            .map { meta, aln -> [meta.og, meta] }
-            .join(tiered.tier2.map { meta, fasta -> [meta.og, fasta] })
+        tier2_produced = WITCH_TIER2.out.msas.map { meta, aln -> [meta.og, true] }
+        tier2_failed = tiered.tier2
+            .map { meta, fasta -> [meta.og, true] }
+            .join(tier2_produced, remainder: true)
+            .filter { it[2] == null }
+            .map { it[0] }
+            .join(tiered.tier2.map { meta, fasta -> [meta.og, meta, fasta] })
             .map { og, meta, fasta -> [meta, fasta] }
 
         // Run FAMSA fallback on all tier 1/2 failures
         FAMSA_FALLBACK(tier1_failed.mix(tier2_failed))
 
         // Combine successful primary alignments with fallback
-        all_msas = tier1_ok
-            .mix(tier2_ok)
+        all_msas = MAFFT_TIER1.out.msas
+            .mix(WITCH_TIER2.out.msas)
             .mix(FAMSA_TIER3.out.msas)
             .mix(FAMSA_FALLBACK.out.msas)
 
@@ -111,21 +115,21 @@ workflow INFER_GENE_TREES {
     TREES(cleaned_msas, params.tree_model)
 
     if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
-        // Filter real trees (non-empty) from sentinels (0-byte)
-        real_trees = TREES.out.phylogeny.filter { meta, tree -> tree.size() > 0 }
-
-        // Detect failures: 0-byte sentinels, rejoin with input alignment for fallback
-        failed_alignments = TREES.out.phylogeny
-            .filter { meta, tree -> tree.size() == 0 }
-            .map { meta, tree -> [meta.og, meta] }
-            .join(cleaned_msas.map { meta, aln -> [meta.og, aln] })
+        // Detect vanished OGs: present in input but absent from output
+        tree_produced = TREES.out.phylogeny.map { meta, tree -> [meta.og, true] }
+        failed_alignments = cleaned_msas
+            .map { meta, aln -> [meta.og, true] }
+            .join(tree_produced, remainder: true)
+            .filter { it[2] == null }
+            .map { it[0] }
+            .join(cleaned_msas.map { meta, aln -> [meta.og, meta, aln] })
             .map { og, meta, aln -> [meta, aln] }
 
         // Run FastTree on failed alignments
         FASTTREE_FALLBACK(failed_alignments, params.tree_model)
 
         // Combine successful IQ-TREE trees with FastTree fallback trees
-        phylogeny = real_trees.mix(FASTTREE_FALLBACK.out.phylogeny)
+        phylogeny = TREES.out.phylogeny.mix(FASTTREE_FALLBACK.out.phylogeny)
     } else {
         phylogeny = TREES.out.phylogeny
     }
