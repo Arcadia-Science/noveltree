@@ -158,8 +158,8 @@ The `bin/zoogle/` directory contains code vendored from the [2024-organismal-sel
 1. **Orthology inference** — OrthoFinder normalizes sequence similarity scores and clusters proteins into gene families via MCL. An optional test step selects the best MCL inflation parameter using InterPro domain coherence (COGEQC).
 2. **Alignment & trimming** — Adaptive three-tier alignment (MAFFT → WITCH → FAMSA by family size), trimmed with ClipKIT.
 3. **Tree inference** — Gene family trees via IQ-TREE (FastTree fallback). Species tree via SpeciesRax (and optionally Asteroid).
-4. **Reconciliation** — GeneRax reconciles gene/species trees, estimating duplication, transfer, and loss rates. Ortholog/paralog/xenolog relationships and HOGs are parsed from reconciliation output.
-5. **Phylogenetic profiles** — Species × gene-family matrices of duplication, loss, speciation, and HGT events (donor, recipient, and summed) per species-tree node per gene family.
+4. **Reconciliation** — GeneRax reconciles gene/species trees, estimating duplication and loss rates. Ortholog/paralog relationships and HOGs are parsed from reconciliation output.
+5. **Phylogenetic profiles** — Species × gene-family matrices of duplication, loss, and speciation events per species-tree node per gene family.
 6. **Zoogle analyses** _(zoogle mode)_ — Physicochemical protein properties, time-calibrated trees, and phylogenetically-corrected protein distances for organism prioritization.
 
 The pipeline distributes tasks in a highly parallel manner across available computational resources, supporting local execution, [AWS Batch](#running-on-aws-batch), and SLURM schedulers ([see Nextflow executor documentation](https://www.nextflow.io/docs/latest/executor.html)).
@@ -305,7 +305,7 @@ flowchart TD
     CORE["Core gene trees<br/>(species-tree families)"] --> OGQ{"Outgroups<br/>specified?"}
     OGQ -->|yes| AST["ASTEROID<br/>Unrooted species tree"]
     OGQ -->|no| SRAX
-    AST --> SRAX["SPECIESRAX<br/>Rooted species tree<br/>(DTL model)"]
+    AST --> SRAX["SPECIESRAX<br/>Rooted species tree<br/>(DL model)"]
     CORE --> SRAX
 
     SRAX --> SPP["Rooted Species Tree"]
@@ -348,7 +348,7 @@ flowchart TD
 
     DATED_GFT --> ZOOG["ZOOGLE_ANALYSIS<br/>Mahalanobis distances<br/>Permutation tests"]
     PHYSCHEM --> ZOOG
-    RELS["Ortholog / Paralog / Xenolog<br/>relationships"] --> ZOOG
+    RELS["Ortholog / Paralog<br/>relationships"] --> ZOOG
 
     ZOOG --> CENT["Centroid-based distances<br/>(all families)"]
     ZOOG --> REFD["Reference-based distances<br/>(families with ref species)"]

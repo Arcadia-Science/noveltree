@@ -68,7 +68,6 @@ workflow RECONCILE_TREES {
     speciesrax_tree       = ch_speciesrax
     event_counts          = GENERAX_PER_SPECIES.out.event_counts
     species_event_counts  = GENERAX_PER_SPECIES.out.species_event_counts
-    transfer_event_counts = GENERAX_PER_SPECIES.out.transfer_event_counts
     species_coverage      = GENERAX_PER_SPECIES.out.species_coverage
     generax_nhx           = GENERAX_PER_SPECIES.out.generax_nhx
     labeled_species_tree  = GENERAX_PER_SPECIES.out.labeled_species_tree

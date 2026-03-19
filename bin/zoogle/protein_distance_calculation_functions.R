@@ -5,9 +5,9 @@ Rcpp::sourceCpp("calculate_dist_stats.cpp")
 source("centroid_distance_functions.R")
 
 # build_relationship_lookup:
-# Read ortholog/paralog/xenolog TSV files and build a lookup table
+# Read ortholog/paralog TSV files and build a lookup table
 # keyed by gene1|||gene2 pairs (both orderings) for fast matching.
-build_relationship_lookup <- function(orthologs_path, paralogs_path, xenologs_path) {
+build_relationship_lookup <- function(orthologs_path, paralogs_path) {
   read_rel <- function(path, label) {
     df <- read.delim(path, stringsAsFactors = FALSE)
     if (nrow(df) == 0) return(data.frame(key = character(0), relationship = character(0)))
@@ -20,8 +20,7 @@ build_relationship_lookup <- function(orthologs_path, paralogs_path, xenologs_pa
   }
   rbind(
     read_rel(orthologs_path, "ortholog"),
-    read_rel(paralogs_path, "paralog"),
-    read_rel(xenologs_path, "xenolog")
+    read_rel(paralogs_path, "paralog")
   )
 }
 
@@ -104,7 +103,7 @@ calc_universal_dists <-
 # reference species has proteins in the gene family.
 calc_ref_dists <-
   function(universal_results, ref_spp, gene_family, out_dir,
-           orthologs_path = NULL, paralogs_path = NULL, xenologs_path = NULL) {
+           orthologs_path = NULL, paralogs_path = NULL) {
     # Prep output directories for reference-specific outputs
     dir.create(paste0(out_dir, "/protein-dists-to-reference/"),
                recursive = TRUE, showWarnings = FALSE)
@@ -124,12 +123,7 @@ calc_ref_dists <-
 
     # Pull out the distances between each species and our reference species
     focal_dists_idx <- which(grepl(ref_spp, rownames(dist_mat)))
-    focal_dists <-
-      matrix(dist_mat[-focal_dists_idx, focal_dists_idx],
-             nrow = nrow(dist_mat[-focal_dists_idx, ]),
-             ncol = length(focal_dists_idx),
-             dimnames = list(rownames(dist_mat)[-focal_dists_idx],
-                             colnames(dist_mat)[focal_dists_idx]))
+    focal_dists <- dist_mat[-focal_dists_idx, focal_dists_idx, drop = FALSE]
     focal_prots <- rownames(focal_dists)
 
     # Conduct permutation tests to assess whether individual non-reference
@@ -202,8 +196,8 @@ calc_ref_dists <-
       })
 
     # Look up evolutionary relationship for each protein pair
-    if (!is.null(orthologs_path) && !is.null(paralogs_path) && !is.null(xenologs_path)) {
-      rel_lookup <- build_relationship_lookup(orthologs_path, paralogs_path, xenologs_path)
+    if (!is.null(orthologs_path) && !is.null(paralogs_path)) {
+      rel_lookup <- build_relationship_lookup(orthologs_path, paralogs_path)
       pair_keys <- paste(per_prot_dist_res$observation, per_prot_dist_res$reference, sep = "|||")
       relationship <- rel_lookup$relationship[match(pair_keys, rel_lookup$key)]
       relationship[is.na(relationship)] <- "unknown"
@@ -247,7 +241,7 @@ genefam_aa_conservation <-
              "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
              "sheet_fract", "molar_ext_coef_cysteines"),
            out_dir = "gf-aa-multivar-distances",
-           orthologs_path = NULL, paralogs_path = NULL, xenologs_path = NULL) {
+           orthologs_path = NULL, paralogs_path = NULL) {
 
     # --- Tier 1: Universal analysis (all gene families) ---
     universal_res <-
@@ -293,8 +287,7 @@ genefam_aa_conservation <-
           gene_family = gene_family,
           out_dir = out_dir,
           orthologs_path = orthologs_path,
-          paralogs_path = paralogs_path,
-          xenologs_path = xenologs_path
+          paralogs_path = paralogs_path
         )
 
       write.table(ref_res$prot_dists_to_ref, sep = "\t",

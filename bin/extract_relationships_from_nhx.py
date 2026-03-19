@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract ortholog, paralog, xenolog pairs and HOG membership from GeneRax NHX.
+"""Extract ortholog, paralog pairs and HOG membership from GeneRax NHX.
 
 Replaces the orthoxml-tools pipeline (from-nhx + export-pairs + extract_hog_membership)
 with a single lightweight script that parses the NHX tree directly. No XML DOM,
@@ -9,9 +9,8 @@ GeneRax NHX format:
   [&&NHX:S=species:D=Y/N:H=Y/N:B=brlen]
 
 Event classification at each internal node:
-  - D=N, H=N  → Speciation: cross-child pairs are orthologs
-  - D=Y       → Duplication: cross-child pairs are paralogs
-  - H=Y       → Transfer: cross-child pairs are xenologs
+  - D=N  → Speciation: cross-child pairs are orthologs
+  - D=Y  → Duplication: cross-child pairs are paralogs
 
 HOG membership (hierarchical):
   Each speciation node defines a HOG keyed by its species tree node (S= tag).
@@ -26,7 +25,6 @@ Usage:
 Outputs:
   <outprefix>_orthologs.tsv       (gene1, gene2, og)
   <outprefix>_paralogs.tsv        (gene1, gene2, og)
-  <outprefix>_xenologs.tsv        (gene1, gene2, species1, species2, og)
   <outprefix>_hog_membership.tsv  (protein_id, species, hog_id, og)
   spp_tree_node_lookup.tsv        (hog_id, spp_tree_node — same for all OGs)
 """
@@ -192,14 +190,13 @@ def cache_leaves(node):
 # ---------------------------------------------------------------------------
 # Pair extraction — single traversal, streaming output
 # ---------------------------------------------------------------------------
-def extract_pairs(node, og, ortho_fh, para_fh, xeno_fh):
+def extract_pairs(node, og, ortho_fh, para_fh):
     """Traverse tree; at each internal node emit cross-child pairs."""
     if not node["children"]:
         return
 
     # Determine event type
     is_dup = node["nhx"].get("D", "N").startswith("Y")
-    is_transfer = node["nhx"].get("H", "N").startswith("Y")
 
     # Emit pairs between all child combinations (handles polytomies)
     children = node["children"]
@@ -209,14 +206,7 @@ def extract_pairs(node, og, ortho_fh, para_fh, xeno_fh):
                 left_leaves = children[i]["_leaves"]
                 right_leaves = children[j]["_leaves"]
 
-                if is_transfer:
-                    # Xenolog pairs
-                    for g1 in left_leaves:
-                        sp1 = species_from_tip(g1)
-                        for g2 in right_leaves:
-                            sp2 = species_from_tip(g2)
-                            xeno_fh.write(f"{g1}\t{g2}\t{sp1}\t{sp2}\t{og}\n")
-                elif is_dup:
+                if is_dup:
                     # Paralog pairs
                     for g1 in left_leaves:
                         for g2 in right_leaves:
@@ -230,7 +220,7 @@ def extract_pairs(node, og, ortho_fh, para_fh, xeno_fh):
 
     # Recurse into children
     for child in children:
-        extract_pairs(child, og, ortho_fh, para_fh, xeno_fh)
+        extract_pairs(child, og, ortho_fh, para_fh)
 
 
 # ---------------------------------------------------------------------------
@@ -243,7 +233,7 @@ def extract_hog_membership(node, og, node_index, rows=None, ancestor_hogs=None):
     mapped to a short index via node_index. A gene gets one row per speciation
     ancestor, from the root down to its deepest speciation node.
 
-    Duplication/transfer nodes do NOT define new HOGs — they inherit.
+    Duplication nodes do NOT define new HOGs — they inherit.
 
     Returns a list of (protein_id, species, hog_id, og) tuples.
     """
@@ -253,10 +243,9 @@ def extract_hog_membership(node, og, node_index, rows=None, ancestor_hogs=None):
         ancestor_hogs = []
 
     is_dup = node["nhx"].get("D", "N").startswith("Y")
-    is_transfer = node["nhx"].get("H", "N").startswith("Y")
 
     # Speciation node → new HOG level
-    if node["children"] and not is_dup and not is_transfer:
+    if node["children"] and not is_dup:
         spp_tree_node = node["nhx"].get("S", "unknown")
         hog_id = node_index.get(spp_tree_node, spp_tree_node)
         ancestor_hogs = ancestor_hogs + [hog_id]
@@ -314,17 +303,15 @@ def main():
     # Extract pairs and HOG membership — streaming to files
     ortho_fh = open(f"{prefix}_orthologs.tsv", "w")
     para_fh = open(f"{prefix}_paralogs.tsv", "w")
-    xeno_fh = open(f"{prefix}_xenologs.tsv", "w")
     hog_fh = open(f"{prefix}_hog_membership.tsv", "w")
     try:
         # Headers
         ortho_fh.write("gene1\tgene2\tog\n")
         para_fh.write("gene1\tgene2\tog\n")
-        xeno_fh.write("gene1\tgene2\tspecies1\tspecies2\tog\n")
         hog_fh.write("protein_id\tspecies\thog_id\tog\n")
 
         # Pairs
-        extract_pairs(tree, og, ortho_fh, para_fh, xeno_fh)
+        extract_pairs(tree, og, ortho_fh, para_fh)
 
         # HOG membership (hierarchical, sorted by HOG ID)
         hog_rows = extract_hog_membership(tree, og, node_index)
@@ -334,7 +321,6 @@ def main():
     finally:
         ortho_fh.close()
         para_fh.close()
-        xeno_fh.close()
         hog_fh.close()
 
 

@@ -19,7 +19,6 @@ workflow ZOOGLE {
     ref_species            // string value
     orthologs              // [ val(meta), path(tsv) ]
     paralogs               // [ val(meta), path(tsv) ]
-    xenologs               // [ val(meta), path(tsv) ]
 
     main:
     //
@@ -89,18 +88,17 @@ workflow ZOOGLE {
             return true
         }
 
-    // Combine relationship files per OG: [og, ortho_file, para_file, xeno_file]
+    // Combine relationship files per OG: [og, ortho_file, para_file]
     ch_relationships = orthologs
         .map { meta, f -> [meta.og, f] }
         .join(paralogs.map { meta, f -> [meta.og, f] })
-        .join(xenologs.map { meta, f -> [meta.og, f] })
 
     // Join relationship files with zoogle input by OG
     ch_zoogle_with_rels = ch_zoogle_input
         .map { meta, tree, props -> [meta.og, meta, tree, props] }
         .join(ch_relationships)
-        .map { og, meta, tree, props, ortho, para, xeno ->
-            [meta, tree, props, ortho, para, xeno] }
+        .map { og, meta, tree, props, ortho, para ->
+            [meta, tree, props, ortho, para] }
 
     ZOOGLE_ANALYSIS(ch_zoogle_with_rels, ref_species)
 
