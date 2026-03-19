@@ -26,7 +26,6 @@ process GENERAX_PER_FAMILY {
     path "${meta.og}/${meta.og}_full_output.tar.gz"                                            , emit: archive
     path "${meta.og}/_intermediate/${meta.og}_eventCounts.txt"
     path "${meta.og}/_intermediate/${meta.og}_speciesEventCounts.txt"
-    path "${meta.og}/_intermediate/${meta.og}_transfers.txt"
 
     when:
     task.ext.when == null || task.ext.when
@@ -75,17 +74,10 @@ process GENERAX_PER_FAMILY {
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
 
-    # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
-    mkdir $og/reconciliations/reconciliation_transfer_samples/
-    mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
-    tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
-    rm -r $og/reconciliations/reconciliation_transfer_samples/
-
     # Extract key files to working directory
     cp $og/results/$og/${og}_reconciled_gft.newick .
     cp $og/reconciliations/${og}_eventCounts.txt .
     cp $og/reconciliations/${og}_speciesEventCounts.txt .
-    cp $og/reconciliations/${og}_transfers.txt .
 
     # Archive full GeneRax output, then replace with clean structure
     tar -czf ${og}_full_output.tar.gz $og/
@@ -95,7 +87,6 @@ process GENERAX_PER_FAMILY {
     mv ${og}_full_output.tar.gz $og/
     mv ${og}_eventCounts.txt $og/_intermediate/
     mv ${og}_speciesEventCounts.txt $og/_intermediate/
-    mv ${og}_transfers.txt $og/_intermediate/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

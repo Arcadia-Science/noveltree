@@ -8,7 +8,7 @@ process ZOOGLE_ANALYSIS {
 
     input:
     tuple val(meta), path(gene_tree), path(phys_props_file),
-          path(orthologs_file), path(paralogs_file), path(xenologs_file)
+          path(orthologs_file), path(paralogs_file)
     val ref_species
 
     output:
@@ -75,8 +75,7 @@ process ZOOGLE_ANALYSIS {
                        "sheet_fract", "molar_ext_coef_cysteines"),
         out_dir = ".",
         orthologs_path = "${orthologs_file}",
-        paralogs_path  = "${paralogs_file}",
-        xenologs_path  = "${xenologs_file}"
+        paralogs_path  = "${paralogs_file}"
     )
 
     # Create versions file

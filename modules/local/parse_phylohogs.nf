@@ -24,7 +24,6 @@ process PARSE_PHYLOHOGS {
     output:
     tuple val(meta), path("${meta.og}/${meta.og}_orthologs.tsv") , emit: orthologs
     tuple val(meta), path("${meta.og}/${meta.og}_paralogs.tsv")  , emit: paralogs
-    tuple val(meta), path("${meta.og}/${meta.og}_xenologs.tsv")  , emit: xenologs
     path "${meta.og}/${meta.og}_hog_membership.tsv"    , emit: hog_membership
     path "spp_tree_node_lookup.tsv"                   , emit: node_lookup
 

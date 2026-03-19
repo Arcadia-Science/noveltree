@@ -5,16 +5,13 @@ process PHYLO_PROFILES {
     container 'arcadiascience/phylo_profiles:1.0.0'
 
     input:
-    tuple val(meta), path(event_counts), path(species_event_counts), path(transfer_event_counts), path(species_coverage)
+    tuple val(meta), path(event_counts), path(species_event_counts), path(species_coverage)
     path 'orthogroups'
 
     output:
     path "${meta.og}_duplication_count.tsv"        , emit: duplication_count
-    path "${meta.og}_hgt_counts_long.tsv"           , emit: hgt_counts_long
     path "${meta.og}_loss_count.tsv"               , emit: loss_count
     path "${meta.og}_speciation_count.tsv"         , emit: speciation_count
-    path "${meta.og}_transfer_donor_count.tsv"     , emit: transfer_donor_count
-    path "${meta.og}_transfer_recipient_count.tsv" , emit: transfer_recipient_count
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,7 +20,6 @@ process PHYLO_PROFILES {
     """
     phylo_profiles.R "${event_counts}" \\
                      "${species_event_counts}" \\
-                     "${transfer_event_counts}" \\
                      "${species_coverage}" \\
                      "${meta.og}" \\
                      "orthogroups"

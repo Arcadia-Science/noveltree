@@ -141,11 +141,10 @@ workflow NOVELTREE {
         REMAINING_GENE_FAMILIES.out.cleaned_msas
     )
 
-    // 7. Reconciliation summaries (phylo profiles, HGT matrix, HOG parsing)
+    // 7. Reconciliation summaries (phylo profiles, HOG parsing)
     RECONCILIATION_SUMMARIES(
         RECONCILE_TREES.out.event_counts,
         RECONCILE_TREES.out.species_event_counts,
-        RECONCILE_TREES.out.transfer_event_counts,
         RECONCILE_TREES.out.species_coverage,
         INFER_ORTHOGROUPS.out.inflation_dir,
         RECONCILE_TREES.out.generax_nhx,
@@ -163,8 +162,7 @@ workflow NOVELTREE {
             species_name_list,
             ref_species,
             RECONCILIATION_SUMMARIES.out.orthologs,
-            RECONCILIATION_SUMMARIES.out.paralogs,
-            RECONCILIATION_SUMMARIES.out.xenologs
+            RECONCILIATION_SUMMARIES.out.paralogs
         )
     }
 }

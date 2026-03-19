@@ -201,11 +201,11 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`IQ-TREE`](http://www.iqtree.org/) (default) or [`FastTree2`](http://www.microbesonline.org/fasttree/)
 11. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
-12. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication, transfer, and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
-13. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
-14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication, transfer and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
-15. `PARSE_PHYLOHOGS`: Parse ortholog/paralog/xenolog relationships and HOG membership from GeneRax reconciliation output
-16. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, transfer, loss, and speciation events across species and gene families
+12. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
+13. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
+14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
+15. `PARSE_PHYLOHOGS`: Parse ortholog/paralog relationships and HOG membership from GeneRax reconciliation output
+16. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, loss, and speciation events across species and gene families
 17. `BUILD_REFERENCE_CHRONOGRAM` _(zoogle mode only, when `--reference_time_tree` not provided)_: Auto-build a reference chronogram by querying TimeTree.org for pairwise divergence times among input species and constructing a UPGMA tree
 17b. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against the reference chronogram (auto-built or user-provided) using treePL penalized likelihood
 18. `DATE_GENE_FAMILY_TREES` _(zoogle mode only)_: Time-calibrate gene family trees using speciation node ages from the dated species tree. Only speciation nodes from GeneRax reconciliation are used as calibration points.
@@ -334,7 +334,7 @@ process {
 - `--strategy SKIP --si-estimate-bl --per-species-rates`
 
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
-- `--rec-model UndatedDTL --si-strategy SKIP --si-quartet-support`
+- `--rec-model UndatedDL --si-strategy SKIP --si-quartet-support`
 
 #### 11. [`GENERAX_PER_FAMILY`](../modules/local/generax_per_family.nf):
 
@@ -342,7 +342,7 @@ process {
 - `--prune-species-tree --reconciliation-samples 100`
 
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
-- `--rec-model UndatedDTL --strategy SPR`
+- `--rec-model UndatedDL --strategy SPR`
 
 - [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)
 
@@ -352,20 +352,20 @@ process {
 - `--prune-species-tree --reconciliation-samples 100 --per-species-rates`
 
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
-- `--rec-model UndatedDTL --strategy SPR`
+- `--rec-model UndatedDL --strategy SPR`
 
 - [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)
 
 #### 13. [`PARSE_PHYLOHOGS`](../modules/local/parse_phylohogs.nf):
 
-- Extracts ortholog/paralog/xenolog pairs and hierarchical orthogroup (HOG) membership from GeneRax reconciliation output
+- Extracts ortholog/paralog pairs and hierarchical orthogroup (HOG) membership from GeneRax reconciliation output
 - Inputs: GeneRax `_reconciliated.nhx` file + GeneRax-labeled species tree
-- Outputs: `{OG}_orthologs.tsv`, `{OG}_paralogs.tsv`, `{OG}_xenologs.tsv`, `{OG}_hog_membership.tsv`, `spp_tree_node_lookup.tsv`
+- Outputs: `{OG}_orthologs.tsv`, `{OG}_paralogs.tsv`, `{OG}_hog_membership.tsv`, `spp_tree_node_lookup.tsv`
 
 #### 14. [`PHYLO_PROFILES`](../modules/local/phylo_profiles.nf):
 
 - Generates phylogenetic profiles from GeneRax per-species reconciliation outputs
-- Summarizes gene duplication, transfer, loss, and speciation events across species
+- Summarizes gene duplication, loss, and speciation events across species
 - No parameters required
 
 #### 15a. [`BUILD_REFERENCE_CHRONOGRAM`](../modules/local/build_reference_chronogram.nf) _(zoogle mode only)_:
@@ -388,7 +388,7 @@ process {
 #### 16. [`DATE_GENE_FAMILY_TREES`](../modules/local/date_gene_family_trees.nf) _(zoogle mode only)_:
 
 - Time-calibrates gene family trees using speciation node ages from the dated species tree
-- Uses GeneRax reconciliation output (`_events.newick`) to identify speciation nodes — only speciation events are used as calibration points (duplications and transfers are excluded)
+- Uses GeneRax reconciliation output (`_events.newick`) to identify speciation nodes — only speciation events are used as calibration points (duplications are excluded)
 - Calibration ages are set as fixed points (no bracket) to avoid compounding uncertainty from the species tree dating
 - Gene family trees exceeding `max_treepl_tips` (default: 2500) are skipped
 

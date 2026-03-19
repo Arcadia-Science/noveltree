@@ -50,13 +50,12 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - `speciesrax/`: Rooted species tree from [SpeciesRax](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). Contains inferred species trees with support values (`inferred_species_tree.newick`, `species_tree_*.newick`, `starting_species_tree.newick`), per-species event and coverage summaries, and run statistics.
 - `time_calibrated/` *(zoogle mode only)*: Time-calibrated species tree. Contains `time_calibrated_species_tree.newick` and `calibration_log.txt`.
 
-**10.** `generax/`: Results from GeneRax gene-family tree/species tree reconciliation with joint optimization of gene tree topology and duplication/transfer/loss rates. Each gene family directory contains the key output files in a flat structure, plus a compressed archive of the full GeneRax output.
+**10.** `generax/`: Results from GeneRax gene-family tree/species tree reconciliation with joint optimization of gene tree topology and duplication/loss rates. Each gene family directory contains the key output files in a flat structure, plus a compressed archive of the full GeneRax output.
 
 - `per_family_rates/` *(full mode only)*: Results using the per-family rate model. One directory per gene family containing:
   - `{OG}_reconciled_gft.newick`: Reconciled gene family tree.
-  - `{OG}_eventCounts.txt`: Counts of duplication, transfer, and loss events.
+  - `{OG}_eventCounts.txt`: Counts of duplication and loss events.
   - `{OG}_speciesEventCounts.txt`: Event counts per species-tree node.
-  - `{OG}_transfers.txt`: Inferred transfer events.
   - `{OG}_full_output.tar.gz`: Compressed archive of the complete GeneRax output for this gene family.
 - `per_species_rates/`: Results using the per-species rate model. One directory per gene family containing the same files as above, plus:
   - `{OG}_perSpeciesCoverage.txt`: Per-species coverage statistics.
@@ -64,11 +63,8 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 **11.** `gene_family_evolution/`: Phylogenetic profiles and event summaries from PHYLO_PROFILES module.
 
 - `duplication_count_per_species_per_gene_family.tsv`: Matrix of duplication events with species-tree nodes as rows and gene families as columns.
-- `hgt_summed_counts_recip_donor.tsv`: Horizontal gene transfer network matrix showing donor-recipient relationships between species.
 - `loss_count_per_per_species_gene_family.tsv`: Matrix of gene loss events per species-tree node per gene family.
 - `speciation_count_per_species_per_gene_family.tsv`: Matrix of speciation events per species-tree node per gene family.
-- `transfer_donor_count_per_species_per_gene_family.tsv`: HGT events where each species acted as donor.
-- `transfer_recipient_count_per_species_per_gene_family.tsv`: HGT events where each species acted as recipient.
 
 **12.** `protein_properties/` *(zoogle mode only)*: Amino acid composition and physicochemical property summaries from PROTEIN_PROPERTIES module.
 
