@@ -79,11 +79,11 @@ cat("Shared species:", paste(shared_species, collapse = ", "), "\n")
 
 cat("\nExtracting calibrations from reference chronogram...\n")
 
-ref_depths <- node.depth.edgelength(reference_tree)
-ref_root_depth <- max(ref_depths)
-
-n_ref_tips <- length(reference_tree$tip.label)
-n_ref_internal <- reference_tree$Nnode
+# Prune reference tree to shared species (preserves node ages for ultrametric trees)
+ref_pruned <- keep.tip(reference_tree, shared_species)
+ref_pruned_depths <- node.depth.edgelength(ref_pruned)
+ref_pruned_root_depth <- max(ref_pruned_depths)
+n_pruned_tips <- length(ref_pruned$tip.label)
 
 calibrations <- data.frame(
   spp_mrca = integer(0),
@@ -91,44 +91,67 @@ calibrations <- data.frame(
   tipA = character(0),
   tipB = character(0),
   n_desc_tips = integer(0),
+  concordant = logical(0),
   stringsAsFactors = FALSE
 )
 
-for (i in seq_len(n_ref_internal)) {
-  ref_node <- n_ref_tips + i
+for (i in seq_len(ref_pruned$Nnode)) {
+  ref_node <- n_pruned_tips + i
 
-  # Get descendant tip labels in the reference tree
-  desc_tips <- reference_tree$tip.label[unlist(
-    Descendants(reference_tree, ref_node, type = "tips")
+  # Get descendant tip labels in the pruned reference tree
+  desc_tips <- ref_pruned$tip.label[unlist(
+    Descendants(ref_pruned, ref_node, type = "tips")
   )]
 
-  # Intersect with species tree tip labels
-  shared_desc <- intersect(desc_tips, species_tree$tip.label)
-  if (length(shared_desc) < 2) next
+  if (length(desc_tips) < 2) next
 
   # Find MRCA in species tree
-  spp_mrca <- getMRCA(species_tree, shared_desc)
+  spp_mrca <- getMRCA(species_tree, desc_tips)
   if (is.null(spp_mrca)) next
 
   # Reference node age = root depth - node depth
-  age_mya <- ref_root_depth - ref_depths[ref_node]
+  age_mya <- ref_pruned_root_depth - ref_pruned_depths[ref_node]
   if (is.na(age_mya) || age_mya <= 0) next
 
-  # Pick two representative tips (must exist in species tree)
-  tipA <- shared_desc[1]
-  tipB <- shared_desc[length(shared_desc)]
+  # Concordance check: does the species tree MRCA's set of shared descendant
+  # tips match the reference tree clade exactly? If not, the topologies
+  # disagree at this node and the calibration may be unreliable.
+  spp_desc_all <- species_tree$tip.label[unlist(
+    Descendants(species_tree, spp_mrca, type = "tips")
+  )]
+  spp_desc_shared <- intersect(spp_desc_all, shared_species)
+  is_concordant <- setequal(desc_tips, spp_desc_shared)
+
+  # Pick two representative tips
+  tipA <- desc_tips[1]
+  tipB <- desc_tips[length(desc_tips)]
 
   calibrations <- rbind(calibrations, data.frame(
     spp_mrca = spp_mrca,
     age_mya = age_mya,
     tipA = tipA,
     tipB = tipB,
-    n_desc_tips = length(shared_desc),
+    n_desc_tips = length(desc_tips),
+    concordant = is_concordant,
     stringsAsFactors = FALSE
   ))
 }
 
 cat("Raw calibrations extracted:", nrow(calibrations), "\n")
+n_concordant <- sum(calibrations$concordant)
+cat("  of which concordant (shared bipartition):", n_concordant, "\n")
+
+# Prefer concordant calibrations; fall back to all if too few concordant
+if (n_concordant >= 2) {
+  calibrations <- calibrations[calibrations$concordant, ]
+  cat("Using concordant calibrations only\n")
+} else if (n_concordant >= 1 && nrow(calibrations) > n_concordant) {
+  cat("WARNING: Only", n_concordant, "concordant calibration(s);",
+      "including non-concordant calibrations as well\n")
+} else {
+  cat("No concordant calibrations; using all raw calibrations\n")
+}
+calibrations$concordant <- NULL
 
 # Deduplicate: one calibration per species-tree MRCA node (keep entry with most descendant tips)
 if (nrow(calibrations) > 0) {
@@ -174,8 +197,12 @@ if (nrow(calibrations) > 1) {
 
 cat("Calibrations after conflict resolution:", nrow(calibrations), "\n")
 
-if (nrow(calibrations) < 2) {
-  stop("Need at least 2 calibration points from the reference tree, got ", nrow(calibrations))
+if (nrow(calibrations) < 1) {
+  stop("Need at least 1 calibration point from the reference tree, got 0")
+}
+if (nrow(calibrations) == 1) {
+  cat("WARNING: Only 1 calibration point available.",
+      "Tree dating will rely heavily on rate smoothing.\n")
 }
 
 # ============================================================================
