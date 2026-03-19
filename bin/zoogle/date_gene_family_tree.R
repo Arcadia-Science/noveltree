@@ -227,15 +227,53 @@ if (nrow(calibrations) > 0) {
 cat("  Final calibrations after dedup/conflict resolution:", nrow(calibrations), "\n")
 
 # ============================================================================
-# Step 4: Set fixed calibration ages
+# Step 3b: Ancestor-descendant spacing thinning
 # ============================================================================
-# Gene tree calibrations use fixed ages from the already-calibrated species
-# tree (age bracket was applied during species tree dating, so using fixed
-# ages here avoids compounding uncertainty).
+# On any root-to-tip path, adjacent calibrations must be >= 5% of root age
+# apart.  When two are closer, the shallower (younger) one is dropped.
+# This prevents over-constraining treePL in densely-calibrated clades.
+
+if (nrow(calibrations) > 1) {
+  min_age_gap <- max(calibrations$age_mya) * 0.05
+  # Sort oldest-first so we preferentially keep deeper calibrations
+  calibrations <- calibrations[order(-calibrations$age_mya), ]
+
+  drop_idx <- c()
+  for (i in 1:(nrow(calibrations) - 1)) {
+    if (i %in% drop_idx) next
+    for (j in (i + 1):nrow(calibrations)) {
+      if (j %in% drop_idx) next
+      node_i <- calibrations$gf_mrca[i]
+      node_j <- calibrations$gf_mrca[j]
+      # Check if i is ancestor of j (i is older, j is younger)
+      if (node_i %in% Ancestors(gf_tree, node_j, type = "all")) {
+        age_diff <- calibrations$age_mya[i] - calibrations$age_mya[j]
+        if (age_diff < min_age_gap) {
+          drop_idx <- c(drop_idx, j)
+        }
+      }
+    }
+  }
+
+  if (length(drop_idx) > 0) {
+    cat("  Spacing thinning: dropped", length(drop_idx), "of",
+        nrow(calibrations), "calibrations (min gap =",
+        round(min_age_gap, 2), "Mya)\n")
+    calibrations <- calibrations[-drop_idx, ]
+  }
+}
+
+cat("  Calibrations after spacing thinning:", nrow(calibrations), "\n")
+
+# ============================================================================
+# Step 4: Set ±10% calibration brackets
+# ============================================================================
+# Gene tree calibrations use ±10% brackets around species tree ages,
+# giving treePL freedom for lineage-specific rate variation.
 
 if (nrow(calibrations) > 0) {
-  calibrations$min_mya <- calibrations$age_mya
-  calibrations$max_mya <- calibrations$age_mya
+  calibrations$min_mya <- calibrations$age_mya * 0.90
+  calibrations$max_mya <- calibrations$age_mya * 1.10
 }
 
 # ============================================================================
@@ -407,7 +445,7 @@ if (n_cal >= 2) {
 
   dated_tree <- tryCatch({
     calib <- makeChronosCalib(gf_tree, node = cal_node,
-                               age.min = cal_age, age.max = cal_age)
+                               age.min = cal_age * 0.90, age.max = cal_age * 1.10)
     chronos(gf_tree, model = "strict", calibration = calib)
   }, error = function(e) {
     cat("  chronos() failed:", e$message, "\n")
