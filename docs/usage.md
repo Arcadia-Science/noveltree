@@ -195,7 +195,7 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 6. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
 7. `FILTER_ORTHOGROUPS`: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
 
-![Workflow Figure](../Fig2-Workflow-part-one.png)
+
 
 8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family using the adaptive three-tier strategy ([`MAFFT`](https://mafft.cbrc.jp/alignment/software/) for ≤200 seqs, [`WITCH`](https://github.com/c5shen/WITCH) for ≤3000, [`FAMSA`](https://github.com/refresh-bio/FAMSA) for larger), or a single aligner if specified
 9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
@@ -212,7 +212,7 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 19. `PROTEIN_PROPERTIES` _(zoogle mode only)_: Calculate amino acid composition and physicochemical properties for all gene families
 20. `ZOOGLE` _(zoogle mode only)_: Calculate phylogenetically-corrected protein distances using Mahalanobis distances and permutation tests
 
-![Workflow Figure](../Fig4-Workflow-part-two.png)
+
 
 ---
 

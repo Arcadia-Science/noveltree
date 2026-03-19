@@ -2,12 +2,6 @@
 
 **Arcadia-Science/noveltree** is a Nextflow pipeline for phylogenomic inference from whole-proteome amino acid data — automating orthology inference, multiple sequence alignment, gene-family and species tree estimation, and reconciliation-based evolutionary analysis. Input proteomes can be preprocessed using the built-in `--preprocess` flag or filtered externally (see [preprocessing scripts](https://github.com/Arcadia-Science/2023-tsar-noveltree/tree/main/scripts/data-preprocessing)).
 
-<!-- TODO: Update workflow figures for v2.0.0 to reflect new adaptive alignment, preprocessing, and zoogle steps -->
-![Workflow Figure](./Fig2-Workflow-part-one.png)
-![Workflow Figure](./Fig4-Workflow-part-two.png)
-
-_These figures illustrate the full workflow mode. Simplified and zoogle modes skip certain steps (e.g., BUSCO, per-family GeneRax) or add additional analyses (e.g., phylo-dist). See [Workflow Modes](#workflow-modes) for details._
-
 `NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.
 
 ---
