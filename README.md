@@ -205,7 +205,8 @@ flowchart TD
 
     style BUSCO_Q fill:none,stroke:#999
     style BUSCO fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5
-    style ZOOG fill:#e8f4e8,stroke:#2d8a2d
+    style ZOOG fill:#e8f4e8,stroke:#2d8a2d,color:#000
+    linkStyle 18,19 stroke:#333
 ```
 
 <details>
