@@ -209,9 +209,26 @@ flowchart TD
 ```
 
 <details>
-<summary><b>Detailed subworkflow diagrams</b> (click to expand)</summary>
+<summary><b>Input Preparation</b></summary>
 
-#### Orthogroup Inference
+```mermaid
+flowchart TD
+    SS["Samplesheet CSV"] --> IC["INPUT_CHECK<br/>Validate + stage"]
+    IC -->|remote files| DL["DOWNLOAD_INPUT<br/>S3 / URL / accession"]
+    IC -->|local files| MIX["All proteomes"]
+    DL --> MIX
+
+    MIX --> PPQ{"Preprocessing<br/>enabled?"}
+    PPQ -->|yes| PP["PREPROCESS_PROTEOMES<br/>TransDecoder · Isoform filter<br/>Min length · Redundancy removal"]
+    PPQ -->|no| RENAME
+    PP --> RENAME["RENAME_FASTAS<br/>Normalize species names"]
+    RENAME --> OUT["Renamed proteomes<br/>(ready for OrthoFinder)"]
+```
+
+</details>
+
+<details>
+<summary><b>Orthogroup Inference</b></summary>
 
 ```mermaid
 flowchart TD
@@ -237,7 +254,10 @@ flowchart TD
     FILTER -->|"remaining set<br/>(≥4 species)"| GEN_FAMS["Gene-tree<br/>families"]
 ```
 
-#### Gene Tree Inference (per subset)
+</details>
+
+<details>
+<summary><b>Gene Tree Inference</b> (runs once per subset)</summary>
 
 ```mermaid
 flowchart TD
@@ -274,7 +294,10 @@ flowchart TD
     FT --> TREES
 ```
 
-#### Species Tree & Reconciliation
+</details>
+
+<details>
+<summary><b>Species Tree & Reconciliation</b></summary>
 
 ```mermaid
 flowchart TD
@@ -299,7 +322,10 @@ flowchart TD
     GRAX_S --> OUT["Reconciled trees<br/>Event counts · Species rates<br/>NHX files · Labeled species tree"]
 ```
 
-#### Zoogle Analyses
+</details>
+
+<details>
+<summary><b>Zoogle Analyses</b> (zoogle mode only)</summary>
 
 ```mermaid
 flowchart TD
