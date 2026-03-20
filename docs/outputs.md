@@ -42,7 +42,9 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 
 - `original/`: Gene family trees as inferred by FastTree2 or IQ-TREE. Files are named `{alignment_prefix}_{method}.newick` where method is `ft` (FastTree) or `iqt` (IQ-TREE), and the alignment prefix encodes the aligner and trimmer used (e.g., `OG0000001_witch_clipkit_iqt.newick`).
 - `reconciled/`: Gene family trees reconciled with the species tree by GeneRax. Contains `generax_per_species/` (per-species rate model) and `generax_per_family/` *(full mode only)* (per-family rate model). Files are named `{OG}_reconciled_gft.newick`.
-- `time_calibrated/` *(zoogle mode only)*: Time-calibrated gene family trees dated using speciation node ages from the species tree. Files are named `{OG}_dated.newick`.
+- `time_calibrated/` *(zoogle mode only)*: Time-calibrated gene family trees dated using speciation node ages from the species tree.
+  - `{OG}_dated.newick`: Time-calibrated gene family tree.
+  - `{OG}_calibrations.csv`: Speciation-node calibrations used for dating, with columns: `gf_mrca` (gene tree node), `age_mya` (species tree age), `tipA`/`tipB` (MRCA-defining tips), `n_desc_tips`, `events_node`, `min_mya`, `max_mya` (±10% brackets).
 
 **9.** `species_trees/`: Species trees organized by inference method.
 
