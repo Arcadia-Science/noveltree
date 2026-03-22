@@ -111,26 +111,41 @@ workflow INFER_GENE_TREES {
         cleaned_msas = all_msas
     }
 
-    // Run primary tree inference (IQTREE in fallback mode, otherwise based on tree_method)
-    TREES(cleaned_msas, params.tree_model)
-
     if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
-        // Detect vanished OGs: present in input but absent from output
+        // ── storeDir-aware pre-filter ──────────────────────────────────
+        // On resume, OGs that previously fell back to FastTree have only
+        // a _ft.newick in storeDir — no _iqt.newick.  Without this filter
+        // IQTREE would rerun them (and fail again) before they route to
+        // FASTTREE_FALLBACK.  We check storeDir upfront and send those OGs
+        // straight to FASTTREE_FALLBACK, which hits storeDir immediately.
+        // Nextflow's file().exists() works transparently on S3 paths.
+        def store = "${params.outdir}/gene_family_trees/original"
+        cleaned_msas.branch { meta, aln ->
+            has_ft: file("${store}/${aln.baseName}_ft.newick").exists()
+            needs_iqtree: true
+        }.set { routed }
+
+        // Run IQ-TREE only on OGs that do NOT already have a FastTree result
+        TREES(routed.needs_iqtree, params.tree_model)
+
+        // Detect vanished OGs: present in IQTREE input but absent from output
         tree_produced = TREES.out.phylogeny.map { meta, tree -> [meta.og, true] }
-        failed_alignments = cleaned_msas
+        newly_failed = routed.needs_iqtree
             .map { meta, aln -> [meta.og, true] }
             .join(tree_produced, remainder: true)
             .filter { it[2] == null }
             .map { it[0] }
-            .join(cleaned_msas.map { meta, aln -> [meta.og, meta, aln] })
+            .join(routed.needs_iqtree.map { meta, aln -> [meta.og, meta, aln] })
             .map { og, meta, aln -> [meta, aln] }
 
-        // Run FastTree on failed alignments
-        FASTTREE_FALLBACK(failed_alignments, params.tree_model)
+        // Run FastTree on newly-failed OGs plus pre-existing fallback OGs
+        FASTTREE_FALLBACK(newly_failed.mix(routed.has_ft), params.tree_model)
 
-        // Combine successful IQ-TREE trees with FastTree fallback trees
+        // Combine successful IQ-TREE trees with all FastTree fallback trees
         phylogeny = TREES.out.phylogeny.mix(FASTTREE_FALLBACK.out.phylogeny)
     } else {
+        // No fallback mode: run primary tree method on everything
+        TREES(cleaned_msas, params.tree_model)
         phylogeny = TREES.out.phylogeny
     }
 
