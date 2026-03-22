@@ -58,17 +58,12 @@ dist_permute_test <- function(dist_mat, focal_dists, n_permutations = 10000) {
   # protein), across non-reference proteins
   obs_dists_p_values <-
     perm_test_within_non_ref(dist_mat, focal_dists, n_permutations) # nolint
-  obs_dists_p_values <- setNames(
-    lapply(seq_len(ncol(obs_dists_p_values)),
-           function(x) obs_dists_p_values[, x]), colnames(obs_dists_p_values)
+  # Reshape the matrix to long format (handles single-row case where stack() fails)
+  obs_dists_p_values <- data.frame(
+    values = as.vector(obs_dists_p_values),
+    ind = rep(rownames(obs_dists_p_values), ncol(obs_dists_p_values)),
+    reference = rep(colnames(obs_dists_p_values), each = nrow(obs_dists_p_values))
   )
-  obs_dists_p_values <-
-    do.call(rbind,
-            lapply(names(obs_dists_p_values), function(name) {
-              df <- as.data.frame(stack(obs_dists_p_values[[name]]))
-              df$reference <- name
-              df
-            }))
 
   # Prepare to combine:
   obs_dists_p_values$key <-
