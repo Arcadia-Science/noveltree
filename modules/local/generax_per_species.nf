@@ -73,6 +73,10 @@ process GENERAX_PER_SPECIES {
     echo "alignment = $alignment" >> ${og}.family
     echo "subst_model = LG+G4+F" >> ${og}.family
 
+    # Resolve polytomies — GeneRax requires strictly binary gene trees
+    resolve_polytomies.py ${gene_tree} ${gene_tree}.resolved
+    mv ${gene_tree}.resolved ${gene_tree}
+
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
