@@ -49,11 +49,28 @@ workflow INFER_GENE_TREES {
             tier3: true
         }.set { tiered }
 
+        // ── storeDir-aware pre-filter for alignment fallback ─────────────
+        // On resume, OGs that previously fell back to FAMSA have only a
+        // _famsa.fa in storeDir — no MAFFT/WITCH output.  Without this
+        // filter, MAFFT/WITCH would rerun them (and fail again) before
+        // routing to FAMSA_FALLBACK.  We check storeDir upfront.
+        def alnStore = "${params.outdir}/alignments/original"
+
+        tiered.tier1.branch { meta, fasta ->
+            has_famsa: file("${alnStore}/${fasta.baseName}_famsa.fa").exists()
+            needs_aligner: true
+        }.set { tier1_routed }
+
+        tiered.tier2.branch { meta, fasta ->
+            has_famsa: file("${alnStore}/${fasta.baseName}_famsa.fa").exists()
+            needs_aligner: true
+        }.set { tier2_routed }
+
         // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤300 seqs)
-        MAFFT_TIER1(tiered.tier1)
+        MAFFT_TIER1(tier1_routed.needs_aligner)
 
         // Tier 2: WITCH (medium families, 301–3000 seqs)
-        WITCH_TIER2(tiered.tier2)
+        WITCH_TIER2(tier2_routed.needs_aligner)
 
         // Tier 3: FAMSA2 with accuracy flags (large families, >3000 seqs)
         FAMSA_TIER3(tiered.tier3)
@@ -62,25 +79,30 @@ workflow INFER_GENE_TREES {
         // Any failure (tool or infrastructure) is ignored by Nextflow,
         // producing no output for that OG — route it to FAMSA_FALLBACK.
         tier1_produced = MAFFT_TIER1.out.msas.map { meta, aln -> [meta.og, true] }
-        tier1_failed = tiered.tier1
+        newly_failed_tier1 = tier1_routed.needs_aligner
             .map { meta, fasta -> [meta.og, true] }
             .join(tier1_produced, remainder: true)
             .filter { it[2] == null }          // no match in output → vanished
             .map { it[0] }                     // OG id
-            .join(tiered.tier1.map { meta, fasta -> [meta.og, meta, fasta] })
+            .join(tier1_routed.needs_aligner.map { meta, fasta -> [meta.og, meta, fasta] })
             .map { og, meta, fasta -> [meta, fasta] }
 
         tier2_produced = WITCH_TIER2.out.msas.map { meta, aln -> [meta.og, true] }
-        tier2_failed = tiered.tier2
+        newly_failed_tier2 = tier2_routed.needs_aligner
             .map { meta, fasta -> [meta.og, true] }
             .join(tier2_produced, remainder: true)
             .filter { it[2] == null }
             .map { it[0] }
-            .join(tiered.tier2.map { meta, fasta -> [meta.og, meta, fasta] })
+            .join(tier2_routed.needs_aligner.map { meta, fasta -> [meta.og, meta, fasta] })
             .map { og, meta, fasta -> [meta, fasta] }
 
-        // Run FAMSA fallback on all tier 1/2 failures
-        FAMSA_FALLBACK(tier1_failed.mix(tier2_failed))
+        // Run FAMSA fallback: fresh failures + pre-existing fallback OGs
+        FAMSA_FALLBACK(
+            newly_failed_tier1
+                .mix(newly_failed_tier2)
+                .mix(tier1_routed.has_famsa)
+                .mix(tier2_routed.has_famsa)
+        )
 
         // Combine successful primary alignments with fallback
         all_msas = MAFFT_TIER1.out.msas
