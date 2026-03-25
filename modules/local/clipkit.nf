@@ -6,8 +6,8 @@ process CLIPKIT {
     memory {
         def n = (meta?.n_seq ?: 50) as long
         def L = (meta?.max_len ?: 500) as long
-        def estimated_gb = Math.max(2L, (long)(n * L * 20L / (1024L * 1024L * 1024L)) + 1L)
-        def capped_gb = (int) Math.min(estimated_gb, 32L)
+        def estimated_gb = Math.max(4L, (long)(n * L * 20L / (1024L * 1024L * 1024L)) + 1L)
+        def capped_gb = (int) Math.min(estimated_gb, 64L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested

@@ -7,7 +7,7 @@
 #
 # Usage:
 #   Rscript date_gene_family_tree.R <reconciled_tree> <species_tree> \
-#     <alignment> <og_name> <max_treepl_tips> \
+#     <alignment> <og_name> <age_bracket> \
 #     <out_dated_tree> <out_calibrations_csv>
 
 suppressPackageStartupMessages({
@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 7) {
   stop("Usage: Rscript date_gene_family_tree.R <reconciled_tree> ",
-       "<species_tree> <alignment> <og_name> <max_treepl_tips> ",
+       "<species_tree> <alignment> <og_name> <age_bracket> ",
        "<out_dated_tree> <out_calibrations_csv>")
 }
 
@@ -27,7 +27,7 @@ tree_path       <- args[1]
 spp_tree_path   <- args[2]
 alignment_path  <- args[3]
 og_name         <- args[4]
-max_treepl_tips <- as.integer(args[5])
+age_bracket     <- as.numeric(args[5])
 out_tree_path   <- args[6]
 out_csv_path    <- args[7]
 
@@ -36,7 +36,7 @@ cat("OG:", og_name, "\n")
 cat("Reconciled tree:", tree_path, "\n")
 cat("Species tree:", spp_tree_path, "\n")
 cat("Alignment:", alignment_path, "\n")
-cat("Max treePL tips:", max_treepl_tips, "\n")
+cat("Age bracket:", age_bracket, "\n")
 
 # ============================================================================
 # Step 0: Read inputs
@@ -227,53 +227,14 @@ if (nrow(calibrations) > 0) {
 cat("  Final calibrations after dedup/conflict resolution:", nrow(calibrations), "\n")
 
 # ============================================================================
-# Step 3b: Ancestor-descendant spacing thinning
+# Step 4: Set calibration brackets
 # ============================================================================
-# On any root-to-tip path, adjacent calibrations must be >= 5% of root age
-# apart.  When two are closer, the shallower (younger) one is dropped.
-# This prevents over-constraining treePL in densely-calibrated clades.
-
-if (nrow(calibrations) > 1) {
-  min_age_gap <- max(calibrations$age_mya) * 0.05
-  # Sort oldest-first so we preferentially keep deeper calibrations
-  calibrations <- calibrations[order(-calibrations$age_mya), ]
-
-  drop_idx <- c()
-  for (i in 1:(nrow(calibrations) - 1)) {
-    if (i %in% drop_idx) next
-    for (j in (i + 1):nrow(calibrations)) {
-      if (j %in% drop_idx) next
-      node_i <- calibrations$gf_mrca[i]
-      node_j <- calibrations$gf_mrca[j]
-      # Check if i is ancestor of j (i is older, j is younger)
-      if (node_i %in% Ancestors(gf_tree, node_j, type = "all")) {
-        age_diff <- calibrations$age_mya[i] - calibrations$age_mya[j]
-        if (age_diff < min_age_gap) {
-          drop_idx <- c(drop_idx, j)
-        }
-      }
-    }
-  }
-
-  if (length(drop_idx) > 0) {
-    cat("  Spacing thinning: dropped", length(drop_idx), "of",
-        nrow(calibrations), "calibrations (min gap =",
-        round(min_age_gap, 2), "Mya)\n")
-    calibrations <- calibrations[-drop_idx, ]
-  }
-}
-
-cat("  Calibrations after spacing thinning:", nrow(calibrations), "\n")
-
-# ============================================================================
-# Step 4: Set ±10% calibration brackets
-# ============================================================================
-# Gene tree calibrations use ±10% brackets around species tree ages,
+# Gene tree calibrations use ±age_bracket windows around species tree ages,
 # giving treePL freedom for lineage-specific rate variation.
 
 if (nrow(calibrations) > 0) {
-  calibrations$min_mya <- calibrations$age_mya * 0.90
-  calibrations$max_mya <- calibrations$age_mya * 1.10
+  calibrations$min_mya <- calibrations$age_mya * (1 - age_bracket)
+  calibrations$max_mya <- calibrations$age_mya * (1 + age_bracket)
 }
 
 # ============================================================================
@@ -300,139 +261,58 @@ cat("  Number of calibrations:", n_cal, "\n")
 cat("  Number of tips:", n_tips, "\n")
 
 if (n_cal >= 2) {
-  if (n_tips < max_treepl_tips) {
-    # --- treePL ---
-    cat("  Using treePL for dating...\n")
+  # --- treePL with fixed smooth=10 ---
+  # Fixed smoothing avoids CV instability (hanging, optimizer failures) on
+  # large gene family trees.  smooth=10 allows sufficient rate heterogeneity
+  # for post-duplication rate asymmetry while still regularizing uncalibrated
+  # subtrees.  PATHd8 is not used — it produces Inf branches on gene family
+  # trees due to extreme rate heterogeneity between paralogs.
+  cat("  Using treePL for dating (smooth=10)...\n")
 
-    # Write gene tree for treePL
-    tree_file <- paste0(og_name, "_for_treepl.newick")
-    write.tree(gf_tree, file = tree_file)
+  # Write gene tree for treePL — strip internal node labels (S/D)
+  tree_file <- paste0(og_name, "_for_treepl.newick")
+  gf_tree_for_treepl <- gf_tree
+  gf_tree_for_treepl$node.label <- NULL
+  write.tree(gf_tree_for_treepl, file = tree_file)
 
-    # Build calibration lines
-    cal_lines <- c()
-    for (i in 1:n_cal) {
-      cal_name <- paste0("cal", i)
-      cal_lines <- c(cal_lines,
-        paste("mrca =", cal_name, calibrations$tipA[i], calibrations$tipB[i]),
-        paste("min =", cal_name, calibrations$min_mya[i]),
-        paste("max =", cal_name, calibrations$max_mya[i])
-      )
-    }
-
-    # CV pass to find optimal smoothing
-    cv_config_file <- paste0(og_name, "_treepl_cv.config")
-    cv_out_file <- paste0(og_name, "_treepl_cv_out.newick")
-    cv_config <- c(
-      paste("treefile =", tree_file),
-      paste("numsites =", numsites),
-      "smooth = 100",
-      cal_lines,
-      paste("outfile =", cv_out_file),
-      "opt = 1",
-      "optad = 1",
-      "cvstart = 1000",
-      "cvstop = 0.1",
-      "cviter = 3",
-      "cv"
+  # Build calibration lines
+  cal_lines <- c()
+  for (i in 1:n_cal) {
+    cal_name <- paste0("cal", i)
+    cal_lines <- c(cal_lines,
+      paste("mrca =", cal_name, calibrations$tipA[i], calibrations$tipB[i]),
+      paste("min =", cal_name, calibrations$min_mya[i]),
+      paste("max =", cal_name, calibrations$max_mya[i])
     )
-    writeLines(cv_config, cv_config_file)
+  }
 
-    cv_output <- tryCatch({
-      system2("/opt/conda/bin/treePL", args = cv_config_file,
-              stdout = TRUE, stderr = TRUE)
-    }, error = function(e) {
-      cat("  treePL CV pass failed:", e$message, "\n")
-      NULL
-    })
+  config_file <- paste0(og_name, "_treepl.config")
+  out_file <- paste0(og_name, "_treepl_dated.newick")
+  treepl_config <- c(
+    paste("treefile =", tree_file),
+    paste("numsites =", numsites),
+    "smooth = 10",
+    cal_lines,
+    paste("outfile =", out_file),
+    "opt = 1",
+    "optad = 1"
+  )
+  writeLines(treepl_config, config_file)
 
-    # Parse optimal smoothing from CV output
-    optimal_smooth <- 100  # default
-    if (!is.null(cv_output)) {
-      smooth_line <- grep("Optimal smoothing value", cv_output, value = TRUE)
-      if (length(smooth_line) > 0) {
-        smooth_val <- as.numeric(sub(".*: *", "", smooth_line[1]))
-        if (!is.na(smooth_val) && smooth_val > 0) {
-          optimal_smooth <- smooth_val
-          cat("  Optimal smoothing from CV:", optimal_smooth, "\n")
-        }
-      }
-    }
+  treepl_result <- tryCatch({
+    system2("/opt/conda/bin/treePL", args = config_file,
+            stdout = TRUE, stderr = TRUE)
+  }, error = function(e) {
+    cat("  treePL failed:", e$message, "\n")
+    NULL
+  })
 
-    # Final pass with optimal smoothing
-    final_config_file <- paste0(og_name, "_treepl_final.config")
-    final_out_file <- paste0(og_name, "_treepl_dated.newick")
-    final_config <- c(
-      paste("treefile =", tree_file),
-      paste("numsites =", numsites),
-      paste("smooth =", optimal_smooth),
-      cal_lines,
-      paste("outfile =", final_out_file),
-      "opt = 1",
-      "optad = 1"
-    )
-    writeLines(final_config, final_config_file)
-
-    treepl_result <- tryCatch({
-      system2("/opt/conda/bin/treePL", args = final_config_file,
-              stdout = TRUE, stderr = TRUE)
-    }, error = function(e) {
-      cat("  treePL final pass failed:", e$message, "\n")
-      NULL
-    })
-
-    if (file.exists(final_out_file)) {
-      dated_tree <- read.tree(final_out_file)
-      cat("  treePL dating succeeded\n")
-    } else {
-      cat("  WARNING: treePL output not found, falling back to undated tree\n")
-      dated_tree <- gf_tree
-    }
-
+  if (file.exists(out_file)) {
+    dated_tree <- read.tree(out_file)
+    cat("  treePL dating succeeded\n")
   } else {
-    # --- PATHd8 ---
-    cat("  Using PATHd8 for dating (tree has", n_tips, "tips)...\n")
-
-    # Write PATHd8 input
-    pathd8_input <- paste0(og_name, "_pathd8_input.txt")
-    tree_string <- write.tree(gf_tree)
-
-    pathd8_lines <- c(tree_string)
-    pathd8_lines <- c(pathd8_lines, paste("Sequence length =", numsites, ";"))
-    for (i in 1:n_cal) {
-      midpoint <- (calibrations$min_mya[i] + calibrations$max_mya[i]) / 2
-      pathd8_lines <- c(pathd8_lines,
-        paste0("mrca: ", calibrations$tipA[i], ", ", calibrations$tipB[i],
-               ", fixage=", midpoint, ";")
-      )
-    }
-    writeLines(pathd8_lines, pathd8_input)
-
-    pathd8_output <- paste0(og_name, "_pathd8_output.txt")
-    pathd8_result <- tryCatch({
-      system2("/usr/local/bin/PATHd8", args = c("-i", pathd8_input,
-                                                 "-o", pathd8_output),
-              stdout = TRUE, stderr = TRUE)
-    }, error = function(e) {
-      cat("  PATHd8 failed:", e$message, "\n")
-      NULL
-    })
-
-    if (file.exists(pathd8_output)) {
-      # Parse PATHd8 output - extract the d8 dated tree
-      pathd8_out_lines <- readLines(pathd8_output, warn = FALSE)
-      d8_line <- grep("^d8 tree", pathd8_out_lines, value = TRUE)
-      if (length(d8_line) > 0) {
-        d8_tree_str <- sub("^d8 tree *: *", "", d8_line[1])
-        dated_tree <- read.tree(text = d8_tree_str)
-        cat("  PATHd8 dating succeeded\n")
-      } else {
-        cat("  WARNING: Could not parse PATHd8 output, using undated tree\n")
-        dated_tree <- gf_tree
-      }
-    } else {
-      cat("  WARNING: PATHd8 output not found, using undated tree\n")
-      dated_tree <- gf_tree
-    }
+    cat("  WARNING: treePL output not found, falling back to undated tree\n")
+    dated_tree <- gf_tree
   }
 
 } else if (n_cal == 1) {
@@ -445,7 +325,7 @@ if (n_cal >= 2) {
 
   dated_tree <- tryCatch({
     calib <- makeChronosCalib(gf_tree, node = cal_node,
-                               age.min = cal_age * 0.90, age.max = cal_age * 1.10)
+                               age.min = cal_age * (1 - age_bracket), age.max = cal_age * (1 + age_bracket))
     chronos(gf_tree, model = "strict", calibration = calib)
   }, error = function(e) {
     cat("  chronos() failed:", e$message, "\n")

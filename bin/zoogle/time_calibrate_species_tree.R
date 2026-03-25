@@ -355,7 +355,7 @@ if (calibration_method == "treePL") {
   pathd8_output <- "spp_tree_pathd8_output.txt"
   cat("Running PATHd8...\n")
   pathd8_result <- tryCatch({
-    system2("/usr/local/bin/PATHd8", args = c("-i", pathd8_input, "-o", pathd8_output),
+    system2("/usr/local/bin/PATHd8", args = c(pathd8_input, pathd8_output),
             stdout = TRUE, stderr = TRUE)
   }, error = function(e) {
     cat("PATHd8 failed:", e$message, "\n")

@@ -6,8 +6,8 @@ process PARSE_PHYLOHOGS {
     memory {
         def n = (meta?.n_seq ?: 100) as long
         // Tree traversal is O(n); pair output is O(n²) but streamed to disk
-        def base_gb = Math.max(2L, (long)(n / 200L) + 2L)
-        def capped_gb = (int) Math.min(base_gb, 32L)
+        def base_gb = Math.max(4L, (long)(n / 200L) + 4L)
+        def capped_gb = (int) Math.min(base_gb, 64L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
