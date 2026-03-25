@@ -55,7 +55,7 @@ workflow ZOOGLE {
         .join(all_clean_msas)
         .combine(TIME_CALIBRATE_SPECIES_TREE.out.calibrated_tree)
 
-    DATE_GENE_FAMILY_TREES(ch_dating_input, params.max_treepl_tips)
+    DATE_GENE_FAMILY_TREES(ch_dating_input, params.age_bracket)
 
     //
     // ZOOGLE_ANALYSIS: phylogenetic distance analysis with validation filter

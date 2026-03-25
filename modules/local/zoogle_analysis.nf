@@ -1,6 +1,18 @@
 process ZOOGLE_ANALYSIS {
     tag "${meta.og}"
-    label "process_high"
+
+    cpus { Math.min( 36 * task.attempt, params.max_cpus as int ) }
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def dist_matrix_gb = n * n * 8L / (1024L * 1024L * 1024L)
+        def estimated_gb = Math.max(8L, (long)(dist_matrix_gb * 3L) + 4L)
+        def capped_gb = (int) Math.min(estimated_gb, 64L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
     container 'arcadiascience/zoogle:1.1.0'
 

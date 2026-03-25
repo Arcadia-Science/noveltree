@@ -9,7 +9,7 @@ process GENERAX_PER_SPECIES {
         def clv_bytes = n * L * 640L
         def mpi_overhead = task.cpus * 250L * 1024L * 1024L
         def estimated_gb = Math.max(8L, (long)((clv_bytes * 2.5 + mpi_overhead) / (1024L * 1024L * 1024L)) + 2L)
-        def capped_gb = (int) Math.min(estimated_gb, 96L)
+        def capped_gb = (int) Math.min(estimated_gb, 128L)
         def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
