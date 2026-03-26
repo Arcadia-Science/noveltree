@@ -243,9 +243,13 @@ if (nrow(calibrations) > 0) {
 
 count_alignment_columns <- function(fasta_path) {
   lines <- readLines(fasta_path, warn = FALSE)
-  seq_lines <- lines[!grepl("^>", lines)]
-  if (length(seq_lines) == 0) return(0)
-  nchar(paste(seq_lines[1:min(length(seq_lines), 1)], collapse = ""))
+  # Concatenate all lines of the first sequence (until next header)
+  first_header <- which(grepl("^>", lines))[1]
+  if (is.na(first_header)) return(0)
+  second_header <- which(grepl("^>", lines))[2]
+  end <- if (is.na(second_header)) length(lines) else second_header - 1
+  seq_lines <- lines[(first_header + 1):end]
+  nchar(paste(seq_lines, collapse = ""))
 }
 
 numsites <- count_alignment_columns(alignment_path)
