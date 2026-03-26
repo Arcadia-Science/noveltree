@@ -77,14 +77,14 @@ All six species also go through stop codon removal, rare amino acid handling (U-
 
 ### MCL Inflation Testing
 
-By default, the pipeline uses a fixed MCL inflation value of `1.5` without testing alternatives. To enable inflation optimization (tests multiple values using COGEQC + InterPro annotations), pass `--test_mcl true` along with multiple inflation values:
+By default, the pipeline uses a fixed MCL inflation value of `1.5` without testing alternatives. To enable inflation optimization (tests multiple values using COGEQC + InterPro annotations), pass `--test_run_mcl true` along with multiple inflation values:
 
 ```bash
 nextflow run . -profile test,docker --outdir tests/results \
-    --test_mcl true --mcl_inflation '1.1,1.3,1.5,2.0,3.0'
+    --test_run_mcl true --mcl_inflation '1.1,1.3,1.5,2.0,3.0'
 ```
 
-Note: `--test_mcl true` requires at least two `--mcl_inflation` values; the pipeline will exit with an error otherwise.
+Note: `--test_run_mcl true` requires at least two `--mcl_inflation` values; the pipeline will exit with an error otherwise.
 
 ### BUSCO
 

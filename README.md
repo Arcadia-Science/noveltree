@@ -147,7 +147,7 @@ Pre-built Docker images are pulled automatically when running the pipeline. If y
 make docker-all
 ```
 
-Building R-based images (phylo-dist) may take 15-20 minutes due to package compilation. Images are built for `linux/amd64`.
+Building R-based images (zoogle) may take 15-20 minutes due to package compilation. Images are built for `linux/amd64`.
 
 The `bin/zoogle/` directory contains code vendored from the [2024-organismal-selection](https://github.com/Arcadia-Science/2024-organismal-selection) repository. See `bin/zoogle/README.md` for provenance details.
 
@@ -250,9 +250,8 @@ flowchart TD
     PREP_ALL --> BLAST_ALL["DIAMOND_BLASTP<br/>(all-vs-all)"]
     BLAST_ALL --> MCL_ALL["ORTHOFINDER_MCL"]
     BEST --> MCL_ALL
-    MCL_ALL --> FILTER["FILTER_ORTHOGROUPS"]
-    FILTER -->|"conservative set<br/>(high coverage, low copy #)"| SPP_FAMS["Species-tree<br/>families"]
-    FILTER -->|"remaining set<br/>(≥4 species)"| GEN_FAMS["Gene-tree<br/>families"]
+    MCL_ALL -->|"conservative set<br/>(high coverage, low copy #)"| SPP_FAMS["Species-tree<br/>families"]
+    MCL_ALL -->|"remaining set<br/>(≥4 species)"| GEN_FAMS["Gene-tree<br/>families"]
 ```
 
 </details>

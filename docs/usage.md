@@ -171,7 +171,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | `ncbi_email` | — | Email for NCBI Entrez queries. Required for zoogle mode when `reference_time_tree` is not provided |
 | `reference_time_tree` | — | Path to a reference time-calibrated tree (Newick). If not provided in zoogle mode, a chronogram is auto-built from TimeTree.org |
 | `test_run` | `false` | Restrict analysis to gene families containing all species for fast smoke testing |
-| `test_mcl` | `false` | Enable MCL inflation parameter testing on species with UniProt accessions. When false, uses `--mcl_inflation` directly |
+| `test_run_mcl` | `false` | Enable MCL inflation parameter testing on species with UniProt accessions. When false, uses `--mcl_inflation` directly |
 | `preprocess` | `false` | Enable built-in proteome preprocessing (TransDecoder, isoform filtering, min length, redundancy removal) |
 | `simplified` | `true` | Enable simplified mode (skip BUSCO, per-species GeneRax EVAL only) |
 | `busco` | `false` | Enable BUSCO quality assessment (full mode only) |
@@ -212,6 +212,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `time_calibration_method` | `"treePL"` | Species tree calibration method. Options: `treePL`, `PATHd8`. Gene family trees always use treePL with fixed smoothing |
+| `age_bracket` | `0.20` | Proportional bracket applied to calibration ages for both species tree and gene family tree dating (e.g., 0.20 = ±20%) |
 
 ---
 
@@ -279,7 +280,7 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 4. `ORTHOFINDER_PREP`: All proteomes are staged/reformated for analysis with [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)
 5. `DIAMOND_BLASTP`: Determine all-v-all (within and among species) protein sequence similarity using [`Diamond`](https://github.com/bbuchfink/diamond) BlastP ultra-sensitive.
 6. `ORTHOFINDER_MCL`: Cluster [`UniProt`](https://www.uniprot.org/) sequences into orthogroups/gene-families using [`OrthoFinder`](https://github.com/davidemms/OrthoFinder)'s implementation of [`MCL`](http://micans.org/mcl/) clustering using a specified set of inflation scores
-7. `FILTER_ORTHOGROUPS`: Summarize distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference, and one for gene-family tree inference.
+7. `ORTHOFINDER_MCL` also summarizes the distribution of orthogroups across taxonomic groups and per-species copy number, filtering into a conservative subset for species tree inference and one for gene-family tree inference.
 
 
 
@@ -343,18 +344,10 @@ process {
 
 #### 4. [`ORTHOFINDER_MCL`](../modules/local/orthofinder_mcl.nf):
 
-- `mcl_inflation`: Comma-separated list of inflation parameter values to be used in testing. MCL inflation testing is optional. Set `--test_mcl true` to enable. When disabled (default), the pipeline uses the `--mcl_inflation` value directly.
+- `mcl_inflation`: Comma-separated list of inflation parameter values to be used in testing. MCL inflation testing is optional. Set `--test_run_mcl true` to enable. When disabled (default), the pipeline uses the `--mcl_inflation` value directly.
 - [OrthoFinder2 documentation](https://github.com/davidemms/OrthoFinder)
 
-#### 5. [`FILTER_ORTHOGROUPS`](../modules/local/filter_orthogroups.nf):
-
-- Parameters specified in parameter json file or via commandline when running workflow.
-- `min_num_seq_per_og`: Minimum number of sequences a gene family must contain for phylogenetic inference.
-- `min_prop_spp_for_spptree`: Minimum % of species for inclusion in species tree inference.
-- `min_num_spp_per_og`: Minimum # of species a gene family must contain for phylogenetic inference.
-- `max_copy_num_spp_tree`: Maximum # of per-species gene copy number a gene family may contain for species-tree inference.
-
-#### 6. `ALIGN_SEQS`
+#### 5. `ALIGN_SEQS`
 
 ##### [`MAFFT`](../modules/nf-core-modified/mafft.nf):
 
@@ -378,7 +371,7 @@ process {
   - `-t <n>`: Number of threads (automatically set from task.cpus)
 - [FAMSA documentation](https://github.com/refresh-bio/FAMSA)
 
-#### 7. `TRIM_SEQS`
+#### 6. `TRIM_SEQS`
 
 ##### [`CLIPKIT`](../modules/local/clipkit.nf):
 
@@ -391,7 +384,7 @@ process {
 - See [CIALIGN documentation](https://github.com/KatyBrown/CIAlign) for detailed description of options.
 - `--crop_divergent_min_prop_ident=0.25 --crop_divergent_min_prop_nongap=0.25 --crop_ends --remove_insertions --insertion_min_size=5 --insertion_max_size=200 --remove_divergent --remove_divergent_minperc=0.15`
 
-#### 8. `INFER_TREES`
+#### 7. `INFER_TREES`
 
 ##### [`FASTTREE`](../modules/nf-core-modified/fasttree.nf):
 
@@ -405,14 +398,14 @@ process {
 - All other custom parameters should be specified in [`conf/modules.config`](../conf/modules.config).
 - [IQ-TREE documentation](http://www.iqtree.org/)
 
-#### 9. [`ASTEROID`](../modules/local/asteroid.nf):
+#### 8. [`ASTEROID`](../modules/local/asteroid.nf):
 
 - Parameters should be specified in [`conf/modules.config`](../conf/modules.config).
 - `--random-starting-trees 10`: Number of random starting trees used in species tree inference.
 - `--bs-replicates 100`: Number of bootstrap replicates for assessing species tree support.
 - [Asteroid documentation](https://github.com/BenoitMorel/Asteroid)
 
-#### 10. [`SPECIESRAX`](../modules/local/speciesrax.nf):
+#### 9. [`SPECIESRAX`](../modules/local/speciesrax.nf):
 
 ##### **PLEASE** read the [SpeciesRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax) to GeneRax and SpeciesRax for a more detailed explanation, both of these options as well as other possible parameter specifications.
 
@@ -422,7 +415,7 @@ process {
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
 - `--rec-model UndatedDL --si-strategy SKIP --si-quartet-support`
 
-#### 11. [`GENERAX_PER_FAMILY`](../modules/local/generax_per_family.nf):
+#### 10. [`GENERAX_PER_FAMILY`](../modules/local/generax_per_family.nf):
 
 - The following parameters are specified within the [GeneRax per-family module file](../modules/local/generax_per_family.nf)
 - `--prune-species-tree --reconciliation-samples 100`
@@ -432,7 +425,7 @@ process {
 
 - [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)
 
-#### 12. [`GENERAX_PER_SPECIES`](../modules/local/generax_per_species.nf):
+#### 11. [`GENERAX_PER_SPECIES`](../modules/local/generax_per_species.nf):
 
 - The following parameters are specified within the [GeneRax per-species module file](../modules/local/generax_per_species.nf)
 - `--prune-species-tree --reconciliation-samples 100 --per-species-rates`
@@ -442,19 +435,19 @@ process {
 
 - [GeneRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax)
 
-#### 13. [`PARSE_PHYLOHOGS`](../modules/local/parse_phylohogs.nf):
+#### 12. [`PARSE_PHYLOHOGS`](../modules/local/parse_phylohogs.nf):
 
 - Extracts ortholog/paralog pairs and hierarchical orthogroup (HOG) membership from GeneRax reconciliation output
 - Inputs: GeneRax `_reconciliated.nhx` file + GeneRax-labeled species tree
 - Outputs: `{OG}_orthologs.tsv`, `{OG}_paralogs.tsv`, `{OG}_hog_membership.tsv`, `spp_tree_node_lookup.tsv`
 
-#### 14. [`PHYLO_PROFILES`](../modules/local/phylo_profiles.nf):
+#### 13. [`PHYLO_PROFILES`](../modules/local/phylo_profiles.nf):
 
 - Generates phylogenetic profiles from GeneRax per-species reconciliation outputs
 - Summarizes gene duplication, loss, and speciation events across species
 - No parameters required
 
-#### 15a. [`BUILD_REFERENCE_CHRONOGRAM`](../modules/local/build_reference_chronogram.nf) _(zoogle mode only)_:
+#### 14a. [`BUILD_REFERENCE_CHRONOGRAM`](../modules/local/build_reference_chronogram.nf) _(zoogle mode only)_:
 
 - Automatically builds a reference chronogram by querying TimeTree.org for pairwise divergence times
 - Queries species-level taxids first, with genus-level fallback for missing pairs
@@ -463,7 +456,7 @@ process {
 - **Requires**: `ncbi_email` parameter for NCBI Entrez queries
 - Skipped when `reference_time_tree` is provided
 
-#### 15b. [`TIME_CALIBRATE_SPECIES_TREE`](../modules/local/time_calibrate_species_tree.nf) _(zoogle mode only)_:
+#### 14b. [`TIME_CALIBRATE_SPECIES_TREE`](../modules/local/time_calibrate_species_tree.nf) _(zoogle mode only)_:
 
 - Time-calibrates the inferred species tree against the reference chronogram (auto-built or user-provided)
 - Matches shared taxa between the inferred and reference trees, then uses treePL penalized likelihood to date the species tree
@@ -471,7 +464,7 @@ process {
 - **Optional**: `reference_time_tree` parameter with path to reference timetree (Newick format). If not provided, a chronogram is auto-built from TimeTree.org.
 - `time_calibration_method`: Method for calibration - "treePL" (default)
 
-#### 16. [`DATE_GENE_FAMILY_TREES`](../modules/local/date_gene_family_trees.nf) _(zoogle mode only)_:
+#### 15. [`DATE_GENE_FAMILY_TREES`](../modules/local/date_gene_family_trees.nf) _(zoogle mode only)_:
 
 - Time-calibrates gene family trees using speciation node ages from the dated species tree
 - Uses GeneRax reconciliation output (`_events.newick`) to identify speciation nodes — only speciation events are used as calibration points (duplications are excluded)
@@ -479,13 +472,13 @@ process {
 - Uses treePL with fixed `smooth=10` (no cross-validation pass) to avoid CV instability on large gene trees
 - Calibration ages use `age_bracket` (default ±20%) around species tree node ages
 
-#### 17. [`PROTEIN_PROPERTIES`](../modules/local/protein_properties.nf) _(zoogle mode only)_:
+#### 16. [`PROTEIN_PROPERTIES`](../modules/local/protein_properties.nf) _(zoogle mode only)_:
 
 - Calculates amino acid composition and physicochemical properties for all gene families
 - Computes 20 amino acid frequencies and properties (molecular weight, aromaticity, GRAVY, isoelectric point, etc.)
 - No parameters required
 
-#### 18. [`ZOOGLE`](../modules/local/zoogle.nf) _(zoogle mode only)_:
+#### 17. [`ZOOGLE`](../modules/local/zoogle.nf) _(zoogle mode only)_:
 
 - Calculates phylogenetically-corrected protein distances using Mahalanobis distances
 - **Universal centroid analysis**: For all gene families, computes Mahalanobis distance from each protein to the family centroid, with protein-level rank p-values and species-level permutation p-values
