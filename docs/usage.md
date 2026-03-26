@@ -211,7 +211,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `time_calibration_method` | `"treePL"` | Species tree calibration method. Options: `treePL`, `PATHd8` |
+| `time_calibration_method` | `"treePL"` | Species tree calibration method. Options: `treePL`, `PATHd8`. Gene family trees always use treePL with fixed smoothing |
 
 ---
 
@@ -475,8 +475,9 @@ process {
 
 - Time-calibrates gene family trees using speciation node ages from the dated species tree
 - Uses GeneRax reconciliation output (`_events.newick`) to identify speciation nodes — only speciation events are used as calibration points (duplications are excluded)
-- Calibration ages are set as fixed points (no bracket) to avoid compounding uncertainty from the species tree dating
-- Gene family trees exceeding `max_treepl_tips` (default: 2500) are skipped
+- Internal node labels (S/D) are stripped before dating to avoid confusing treePL
+- Uses treePL with fixed `smooth=10` (no cross-validation pass) to avoid CV instability on large gene trees
+- Calibration ages use `age_bracket` (default ±20%) around species tree node ages
 
 #### 17. [`PROTEIN_PROPERTIES`](../modules/local/protein_properties.nf) _(zoogle mode only)_:
 

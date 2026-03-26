@@ -263,19 +263,13 @@
                 "time_calibration_method": {
                     "type": "string",
                     "default": "treePL",
-                    "description": "Method for time-calibrating trees. treePL (penalized likelihood) is default; PATHd8 is used automatically as fallback for large trees or on retry.",
+                    "description": "Method for time-calibrating the species tree. Options: treePL (penalized likelihood) or PATHd8. Gene family trees always use treePL with fixed smoothing.",
                     "enum": ["treePL", "PATHd8"]
-                },
-                "max_treepl_tips": {
-                    "type": "integer",
-                    "default": 2500,
-                    "description": "Maximum number of tips allowed for treePL dating. Gene family trees exceeding this are skipped.",
-                    "fa_icon": "fas fa-hashtag"
                 },
                 "age_bracket": {
                     "type": "number",
                     "default": 0.20,
-                    "description": "Proportional bracket applied to calibration ages for species tree dating (e.g., 0.20 = +/- 20%).",
+                    "description": "Proportional bracket applied to calibration ages for both species tree and gene family tree dating (e.g., 0.20 = +/- 20%).",
                     "fa_icon": "fas fa-arrows-alt-h"
                 }
             }

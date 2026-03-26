@@ -44,7 +44,7 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 - `reconciled/`: Gene family trees reconciled with the species tree by GeneRax. Contains `generax_per_species/` (per-species rate model) and `generax_per_family/` *(full mode only)* (per-family rate model). Files are named `{OG}_reconciled_gft.newick`.
 - `time_calibrated/` *(zoogle mode only)*: Time-calibrated gene family trees dated using speciation node ages from the species tree.
   - `{OG}_dated.newick`: Time-calibrated gene family tree.
-  - `{OG}_calibrations.csv`: Speciation-node calibrations used for dating, with columns: `gf_mrca` (gene tree node), `age_mya` (species tree age), `tipA`/`tipB` (MRCA-defining tips), `n_desc_tips`, `events_node`, `min_mya`, `max_mya` (±10% brackets).
+  - `{OG}_calibrations.csv`: Speciation-node calibrations used for dating, with columns: `gf_mrca` (gene tree node), `age_mya` (species tree age), `tipA`/`tipB` (MRCA-defining tips), `n_desc_tips`, `events_node`, `min_mya`, `max_mya` (±`age_bracket`, default ±20%).
 
 **9.** `species_trees/`: Species trees organized by inference method.
 
