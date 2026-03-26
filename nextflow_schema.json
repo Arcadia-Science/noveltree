@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/Arcadia-Science/noveltree/main/nextflow_schema.json",
     "title": "Arcadia-Science/noveltree pipeline parameters",
-    "description": "taking proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree",
+    "description": "Phylogenomic inference from whole-proteome data: orthology, gene-family and species trees, reconciliation, and physicochemical distance analysis",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -150,7 +150,7 @@
                     "default": false,
                     "description": "Restrict to gene families containing ALL species (fast smoke test)."
                 },
-                "test_mcl": {
+                "test_run_mcl": {
                     "type": "boolean",
                     "default": false,
                     "description": "Test multiple MCL inflation values on species with UniProt accessions."

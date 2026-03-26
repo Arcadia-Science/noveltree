@@ -1,6 +1,6 @@
 # Arcadia-Science/noveltree Docker images
 
-This folder includes the Dockerfiles used for the custome modules of the pipeline. The final versions of all containers are hosted on [Arcadia Science's DockerHub account](https://hub.docker.com/u/arcadiascience).
+This folder includes the Dockerfiles used for the custom modules of the pipeline. The final versions of all containers are hosted on [Arcadia Science's DockerHub account](https://hub.docker.com/u/arcadiascience).
 
 ## Base images
 
@@ -32,12 +32,10 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `GENERAX/SPECIESRAX`                 | [GeneRax @ commit 56f3ed0](./generax/)                               | [arcadiascience/generax_56f3ed0:1.1.3](https://hub.docker.com/r/arcadiascience/generax_56f3ed0)                         |
 | `IQTREE`                             | [IQ-TREE v2.2.0.5](./iqtree/)                                        | [arcadiascience/iqtree_2.2.0.5](https://hub.docker.com/r/arcadiascience/iqtree_2.2.0.5)                        |
 | `ORTHOFINDER` (prep, mcl, phylohogs) | [OrthoFinder v2.5.4](./orthofinder)                                  | [arcadiascience/orthofinder_2.5.4](https://hub.docker.com/r/arcadiascience/orthofinder_2.5.4)                     |
-| `FILTER_ORTHOGROUPS`                 | [R v4.2.2](./rbase/)                                                 | [arcadiascience/rbase_4.2.2](https://hub.docker.com/r/arcadiascience/rbase_4.2.2)                                 |
 | `SELECT_INFLATION`                   | [select_mcl_inflation_params created on 08/30/2023](./select_mcl_inflation_params/) | [arcadiascience/select_mcl_inflation_params_08302023](https://hub.docker.com/r/arcadiascience/select_mcl_inflation_params_08302023) |
 | `WITCH`                   | [WITCH v0.3.0](./witch/) | [arcadiascience/witch_0.3.0](https://hub.docker.com/r/arcadiascience/witch_0.3.0) |
 | `FAMSA`                   | [FAMSA v2.5.0](./famsa/) | [arcadiascience/famsa_2.0.0](https://hub.docker.com/r/arcadiascience/famsa_2.0.0) |
 | `PHYLO_PROFILES`          | [phylo_profiles v1.0.0](./phylo_profiles/) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
-| `MERGE_PHYLO_PROFILES`    | (uses phylo_profiles image) | [arcadiascience/phylo_profiles:1.0.0](https://hub.docker.com/r/arcadiascience/phylo_profiles) |
 | `PHYSICOCHEMICAL_PROPS`   | [physicochemical_props v1.0.0](./physicochemical_props/) | [arcadiascience/physicochemical_props:1.0.0](https://hub.docker.com/r/arcadiascience/physicochemical_props) |
 | `ZOOGLE`                  | [zoogle v1.2.0](./zoogle/) | [arcadiascience/zoogle:1.2.0](https://hub.docker.com/r/arcadiascience/zoogle) |
 | `TIME_CALIBRATE_SPECIES_TREE` | (uses zoogle image) | [arcadiascience/zoogle:1.2.0](https://hub.docker.com/r/arcadiascience/zoogle) |

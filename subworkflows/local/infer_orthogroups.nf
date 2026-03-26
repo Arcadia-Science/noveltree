@@ -32,12 +32,12 @@ workflow INFER_ORTHOGROUPS {
 
     main:
     //
-    // MCL inflation parameter selection (opt-in via --test_mcl)
+    // MCL inflation parameter selection (opt-in via --test_run_mcl)
     //
     if (params.test_run_mcl) {
         // Ensure multiple inflation values are provided when testing
         if (mcl_inflation.size() < 2) {
-            exit 1, '--test_mcl requires multiple --mcl_inflation values (e.g. --mcl_inflation "1.1,1.3,1.5,2.0,3.0")'
+            exit 1, '--test_run_mcl requires multiple --mcl_inflation values (e.g. --mcl_inflation "1.1,1.3,1.5,2.0,3.0")'
         }
         // Derive MCL test and annotation subsets from renamed files
         ch_renamed_mcl_test = renamed_prots.filter { it[0].mcl_test == 'true' }
