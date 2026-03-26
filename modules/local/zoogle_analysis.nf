@@ -14,7 +14,7 @@ process ZOOGLE_ANALYSIS {
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }
 
-    container 'arcadiascience/zoogle:1.1.0'
+    container 'arcadiascience/zoogle:1.2.0'
 
     storeDir "${params.outdir}/zoogle"
 
