@@ -22,6 +22,9 @@ process BUILD_REFERENCE_CHRONOGRAM {
     script:
     def args = task.ext.args ?: ''
     """
+    # Ensure HOME is writable (Singularity mounts host HOME read-only)
+    export HOME=\$PWD
+
     build_reference_chronogram.py \\
         --species-names ${species_names} \\
         --output ref_chronogram.nwk \\
