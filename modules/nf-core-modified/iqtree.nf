@@ -20,8 +20,7 @@ process IQTREE {
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
-        '' }"
+    container 'arcadiascience/iqtree_2.2.0.5:1.0.0'
 
     storeDir "${params.outdir}/gene_family_trees/original"
 
