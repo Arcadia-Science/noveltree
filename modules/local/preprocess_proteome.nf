@@ -17,7 +17,7 @@ process PREPROCESS_PROTEOME {
     task.ext.when == null || task.ext.when
 
     script:
-    def skip_cdhit = meta.reference == 'yes'
+    def skip_cdhit = meta.reference_proteome == 'yes'
     def cdhit_threshold = meta.transdecoder == 'yes' ? '0.97' : '1.00'
     """
     # Decompress if gzipped

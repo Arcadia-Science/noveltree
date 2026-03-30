@@ -102,13 +102,13 @@ workflow NOVELTREE {
     // 3. BUSCO (optional, independent — no downstream consumers)
     if (params.busco) {
         BUSCO_SHALLOW(
-            ch_renamed_prots.filter{ it[0].shallow_db != "NA" },
+            ch_renamed_prots.filter{ it[0].busco_shallow != "NA" },
             "shallow",
             [],
             []
         )
         BUSCO_BROAD(
-            ch_renamed_prots.filter{ it[0].broad_db != "NA" },
+            ch_renamed_prots.filter{ it[0].busco_broad != "NA" },
             "broad",
             [],
             []

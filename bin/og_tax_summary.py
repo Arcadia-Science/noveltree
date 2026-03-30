@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Summarize orthogroup distribution across species and taxonomic groups,
-and filter orthogroups for species tree vs gene tree inference.
-
-Replaces og_tax_summary.R with identical logic.
+Summarize orthogroup distribution across species and filter orthogroups
+for species tree vs gene tree inference.
 """
 
 import csv
@@ -27,13 +25,11 @@ def main():
     prop_spp_spptree_filt = float(sys.argv[5])
     copy_num_filt1 = float(sys.argv[6])
 
-    # Read samplesheet to get species → taxonomy mapping
-    spp_to_taxon = {}
+    # Read samplesheet to count species
     num_species = 0
     with open(samplesheet_path) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            spp_to_taxon[row["species"]] = row["taxonomy"]
             num_species += 1
 
     num_spp_spptree_filt = round(num_species * prop_spp_spptree_filt)
@@ -72,24 +68,11 @@ def main():
             present_counts = [c for c in counts.values() if c > 0]
             mean_copy_num = sum(present_counts) / len(present_counts) if present_counts else 0.0
 
-            # Count taxonomic groups represented
-            taxon_present = set()
-            for spp_name, count in counts.items():
-                if count > 0:
-                    # Strip EukProt ID if present (matching R's sub("EP0.*?_", "", spp))
-                    clean_spp = spp_name
-                    import re
-                    clean_spp = re.sub(r"EP0.*?_", "", clean_spp)
-                    taxon = spp_to_taxon.get(clean_spp, "Unknown")
-                    taxon_present.add(taxon)
-            num_tax_grps = len(taxon_present)
-
             results.append({
                 "orthogroup": og_name,
                 "num_spp": num_spp,
                 "total_copy_num": total_copy_num,
                 "mean_copy_num": mean_copy_num,
-                "num_tax_grps": num_tax_grps,
             })
 
     # Filter: species tree core OGs
@@ -111,7 +94,7 @@ def main():
     ]
 
     # Write outputs
-    fieldnames = ["orthogroup", "num_spp", "total_copy_num", "mean_copy_num", "num_tax_grps"]
+    fieldnames = ["orthogroup", "num_spp", "total_copy_num", "mean_copy_num"]
 
     def write_csv(filename, data):
         with open(filename, "w", newline="") as f:

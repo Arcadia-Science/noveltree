@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gene family tree dating uses speciation-only calibrations from GeneRax reconciliation with treePL fixed smoothing (smooth=10) and `--age_bracket` (default ±20%) calibration brackets (replaces congruification)
 - FILTER_ORTHOGROUPS functionality absorbed into ORTHOFINDER_MCL
 - `MAFFT_ADAPTIVE` renamed to `MAFFT_TIER1` for consistency with WITCH_TIER2 and FAMSA_TIER3
+- Samplesheet redesigned: required columns reduced from 7 to 3 (`species`, `input_data`, `input_type`); all other columns are optional in any order. Column renames for clarity: `file` → `input_data`, `mode` → `input_type`, `uniprot` → `has_uniprot_ids`, `mcl_test` → `include_in_mcl_test`, `isoform` → `filter_isoforms`, `reference` → `reference_proteome`, `shallow_db` → `busco_shallow`, `broad_db` → `busco_broad`
+- All samplesheet boolean columns standardized to `yes`/`no` (previously `uniprot` used `true`/`false`)
 
 ### Removed
 - ORTHOFINDER_PHYLOHOGS module (replaced by PARSE_PHYLOHOGS using GeneRax NHX directly)
@@ -58,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `species_tree_prep` module
 - OMA annotation collection and scoring from cogeqc analysis
 - `bin/protein_annotation.R` (dead code; only Python version was used)
+- `taxonomy` samplesheet column and taxonomy group counting from orthogroup summaries
 - `bioservices` dependency (replaced by `requests` for UniProt ID Mapping API)
 - Congruification approach for gene family tree dating (replaced by reconciliation-filtered speciation-only calibrations)
 - Gene transfer (HGT) inference from GeneRax reconciliation (UndatedDTL → UndatedDL)
