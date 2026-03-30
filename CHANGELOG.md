@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default MSA trimmer: `none` → `clipkit`
 - `min_ungapped_length` default: 20 → 50
 - `min_num_spp_per_og` default: 4 → 2
-- `min_prop_spp_for_spptree` default: 0.25 → 0.75
+- `min_prop_spp_for_spptree` default: 0.25 → 0.50
 - `max_copy_num_spp_tree` default: 5 → 10
 - `mcl_inflation` default: `'1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0'` → `'1.5'`
 - FastTree arguments updated to evidence-based maximum accuracy settings (`-lg -gamma -bionj -pseudo -spr 4 -mlacc 2 -slownni`; Zhou et al. 2018)

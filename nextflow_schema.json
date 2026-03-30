@@ -57,7 +57,7 @@
                 },
                 "min_prop_spp_for_spptree": {
                     "type": "number",
-                    "default": 0.75,
+                    "default": 0.50,
                     "description": "Minimum proportion of all species in orthogroup for inclusion in species tree inference."
                 },
                 "max_copy_num_spp_tree": {
