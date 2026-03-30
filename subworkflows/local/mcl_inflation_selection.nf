@@ -17,7 +17,7 @@ workflow MCL_INFLATION_SELECTION {
         mcl_test_prots_list = mcl_test_prots.collect { it[1] }
 
         annotation_prots.ifEmpty {
-            exit 1, 'Samplesheet must include samples with UniProt annotations (uniprot column set to true) and mcl_test when performing MCL parameter selection.'
+            exit 1, 'Samplesheet must include samples with has_uniprot_ids=yes and include_in_mcl_test=yes when performing MCL parameter selection.'
         }
 
         //

@@ -23,10 +23,10 @@ workflow PREPROCESS_PROTEOMES {
 
     // Step 2: Isoform filtering — for species with isoform == 'yes' OR transdecoder == 'yes'
     ch_needs_isofilter = ch_after_transdecoder.filter {
-        it[0].isoform == 'yes' || it[0].transdecoder == 'yes'
+        it[0].filter_isoforms == 'yes' || it[0].transdecoder == 'yes'
     }
     ch_skip_isofilter = ch_after_transdecoder.filter {
-        it[0].isoform != 'yes' && it[0].transdecoder != 'yes'
+        it[0].filter_isoforms != 'yes' && it[0].transdecoder != 'yes'
     }
 
     FILTER_ISOFORMS(ch_needs_isofilter)

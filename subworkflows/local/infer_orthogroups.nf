@@ -40,8 +40,8 @@ workflow INFER_ORTHOGROUPS {
             exit 1, '--test_run_mcl requires multiple --mcl_inflation values (e.g. --mcl_inflation "1.1,1.3,1.5,2.0,3.0")'
         }
         // Derive MCL test and annotation subsets from renamed files
-        ch_renamed_mcl_test = renamed_prots.filter { it[0].mcl_test == 'true' }
-        ch_renamed_annotation = ch_renamed_mcl_test.filter { it[0].uniprot == 'true' }
+        ch_renamed_mcl_test = renamed_prots.filter { it[0].include_in_mcl_test == 'yes' }
+        ch_renamed_annotation = ch_renamed_mcl_test.filter { it[0].has_uniprot_ids == 'yes' }
 
         MCL_INFLATION_SELECTION(
             ch_renamed_mcl_test,

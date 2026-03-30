@@ -25,13 +25,13 @@ process ANNOTATE_UNIPROT {
     script:
     def args        = task.ext.args ?: ''
     def spp         = "${meta.id}"
-    def is_uniprot  = "${meta.uniprot}"
+    def is_uniprot  = "${meta.has_uniprot_ids}"
     def project_dir = "${projectDir}"
     """
     # Only annotate species for which protein IDs are found in UniProt (i.e.
     # proteomes come from UniProt).
     # Check below - if from uniprot, go ahead and annotate, otherwise skip the species.
-    if [ "$is_uniprot" == "true" ]; then
+    if [ "$is_uniprot" == "yes" ]; then
         # Pull out the sequence names, strip trailing info, and remove spp name.
         # Handle both colon-delimited (>Species:Accession) and pipe-delimited (>Species|Accession|Entry) formats
         grep ">" $fasta | cut -d" " -f1 | awk -F'[:|]' '{print \$2}' > ${spp}_protein_accessions.txt

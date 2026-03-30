@@ -38,36 +38,12 @@ ogs[-1][ogs[-1] > 0] <- 1
 # For each orthogroup, count the number of species included
 numspp <- rowSums(ogs[-1], na.rm = T)
 
-# Convert species names to taxon group
-for(i in 2:ncol(ogs)){
-    # Identify the species
-    spp <- colnames(ogs)[i]
-
-    # Strip the EukProt ID (if relevant)
-    spp <- sub("EP0.*?_", "", spp)
-
-    # And the taxonomic group for this species
-    grp <- unique(as.character(samples$taxonomy[which(samples$species == spp)]))
-
-    # Now replace the species name with group name
-    colnames(ogs)[i] <- grp
-}
-
-# Count number of taxonomic groups included in each orthogroup
-taxcount <- t(rowsum(t(ogs[-1]),
-              group = colnames(ogs)[-1],
-              na.rm = T))
-# Convert counts to binary for easy counts of species in each og.
-taxcount[taxcount > 1] <- 1
-taxcount <- rowSums(taxcount)
-
 res <-
     data.frame(
         orthogroup = ogs$Orthogroup,
         num_spp = numspp,
         total_copy_num = totals[,1],
-        mean_copy_num = copynum,
-        num_tax_grps = taxcount
+        mean_copy_num = copynum
     )
 
 # Create the subsets
