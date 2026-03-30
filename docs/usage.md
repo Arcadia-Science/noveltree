@@ -182,7 +182,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 |-----------|---------|-------------|
 | `mcl_inflation` | `"1.5"` | Quoted, comma-separated MCL inflation parameters for orthogroup clustering. A single value skips testing. Recommended single value: `2.5` ([rationale](https://doi.org/10.57844/arcadia-z08x-v798)) |
 | `min_num_spp_per_og` | `4` | Minimum number of species a gene family must contain for phylogenetic inference |
-| `min_prop_spp_for_spptree` | `0.75` | Minimum proportion of species for inclusion in species tree inference |
+| `min_prop_spp_for_spptree` | `0.50` | Minimum proportion of species for inclusion in species tree inference |
 | `max_copy_num_spp_tree` | `10` | Maximum per-species gene copy number for species tree inference |
 | `min_protein_length` | `50` | Minimum amino acid sequence length during preprocessing (only when `--preprocess` enabled) |
 
