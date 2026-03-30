@@ -1,0 +1,7 @@
+species,input_data,input_type,has_uniprot_ids,include_in_mcl_test,busco_shallow,busco_broad
+Homo-sapiens,euk_test_data/proteomes/Homo-sapiens.fasta,proteins,yes,yes,primates_odb10,eukaryota_odb10
+Mus-musculus,euk_test_data/proteomes/Mus-musculus.fasta,proteins,yes,yes,glires_odb10,eukaryota_odb10
+Danio-rerio,euk_test_data/proteomes/Danio-rerio.fasta,proteins,yes,yes,actinopterygii_odb10,eukaryota_odb10
+Drosophila-melanogaster,euk_test_data/proteomes/Drosophila-melanogaster.fasta,proteins,yes,yes,diptera_odb10,eukaryota_odb10
+Saccharomyces-cerevisiae,euk_test_data/proteomes/Saccharomyces-cerevisiae.fasta,proteins,yes,no,saccharomycetes_odb10,eukaryota_odb10
+Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,proteins,yes,no,sordariomycetes_odb10,eukaryota_odb10

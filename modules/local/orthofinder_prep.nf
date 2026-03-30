@@ -2,14 +2,9 @@ process ORTHOFINDER_PREP {
     tag "Prepping data for OrthoFinder"
     label 'process_low'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
-        '' }"
+    container 'arcadiascience/orthofinder_2.5.4:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/orthofinder",
-        mode: 'copy',
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/orthofinder/prep"
 
     input:
     file(fasta)
@@ -20,7 +15,6 @@ process ORTHOFINDER_PREP {
     path "**.fa"             , emit: fastas
     path "**SequenceIDs.txt" , emit: seqIDs
     path "**SpeciesIDs.txt"  , emit: sppIDs
-    path "versions.yml"      , emit: versions
 
     script:
     """

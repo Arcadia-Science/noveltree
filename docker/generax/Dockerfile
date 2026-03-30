@@ -19,12 +19,13 @@ RUN apt-get update && \
         libgmp3-dev \
         libssl-dev \
         openmpi-bin \
-        openmpi-doc
+        openmpi-doc \
+        python3
 
 # Clone the GeneRax repository and install with MPI
 RUN git clone --recursive https://github.com/BenoitMorel/GeneRax && \
     cd GeneRax/ && \
-    git checkout 19604b7115c8ff6306f04d69572483de195600a8 && \
+    git checkout 56f3ed0fb55a6e57397d2816348b70e4c31a3890 && \
     bash ./install.sh
 
 # Clean up

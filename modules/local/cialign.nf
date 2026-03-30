@@ -2,30 +2,27 @@ process CIALIGN {
     tag "$fasta"
     label 'process_low_cpu'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/cialign_1.1.0:1.0.0' :
-        '' }"
+    container 'arcadiascience/cialign_1.1.0:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/cialign_cleaned_msas",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/alignments/trimmed"
 
     input:
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
 
     output:
-    tuple val(meta), path("**_cialign.fa") , emit: cleaned_msas, optional: true
-    tuple val(meta), path("**_map.link")   , emit: map_link, optional: true
-    path "*"                               , emit: results
-    path "versions.yml"                    , emit: versions
+    tuple val(meta), path("${fasta.baseName}_cialign.fa")  , emit: cleaned_msas
+    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link
+    path "removed_sites/*"                 , emit: removed_sites
+    path "log_files/*"                     , emit: log_files
 
     script:
     def args = task.ext.args ?: ''
     def remove_short = params.min_ungapped_length ? "--remove_short --remove_min_length=${params.min_ungapped_length}" : ''
+    def min_seq = params.min_num_seq_per_og
+    def min_spp = params.min_num_spp_per_og
     """
-    # Get the name of the orthogroup we are processing
-    prefix=\$(echo ${fasta} | cut -f1 -d "_")
+    # Get the alignment prefix (strip .fa extension, preserving aligner provenance)
+    prefix=\$(basename "${fasta}" .fa)
 
     # Clean up the MSAs for each orthogroup containing at least 4 species.
     CIAlign \
@@ -46,16 +43,20 @@ process CIALIGN {
     mkdir log_files
     mv *log.txt log_files
 
-    # Now, create a protein-species map-file, assuming that trimming didn't lead
-    # to the focal MSA being comprised of < 4 sequences.
-    n_remain=\$(grep ">" \${prefix}_cialign.fa | wc -l)
-    if [ \$n_remain -lt 4 ]; then
+    # Verify the trimmed alignment still meets minimum sequence/species thresholds.
+    n_seq=\$(grep -c ">" \${prefix}_cialign.fa || true)
+    n_spp=\$(grep ">" \${prefix}_cialign.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    mkdir -p species_protein_maps
+    if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
+        # QC failed — produce empty outputs so storeDir can distinguish
+        # "task ran, alignment discarded" from "task never ran"
         rm \${prefix}_cialign.fa
+        touch \${prefix}_cialign.fa
+        touch species_protein_maps/\${prefix}_map.link
     else
         # Now pull out the sequences, and split into a TreeRecs format mapping
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
-        mkdir species_protein_maps
         grep ">" \${prefix}_cialign.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
         paste prot spp > species_protein_maps/\${prefix}_map.link

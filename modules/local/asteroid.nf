@@ -2,14 +2,9 @@ process ASTEROID {
     tag "Asteroid"
     label 'process_asteroid'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0':
-        '' }"
+    container 'arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0'
 
-    publishDir(
-        path: "${params.outdir}/asteroid",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/species_trees/asteroid"
 
     input:
     val species_names  // Names of all species
@@ -23,7 +18,6 @@ process ASTEROID {
     path "*bsTrees.newick"                 , emit: asteroid_bs_trees
     path "*scores.txt"                     , emit: asteroid_scores
     path "disco*.newick"                   , emit: disco_trees
-    path "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -40,7 +34,7 @@ process ASTEROID {
 
     # Create the list of gene family trees to be decomposed into single-copy
     # trees using DISCO
-    cat *.treefile >> gene_family_trees.newick
+    cat *.newick >> gene_family_trees.newick
 
     # Use the updated species names to update protein names in these gene family
     # trees, ensuring that underscores in names successfully delimit protein ids

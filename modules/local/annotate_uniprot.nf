@@ -2,8 +2,7 @@ process ANNOTATE_UNIPROT {
     tag "$meta.id"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/bioservices_1.10.0:1.0.0':
-        '' }"
+    container 'arcadiascience/bioservices_1.10.0:1.0.0'
 
     publishDir(
         path: "${params.outdir}/protein_annotations",
@@ -26,35 +25,25 @@ process ANNOTATE_UNIPROT {
     script:
     def args        = task.ext.args ?: ''
     def spp         = "${meta.id}"
-    def is_uniprot  = "${meta.uniprot}"
+    def is_uniprot  = "${meta.has_uniprot_ids}"
     def project_dir = "${projectDir}"
     """
     # Only annotate species for which protein IDs are found in UniProt (i.e.
     # proteomes come from UniProt).
     # Check below - if from uniprot, go ahead and annotate, otherwise skip the species.
-    if [ "$is_uniprot" == "true" ]; then
+    if [ "$is_uniprot" == "yes" ]; then
         # Pull out the sequence names, strip trailing info, and remove spp name.
-        grep ">" $fasta | cut -d" " -f1 | cut -d":" -f2 > ${spp}_protein_accessions.txt
+        # Handle both colon-delimited (>Species:Accession) and pipe-delimited (>Species|Accession|Entry) formats
+        grep ">" $fasta | cut -d" " -f1 | awk -F'[:|]' '{print \$2}' > ${spp}_protein_accessions.txt
 
-        # Now run the script to pull down annotations for the protein accessions in this species.
-        # This Python script uses the bioservices python package to accomplish this.
-        # NOTE: The script is packaged in the bin/ subdirectory of this workflow.
+        # Retrieve InterPro annotations from UniProt REST API.
         protein_annotation.py $spp ${spp}_protein_accessions.txt
-
-        # Organize results so that the cogeqc annotations are in the current
-        # directory, and all others are moved into a single directory for the
-        # species
-        mkdir $spp
-        for f in \$(ls *.tsv | grep -v "cogeqc")
-        do
-            mv \$f ${spp}/
-        done
     fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         Python: \$( python --version | sed "s/Python //g" | sed "s/ (.*//g" )
-        bioservices: \$(python -c "import pkg_resources; print(pkg_resources.get_distribution('bioservices').version)")
+        requests: \$(python -c "import requests; print(requests.__version__)")
     END_VERSIONS
     """
 }

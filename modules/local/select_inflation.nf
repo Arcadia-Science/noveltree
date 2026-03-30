@@ -2,8 +2,7 @@ process SELECT_INFLATION {
     tag "Selecting best MCL Inflation"
     label 'process_low'
 
-    container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/select_mcl_inflation_params_08302023:1.0.0': '' }"
+    container 'arcadiascience/select_mcl_inflation_params_08302023:1.0.0'
 
     publishDir(
         path: "${params.outdir}/orthogroup_summaries",

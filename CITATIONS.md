@@ -18,9 +18,9 @@
 
   > The UniProt Consortium. (2023). UniProt: the universal protein knowledgebase in 2023. https://doi.org/10.1093/nar/gkac1052
 
-- [BioServices](https://doi.org/10.1093/bioinformatics/btt547)
+- [Biopython](https://doi.org/10.1093/bioinformatics/btp163)
 
-  > Cokelaer, T, Pultz, D, Harder, LM, Serra-Musach, J, Saez-Rodriguez, J. (2013). BioServices: a common Python package to access biological Web Services programmatically. https://doi.org/10.1093/bioinformatics/btt547
+  > Cock PJ, Antao T, Chang JT, Chapman BA, Cox CJ, Dalke A, Friedberg I, Hamelryck T, Kauff F, Wilczynski B, de Hoon MJ. (2009). Biopython: freely available Python tools for computational molecular biology and bioinformatics. https://doi.org/10.1093/bioinformatics/btp163
 
 - [pandas](https://zenodo.org/record/8239932)
 
@@ -54,6 +54,10 @@
 
   > Shen, C, Park, M, & Warnow, T. (2022). WITCH: improved multiple sequence alignment through weighted consensus hidden Markov model alignment. https://doi.org/10.1089/cmb.2021.0585
 
+- [FAMSA2](https://doi.org/10.1101/2025.07.15.664876)
+
+  > Deorowicz S, Debudaj-Grabysz A, Gudyś A. (2025). FAMSA2 enables accurate multiple sequence alignment at protein-universe scale. https://doi.org/10.1101/2025.07.15.664876
+
 - [ClipKIT](https://doi.org/10.1371/journal.pbio.3001007)
 
   > Steenwyk JL, Buida III TJ, Li Y, Shen XX, Rokas A. (2020). ClipKIT: a multiple sequence alignment trimming software for accurate phylogenomic inference. https://doi.org/10.1371/journal.pbio.3001007
@@ -82,9 +86,45 @@
 
   > Morel B, Schade P, Lutteropp S, Williams TA, Szöllősi GJ, Stamatakis A. (2022). SpeciesRax: a tool for maximum likelihood species tree inference from gene family trees under duplication, transfer, and loss. https://doi.org/10.1093/molbev/msab365
 
+- [treePL](https://doi.org/10.1093/bioinformatics/bts492)
+
+  > Smith SA, O'Meara BC. (2012). treePL: divergence time estimation using penalized likelihood for large phylogenies. Bioinformatics 28(20):2689-2690. https://doi.org/10.1093/bioinformatics/bts492
+
+- [PATHd8](https://doi.org/10.1080/10635150701613783)
+
+  > Britton T, Anderson CL, Jacquet D, Lundqvist S, Bremer K. (2007). Estimating divergence times in large phylogenetic trees. Systematic Biology 56(5):741-752. https://doi.org/10.1080/10635150701613783
+
+- [phangorn](https://doi.org/10.1093/bioinformatics/btq706)
+
+  > Schliep KP. (2011). phangorn: phylogenetic analysis in R. Bioinformatics 27(4):592-593. https://doi.org/10.1093/bioinformatics/btq706
+
+- [SciPy](https://doi.org/10.1038/s41592-019-0686-2)
+
+  > Virtanen P et al. (2020). SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python. Nature Methods 17:261-272. https://doi.org/10.1038/s41592-019-0686-2
+
+- [TransDecoder](https://github.com/TransDecoder/TransDecoder)
+
+  > Haas BJ et al. TransDecoder. https://github.com/TransDecoder/TransDecoder
+
+- [CD-HIT](https://doi.org/10.1093/bioinformatics/bts565)
+
+  > Fu L, Niu B, Zhu Z, Wu S, Li W. (2012). CD-HIT: accelerated for clustering the next-generation sequencing data. Bioinformatics 28(23):3150-3152. https://doi.org/10.1093/bioinformatics/bts565
+
+- [SeqKit](https://doi.org/10.1371/journal.pone.0163962)
+
+  > Shen W, Le S, Li Y, Hu F. (2016). SeqKit: A Cross-Platform and Ultrafast Toolkit for FASTA/Q File Manipulation. PLoS ONE 11(10):e0163962. https://doi.org/10.1371/journal.pone.0163962
+
 - [tidyverse](https://doi.org/10.21105/joss.01686)
 
   > Wickham H et al. (2019). Welcome to the Tidyverse. https://doi.org/10.21105/joss.01686
+
+- [data.table](https://CRAN.R-project.org/package=data.table)
+
+  > Dowle M, Srinivasan A. (2023). data.table: Extension of `data.frame`. R package version 1.14.8. https://CRAN.R-project.org/package=data.table
+
+- [plyr](https://CRAN.R-project.org/package=plyr)
+
+  > Wickham H. (2011). The Split-Apply-Combine Strategy for Data Analysis. Journal of Statistical Software, 40(1), 1-29. https://www.jstatsoft.org/v40/i01/
 
 - [reshape](https://doi.org/10.18637/jss.v021.i12)
 
@@ -102,6 +142,15 @@
 
 - [phytools](https://doi.org/10.1111/j.2041-210X.2011.00169.x)
   > Revell, LJ. (2011). phytools: an R package for phylogenetic comparative biology (and other things). https://doi.org/10.1111/j.2041-210X.2011.00169.x
+
+- [geiger](https://doi.org/10.1093/bioinformatics/btu181)
+  > Harmon LJ, Weir JT, Brock CD, Glor RE, Challenger W. (2014). GEIGER: investigating evolutionary radiations. https://doi.org/10.1093/bioinformatics/btu181
+
+- [Rcpp](https://doi.org/10.18637/jss.v040.i08)
+  > Eddelbuettel D, François R. (2011). Rcpp: Seamless R and C++ Integration. https://doi.org/10.18637/jss.v040.i08
+
+- [RcppArmadillo](https://doi.org/10.1007/s00180-016-0695-x)
+  > Eddelbuettel D, Sanderson C. (2014). RcppArmadillo: Accelerating R with high-performance C++ linear algebra. https://doi.org/10.1007/s00180-016-0695-x
 
 - [DISCO](https://doi.org/10.1093/sysbio/syab070)
   > Willson, J, Saha Roddur, M, Liu, B, Zaharias, P, Warnow, T. (2021). DISCO: Species Tree Inference using Multicopy Gene Family Tree Decomposition. https://doi.org/10.1093/sysbio/syab070
