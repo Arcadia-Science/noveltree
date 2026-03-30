@@ -4,6 +4,8 @@
 
 `NovelTree` is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies.
 
+> **Detailed documentation:** For thorough descriptions of samplesheet preparation, all parameters, per-module options, and output files, see [`docs/usage.md`](docs/usage.md) and [`docs/outputs.md`](docs/outputs.md). This README provides a concise overview to get started quickly.
+
 ---
 
 ## Quick Start
@@ -31,6 +33,28 @@ Reduce `--max_memory` by ~2 GB below your available memory to leave room for Nex
 > **Note:** Pre-built Docker images are pulled automatically. You only need `make docker-all` if you've modified the pipeline code.
 
 **NOTE: The workflow supports both Docker and Singularity profiles.**
+
+---
+
+## Samplesheet
+
+NovelTree takes a CSV samplesheet as input. Only 3 columns are required:
+
+```csv
+species,input_data,input_type
+Homo-sapiens,UP000005640,proteins
+Mus-musculus,GCF_000001635.27,proteins
+Drosophila-melanogaster,/path/to/Dmel.fasta,proteins
+Saccharomyces-cerevisiae,https://example.com/Scer.fasta.gz,proteins
+```
+
+| Column | Description |
+|--------|-------------|
+| `species` | Species name in `Genus-species` format |
+| `input_data` | Local file path, URL, UniProt proteome ID (`UP*`), or NCBI accession (`GCF_*`/`GCA_*`) |
+| `input_type` | `proteins` or `transcriptome` |
+
+Optional columns (`has_uniprot_ids`, `transdecoder`, `filter_isoforms`, `reference_proteome`, `include_in_mcl_test`, `busco_shallow`, `busco_broad`) can be added in any order after the required 3. All default to `no` or `NA`. See the [full samplesheet documentation](docs/usage.md#preparation) for details on all columns, data source types, and preprocessing options.
 
 ---
 
@@ -354,16 +378,6 @@ flowchart TD
 ```
 
 </details>
-
----
-
-## Usage
-
-For a detailed description of basic- to advance-usage of the workflow, please see the [`usage.md`](docs/usage.md) file.
-
-## Outputs
-
-For a detailed description of workflow outputs, please see the [`outputs.md`](docs/outputs.md) file.
 
 ---
 
