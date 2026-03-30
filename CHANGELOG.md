@@ -54,16 +54,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - ORTHOFINDER_PHYLOHOGS module (replaced by PARSE_PHYLOHOGS using GeneRax NHX directly)
 - FILTER_ORTHOGROUPS module (absorbed into ORTHOFINDER_MCL)
-- `bin/translate_gene_trees.py` (was used by ORTHOFINDER_PHYLOHOGS)
 - PMSF two-pass tree inference (`iqtree_pmsf.nf`)
 - `min_num_grp_per_og`, `max_copy_num_gene_trees`, `tree_model_pmsf` parameters
 - `species_tree_prep` module
 - OMA annotation collection and scoring from cogeqc analysis
-- `bin/protein_annotation.R` (dead code; only Python version was used)
+- `bin/protein_annotation.R`, `bin/resolve_polytomies.R` (replaced by Python versions)
 - `taxonomy` samplesheet column and taxonomy group counting from orthogroup summaries
 - `bioservices` dependency (replaced by `requests` for UniProt ID Mapping API)
 - Congruification approach for gene family tree dating (replaced by reconciliation-filtered speciation-only calibrations)
 - Gene transfer (HGT) inference from GeneRax reconciliation (UndatedDTL → UndatedDL)
+- Unused Docker build contexts (`orthoxml_phylohogs`, `prequal`, `queryup`)
 
 ## v1.0.1-alpha - 09/28/2023
 
