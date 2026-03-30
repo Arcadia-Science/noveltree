@@ -3,21 +3,29 @@ process GENERAX_PER_FAMILY {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
-    container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/generax_19604b71:1.0.0': '' }"
+    // Exit code 10 = "no valid families" (e.g. invalid starting tree).
+    // Skip the OG gracefully rather than crashing the pipeline.
+    errorStrategy { task.exitStatus == 10 ? 'ignore' : (task.attempt <= 5 ? 'retry' : 'terminate') }
+    maxRetries 5
 
+    container 'arcadiascience/generax_56f3ed0:1.1.3'
+
+    storeDir "${params.outdir}/reconciliations/generax_per_family"
     publishDir(
-        path: "${params.outdir}/generax/per_family_rates",
+        path: "${params.outdir}/gene_family_trees/reconciled",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        pattern: "*/*_reconciled_gft.newick",
+        saveAs: { fn -> fn.split('/')[-1].replace('_reconciled_gft', '_gpf_reconciled') },
     )
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
 
     output:
-    path "*"                                         , emit: results
-    tuple val(meta), path("**_reconciled_gft.newick"), emit: generax_per_fam_gfts
+    tuple val(meta), path("${meta.og}/${meta.og}_reconciled_gft.newick")                       , emit: generax_per_fam_gfts
+    path "${meta.og}/${meta.og}_full_output.tar.gz"                                            , emit: archive
+    path "${meta.og}/_intermediate/${meta.og}_eventCounts.txt"
+    path "${meta.og}/_intermediate/${meta.og}_speciesEventCounts.txt"
 
     when:
     task.ext.when == null || task.ext.when
@@ -32,10 +40,10 @@ process GENERAX_PER_FAMILY {
     # GeneRax) cannot handle these. Even if rare,
     # their inclusion leads a number of gene families
     # to be excluded from analyses.
-    sed -E -i '/>/!s/U/-/g' *.fa
+    sed -E -i '/>/!s/U/X/g' *.fa
 
     # Do the same for Pyrrolysine
-    sed -E -i '/>/!s/O/-/g' *.fa
+    sed -E -i '/>/!s/O/X/g' *.fa
 
     # Populate the family file for this gene family for the
     # analysis with GeneRax
@@ -43,7 +51,7 @@ process GENERAX_PER_FAMILY {
     echo "[FAMILIES]" > ${og}.family
     echo "- ${og}" >> ${og}.family
     echo "starting_gene_tree = ${gene_tree}" >> ${og}.family
-    echo "mapping = ${og}_map.link" >> ${og}.family
+    echo "mapping = ${map_link}" >> ${og}.family
     echo "alignment = $alignment" >> ${og}.family
     echo "subst_model = LG+G4+F" >> ${og}.family
 
@@ -66,10 +74,23 @@ process GENERAX_PER_FAMILY {
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
 
-    # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
-    mkdir $og/reconciliations/reconciliation_transfer_samples/
-    mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
-    tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
-    rm -r $og/reconciliations/reconciliation_transfer_samples/
+    # Extract key files to working directory
+    cp $og/results/$og/${og}_reconciled_gft.newick .
+    cp $og/reconciliations/${og}_eventCounts.txt .
+    cp $og/reconciliations/${og}_speciesEventCounts.txt .
+
+    # Archive full GeneRax output, then replace with clean structure
+    tar -czf ${og}_full_output.tar.gz $og/
+    rm -rf $og/
+    mkdir -p $og/_intermediate
+    mv ${og}_reconciled_gft.newick $og/
+    mv ${og}_full_output.tar.gz $og/
+    mv ${og}_eventCounts.txt $og/_intermediate/
+    mv ${og}_speciesEventCounts.txt $og/_intermediate/
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        generax: \$(generax --version | head -n1 | sed 's/.*GeneRax //')
+    END_VERSIONS
     """
 }

@@ -1,0 +1,107 @@
+process ZOOGLE_ANALYSIS {
+    tag "${meta.og}"
+
+    cpus { Math.min( 36 * task.attempt, params.max_cpus as int ) }
+    time { 6.h * task.attempt }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def dist_matrix_gb = n * n * 8L / (1024L * 1024L * 1024L)
+        def estimated_gb = Math.max(8L, (long)(dist_matrix_gb * 3L) + 4L)
+        def capped_gb = (int) Math.min(estimated_gb, 64L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
+
+    container 'arcadiascience/zoogle:1.2.0'
+
+    storeDir "${params.outdir}/zoogle"
+
+    input:
+    tuple val(meta), path(gene_tree), path(phys_props_file),
+          path(orthologs_file), path(paralogs_file)
+    val ref_species
+
+    output:
+    // Universal outputs (always produced)
+    path "phylo-corrected-data/${meta.og}_phylo_corr_dat.tsv"           , emit: phylo_corrected_data
+    path "protein-dist-mats/${meta.og}_protein_dists.tsv"               , emit: protein_dist_mat
+    path "protein-phylo-dist-mats/${meta.og}_phylo_dists.tsv"           , emit: prot_phylo_dists
+    path "centroid-dists/${meta.og}_centroid_dists.tsv"                  , emit: centroid_dists
+    path "centroid-summary-tables/${meta.og}_centroid_summary_table.tsv" , emit: centroid_summary
+    // Reference-specific outputs (only when ref species is present in family)
+    path "protein-dists-to-reference/${meta.og}_protein_dists.tsv"      , emit: prot_dists_to_ref, optional: true
+    path "species-dists-to-reference/${meta.og}_species_dists.tsv"      , emit: spp_dists_to_ref, optional: true
+    path "protein-pvals/${meta.og}_protein_reference_dist_pvals.tsv"    , emit: protein_pvals, optional: true
+    path "species-pvals/${meta.og}_species_reference_dist_pvals.tsv"    , emit: species_pvals, optional: true
+    path "pairwise-protein-dist-perm-test/${meta.og}_protein_protein_dist_permutation_test.tsv" , emit: per_protein_dist_res, optional: true
+    path "final_protein_pair_summary_tables/${meta.og}_final_summary_table.tsv" , emit: final_summary_table, optional: true
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    """
+    #!/usr/bin/env Rscript
+
+    # Enable error tracing
+    options(error = function() {
+        traceback(2)
+        quit(status = 1)
+    })
+
+    # Save the work directory path where input files are staged
+    work_dir <- getwd()
+    cat("Work directory:", work_dir, "\\n")
+
+    # Change to /opt/zoogle to source R scripts (they need to source C++ files with relative paths)
+    setwd("/opt/zoogle")
+    cat("Sourcing R scripts from /opt/zoogle...\\n")
+    source("phylo_multivariate_distance_functions.R")
+    source("protein_dist_permutation_tests.R")
+    source("simple_protein_dist_signif_tests.R")
+    source("protein_distance_calculation_functions.R")
+    cat("Scripts sourced successfully\\n")
+
+    # Change back to work directory where input files are
+    setwd(work_dir)
+    cat("Changed back to work directory\\n")
+
+    # Prepare gene family info as named vector
+    gene_family <- c(
+        family = "${meta.og}",
+        gft = "${gene_tree}"
+    )
+
+    # Call the main function
+    # Note: gene_family["family"] is the OG name, script expects aa_stat_basedir/OG_summary_statistics.csv
+    # We need to point to current dir since Nextflow stages the file here
+    genefam_aa_conservation(
+        gene_family = gene_family,
+        ref_spp = "${ref_species}",
+        aa_stat_basedir = "",
+        keep_stats = c("molecular_weight", "aromaticity", "instability", "flexibility",
+                       "gravy_bm", "isoelectric_point", "charge_at_pH_7", "helix_fract",
+                       "sheet_fract", "molar_ext_coef_cysteines"),
+        out_dir = ".",
+        orthologs_path = "${orthologs_file}",
+        paralogs_path  = "${paralogs_file}"
+    )
+
+    # Create versions file
+    writeLines(
+        c(
+            '"${task.process}":',
+            paste0('    R: "', R.version.string, '"'),
+            paste0('    Rcpp: "', packageVersion("Rcpp"), '"'),
+            paste0('    RcppArmadillo: "', packageVersion("RcppArmadillo"), '"'),
+            paste0('    ape: "', packageVersion("ape"), '"'),
+            paste0('    phytools: "', packageVersion("phytools"), '"'),
+            paste0('    geiger: "', packageVersion("geiger"), '"')
+        ),
+        "versions.yml"
+    )
+    """
+}

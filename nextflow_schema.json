@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/Arcadia-Science/noveltree/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/Arcadia-Science/noveltree/main/nextflow_schema.json",
     "title": "Arcadia-Science/noveltree pipeline parameters",
-    "description": "taking proteomes from diverse organisms and inferring orthology, gene-family trees, and a species tree",
+    "description": "Phylogenomic inference from whole-proteome data: orthology, gene-family and species trees, reconciliation, and physicochemical distance analysis",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -16,9 +16,7 @@
                 "outdir",
                 "min_num_spp_per_og",
                 "min_prop_spp_for_spptree",
-                "min_num_grp_per_og",
-                "max_copy_num_spp_tree",
-                "max_copy_num_gene_trees"
+                "max_copy_num_spp_tree"
             ],
             "properties": {
                 "input": {
@@ -54,63 +52,108 @@
                 },
                 "min_num_spp_per_og": {
                     "type": "integer",
-                    "default": 4,
+                    "default": 2,
                     "description": "Minimum number of species included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
                 },
                 "min_prop_spp_for_spptree": {
                     "type": "number",
-                    "default": 0.25,
+                    "default": 0.50,
                     "description": "Minimum proportion of all species in orthogroup for inclusion in species tree inference."
-                },
-                "min_num_grp_per_og": {
-                    "type": "integer",
-                    "default": 1,
-                    "description": "Minimum number of higher-level taxonomic groups included in orthogroup required for inference of MSA, gene family tree, and inclusion in species tree inference."
                 },
                 "max_copy_num_spp_tree": {
                     "type": "integer",
-                    "default": 5,
-                    "description": "Maximum mean per-species orthogroup gene copy allowed for species tree inference."
-                },
-                "max_copy_num_gene_trees": {
-                    "type": "integer",
                     "default": 10,
-                    "description": "Maximum mean per-species orthogroup gene copy allowed for gene family tree / species tree reconciliation."
+                    "description": "Maximum mean per-species orthogroup gene copy allowed for species tree inference."
                 },
                 "aligner": {
                     "type": "string",
-                    "default": "witch",
-                    "description": "Option specifying the method used to infer multiple sequence alignments. Either WITCH ('witch') or MAFFT ('mafft'). Additional params for either method should be provided in modules.config."
+                    "default": "adaptive",
+                    "description": "Alignment method. 'adaptive' (default) uses three-tier routing: MAFFT_TIER1 for ≤200 seqs → WITCH_TIER2 for ≤3000 → FAMSA_TIER3 for larger, with automatic fallback. 'mafft', 'witch', and 'famsa' use a single aligner for all families.",
+                    "enum": ["adaptive", "mafft", "witch", "famsa"]
                 },
                 "msa_trimmer": {
                     "type": "string",
-                    "default": "none",
+                    "default": "clipkit",
                     "description": "Option specifying the method used to trim/clean multiple sequence alignments prior to phylogenetic inference. Either CIAlign ('cialign') or ClipKIT ('clipkit'). Additional params for either method should be provided in modules.config."
                 },
                 "min_ungapped_length": {
                     "type": "integer",
-                    "default": 20,
+                    "default": 50,
                     "description": "Option specifying the minimum ungapped length of cleaned/trimmed multiple sequence alignments. Prevents ClipKIT from removing all non-gap characters. Specify as null (no quotes) if you do not want to remove short sequences with CIAlign."
                 },
                 "tree_method": {
                     "type": "string",
-                    "default": "fasttree",
-                    "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is fasttree, alternative is iqtree."
+                    "default": "iqtree",
+                    "description": "Method used to infer phylogenies from trimmed and cleaned MSAs. Default is iqtree, alternative is fasttree."
                 },
                 "tree_model": {
                     "type": "string",
                     "default": "LG+F+G4",
                     "description": "AA substitution model used by IQ-TREE for gene family tree inference. Default model is generally applicable, but may be specified by the user. Not used if running FastTree."
                 },
-                "tree_model_pmsf": {
-                    "type": "string",
-                    "default": "none",
-                    "description": "Optional posterior mean site frequency (PMSF) approximation model for IQ-TREE. Conducts a second round of phylogenetic inference, using a guide tree inferred using the \"tree_model\" parameter specification."
-                },
                 "outgroups": {
                     "type": "string",
                     "default": "none",
                     "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
+                },
+                "iqtree_fasttree_fallback": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "When using IQ-TREE, fall back to FastTree for gene families that fail or time out.",
+                    "fa_icon": "fas fa-redo"
+                },
+                "busco": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run BUSCO completeness assessment on input proteomes.",
+                    "fa_icon": "fas fa-check-circle"
+                },
+                "ref_species": {
+                    "type": "string",
+                    "default": "Homo-sapiens",
+                    "description": "Reference species for distance comparisons. Set to 'none' for centroid-only analysis.",
+                    "help_text": "When set to a species name, both centroid-based and reference-based analyses are produced. When set to 'none', only universal centroid-based analyses are produced for all gene families. Must match a species name from the input samplesheet (format: Genus-species). Underscores and spaces are auto-converted to hyphens.",
+                    "fa_icon": "fas fa-bullseye"
+                },
+                "preprocess": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable optional proteome preprocessing (TransDecoder, isoform filtering, quality cleanup).",
+                    "help_text": "When enabled, NovelTree runs preprocessing steps before the main pipeline. Per-species flags in the samplesheet (transdecoder, isoform, reference columns) control which steps run for each species.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "min_protein_length": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Minimum protein sequence length (aa) to retain during preprocessing.",
+                    "help_text": "Proteins shorter than this length are removed during the preprocessing step. Only applies when --preprocess is enabled.",
+                    "fa_icon": "fas fa-ruler"
+                },
+                "mafft_mode": {
+                    "type": "string",
+                    "default": "einsi",
+                    "description": "MAFFT algorithm for tier-1 alignment. E-INS-i for sequences with conserved motifs, L-INS-i for globally alignable sequences.",
+                    "enum": ["einsi", "linsi"]
+                },
+                "align_tier1_max": {
+                    "type": "integer",
+                    "default": 200,
+                    "description": "Maximum sequences for tier-1 MAFFT alignment. Families above this use WITCH."
+                },
+                "align_tier2_max": {
+                    "type": "integer",
+                    "default": 3000,
+                    "description": "Maximum sequences for tier-2 WITCH alignment. Families above this use FAMSA."
+                },
+                "test_run": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Restrict to gene families containing ALL species (fast smoke test)."
+                },
+                "test_run_mcl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Test multiple MCL inflation values on species with UniProt accessions."
                 },
                 "email": {
                     "type": "string",
@@ -131,7 +174,7 @@
                 "max_cpus": {
                     "type": "integer",
                     "description": "Maximum number of CPUs that can be requested for any single job.",
-                    "default": 16,
+                    "default": 192,
                     "fa_icon": "fas fa-microchip",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
@@ -159,6 +202,77 @@
                 "max_cpus",
                 "max_memory"
             ]
+        },
+        "aws_batch_options": {
+            "title": "AWS Batch options",
+            "type": "object",
+            "fa_icon": "fab fa-aws",
+            "description": "Parameters required for running on AWS Batch.",
+            "help_text": "These parameters are required when using the 'awsbatch' profile. The pipeline must be run with work directory and output directory on S3.",
+            "properties": {
+                "awsqueue": {
+                    "type": "string",
+                    "description": "The AWS Batch job queue to submit jobs to.",
+                    "fa_icon": "fas fa-list",
+                    "help_text": "Specify the name of your AWS Batch job queue. Required when using -profile awsbatch."
+                },
+                "awsregion": {
+                    "type": "string",
+                    "description": "The AWS region where your Batch compute environment is located.",
+                    "fa_icon": "fas fa-globe",
+                    "help_text": "Specify your AWS region (e.g., 'us-east-1', 'us-west-2'). Required when using -profile awsbatch."
+                }
+            }
+        },
+        "zoogle_options": {
+            "title": "Zoogle analysis options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for the Zoogle physicochemical protein distance analysis mode.",
+            "properties": {
+                "zoogle": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable Zoogle physicochemical protein distance analysis.",
+                    "fa_icon": "fas fa-flask"
+                },
+                "simplified": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run in simplified mode (skip BUSCO, use single MCL inflation value).",
+                    "fa_icon": "fas fa-compress"
+                },
+                "generax_per_family": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run GeneRax per gene family instead of globally.",
+                    "fa_icon": "fas fa-sitemap"
+                },
+                "reference_time_tree": {
+                    "type": "string",
+                    "default": "none",
+                    "description": "Path to a pre-existing time-calibrated reference tree. If 'none', one will be built from TimeTree.org divergence times.",
+                    "fa_icon": "fas fa-tree"
+                },
+                "ncbi_email": {
+                    "type": "string",
+                    "default": "none",
+                    "description": "Email address for NCBI Entrez API queries (used when building reference chronogram from TimeTree.org).",
+                    "fa_icon": "fas fa-at"
+                },
+                "time_calibration_method": {
+                    "type": "string",
+                    "default": "treePL",
+                    "description": "Method for time-calibrating the species tree. Options: treePL (penalized likelihood) or PATHd8. Gene family trees always use treePL with fixed smoothing.",
+                    "enum": ["treePL", "PATHd8"]
+                },
+                "age_bracket": {
+                    "type": "number",
+                    "default": 0.20,
+                    "description": "Proportional bracket applied to calibration ages for both species tree and gene family tree dating (e.g., 0.20 = +/- 20%).",
+                    "fa_icon": "fas fa-arrows-alt-h"
+                }
+            }
         },
         "generic_options": {
             "title": "Generic options",
@@ -252,6 +366,12 @@
         },
         {
             "$ref": "#/definitions/max_job_request_options"
+        },
+        {
+            "$ref": "#/definitions/aws_batch_options"
+        },
+        {
+            "$ref": "#/definitions/zoogle_options"
         },
         {
             "$ref": "#/definitions/generic_options"

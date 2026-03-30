@@ -1,30 +1,37 @@
 process FASTTREE {
     tag "$meta.og"
-    label 'process_fasttree'
 
-    container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:1.0.0':
-        '' }"
+    cpus { Math.min( 16 * task.attempt, params.max_cpus as int ) }
+    time { 3.h * Math.pow(3, task.attempt - 1) }
+    memory {
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def profile_bytes = n * L * 165L * 3L  // 3x multiplier for SPR/NNI search overhead
+        def nj_bytes = (long)(16.0 * Math.pow(n, 1.5))
+        def estimated_gb = Math.max(8L, (long)((profile_bytes + nj_bytes) / (1024L * 1024L * 1024L)) + 2L)
+        def capped_gb = (int) Math.min(estimated_gb, 128L)
+        def requested = capped_gb.GB * task.attempt
+        def max_mem = params.max_memory as nextflow.util.MemoryUnit
+        requested.compareTo(max_mem) > 0 ? max_mem : requested
+    }
 
-    publishDir(
-        path: "${params.outdir}/fasttree_gene_trees",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    container 'arcadiascience/fasttree_2.1.11:1.0.0'
+
+    storeDir "${params.outdir}/gene_family_trees/original"
 
     input:
     tuple val(meta), file(alignment)
     val model // not used
 
     output:
-    tuple val(meta), path("*.treefile") , emit: phylogeny
-    path "versions.yml"                 , emit: versions
+    tuple val(meta), path("${alignment.baseName}_ft.newick") , emit: phylogeny
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def og   = "${meta.og}"
+    def args   = task.ext.args ?: ''
+    def prefix = alignment.baseName
     """
     # Make sure the number of threads are being specified properly
     export OMP_NUM_THREADS=${task.cpus}
@@ -32,11 +39,7 @@ process FASTTREE {
     # Efficiently infer a gene family tree using FastTree!
     FastTreeDblMP \\
         $args \\
-        $alignment > ${og}_ft.treefile
-
-    # prevent zero-length branches (sometimes inferred with fasttree)
-    resolve_polytomies.R ${og}_ft.treefile resolved.tree
-    mv resolved.tree ${og}_ft.treefile
+        $alignment > ${prefix}_ft.newick
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

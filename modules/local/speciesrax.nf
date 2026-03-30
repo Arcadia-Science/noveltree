@@ -3,14 +3,9 @@ process SPECIESRAX {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
-    container "${ workflow.containerEngine == 'docker' ?
-        'arcadiascience/generax_19604b71:1.0.0': '' }"
+    container 'arcadiascience/generax_56f3ed0:1.1.3'
 
-    publishDir(
-        path: "${params.outdir}/speciesrax",
-        mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
+    storeDir "${params.outdir}/species_trees/speciesrax"
 
     input:
     file map_links       // Filepath to the generax gene-species map file
@@ -19,9 +14,12 @@ process SPECIESRAX {
     file rooted_spp_tree // Filepath to the rooted asteroid species tree
 
     output:
-    path "*"                                          , emit: results
-    path "species_trees/inferred_species_tree.newick" , emit: speciesrax_tree
-    path "versions.yml"                               , emit: versions
+    path "inferred_species_tree.newick"  , emit: speciesrax_tree
+    path "starting_species_tree.newick"
+    path "species_tree_*.newick"
+    path "*.txt"
+    path "generax.log"
+    path "speciesrax_orthogroup.families"
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,30 +28,21 @@ process SPECIESRAX {
     def args = task.ext.args ?: ''
     def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : "MiniNJ"
     """
-    # Recode selenocysteine as a gap character:
-    # RAxML-NG (used under the hood by SpeciesRax and
-    # GeneRax) cannot handle these. Even if rare,
-    # their inclusion leads a number of gene families
-    # to be excluded from analyses.
-    sed -E -i '/>/!s/U/-/g' *.fa
-
-    # Do the same for Pyrrolysine
-    sed -E -i '/>/!s/O/-/g' *.fa
-
     # Construct the family files for each gene family
     echo "[FAMILIES]" > speciesrax_orthogroup.families
     for msa in \$(ls *fa)
     do
         # Get the OG name
         og=\$(echo \$msa | cut -f1 -d"_")
-        tree=\$(ls \${og}*.treefile)
+        tree=\$(ls \${og}*.newick)
+        map_link=\$(ls \${og}*_map.link | head -n1)
 
         # Populate the families file for this gene family for the
         # analysis with SpeciesRax
         # We will be using LG+G4+F for all gene families
         echo "- \${og}" >> speciesrax_orthogroup.families
         echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
-        echo "mapping = \${og}_map.link" >> speciesrax_orthogroup.families
+        echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
         echo "alignment = \$msa" >> speciesrax_orthogroup.families
         echo "subst_model = LG+G4+F" >> speciesrax_orthogroup.families
     done
@@ -72,12 +61,13 @@ process SPECIESRAX {
         --per-species-rates \\
         $args
 
-    # Remove the redundant result directory, moving everything into the
-    # working directory, deleiting the meaningless reconciliations
-    # directory and cleaning up
+    # Move SpeciesRax output into the working directory and clean up
     mv SpeciesRax/* .
-    rm -r reconciliations
-    rm -r SpeciesRax
+    rm -rf reconciliations results SpeciesRax
+
+    # Flatten species_trees/ into working directory
+    mv species_trees/* .
+    rm -r species_trees
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
