@@ -221,6 +221,29 @@
                     "description": "The AWS region where your Batch compute environment is located.",
                     "fa_icon": "fas fa-globe",
                     "help_text": "Specify your AWS region (e.g., 'us-east-1', 'us-west-2'). Required when using -profile awsbatch."
+                },
+                "cost_project": {
+                    "type": "string",
+                    "default": "noveltree",
+                    "description": "Project label to apply to AWS Batch jobs for cost allocation.",
+                    "fa_icon": "fas fa-tags"
+                },
+                "cost_dataset": {
+                    "type": "string",
+                    "default": "unset",
+                    "description": "Dataset label to apply to AWS Batch jobs for cost allocation.",
+                    "fa_icon": "fas fa-tags"
+                },
+                "cost_owner": {
+                    "type": "string",
+                    "default": "unknown",
+                    "description": "Owner label to apply to AWS Batch jobs for cost allocation.",
+                    "fa_icon": "fas fa-tags"
+                },
+                "cost_run_id": {
+                    "type": "string",
+                    "description": "Run identifier label to apply to AWS Batch jobs for cost allocation. Defaults to NOVELTREE_RUN_ID if set, otherwise a timestamp.",
+                    "fa_icon": "fas fa-tags"
                 }
             }
         },
