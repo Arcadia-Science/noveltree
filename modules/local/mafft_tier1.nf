@@ -26,7 +26,7 @@ process MAFFT_TIER1 {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("${fasta.baseName}_${(meta.n_seq as int) <= (params.align_tier1_max as int) ? 'einsi' : 'linsi'}.fa"), emit: msas
+    tuple val(meta), path("${fasta.baseName}_${params.mafft_mode ?: 'einsi'}.fa"), emit: msas
     tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
