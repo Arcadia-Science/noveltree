@@ -54,6 +54,9 @@ workflow INFER_GENE_TREES {
         // _famsa.fa in storeDir — no MAFFT/WITCH output.  Without this
         // filter, MAFFT/WITCH would rerun them (and fail again) before
         // routing to FAMSA_FALLBACK.  We check storeDir upfront.
+        // Stays alignments/original: this prefilter only probes *_famsa.fa (FAMSA
+        // fallback), which still lands there. WITCH masked output now lives in
+        // alignments/masked and is not probed here (its resume is handled by storeDir).
         def alnStore = "${params.outdir}/alignments/original"
 
         tiered.tier1.branch { meta, fasta ->
@@ -66,10 +69,10 @@ workflow INFER_GENE_TREES {
             needs_aligner: true
         }.set { tier2_routed }
 
-        // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤300 seqs)
+        // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤200 seqs by default — params.align_tier1_max)
         MAFFT_TIER1(tier1_routed.needs_aligner)
 
-        // Tier 2: WITCH (medium families, 301–3000 seqs)
+        // Tier 2: WITCH (medium families, 201–3000 seqs by default — params.align_tier1_max+1 to align_tier2_max)
         WITCH_TIER2(tier2_routed.needs_aligner)
 
         // Tier 3: FAMSA2 with accuracy flags (large families, >3000 seqs)

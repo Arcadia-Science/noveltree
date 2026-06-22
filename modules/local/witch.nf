@@ -26,14 +26,15 @@ process WITCH {
         (workflow.containerEngine == 'singularity' ? '--writable-tmpfs' : '')
 
     stageInMode = 'copy'
-    storeDir "${params.outdir}/alignments/original"
+    storeDir "${params.outdir}/alignments"
 
     input:
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("${fasta.baseName}_witch.fa"), emit: msas, optional: true
-    tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
+    tuple val(meta), path("masked/${fasta.baseName}_witch.fa"), emit: msas, optional: true
+    tuple val(meta), path("original/${fasta.baseName}_witch_unmasked.fa"), emit: unmasked, optional: true
+    tuple val(meta), path("masked/species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
     task.ext.when == null || task.ext.when
@@ -45,10 +46,8 @@ process WITCH {
     def min_seq  = params.min_num_seq_per_og
     def min_spp  = params.min_num_spp_per_og
     """
-    # If we are resuming a run, do some cleanup:
-    if [ -d "alignments/" ]; then
-        rm -rf alignments/
-    fi
+    # If we are resuming a run, do some cleanup of any stale output dirs:
+    rm -rf alignments/ original/ masked/
 
     # Be sure to remove any non-standard amino acid codes in the input sequences, as this
     # can cause errors downstream and in parsing.
@@ -62,6 +61,14 @@ process WITCH {
         -t ${task.cpus} \\
         --molecule amino \\
         $args
+
+    # Split WITCH's two outputs into sibling dirs under the alignments/ storeDir root:
+    #   original/ = pre-masking alignment (aligned.fasta)
+    #   masked/   = confidence-masked + filtered alignment (built below)
+    mkdir -p original masked
+    if [ -f alignments/aligned.fasta ]; then
+        cp alignments/aligned.fasta original/${og}_witch_unmasked.fa
+    fi
 
     # Remove sequences with fewer than min_ungapped_length AAs remaining once masked.
     awk -v N=${min_len} -F "" \
@@ -85,21 +92,22 @@ process WITCH {
           for(i=1;i<=seq_count;i++){print headers[i]; print new_sequences[i]} \
         }' tmp.fasta > final_masked.fasta
 
-    mv final_masked.fasta ${og}_witch.fa
+    mv final_masked.fasta masked/${og}_witch.fa
     rm -rf alignments/ tmp.fasta
 
     # Verify the cleaned alignment meets minimum thresholds.
-    # If QC fails, remove the output so nothing is emitted (optional: true handles it).
-    n_seq=\$(grep -c ">" ${og}_witch.fa || true)
-    n_spp=\$(grep ">" ${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    # If QC fails, remove BOTH outputs so nothing is emitted (optional: true handles it);
+    # keeping masked/ and original/ in lockstep avoids a half-populated storeDir.
+    n_seq=\$(grep -c ">" masked/${og}_witch.fa || true)
+    n_spp=\$(grep ">" masked/${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
-        rm ${og}_witch.fa
+        rm -f masked/${og}_witch.fa original/${og}_witch_unmasked.fa
     else
         # Build species-protein mapping file
-        mkdir -p species_protein_maps
-        grep ">" ${og}_witch.fa | sed "s/>//g"  | sed "s/.*://g" > prot
+        mkdir -p masked/species_protein_maps
+        grep ">" masked/${og}_witch.fa | sed "s/>//g"  | sed "s/.*://g" > prot
         sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/${og}_map.link
+        paste prot spp > masked/species_protein_maps/${og}_map.link
         rm prot && rm spp
     fi
     """

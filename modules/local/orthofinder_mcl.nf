@@ -22,8 +22,7 @@ process ORTHOFINDER_MCL {
 
     output:
     path("*/Results_Inflation*"),           emit: inflation_dir
-    path("species_tree_og_fas/*.fa"),      emit: spptree_fas, optional: true
-    path("gene_tree_og_fas/*.fa"),         emit: genetree_fas, optional: true
+    path("unaligned/*.fa"),                 emit: unaligned_fas, optional: true
     path("all_ogs_counts.csv"),             emit: all_ogs, optional: true
     path("spptree_core_ogs_counts.csv"),    emit: spptree_core_ogs, optional: true
     path("genetree_core_ogs_counts.csv"),   emit: genetree_core_ogs, optional: true
@@ -77,22 +76,28 @@ process ORTHOFINDER_MCL {
             ${samplesheet} \\
             ${min_num_seqs} ${min_num_spp} ${min_prop_spp_for_spptree} ${max_copy_num}
 
-        # Move filtered FASTAs into separate directories
+        # Move filtered FASTAs into a single flat dir (union of the two core sets).
+        # The species-tree vs gene-tree split is derived downstream from the membership
+        # CSVs, so we publish only the OGs that actually get aligned/tree'd. Families
+        # excluded from phylogenetic analysis (small/taxon-specific) are not moved here.
         msa_dir=OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences
 
-        mkdir -p species_tree_og_fas gene_tree_og_fas
+        mkdir -p unaligned
 
-        tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | while read og; do
+        ( tail -n+2 spptree_core_ogs_counts.csv; tail -n+2 genetree_core_ogs_counts.csv ) \\
+            | cut -f1 -d"," | sort -u | while read og; do
             if [ -f "\${msa_dir}/\${og}.fa" ]; then
-                mv "\${msa_dir}/\${og}.fa" species_tree_og_fas/
+                mv "\${msa_dir}/\${og}.fa" unaligned/
             fi
         done
 
-        tail -n+2 genetree_core_ogs_counts.csv | cut -f1 -d"," | while read og; do
-            if [ -f "\${msa_dir}/\${og}.fa" ]; then
-                mv "\${msa_dir}/\${og}.fa" gene_tree_og_fas/
-            fi
-        done
+        # Sanity check: every OG in the union of the two core sets must have a FASTA.
+        n_union=\$( ( tail -n+2 spptree_core_ogs_counts.csv; tail -n+2 genetree_core_ogs_counts.csv ) | cut -f1 -d"," | sort -u | wc -l | tr -d ' ')
+        n_moved=\$( ls unaligned/ | wc -l | tr -d ' ')
+        if [ "\$n_moved" -ne "\$n_union" ]; then
+            echo "ERROR: unaligned/ has \$n_moved fastas but the core-set union lists \$n_union OGs" >&2
+            exit 1
+        fi
         # Remove directories no longer needed (orthology derived from GeneRax reconciliations in PARSE_PHYLOHOGS)
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Single_Copy_Orthologue_Sequences/

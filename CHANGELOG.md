@@ -3,6 +3,14 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+- Consolidated all per-gene-family sequences under `alignments/`, organized by processing stage (unaligned → aligned → masked → trimmed):
+  - Added `alignments/unaligned/`: the flat OrthoFinder per-orthogroup FASTAs that enter alignment, replacing the `species_tree_og_fas/` + `gene_tree_og_fas/` directories previously published under `orthofinder/`. The species-tree vs gene-tree split is now derived downstream from the `*_core_ogs_counts.csv` membership tables rather than from directory structure.
+  - Added `alignments/masked/`: WITCH's confidence-masked alignments (`{OG}_witch.fa`), which feed gene-family tree inference (previously these were stored, mislabeled, in `alignments/original/`).
+  - `alignments/original/` now holds the *unmasked* alignment for every aligner; for WITCH the previously-discarded pre-masking alignment is now retained as `{OG}_witch_unmasked.fa`.
+
 ## v2.0.0 - 2026-03-30
 
 ### Added

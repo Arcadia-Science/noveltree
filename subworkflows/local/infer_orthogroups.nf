@@ -9,20 +9,6 @@ include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL } from '../../modules/local/o
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL     } from '../../modules/nf-core-modified/diamond_blastp'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL   } from '../../modules/local/orthofinder_mcl'
 
-// Function to get list of [meta, [file]]
-def create_og_channel(Object inputs) {
-    if (inputs instanceof String) {
-        inputs = [inputs]
-    }
-    def metaList = []
-    inputs.each { input ->
-        def meta = [:]
-        meta.og = input
-        metaList.add(meta)
-    }
-    return metaList
-}
-
 workflow INFER_ORTHOGROUPS {
     take:
     renamed_prots        // [ val(meta), path(fasta) ]
@@ -99,17 +85,18 @@ workflow INFER_ORTHOGROUPS {
         params.max_copy_num_spp_tree
     )
 
-    // Create meta maps for the two sets by providing the simple name of each orthogroup
-    spptree_og_names = ORTHOFINDER_MCL_ALL.out.spptree_fas.map { file -> file.simpleName }
-    spptree_og_map = spptree_og_names.map { create_og_channel(it) }.flatten()
-    genetree_og_names = ORTHOFINDER_MCL_ALL.out.genetree_fas.map { file -> file.simpleName }
-    genetree_og_map = genetree_og_names.map { create_og_channel(it) }.flatten()
+    // Re-derive the species-tree vs gene-tree split from the membership CSVs rather than
+    // from two physical FASTA subdirs. ORTHOFINDER_MCL_ALL now emits a single flat channel
+    // of unaligned per-OG FASTAs (unaligned_fas); the two *_core_ogs_counts.csv emits
+    // define which OGs belong to each set (disjoint by construction in og_tax_summary.py).
 
-    // Create the tuple of output fastas paired with the meta map,
-    // injecting n_seq and max_len for downstream dynamic resource allocation.
-    // max_len = longest sequence in the OG (needed for PREQUAL O(L^2) memory).
-    ch_spptree_fas = spptree_og_map.merge(ORTHOFINDER_MCL_ALL.out.spptree_fas.flatten())
-        .map { meta, fasta ->
+    // Key every unaligned fasta by its OG id, injecting n_seq and max_len once for
+    // downstream dynamic resource allocation. max_len = longest sequence in the OG
+    // (needed for PREQUAL O(L^2) memory). meta MUST stay [og, n_seq, max_len] — the zoogle
+    // subworkflow joins on the full meta map downstream.
+    ch_unaligned_keyed = ORTHOFINDER_MCL_ALL.out.unaligned_fas.flatten()
+        .map { fasta ->
+            def og = fasta.simpleName
             def text = fasta.text
             def n_seq = text.count('>')
             def cur = 0; def maxL = 0
@@ -118,20 +105,25 @@ workflow INFER_ORTHOGROUPS {
                 else { cur += line.trim().length() }
             }
             if (cur > maxL) maxL = cur
-            [meta + [n_seq: n_seq, max_len: maxL], fasta]
+            [og, [og: og, n_seq: n_seq, max_len: maxL], fasta]
         }
-    ch_genetree_fas = genetree_og_map.merge(ORTHOFINDER_MCL_ALL.out.genetree_fas.flatten())
-        .map { meta, fasta ->
-            def text = fasta.text
-            def n_seq = text.count('>')
-            def cur = 0; def maxL = 0
-            text.eachLine { line ->
-                if (line.startsWith('>')) { if (cur > maxL) maxL = cur; cur = 0 }
-                else { cur += line.trim().length() }
-            }
-            if (cur > maxL) maxL = cur
-            [meta + [n_seq: n_seq, max_len: maxL], fasta]
+
+    // Label each OG by its core set, mix the two (disjoint, unique within a CSV), then
+    // join ONCE with the keyed fastas and branch. join() keys on element 0, so there is no
+    // cartesian blow-up and no OG is duplicated or cross-routed; OGs absent from both CSVs
+    // are dropped. A header-only/empty CSV yields an empty channel (handled gracefully).
+    ch_spptree_ogs  = ORTHOFINDER_MCL_ALL.out.spptree_core_ogs.splitCsv(header: true).map { row -> tuple(row.orthogroup, 'spptree') }
+    ch_genetree_ogs = ORTHOFINDER_MCL_ALL.out.genetree_core_ogs.splitCsv(header: true).map { row -> tuple(row.orthogroup, 'genetree') }
+
+    ch_split = ch_spptree_ogs.mix(ch_genetree_ogs)
+        .join(ch_unaligned_keyed)
+        .branch { og, set, meta, fasta ->
+            spptree:  set == 'spptree'
+            genetree: set == 'genetree'
         }
+
+    ch_spptree_fas  = ch_split.spptree.map  { og, set, meta, fasta -> [meta, fasta] }
+    ch_genetree_fas = ch_split.genetree.map { og, set, meta, fasta -> [meta, fasta] }
 
     // --test mode: keep only gene families that contain ALL species in the dataset.
     // This dramatically reduces the number of OGs for quick end-to-end smoke tests.
