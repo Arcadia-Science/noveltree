@@ -354,7 +354,7 @@ process {
 - `--localpair --maxiterate 1000 --anysymbol`: Runs MAFFT L-INS-i. Iterative refinement method incorporating local pairwise alignment information. Highly accurate, but slower.
 - [MAFFT documentation](https://mafft.cbrc.jp/alignment/software/)
 
-##### [`WITCH`](../modules/nf-core-modified/witch.nf):
+##### [`WITCH`](../modules/local/witch.nf):
 
 - Parameters specified in [`conf/modules.config`](../conf/modules.config).
 - See [WITCH documentation](https://github.com/c5shen/WITCH) for detailed description of options.
@@ -385,7 +385,7 @@ process {
 
 #### 7. `INFER_TREES`
 
-##### [`FASTTREE`](../modules/nf-core-modified/fasttree.nf):
+##### [`FASTTREE`](../modules/local/fasttree.nf):
 
 - Custom parameters specified in [`conf/modules.config`](../conf/modules.config).
 - See [FastTree2 documentation](http://www.microbesonline.org/fasttree/) for detailed description of options.
@@ -477,7 +477,7 @@ process {
 - Computes 20 amino acid frequencies and properties (molecular weight, aromaticity, GRAVY, isoelectric point, etc.)
 - No parameters required
 
-#### 17. [`ZOOGLE`](../modules/local/zoogle.nf) _(zoogle mode only)_:
+#### 17. [`ZOOGLE`](../modules/local/zoogle_analysis.nf) _(zoogle mode only)_:
 
 - Calculates phylogenetically-corrected protein distances using Mahalanobis distances
 - **Universal centroid analysis**: For all gene families, computes Mahalanobis distance from each protein to the family centroid, with protein-level rank p-values and species-level permutation p-values
