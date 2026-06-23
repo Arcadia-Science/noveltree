@@ -70,6 +70,13 @@ process WITCH {
         cp alignments/aligned.fasta original/${og}_witch_unmasked.fa
     fi
 
+    # When every sequence fits WITCH's backbone there are no query sequences to insert, so
+    # WITCH writes aligned.fasta but skips masking (no aligned.masked.fasta is produced —
+    # common for small families). Fall back to the unmasked alignment in that case so the
+    # family still yields an alignment instead of failing on a missing file.
+    masked_aln=alignments/aligned.masked.fasta
+    [ -f "\$masked_aln" ] || masked_aln=alignments/aligned.fasta
+
     # Remove sequences with fewer than min_ungapped_length AAs remaining once masked.
     awk -v N=${min_len} -F "" \
         'BEGIN { getline; header=\$0; seq="" } \
@@ -77,7 +84,7 @@ process WITCH {
         /^>/ { if (s >= N || seq == "") { if (header != "") print header; if (seq != "") print seq } header=\$0; seq=""; s=0 } \
         !/^>/ { seq = seq \$0 } \
         END { if (s >= N) { print header; print seq } }' \
-        alignments/aligned.masked.fasta > tmp.fasta
+        "\$masked_aln" > tmp.fasta
 
     # Remove gap-only columns following the exclusion of (if any) sequences above.
     awk 'BEGIN {seq_count=0} \
