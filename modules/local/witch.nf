@@ -33,7 +33,7 @@ process WITCH {
 
     output:
     tuple val(meta), path("masked/${fasta.baseName}_witch.fa"), emit: msas, optional: true
-    tuple val(meta), path("original/${fasta.baseName}_witch_unmasked.fa"), emit: unmasked, optional: true
+    tuple val(meta), path("original/${fasta.baseName}_witch_unmasked.fa"), emit: unmasked
     tuple val(meta), path("masked/species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
     when:
@@ -95,13 +95,15 @@ process WITCH {
     mv final_masked.fasta masked/${og}_witch.fa
     rm -rf alignments/ tmp.fasta
 
-    # Verify the cleaned alignment meets minimum thresholds.
-    # If QC fails, remove BOTH outputs so nothing is emitted (optional: true handles it);
-    # keeping masked/ and original/ in lockstep avoids a half-populated storeDir.
+    # Verify the masked alignment meets minimum thresholds. The unmasked alignment in
+    # original/ is ALWAYS kept — it is the required output that gates storeDir resume
+    # (so WITCH re-runs on a fresh store and is skipped only when its output truly exists,
+    # like MAFFT/FAMSA). On QC failure we drop only the masked file; its msas emit is
+    # optional, so the OG produces no gene tree (and routes to fallback in adaptive mode).
     n_seq=\$(grep -c ">" masked/${og}_witch.fa || true)
     n_spp=\$(grep ">" masked/${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
-        rm -f masked/${og}_witch.fa original/${og}_witch_unmasked.fa
+        rm -f masked/${og}_witch.fa
     else
         # Build species-protein mapping file
         mkdir -p masked/species_protein_maps
