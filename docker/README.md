@@ -31,7 +31,7 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `CLIPKIT` | [ClipKIT v2.1.1](./clipkit/) | `arcadiascience/clipkit_2.1.1-seqmagick_0.8.4:1.0.0` |
 | `CIALIGN` | [CIAlign v1.1.0](./cialign/) | `arcadiascience/cialign_1.1.0:1.0.0` |
 | `COGEQC` | [cogeqc v1.2.1](./cogeqc/) | `arcadiascience/cogeqc_1.2.1:1.0.0` |
-| `FAMSA` | [FAMSA v2.0.0](./famsa/) | `arcadiascience/famsa_2.0.0:1.0.0` |
+| `FAMSA` | [FAMSA 2.5.0 @ commit 5a326d5](./famsa/) | `arcadiascience/famsa_2.0.0:1.0.0` |
 | `FASTTREE` | [FastTree v2.1.11](./fasttree/) | `arcadiascience/fasttree_2.1.11:1.0.0` |
 | `GENERAX_PER_FAMILY`, `GENERAX_PER_SPECIES`, `SPECIESRAX` | [GeneRax @ commit 56f3ed0](./generax/) | `arcadiascience/generax_56f3ed0:1.1.3` |
 | `IQTREE` | [IQ-TREE v2.2.0.5](./iqtree/) | `arcadiascience/iqtree_2.2.0.5:1.0.0` |
@@ -42,3 +42,12 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `WITCH` | [WITCH v1.0.10](./witch/) | `arcadiascience/witch_1.0.10:1.0.0` |
 | `BUILD_REFERENCE_CHRONOGRAM` | [build_reference_chronogram v1.0.0](./build_reference_chronogram/) | `arcadiascience/build_reference_chronogram:1.0.0` |
 | `ZOOGLE_ANALYSIS`, `TIME_CALIBRATE_SPECIES_TREE`, `DATE_GENE_FAMILY_TREES` | [zoogle v1.2.0](./zoogle/) | `arcadiascience/zoogle:1.2.0` |
+
+## Reproducibility and upstream availability
+
+Several Dockerfiles build tools directly from third-party GitHub repositories (e.g. Asteroid, DISCO, GeneRax, CIAlign, IQ-TREE 2, FAMSA). To keep builds reproducible, each of these is pinned to a specific upstream commit SHA or release tag rather than a moving branch. There are two independent layers of protection:
+
+1. **Pinned build inputs** — the exact commit/tag in each Dockerfile means a rebuild produces the same tool version as the published image.
+2. **Pre-built images on DockerHub** — the authoritative, ready-to-run artifacts already live on [Arcadia Science's DockerHub account](https://hub.docker.com/u/arcadiascience) and are pulled automatically by the pipeline. These do not depend on the upstream repositories remaining online.
+
+If an upstream repository is ever renamed, deleted, or made unavailable, **the published DockerHub image remains the fallback** — the pipeline continues to run without any change. Rebuilding that image from scratch would then require vendoring the tool's source (e.g. from a fork or an archived copy) and repointing the Dockerfile at it. We do not currently maintain Arcadia forks/mirrors of these upstream repositories.

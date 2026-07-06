@@ -15,9 +15,13 @@ RUN apt-get update && \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install FAMSA from GitHub
+# Install FAMSA from GitHub, pinned to the exact commit that ships in the
+# published image (FAMSA 2.5.0). The image is named `famsa_2.0.0` for historical
+# reasons; the actual tool version built here is 2.5.0 (there is no v2.5.0 tag
+# upstream, so we pin the commit SHA directly for reproducibility).
 RUN git clone https://github.com/refresh-bio/FAMSA.git /opt/FAMSA && \
     cd /opt/FAMSA && \
+    git checkout 5a326d5d262aa5533af07eeeaf41822e67604520 && \
     make && \
     mv bin/famsa /usr/local/bin/ && \
     rm -rf /opt/FAMSA
