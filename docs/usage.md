@@ -248,7 +248,7 @@ nextflow run . -profile awsbatch,zoogle \
   --ref_species Genus-species
 ```
 
-> **Supported container engines:** NovelTree is designed to run with **Docker** or **Singularity/Apptainer** only. Conda is **not** supported — the pipeline's custom modules are distributed exclusively as pre-built Docker images (many wrap tools built from specific git commits that have no corresponding Bioconda package), so there are no Conda environments to resolve.
+> **Supported container engines:** NovelTree is designed and tested to run with **Docker** or **Singularity/Apptainer**. While `conda`/`mamba` profiles exist (from the nf-core template), NovelTree does not ship curated Conda environments for its custom modules, so these profiles are not supported.
 
 ---
 
