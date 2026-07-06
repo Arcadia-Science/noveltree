@@ -10,7 +10,7 @@
 
 ## Quick Start
 
-**NOTE: Unfortunately, at this time NovelTree is not compatible with Apple silicon/ARM architectures (e.g. M1, M2 chips).**
+**Platform:** NovelTree is tested on Linux x86_64, and all Docker images are built for `linux/amd64`. It is not natively compatible with Apple silicon/ARM architectures (e.g. M1/M2/M3 chips). On Apple silicon, run the pipeline inside an x86_64 VM — see the provided [`lima-x86-rosetta.yaml`](lima-x86-rosetta.yaml) Lima configuration (Rosetta emulation with Apptainer) and [`docs/singularity.md`](docs/singularity.md).
 
 **1.** Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`).
 
@@ -32,7 +32,7 @@ Reduce `--max_memory` by ~2 GB below your available memory to leave room for Nex
 
 > **Note:** Pre-built Docker images are pulled automatically. You only need `make docker-all` if you've modified the pipeline code.
 
-**NOTE: The workflow supports both Docker and Singularity profiles.**
+**NOTE: Docker and Singularity are the supported execution profiles. Conda is not supported.**
 
 ---
 
@@ -402,8 +402,6 @@ If you make a substantial contribution, you are welcome to publish it or use it 
 We encourage anyone to build upon our efforts.
 
 ## Citations
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
 
 If you use Arcadia-Science/noveltree for your analysis, please cite it using the following doi: [10.57844/arcadia-z08x-v798](https://doi.org/10.57844/arcadia-z08x-v798)
 

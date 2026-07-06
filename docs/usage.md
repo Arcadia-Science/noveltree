@@ -248,6 +248,8 @@ nextflow run . -profile awsbatch,zoogle \
   --ref_species Genus-species
 ```
 
+> **Supported container engines:** NovelTree is designed to run with **Docker** or **Singularity/Apptainer** only. Conda is **not** supported — the pipeline's custom modules are distributed exclusively as pre-built Docker images (many wrap tools built from specific git commits that have no corresponding Bioconda package), so there are no Conda environments to resolve.
+
 ---
 
 ## Running on AWS Batch / Singularity
@@ -358,6 +360,7 @@ process {
 
 - Parameters specified in [`conf/modules.config`](../conf/modules.config).
 - See [WITCH documentation](https://github.com/c5shen/WITCH) for detailed description of options.
+- **Known limitation (non-determinism):** WITCH selects its alignment backbone with an unseeded random sample, and the upstream `witch-msa` package exposes no option to set a random seed. As a result, WITCH alignments (and anything downstream of them) may vary slightly between runs on the same input. The proper long-term fix is an upstream `--seed` feature ([c5shen/WITCH](https://github.com/c5shen/WITCH)); we deliberately do not patch the third-party package internals.
 
 ##### [`FAMSA`](../modules/local/famsa.nf):
 
