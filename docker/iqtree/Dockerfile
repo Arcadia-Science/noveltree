@@ -19,7 +19,7 @@ RUN apt-get update && \
         libssl-dev
         
 
-# Clone the IQ-TREE 2 repository and install with MPI
+# Clone the IQ-TREE 2 repository and install
 RUN git clone https://github.com/iqtree/iqtree2.git --branch v2.2.0.5 && \
     cd iqtree2 && \
     mkdir build && \
