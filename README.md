@@ -32,7 +32,7 @@ Reduce `--max_memory` by ~2 GB below your available memory to leave room for Nex
 
 > **Note:** Pre-built Docker images are pulled automatically. You only need `make docker-all` if you've modified the pipeline code.
 
-**NOTE: Docker and Singularity are the supported execution profiles. Conda is not supported.**
+**NOTE: Docker and Singularity/Apptainer are the supported execution profiles. The legacy `conda`/`mamba` profiles are not supported for NovelTree (no curated Conda environments are provided for custom modules).**
 
 ---
 
