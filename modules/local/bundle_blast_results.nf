@@ -1,6 +1,6 @@
 process BUNDLE_BLAST_RESULTS {
     tag "$bundle_id"
-    label 'process_single'
+    label 'process_bundle'
 
     storeDir "${params.outdir}/blast_bundles"
 
