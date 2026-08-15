@@ -34,8 +34,6 @@ process ORTHOFINDER_MCL {
 
     script:
     def args = task.ext.args ?: ''
-    def analysis_cpus = Math.max(1, (task.cpus as int).intdiv(4))
-
     """
     # Expand one archive per query species, removing each archive immediately
     # to avoid retaining both the archive and extracted files on local scratch.
@@ -56,7 +54,7 @@ process ORTHOFINDER_MCL {
         -I $mcl_inflation \\
         -M msa -X -os -z \\
         -t ${task.cpus} \\
-        -a ${analysis_cpus} \\
+        -a ${task.cpus} \\
         $args
 
     # Check if we're running an mcl test or not:
