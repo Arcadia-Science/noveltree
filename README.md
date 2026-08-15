@@ -141,6 +141,10 @@ The `awsbatch` profile includes optimized executor settings (queue size of 1000 
 **Requirements:**
 
 - AWS Batch compute environment and job queue configured
+- EC2-backed Batch compute environments need enough local container/scratch
+  storage for OrthoFinder. For datasets with hundreds of species, configure
+  the compute environment launch template with a large root/Docker volume
+  (1 TB recommended as a starting point).
 - Work directory (`-work-dir`) and output directory (`--outdir`) must be S3 paths
 - Input samplesheet and proteome files accessible from S3
 - Appropriate IAM permissions for Batch and S3 access

@@ -1,6 +1,7 @@
 include { ANNOTATE_UNIPROT                          } from '../../modules/local/annotate_uniprot'
 include { COGEQC                                    } from '../../modules/local/cogeqc'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../../modules/nf-core-modified/diamond_blastp'
+include { BUNDLE_BLAST_RESULTS as BUNDLE_BLAST_RESULTS_TEST } from '../../modules/local/bundle_blast_results'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../../modules/local/orthofinder_mcl'
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../../modules/local/orthofinder_prep'
 include { SELECT_INFLATION                          } from '../../modules/local/select_inflation'
@@ -53,11 +54,25 @@ workflow MCL_INFLATION_SELECTION {
             ch_test_spp_id_map
         )
 
+        // Use one archive per query species so the OrthoFinder task does not
+        // receive one staged input for every pairwise search.
+        ch_test_blast_groups = DIAMOND_BLASTP_TEST.out.txt
+            .map { blast ->
+                def matcher = blast.name =~ /^TestBlast(\d+)_/
+                if (!matcher.find()) {
+                    throw new IllegalArgumentException("Unexpected DIAMOND test output name: ${blast.name}")
+                }
+                tuple("mcl_test_${matcher.group(1)}", blast)
+            }
+            .groupTuple()
+
+        BUNDLE_BLAST_RESULTS_TEST(ch_test_blast_groups)
+
         // First determine the optimal MCL inflation parameter, and then
         // subsequently use this for full orthogroup inference.
         ORTHOFINDER_MCL_TEST(
             ch_inflation,
-            DIAMOND_BLASTP_TEST.out.txt.collect(),
+            BUNDLE_BLAST_RESULTS_TEST.out.archive.collect(),
             ORTHOFINDER_PREP_TEST.out.fastas,
             ORTHOFINDER_PREP_TEST.out.diamonds,
             ORTHOFINDER_PREP_TEST.out.sppIDs,
@@ -87,4 +102,3 @@ workflow MCL_INFLATION_SELECTION {
     best_inflation
     versions
 }
-

@@ -7,6 +7,7 @@ if (params.test_run_mcl) {
 }
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL } from '../../modules/local/orthofinder_prep'
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL     } from '../../modules/nf-core-modified/diamond_blastp'
+include { BUNDLE_BLAST_RESULTS as BUNDLE_BLAST_RESULTS_ALL } from '../../modules/local/bundle_blast_results'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL   } from '../../modules/local/orthofinder_mcl'
 
 // Function to get list of [meta, [file]]
@@ -82,11 +83,27 @@ workflow INFER_ORTHOGROUPS {
         ch_spp_id_map
     )
 
+    // Bundle the all-v-all search results by query species before passing
+    // them to OrthoFinder. Without this intermediate step, an N-species run
+    // stages N^2 individual BLAST files into a single AWS Batch task. Large
+    // datasets can overwhelm the generated Nextflow Bash staging wrapper.
+    ch_blast_groups = DIAMOND_BLASTP_ALL.out.txt
+        .map { blast ->
+            def matcher = blast.name =~ /^Blast(\d+)_/
+            if (!matcher.find()) {
+                throw new IllegalArgumentException("Unexpected DIAMOND output name: ${blast.name}")
+            }
+            tuple("complete_${matcher.group(1)}", blast)
+        }
+        .groupTuple()
+
+    BUNDLE_BLAST_RESULTS_ALL(ch_blast_groups)
+
     // Using the best-performing inflation parameter, infer orthogroups for
     // all samples. Also runs chimera detection and orthogroup filtering.
     ORTHOFINDER_MCL_ALL(
         ch_best_inflation,
-        DIAMOND_BLASTP_ALL.out.txt.collect(),
+        BUNDLE_BLAST_RESULTS_ALL.out.archive.collect(),
         ORTHOFINDER_PREP_ALL.out.fastas,
         ORTHOFINDER_PREP_ALL.out.diamonds,
         ORTHOFINDER_PREP_ALL.out.sppIDs,

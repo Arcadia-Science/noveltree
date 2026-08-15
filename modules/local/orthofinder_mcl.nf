@@ -1,6 +1,6 @@
 process ORTHOFINDER_MCL {
     tag "MCL clustering"
-    label 'process_highcpu'
+    label 'process_orthofinder'
 
     storeDir "${params.outdir}/orthofinder/mcl"
 
@@ -8,7 +8,7 @@ process ORTHOFINDER_MCL {
 
     input:
     each mcl_inflation
-    file(blast)
+    file(blast_bundles)
     file(fasta)
     file(db)
     file(sppIDs)
@@ -34,8 +34,17 @@ process ORTHOFINDER_MCL {
 
     script:
     def args = task.ext.args ?: ''
+    def analysis_cpus = Math.max(1, (task.cpus as int).intdiv(4))
 
     """
+    # Expand one archive per query species, removing each archive immediately
+    # to avoid retaining both the archive and extracted files on local scratch.
+    for archive in BlastBundle_*.tar
+    do
+        tar -xf \$archive
+        rm -f \$archive
+    done
+
     for f in \$(ls TestBlast*)
     do
         mv \$f \$(echo \$f | sed "s/TestBlast/Blast/g")
@@ -46,7 +55,8 @@ process ORTHOFINDER_MCL {
         -n "Inflation_${mcl_inflation}" \\
         -I $mcl_inflation \\
         -M msa -X -os -z \\
-        -a ${task.cpus} \\
+        -t ${task.cpus} \\
+        -a ${analysis_cpus} \\
         $args
 
     # Check if we're running an mcl test or not:
