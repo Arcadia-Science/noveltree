@@ -216,6 +216,12 @@
                     "fa_icon": "fas fa-list",
                     "help_text": "Specify the name of your AWS Batch job queue. Required when using -profile awsbatch."
                 },
+                "awsqueue_ondemand": {
+                    "type": "string",
+                    "description": "An On-Demand AWS Batch queue for long-running, monolithic tasks.",
+                    "fa_icon": "fas fa-server",
+                    "help_text": "The Arcadia profile routes OrthoFinder and SpeciesRax to this queue while keeping other tasks on the default Spot queue."
+                },
                 "awsregion": {
                     "type": "string",
                     "description": "The AWS region where your Batch compute environment is located.",
