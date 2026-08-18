@@ -2,11 +2,29 @@
 """
 Summarize orthogroup distribution across species and filter orthogroups
 for species tree vs gene tree inference.
+
+The gene-count table is processed as a stream so memory use stays constant
+for datasets containing hundreds of thousands or millions of orthogroups.
 """
 
 import csv
-import math
 import sys
+
+
+def maximize_csv_field_size():
+    limit = sys.maxsize
+    while True:
+        try:
+            csv.field_size_limit(limit)
+            return
+        except OverflowError:
+            limit //= 10
+
+
+def format_mean(value):
+    if value == int(value):
+        return str(int(value))
+    return f"{value:.6f}"
 
 
 def main():
@@ -23,96 +41,99 @@ def main():
     num_seq_filt = int(sys.argv[3])
     num_spp_filt = int(sys.argv[4])
     prop_spp_spptree_filt = float(sys.argv[5])
-    copy_num_filt1 = float(sys.argv[6])
+    copy_num_filt = float(sys.argv[6])
+    maximize_csv_field_size()
 
-    # Read samplesheet to count species
-    num_species = 0
-    with open(samplesheet_path) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            num_species += 1
-
+    with open(samplesheet_path, newline="") as handle:
+        num_species = sum(1 for _row in csv.DictReader(handle))
     num_spp_spptree_filt = round(num_species * prop_spp_spptree_filt)
 
-    # Read orthogroup gene counts
-    with open(og_counts_path) as f:
-        reader = csv.reader(f, delimiter="\t")
-        header = next(reader)
+    fieldnames = ["orthogroup", "num_spp", "total_copy_num", "mean_copy_num"]
+    total_ogs = 0
+    total_spptree = 0
+    total_genetree = 0
 
-        # Clean column names (strip everything after first dot, matching R's gsub)
-        clean_header = []
-        for col in header:
-            dot_pos = col.find(".")
-            clean_header.append(col[:dot_pos] if dot_pos >= 0 else col)
+    with open(og_counts_path, newline="") as counts_handle, open(
+        "all_ogs_counts.csv", "w", newline=""
+    ) as all_handle, open(
+        "spptree_core_ogs_counts.csv", "w", newline=""
+    ) as spptree_handle, open(
+        "genetree_core_ogs_counts.csv", "w", newline=""
+    ) as genetree_handle:
+        reader = csv.reader(counts_handle, delimiter="\t")
+        header = next(reader, None)
+        if not header:
+            raise ValueError(f"Empty orthogroup gene-count table: {og_counts_path}")
 
-        # Find column indices
-        og_col = 0  # "Orthogroup"
-        total_col = clean_header.index("Total")
-        spp_cols = [i for i in range(1, len(clean_header)) if i != total_col]
+        clean_header = [column.split(".", 1)[0] for column in header]
+        try:
+            total_column = clean_header.index("Total")
+        except ValueError as error:
+            raise ValueError(
+                f"No Total column in orthogroup gene-count table: {og_counts_path}"
+            ) from error
+        species_columns = [
+            index for index in range(1, len(clean_header)) if index != total_column
+        ]
 
-        results = []
-        for row in reader:
-            og_name = row[og_col]
-            total_copy_num = int(row[total_col])
+        all_writer = csv.DictWriter(all_handle, fieldnames=fieldnames)
+        spptree_writer = csv.DictWriter(spptree_handle, fieldnames=fieldnames)
+        genetree_writer = csv.DictWriter(genetree_handle, fieldnames=fieldnames)
+        for writer in (all_writer, spptree_writer, genetree_writer):
+            writer.writeheader()
 
-            # Per-species counts
-            counts = {}
-            for i in spp_cols:
-                spp_name = clean_header[i]
-                counts[spp_name] = int(row[i])
+        for row_number, row in enumerate(reader, start=2):
+            if not row:
+                continue
+            if len(row) != len(header):
+                raise ValueError(
+                    f"Row {row_number} of {og_counts_path} has {len(row)} fields; "
+                    f"expected {len(header)}"
+                )
+            try:
+                total_copy_num = int(row[total_column])
+                counts = [int(row[index]) for index in species_columns]
+            except ValueError as error:
+                raise ValueError(
+                    f"Invalid integer count at row {row_number} of {og_counts_path}"
+                ) from error
 
-            # Number of species present (count > 0)
-            num_spp = sum(1 for c in counts.values() if c > 0)
-
-            # Mean copy number across species that are present
-            present_counts = [c for c in counts.values() if c > 0]
-            mean_copy_num = sum(present_counts) / len(present_counts) if present_counts else 0.0
-
-            results.append({
-                "orthogroup": og_name,
+            present_counts = [count for count in counts if count > 0]
+            num_spp = len(present_counts)
+            mean_copy_num = (
+                sum(present_counts) / len(present_counts) if present_counts else 0.0
+            )
+            result = {
+                "orthogroup": row[0],
                 "num_spp": num_spp,
                 "total_copy_num": total_copy_num,
-                "mean_copy_num": mean_copy_num,
-            })
+                "mean_copy_num": format_mean(mean_copy_num),
+            }
 
-    # Filter: species tree core OGs
-    spptree_core = [
-        r for r in results
-        if r["total_copy_num"] >= num_seq_filt
-        and r["mean_copy_num"] <= copy_num_filt1
-        and r["num_spp"] >= num_spp_filt
-        and r["num_spp"] >= num_spp_spptree_filt
-    ]
-    spptree_og_names = {r["orthogroup"] for r in spptree_core}
+            is_spptree = (
+                total_copy_num >= num_seq_filt
+                and mean_copy_num <= copy_num_filt
+                and num_spp >= num_spp_filt
+                and num_spp >= num_spp_spptree_filt
+            )
+            is_genetree = (
+                total_copy_num >= num_seq_filt
+                and num_spp >= num_spp_filt
+                and not is_spptree
+            )
 
-    # Filter: gene tree core OGs (excludes species tree core to avoid redundancy)
-    genetree_core = [
-        r for r in results
-        if r["total_copy_num"] >= num_seq_filt
-        and r["num_spp"] >= num_spp_filt
-        and r["orthogroup"] not in spptree_og_names
-    ]
+            all_writer.writerow(result)
+            total_ogs += 1
+            if is_spptree:
+                spptree_writer.writerow(result)
+                total_spptree += 1
+            elif is_genetree:
+                genetree_writer.writerow(result)
+                total_genetree += 1
 
-    # Write outputs
-    fieldnames = ["orthogroup", "num_spp", "total_copy_num", "mean_copy_num"]
-
-    def write_csv(filename, data):
-        with open(filename, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in data:
-                # Format mean_copy_num to match R's default CSV output
-                row_out = dict(row)
-                row_out["mean_copy_num"] = f"{row['mean_copy_num']:.6f}" if row["mean_copy_num"] != int(row["mean_copy_num"]) else str(int(row["mean_copy_num"]))
-                writer.writerow(row_out)
-
-    write_csv("all_ogs_counts.csv", results)
-    write_csv("spptree_core_ogs_counts.csv", spptree_core)
-    write_csv("genetree_core_ogs_counts.csv", genetree_core)
-
-    print(f"Total OGs: {len(results)}", file=sys.stderr)
-    print(f"Species tree core OGs: {len(spptree_core)}", file=sys.stderr)
-    print(f"Gene tree core OGs: {len(genetree_core)}", file=sys.stderr)
+    print(f"Total OGs: {total_ogs}", file=sys.stderr)
+    print(f"Species tree core OGs: {total_spptree}", file=sys.stderr)
+    print(f"Gene tree core OGs: {total_genetree}", file=sys.stderr)
 
 
 if __name__ == "__main__":

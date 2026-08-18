@@ -72,18 +72,41 @@ process ORTHOFINDER_MCL {
         rm -r Sequences_ids
         cd \$dir
 
-        # Flag and remove cross-OG chimeric proteins
-        flag_cross_og_chimeras.py \\
-            --orthogroups OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.tsv \\
-            --blast_dir ./ \\
-            --og_seqs_dir OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/ \\
-            --report chimera_report.tsv
-
-        # Filter orthogroups into species tree and gene tree sets
+        # Preliminary streaming filter. Chimera detection only needs to score
+        # proteins in OGs that can proceed downstream.
         og_tax_summary.py \\
             OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.GeneCount.tsv \\
             ${samplesheet} \\
             ${min_num_seqs} ${min_num_spp} ${min_prop_spp_for_spptree} ${max_copy_num}
+
+        # Flag and remove cross-OG chimeric proteins. All protein assignments
+        # remain available as possible hit OGs, but queries and FASTA rewrites
+        # are restricted to preliminary retained families.
+        flag_cross_og_chimeras.py \\
+            --orthogroups OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.tsv \\
+            --blast_dir ./ \\
+            --og_seqs_dir OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/ \\
+            --report chimera_report.tsv \\
+            --retained-og-files spptree_core_ogs_counts.csv genetree_core_ogs_counts.csv \\
+            --gene-counts OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.GeneCount.tsv \\
+            --updated-gene-counts Orthogroups.GeneCount.post_chimera.tsv \\
+            --updated-orthogroups Orthogroups.post_chimera.tsv
+
+        # Recompute the final retained sets after chimera removal. An excluded
+        # OG cannot become eligible when sequences are removed, so the
+        # preliminary restriction above is lossless.
+        og_tax_summary.py \\
+            Orthogroups.GeneCount.post_chimera.tsv \\
+            ${samplesheet} \\
+            ${min_num_seqs} ${min_num_spp} ${min_prop_spp_for_spptree} ${max_copy_num}
+
+        # Ensure the persisted OrthoFinder directory and downstream
+        # PHYLO_PROFILES use membership/count tables matching the filtered
+        # FASTAs rather than the pre-chimera OrthoFinder tables.
+        mv Orthogroups.post_chimera.tsv \\
+            OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.tsv
+        mv Orthogroups.GeneCount.post_chimera.tsv \\
+            OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.GeneCount.tsv
 
         # Move filtered FASTAs into separate directories
         msa_dir=OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences
