@@ -13,10 +13,12 @@ present in the OrthoFinder working directory.
 import argparse
 import csv
 import glob
+import gzip
 import os
 import re
 import shutil
 import sys
+import tempfile
 from collections import defaultdict
 
 
@@ -144,13 +146,22 @@ def iter_blast_score_chunks(
     evalue_max,
 ):
     """Yield score tables one query species at a time to bound peak memory."""
-    blast_files = sorted(glob.glob(os.path.join(blast_dir, "Blast[0-9]*_[0-9]*.txt")))
+    blast_files = sorted(
+        set(
+            glob.glob(os.path.join(blast_dir, "Blast[0-9]*_[0-9]*.txt"))
+            + glob.glob(os.path.join(blast_dir, "Blast[0-9]*_[0-9]*.txt.gz"))
+        )
+    )
     if not blast_files:
-        raise FileNotFoundError(f"No OrthoFinder Blast*_*.txt files found in {blast_dir}")
+        raise FileNotFoundError(
+            f"No OrthoFinder Blast*_*.txt or Blast*_*.txt.gz files found in {blast_dir}"
+        )
 
     files_by_query_species = defaultdict(list)
     for blast_file in blast_files:
-        match = re.fullmatch(r"Blast(\d+)_(\d+)\.txt", os.path.basename(blast_file))
+        match = re.fullmatch(
+            r"Blast(\d+)_(\d+)\.txt(?:\.gz)?", os.path.basename(blast_file)
+        )
         if match is None:
             raise ValueError(f"Unexpected OrthoFinder BLAST filename: {blast_file}")
         files_by_query_species[int(match.group(1))].append(blast_file)
@@ -161,7 +172,8 @@ def iter_blast_score_chunks(
     ):
         protein_og_scores = defaultdict(dict)
         for blast_file in files_by_query_species[query_species]:
-            with open(blast_file) as handle:
+            opener = gzip.open if blast_file.endswith(".gz") else open
+            with opener(blast_file, "rt") as handle:
                 for line in handle:
                     parts = line.rstrip("\n").split("\t")
                     if len(parts) < 12:
@@ -231,7 +243,7 @@ def identify_chimeras(protein_og_scores, protein_to_og, ratio_threshold):
 
 
 def remove_from_og_fastas(chimeras, og_seqs_dir):
-    """Remove chimeric proteins from only their retained OG FASTA files."""
+    """Stream affected FASTAs through temporary files and replace atomically."""
     chimeras_by_og = defaultdict(set)
     for protein, og, _hit_ogs, _ratios in chimeras:
         chimeras_by_og[og].add(protein)
@@ -241,25 +253,34 @@ def remove_from_og_fastas(chimeras, og_seqs_dir):
         fasta_file = os.path.join(og_seqs_dir, f"{og}.fa")
         if not os.path.isfile(fasta_file):
             raise FileNotFoundError(f"Missing retained OG FASTA: {fasta_file}")
-        lines = []
         skip = False
         modified = False
-        with open(fasta_file) as f:
-            for line in f:
-                if line.startswith(">"):
-                    seqid = line[1:].strip().split()[0]
-                    if seqid in chimera_set:
-                        skip = True
-                        modified = True
-                        removed += 1
-                    else:
-                        skip = False
-                if not skip:
-                    lines.append(line)
+        descriptor, temporary_path = tempfile.mkstemp(
+            prefix=f".{og}.", suffix=".tmp", dir=og_seqs_dir, text=True
+        )
+        try:
+            with open(fasta_file) as source, os.fdopen(descriptor, "w") as destination:
+                for line in source:
+                    if line.startswith(">"):
+                        seqid = line[1:].strip().split()[0]
+                        if seqid in chimera_set:
+                            skip = True
+                            modified = True
+                            removed += 1
+                        else:
+                            skip = False
+                    if not skip:
+                        destination.write(line)
 
-        if modified:
-            with open(fasta_file, "w") as f:
-                f.writelines(lines)
+            if modified:
+                os.chmod(temporary_path, os.stat(fasta_file).st_mode)
+                os.replace(temporary_path, fasta_file)
+            else:
+                os.unlink(temporary_path)
+        except BaseException:
+            if os.path.exists(temporary_path):
+                os.unlink(temporary_path)
+            raise
 
     expected = sum(len(proteins) for proteins in chimeras_by_og.values())
     if removed != expected:

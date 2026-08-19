@@ -1,4 +1,5 @@
 import csv
+import gzip
 import importlib.util
 import subprocess
 import sys
@@ -85,6 +86,80 @@ class OrthofinderPostprocessTests(unittest.TestCase):
             self.assertEqual(removed, 1)
             self.assertNotIn(">a1\n", keep_fasta.read_text())
             self.assertEqual(other_fasta.read_text(), ">x1\nGGGG\n>y1\nTTTT\n")
+
+    def test_gzip_compressed_blast_results_are_scored(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            with gzip.open(root / "Blast12_7.txt.gz", "wt") as handle:
+                handle.write(
+                    "a1\ta2\t0\t0\t0\t0\t0\t0\t0\t0\t1e-50\t200\n"
+                    "a1\tx1\t0\t0\t0\t0\t0\t0\t0\t0\t1e-40\t150\n"
+                )
+
+            chunks = list(
+                CHIMERAS.iter_blast_score_chunks(
+                    root,
+                    {"a1": "OG_KEEP", "a2": "OG_KEEP", "x1": "OG_OTHER"},
+                    {"a1": "speciesA"},
+                    100,
+                    1e-10,
+                )
+            )
+
+            self.assertEqual([chunk[0] for chunk in chunks], [12])
+            self.assertEqual(chunks[0][1]["a1"]["OG_KEEP"], 200)
+            self.assertEqual(chunks[0][1]["a1"]["OG_OTHER"], 150)
+
+    def test_fasta_metadata_manifest(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            species_tree = root / "species_tree"
+            gene_tree = root / "gene_tree"
+            species_tree.mkdir()
+            gene_tree.mkdir()
+            (species_tree / "OG1.fa").write_text(
+                ">species_one_p1\nAAAA\nAA\n>species_two_p2\nCCC\n"
+            )
+            (gene_tree / "OG2.fa").write_text(
+                ">species_one_p3\nA\n>species_one_p4\nTTTT\n"
+            )
+            output = root / "metadata.tsv"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "bin" / "summarize_og_fastas.py"),
+                    "--species-tree-dir",
+                    str(species_tree),
+                    "--gene-tree-dir",
+                    str(gene_tree),
+                    "--output",
+                    str(output),
+                ],
+                check=True,
+            )
+
+            with output.open() as handle:
+                rows = list(csv.DictReader(handle, delimiter="\t"))
+            self.assertEqual(
+                rows,
+                [
+                    {
+                        "orthogroup": "OG1",
+                        "family_set": "species_tree",
+                        "n_seq": "2",
+                        "max_len": "6",
+                        "n_species": "2",
+                    },
+                    {
+                        "orthogroup": "OG2",
+                        "family_set": "gene_tree",
+                        "n_seq": "2",
+                        "max_len": "4",
+                        "n_species": "1",
+                    },
+                ],
+            )
 
     def test_post_chimera_counts_drive_final_streaming_filter(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

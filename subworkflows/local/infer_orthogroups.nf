@@ -9,20 +9,7 @@ include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL } from '../../modules/local/o
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL     } from '../../modules/nf-core-modified/diamond_blastp'
 include { BUNDLE_BLAST_RESULTS as BUNDLE_BLAST_RESULTS_ALL } from '../../modules/local/bundle_blast_results'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL   } from '../../modules/local/orthofinder_mcl'
-
-// Function to get list of [meta, [file]]
-def create_og_channel(Object inputs) {
-    if (inputs instanceof String) {
-        inputs = [inputs]
-    }
-    def metaList = []
-    inputs.each { input ->
-        def meta = [:]
-        meta.og = input
-        metaList.add(meta)
-    }
-    return metaList
-}
+include { CLEAN_ORTHOFINDER_CHECKPOINT } from '../../modules/local/orthofinder_checkpoint_cleanup'
 
 workflow INFER_ORTHOGROUPS {
     take:
@@ -116,39 +103,42 @@ workflow INFER_ORTHOGROUPS {
         params.max_copy_num_spp_tree
     )
 
-    // Create meta maps for the two sets by providing the simple name of each orthogroup
-    spptree_og_names = ORTHOFINDER_MCL_ALL.out.spptree_fas.map { file -> file.simpleName }
-    spptree_og_map = spptree_og_names.map { create_og_channel(it) }.flatten()
-    genetree_og_names = ORTHOFINDER_MCL_ALL.out.genetree_fas.map { file -> file.simpleName }
-    genetree_og_map = genetree_og_names.map { create_og_channel(it) }.flatten()
+    // This receipt is emitted only after Nextflow has successfully finalized
+    // and stored every ORTHOFINDER_MCL output. The cleanup task therefore
+    // stages one tiny file and cannot erase recovery data during finalization.
+    CLEAN_ORTHOFINDER_CHECKPOINT(ORTHOFINDER_MCL_ALL.out.checkpoint_receipt)
 
-    // Create the tuple of output fastas paired with the meta map,
-    // injecting n_seq and max_len for downstream dynamic resource allocation.
-    // max_len = longest sequence in the OG (needed for PREQUAL O(L^2) memory).
-    ch_spptree_fas = spptree_og_map.merge(ORTHOFINDER_MCL_ALL.out.spptree_fas.flatten())
-        .map { meta, fasta ->
-            def text = fasta.text
-            def n_seq = text.count('>')
-            def cur = 0; def maxL = 0
-            text.eachLine { line ->
-                if (line.startsWith('>')) { if (cur > maxL) maxL = cur; cur = 0 }
-                else { cur += line.trim().length() }
-            }
-            if (cur > maxL) maxL = cur
-            [meta + [n_seq: n_seq, max_len: maxL], fasta]
+    // Parse one compact manifest and join its resource metadata to the FASTA
+    // paths by orthogroup. This avoids controller-side reads of every FASTA.
+    ch_og_metadata = ORTHOFINDER_MCL_ALL.out.og_metadata
+        .splitCsv(header: true, sep: '\t')
+        .map { row ->
+            def meta = [
+                og: row.orthogroup,
+                n_seq: row.n_seq as int,
+                max_len: row.max_len as int,
+                n_species: row.n_species as int,
+            ]
+            tuple(row.orthogroup, row.family_set, meta)
         }
-    ch_genetree_fas = genetree_og_map.merge(ORTHOFINDER_MCL_ALL.out.genetree_fas.flatten())
-        .map { meta, fasta ->
-            def text = fasta.text
-            def n_seq = text.count('>')
-            def cur = 0; def maxL = 0
-            text.eachLine { line ->
-                if (line.startsWith('>')) { if (cur > maxL) maxL = cur; cur = 0 }
-                else { cur += line.trim().length() }
-            }
-            if (cur > maxL) maxL = cur
-            [meta + [n_seq: n_seq, max_len: maxL], fasta]
-        }
+
+    ch_spptree_metadata = ch_og_metadata
+        .filter { og, family_set, meta -> family_set == 'species_tree' }
+        .map { og, family_set, meta -> tuple(og, meta) }
+    ch_genetree_metadata = ch_og_metadata
+        .filter { og, family_set, meta -> family_set == 'gene_tree' }
+        .map { og, family_set, meta -> tuple(og, meta) }
+
+    ch_spptree_fas = ORTHOFINDER_MCL_ALL.out.spptree_fas
+        .flatten()
+        .map { fasta -> tuple(fasta.simpleName, fasta) }
+        .join(ch_spptree_metadata)
+        .map { og, fasta, meta -> tuple(meta, fasta) }
+    ch_genetree_fas = ORTHOFINDER_MCL_ALL.out.genetree_fas
+        .flatten()
+        .map { fasta -> tuple(fasta.simpleName, fasta) }
+        .join(ch_genetree_metadata)
+        .map { og, fasta, meta -> tuple(meta, fasta) }
 
     // --test mode: keep only gene families that contain ALL species in the dataset.
     // This dramatically reduces the number of OGs for quick end-to-end smoke tests.
@@ -159,22 +149,14 @@ workflow INFER_ORTHOGROUPS {
         ch_spptree_fas = ch_spptree_fas
             .combine(ch_total_species)
             .filter { meta, fasta, n_spp ->
-                def species = fasta.text.readLines()
-                    .findAll { it.startsWith('>') }
-                    .collect { it.substring(1).replaceFirst(/_[^_]+$/, '') }
-                    .toSet()
-                species.size() >= n_spp
+                meta.n_species >= n_spp
             }
             .map { meta, fasta, n_spp -> [meta, fasta] }
 
         ch_genetree_fas = ch_genetree_fas
             .combine(ch_total_species)
             .filter { meta, fasta, n_spp ->
-                def species = fasta.text.readLines()
-                    .findAll { it.startsWith('>') }
-                    .collect { it.substring(1).replaceFirst(/_[^_]+$/, '') }
-                    .toSet()
-                species.size() >= n_spp
+                meta.n_species >= n_spp
             }
             .map { meta, fasta, n_spp -> [meta, fasta] }
     }

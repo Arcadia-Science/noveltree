@@ -27,14 +27,40 @@ process ORTHOFINDER_MCL {
     path("all_ogs_counts.csv"),             emit: all_ogs, optional: true
     path("spptree_core_ogs_counts.csv"),    emit: spptree_core_ogs, optional: true
     path("genetree_core_ogs_counts.csv"),   emit: genetree_core_ogs, optional: true
+    path("og_fasta_metadata.tsv"),          emit: og_metadata, optional: true
     path("chimera_report.tsv"),             emit: chimera_report, optional: true
+    path("orthofinder_checkpoint_receipt.json"), emit: checkpoint_receipt, optional: true
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
+    def checkpoint_root = "${params.outdir}/orthofinder/mcl_checkpoints"
     """
+    checkpoint_fingerprint=''
+    checkpoint_restored=false
+    shopt -s nullglob
+
+    # Hash the biological/clustering inputs before deleting the bundles. This
+    # key intentionally ignores NovelTree postprocessing code so a retry after
+    # a postprocessing fix can reuse the completed OrthoFinder result.
+    if [ "$output_directory" == "complete_dataset" ]; then
+        checkpoint_inputs=(SpeciesIDs.txt SequenceIDs.txt Species*.fa)
+        checkpoint_bundles=(BlastBundle_*.tar)
+        if [ "\${#checkpoint_inputs[@]}" -lt 3 ] || [ "\${#checkpoint_bundles[@]}" -lt 1 ]; then
+            echo "Insufficient inputs to fingerprint the OrthoFinder clustering" >&2
+            exit 1
+        fi
+        checkpoint_fingerprint=\$(orthofinder_checkpoint.py fingerprint \
+            --orthofinder-version '2.5.4' \
+            --inflation '${mcl_inflation}' \
+            --orthofinder-options '-b -I -M msa -X -os -z' \
+            --extra-args '${args}' \
+            "\${checkpoint_inputs[@]}" \
+            --metadata-only-inputs "\${checkpoint_bundles[@]}")
+    fi
+
     # Expand one archive per query species, removing each archive immediately
     # to avoid retaining both the archive and extracted files on local scratch.
     for archive in BlastBundle_*.tar
@@ -43,19 +69,49 @@ process ORTHOFINDER_MCL {
         rm -f \$archive
     done
 
-    for f in \$(ls TestBlast*)
+    for f in TestBlast*
     do
         mv \$f \$(echo \$f | sed "s/TestBlast/Blast/g")
     done
 
-    orthofinder \\
-        -b ./ \\
-        -n "Inflation_${mcl_inflation}" \\
-        -I $mcl_inflation \\
-        -M msa -X -os -z \\
-        -t ${task.cpus} \\
-        -a ${task.cpus} \\
-        $args
+    # Restore raw tables and orthogroup FASTAs when an earlier attempt reached
+    # the end of OrthoFinder but failed during custom postprocessing.
+    if [ "$output_directory" == "complete_dataset" ]; then
+        if orthofinder_checkpoint.py restore \
+            --root '${checkpoint_root}' \
+            --fingerprint "\$checkpoint_fingerprint" \
+            --results-dir 'OrthoFinder/Results_Inflation_${mcl_inflation}' \
+            --receipt orthofinder_checkpoint_receipt.json
+        then
+            checkpoint_restored=true
+        else
+            restore_status=\$?
+            if [ "\$restore_status" -ne 10 ]; then
+                exit "\$restore_status"
+            fi
+        fi
+    fi
+
+    if [ "\$checkpoint_restored" != true ]; then
+        orthofinder \\
+            -b ./ \\
+            -n "Inflation_${mcl_inflation}" \\
+            -I $mcl_inflation \\
+            -M msa -X -os -z \\
+            -t ${task.cpus} \\
+            -a ${task.cpus} \\
+            $args
+
+        # Persist the unmodified clustering immediately after OrthoFinder
+        # succeeds, before any custom filtering can fail or mutate it.
+        if [ "$output_directory" == "complete_dataset" ]; then
+            orthofinder_checkpoint.py save \
+                --root '${checkpoint_root}' \
+                --fingerprint "\$checkpoint_fingerprint" \
+                --results-dir 'OrthoFinder/Results_Inflation_${mcl_inflation}' \
+                --receipt orthofinder_checkpoint_receipt.json
+        fi
+    fi
 
     # Check if we're running an mcl test or not:
     # if so, delete the sequence files and other non-essential directories that
@@ -66,12 +122,6 @@ process ORTHOFINDER_MCL {
         rm -r OrthoFinder/*/WorkingDirectory/
         rm -r OrthoFinder/*/Orthologues/
     else
-        dir=\$(pwd)
-        cd \$(ls -d OrthoFinder/*/WorkingDirectory)
-        tar -czvf Sequences_ids.tar.gz Sequences_ids
-        rm -r Sequences_ids
-        cd \$dir
-
         # Preliminary streaming filter. Chimera detection only needs to score
         # proteins in OGs that can proceed downstream.
         og_tax_summary.py \\
@@ -124,6 +174,15 @@ process ORTHOFINDER_MCL {
                 mv "\${msa_dir}/\${og}.fa" gene_tree_og_fas/
             fi
         done
+
+        # Summarize the retained FASTAs once on local scratch. Downstream
+        # resource routing consumes this small manifest instead of asking the
+        # Nextflow controller to download and parse every FASTA from S3.
+        summarize_og_fastas.py \
+            --species-tree-dir species_tree_og_fas \
+            --gene-tree-dir gene_tree_og_fas \
+            --output og_fasta_metadata.tsv
+
         # Remove directories no longer needed (orthology derived from GeneRax reconciliations in PARSE_PHYLOHOGS)
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences/
         rm -rf OrthoFinder/Results_Inflation_${mcl_inflation}/Single_Copy_Orthologue_Sequences/
