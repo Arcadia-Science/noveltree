@@ -143,10 +143,8 @@ workflow NOVELTREE {
 
     // 7. Reconciliation summaries (phylo profiles, HOG parsing)
     RECONCILIATION_SUMMARIES(
-        RECONCILE_TREES.out.event_counts,
         RECONCILE_TREES.out.species_event_counts,
         RECONCILE_TREES.out.species_coverage,
-        INFER_ORTHOGROUPS.out.inflation_dir,
         RECONCILE_TREES.out.generax_nhx,
         RECONCILE_TREES.out.labeled_species_tree
     )

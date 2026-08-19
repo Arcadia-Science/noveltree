@@ -8,9 +8,7 @@ process SPECIESRAX {
     storeDir "${params.outdir}/species_trees/speciesrax"
 
     input:
-    file map_links       // Filepath to the generax gene-species map file
-    file gene_trees      // Filepaths to the starting gene trees
-    file alignments      // Filepaths to the gene family alignments
+    file input_bundles   // Sharded archives of trees, maps, and manifests
     file rooted_spp_tree // Filepath to the rooted asteroid species tree
 
     output:
@@ -28,24 +26,37 @@ process SPECIESRAX {
     def args = task.ext.args ?: ''
     def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : "MiniNJ"
     """
-    # Construct the family files for each gene family
-    echo "[FAMILIES]" > speciesrax_orthogroup.families
-    for msa in \$(ls *fa)
+    # Extract uncompressed shards locally. The archive layer reduces S3/API
+    # fan-in without spending CPU recompressing files GeneRax immediately reads.
+    for archive in speciesrax_inputs_*.tar
     do
-        # Get the OG name
-        og=\$(echo \$msa | cut -f1 -d"_")
-        tree=\$(ls \${og}*.newick)
-        map_link=\$(ls \${og}*_map.link | head -n1)
-
-        # Populate the families file for this gene family for the
-        # analysis with SpeciesRax
-        # We will be using LG+G4+F for all gene families
-        echo "- \${og}" >> speciesrax_orthogroup.families
-        echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
-        echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
-        echo "alignment = \$msa" >> speciesrax_orthogroup.families
-        echo "subst_model = LG+G4+F" >> speciesrax_orthogroup.families
+        tar -xf "\$archive"
+        rm -f "\$archive"
     done
+
+    # Construct the family file from the validated shard manifests.
+    echo "[FAMILIES]" > speciesrax_orthogroup.families
+    for manifest in speciesrax_inputs_*.tsv
+    do
+        while IFS=\$'\t' read -r og tree map_link
+        do
+            if [ "\$og" = "orthogroup" ]; then
+                continue
+            fi
+            for required in "\$tree" "\$map_link"
+            do
+                if [ ! -s "\$required" ]; then
+                    echo "Missing or empty SpeciesRax input: \$required" >&2
+                    exit 1
+                fi
+            done
+
+            echo "- \${og}" >> speciesrax_orthogroup.families
+            echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
+            echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
+        done < "\$manifest"
+    done
+    rm -f speciesrax_inputs_*.tsv
 
 
     mpiexec \\

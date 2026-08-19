@@ -6,6 +6,7 @@ if (params.outgroups != 'none') {
     include { ASTEROID } from '../../modules/local/asteroid'
 }
 include { SPECIESRAX          } from '../../modules/local/speciesrax'
+include { BUNDLE_SPECIESRAX_INPUTS } from '../../modules/local/bundle_speciesrax_inputs'
 include { GENERAX_PER_SPECIES } from '../../modules/local/generax_per_species'
 if (params.generax_per_family) {
     include { GENERAX_PER_FAMILY } from '../../modules/local/generax_per_family'
@@ -22,10 +23,39 @@ workflow RECONCILE_TREES {
     remaining_clean_msas   // [ val(meta), path(msa) ]
 
     main:
-    // Collect core-set lists for SPECIESRAX
+    // Join each core family's mapping and tree, then create bounded
+    // uncompressed shards. With --strategy SKIP, SpeciesRax never reads an
+    // alignment, so excluding alignments avoids staging the largest inputs.
+    ch_speciesrax_family_inputs = core_map_links
+        .join(core_gene_trees)
+
+    def speciesrax_bundle_size = params.speciesrax_bundle_size as int
+    ch_speciesrax_bundle_inputs = ch_speciesrax_family_inputs
+        .map { meta, map_link, gene_tree ->
+            def matcher = meta.og =~ /^OG(\d+)$/
+            if (!matcher.matches()) {
+                throw new IllegalArgumentException("Unexpected orthogroup identifier: ${meta.og}")
+            }
+            def shard_number = (matcher[0][1] as long).intdiv(speciesrax_bundle_size)
+            tuple(String.format('%08d', shard_number), meta, map_link, gene_tree)
+        }
+        .groupTuple()
+        .map { shard_id, metas, map_links, gene_trees ->
+            def families = (0..<metas.size()).collect { index ->
+                [metas[index], map_links[index], gene_trees[index]]
+            }
+            def ordered = families.sort { left, right -> left[0].og <=> right[0].og }
+            tuple(
+                shard_id,
+                ordered.collect { it[1] },
+                ordered.collect { it[2] },
+            )
+        }
+
+    BUNDLE_SPECIESRAX_INPUTS(ch_speciesrax_bundle_inputs)
+
+    // ASTEROID still consumes only the much smaller tree collection.
     core_gene_tree_list    = core_gene_trees.collect { it[1] }
-    core_og_maplink_list   = core_map_links.collect { it[1] }
-    core_og_clean_msa_list = core_clean_msas.collect { it[1] }
 
     //
     // ASTEROID: infer initial unrooted species tree (optional, when outgroups provided)
@@ -41,7 +71,7 @@ workflow RECONCILE_TREES {
     //
     // SPECIESRAX: infer rooted species tree with gene-tree/species-tree reconciliation
     //
-    SPECIESRAX(core_og_maplink_list, core_gene_tree_list, core_og_clean_msa_list, ch_asteroid)
+    SPECIESRAX(BUNDLE_SPECIESRAX_INPUTS.out.archive.collect(), ch_asteroid)
         .speciesrax_tree
         .set { ch_speciesrax }
 

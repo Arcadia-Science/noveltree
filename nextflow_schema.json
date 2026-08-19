@@ -65,10 +65,16 @@
                     "default": 10,
                     "description": "Maximum mean per-species orthogroup gene copy allowed for species tree inference."
                 },
+                "speciesrax_bundle_size": {
+                    "type": "integer",
+                    "default": 128,
+                    "minimum": 1,
+                    "description": "Numeric orthogroup IDs per uncompressed SpeciesRax tree/mapping input shard."
+                },
                 "aligner": {
                     "type": "string",
                     "default": "adaptive",
-                    "description": "Alignment method. 'adaptive' (default) uses three-tier routing: MAFFT_TIER1 for ≤200 seqs → WITCH_TIER2 for ≤3000 → FAMSA_TIER3 for larger, with automatic fallback. 'mafft', 'witch', and 'famsa' use a single aligner for all families.",
+                    "description": "Alignment method. 'adaptive' (default) uses three-tier routing: MAFFT_TIER1 for ≤200 seqs → WITCH_TIER2 for ≤1000 → FAMSA_TIER3 for larger, with automatic fallback. 'mafft', 'witch', and 'famsa' use a single aligner for all families.",
                     "enum": ["adaptive", "mafft", "witch", "famsa"]
                 },
                 "msa_trimmer": {
@@ -101,6 +107,12 @@
                     "default": true,
                     "description": "When using IQ-TREE, fall back to FastTree for gene families that fail or time out.",
                     "fa_icon": "fas fa-redo"
+                },
+                "tree_iqtree_max": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 3,
+                    "description": "Maximum sequences for IQ-TREE inference. Larger families are sent directly to FastTree."
                 },
                 "busco": {
                     "type": "boolean",
@@ -142,7 +154,7 @@
                 },
                 "align_tier2_max": {
                     "type": "integer",
-                    "default": 3000,
+                    "default": 1000,
                     "description": "Maximum sequences for tier-2 WITCH alignment. Families above this use FAMSA."
                 },
                 "test_run": {

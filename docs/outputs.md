@@ -23,6 +23,13 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
   - `all_ogs_counts.csv`: comma-separated CSV listing, for all orthogroups, the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included.
   - `spptree_core_ogs_counts.csv` / `genetree_core_ogs_counts.csv`: the same as above, but for only the two respective subsets of gene families.
 
+For the full dataset, NovelTree temporarily saves a content-addressed checkpoint
+under `orthofinder/mcl_checkpoints/` immediately after OrthoFinder finishes and
+before custom filtering begins. A failed postprocessing attempt can restore the
+raw orthogroup tables and FASTAs without rerunning graph construction or MCL.
+The checkpoint is checksum-validated and automatically removed after Nextflow
+successfully finalizes the `ORTHOFINDER_MCL` outputs.
+
 **5.** `orthogroup_summaries/`: Results from COGEQC.
 
 - A table reporting all calculated summary statistics for the orthogroups inferred for each inflation parameter.

@@ -25,12 +25,13 @@ if (params.msa_trimmer == "clipkit") {
 
 if (params.tree_method == "iqtree") {
     include { IQTREE as TREES                 } from '../../modules/nf-core-modified/iqtree'
+    include { FASTTREE as FASTTREE_TIER2      } from '../../modules/local/fasttree'
 } else {
     include { FASTTREE as TREES               } from '../../modules/local/fasttree'
 }
 
 // FastTree fallback for when IQ-TREE fails (only in fallback mode)
-if (params.iqtree_fasttree_fallback) {
+if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
     include { FASTTREE as FASTTREE_FALLBACK   } from '../../modules/local/fasttree'
 }
 
@@ -66,13 +67,13 @@ workflow INFER_GENE_TREES {
             needs_aligner: true
         }.set { tier2_routed }
 
-        // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤300 seqs)
+        // Tier 1: MAFFT E-INS-i or L-INS-i (small families, ≤200 seqs)
         MAFFT_TIER1(tier1_routed.needs_aligner)
 
-        // Tier 2: WITCH (medium families, 301–3000 seqs)
+        // Tier 2: WITCH (medium families, 201–1000 seqs by default)
         WITCH_TIER2(tier2_routed.needs_aligner)
 
-        // Tier 3: FAMSA2 with accuracy flags (large families, >3000 seqs)
+        // Tier 3: FAMSA2 with accuracy flags (large families, >1000 seqs)
         FAMSA_TIER3(tiered.tier3)
 
         // Detect vanished OGs: present in input but absent from output.
@@ -133,40 +134,51 @@ workflow INFER_GENE_TREES {
         cleaned_msas = all_msas
     }
 
-    if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
-        // ── storeDir-aware pre-filter ──────────────────────────────────
-        // On resume, OGs that previously fell back to FastTree have only
-        // a _ft.newick in storeDir — no _iqt.newick.  Without this filter
-        // IQTREE would rerun them (and fail again) before they route to
-        // FASTTREE_FALLBACK.  We check storeDir upfront and send those OGs
-        // straight to FASTTREE_FALLBACK, which hits storeDir immediately.
-        // Nextflow's file().exists() works transparently on S3 paths.
-        def store = "${params.outdir}/gene_family_trees/original"
+    if (params.tree_method == "iqtree") {
+        // Direct very large families to FastTree instead of first waiting for
+        // an expensive IQ-TREE failure or timeout.
         cleaned_msas.branch { meta, aln ->
-            has_ft: file("${store}/${aln.baseName}_ft.newick").exists()
-            needs_iqtree: true
-        }.set { routed }
+            iqtree: (meta.n_seq as int) <= (params.tree_iqtree_max as int)
+            fasttree: true
+        }.set { tree_tiered }
 
-        // Run IQ-TREE only on OGs that do NOT already have a FastTree result
-        TREES(routed.needs_iqtree, params.tree_model)
+        FASTTREE_TIER2(tree_tiered.fasttree, params.tree_model)
 
-        // Detect vanished OGs: present in IQTREE input but absent from output
-        tree_produced = TREES.out.phylogeny.map { meta, tree -> [meta.og, true] }
-        newly_failed = routed.needs_iqtree
-            .map { meta, aln -> [meta.og, true] }
-            .join(tree_produced, remainder: true)
-            .filter { it[2] == null }
-            .map { it[0] }
-            .join(routed.needs_iqtree.map { meta, aln -> [meta.og, meta, aln] })
-            .map { og, meta, aln -> [meta, aln] }
+        if (params.iqtree_fasttree_fallback) {
+            // ── storeDir-aware pre-filter ──────────────────────────────
+            // On resume, OGs that previously fell back to FastTree have only
+            // a _ft.newick in storeDir — no _iqt.newick. Send those OGs
+            // straight to FASTTREE_FALLBACK, which hits storeDir immediately.
+            def store = "${params.outdir}/gene_family_trees/original"
+            tree_tiered.iqtree.branch { meta, aln ->
+                has_ft: file("${store}/${aln.baseName}_ft.newick").exists()
+                needs_iqtree: true
+            }.set { routed }
 
-        // Run FastTree on newly-failed OGs plus pre-existing fallback OGs
-        FASTTREE_FALLBACK(newly_failed.mix(routed.has_ft), params.tree_model)
+            // Run IQ-TREE only on OGs that do not already have a FastTree result.
+            TREES(routed.needs_iqtree, params.tree_model)
 
-        // Combine successful IQ-TREE trees with all FastTree fallback trees
-        phylogeny = TREES.out.phylogeny.mix(FASTTREE_FALLBACK.out.phylogeny)
+            // Detect vanished OGs: present in IQ-TREE input but absent from output.
+            tree_produced = TREES.out.phylogeny.map { meta, tree -> [meta.og, true] }
+            newly_failed = routed.needs_iqtree
+                .map { meta, aln -> [meta.og, true] }
+                .join(tree_produced, remainder: true)
+                .filter { it[2] == null }
+                .map { it[0] }
+                .join(routed.needs_iqtree.map { meta, aln -> [meta.og, meta, aln] })
+                .map { og, meta, aln -> [meta, aln] }
+
+            FASTTREE_FALLBACK(newly_failed.mix(routed.has_ft), params.tree_model)
+
+            phylogeny = TREES.out.phylogeny
+                .mix(FASTTREE_FALLBACK.out.phylogeny)
+                .mix(FASTTREE_TIER2.out.phylogeny)
+        } else {
+            TREES(tree_tiered.iqtree, params.tree_model)
+            phylogeny = TREES.out.phylogeny.mix(FASTTREE_TIER2.out.phylogeny)
+        }
     } else {
-        // No fallback mode: run primary tree method on everything
+        // FastTree selected globally: run it on every family.
         TREES(cleaned_msas, params.tree_model)
         phylogeny = TREES.out.phylogeny
     }

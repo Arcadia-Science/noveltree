@@ -184,6 +184,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | `min_num_spp_per_og` | `4` | Minimum number of species a gene family must contain for phylogenetic inference |
 | `min_prop_spp_for_spptree` | `0.50` | Minimum proportion of species for inclusion in species tree inference |
 | `max_copy_num_spp_tree` | `10` | Maximum per-species gene copy number for species tree inference |
+| `speciesrax_bundle_size` | `128` | Numeric orthogroup IDs per uncompressed SpeciesRax tree/mapping staging shard |
 | `min_protein_length` | `50` | Minimum amino acid sequence length during preprocessing (only when `--preprocess` enabled) |
 
 ### Alignment
@@ -192,7 +193,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 |-----------|---------|-------------|
 | `aligner` | `"adaptive"` | Alignment method. Options: `adaptive` (MAFFT → WITCH → FAMSA by family size), `witch`, `mafft`, `famsa` |
 | `align_tier1_max` | `200` | Max sequences for tier-1 MAFFT alignment; families above this use WITCH |
-| `align_tier2_max` | `3000` | Max sequences for tier-2 WITCH alignment; families above this use FAMSA |
+| `align_tier2_max` | `1000` | Max sequences for tier-2 WITCH alignment; families above this use FAMSA |
 | `mafft_mode` | `"einsi"` | MAFFT algorithm for tier-1. Options: `einsi` (E-INS-i, conserved motifs) or `linsi` (L-INS-i, globally alignable) |
 | `msa_trimmer` | `"clipkit"` | Trimming method. Options: `clipkit`, `cialign`, `none` |
 | `min_ungapped_length` | `50` | Minimum ungapped length of cleaned/trimmed alignments |
@@ -202,6 +203,7 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `tree_method` | `"iqtree"` | Tree inference method. Options: `iqtree`, `fasttree`. IQ-TREE failures automatically fall back to FastTree |
+| `tree_iqtree_max` | `1000` | Maximum sequences for IQ-TREE; larger families go directly to FastTree |
 | `tree_model` | `"LG+F+G4"` | Amino acid substitution model for phylogenetic inference |
 | `outgroups` | — | Comma-separated species IDs for manual rooting of the Asteroid species tree. If set, SpeciesRax estimates branch lengths on this tree |
 | `iqtree_fasttree_fallback` | `true` | Automatically fall back to FastTree for IQ-TREE failures |
@@ -289,11 +291,11 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`IQ-TREE`](http://www.iqtree.org/) (default) or [`FastTree2`](http://www.microbesonline.org/fasttree/)
 11. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
-12. `SPECIESRAX`: Infer a rooted species tree, estimating its topology under a model of gene duplication and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). If outgroups are provided, [`SpeciesRax`] infers branch lengths for the `ASTEROID` tree.
+12. `SPECIESRAX`: Infer a MiniNJ species-tree topology and optimize its root under a model of gene duplication and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). Core trees and mappings are validated and staged in bounded uncompressed shards; alignments are omitted because gene-tree optimization is disabled. If outgroups are provided, SpeciesRax preserves the rooted `ASTEROID` topology while estimating its branch lengths and support.
 13. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
 14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
 15. `PARSE_PHYLOHOGS`: Parse ortholog/paralog relationships and HOG membership from GeneRax reconciliation output
-16. `PHYLO_PROFILES`: Generate phylogenetic profiles from GeneRax reconciliation outputs, summarizing gene duplication, loss, and speciation events across species and gene families
+16. `PHYLO_PROFILES`: Generate phylogenetic profiles from each family's small GeneRax event and coverage files, summarizing gene duplication, loss, and speciation events across species and gene families
 17. `BUILD_REFERENCE_CHRONOGRAM` _(zoogle mode only, when `--reference_time_tree` not provided)_: Auto-build a reference chronogram by querying TimeTree.org for pairwise divergence times among input species and constructing a UPGMA tree
 17b. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against the reference chronogram (auto-built or user-provided) using treePL penalized likelihood
 18. `DATE_GENE_FAMILY_TREES` _(zoogle mode only)_: Time-calibrate gene family trees using speciation node ages from the dated species tree. Only speciation nodes from GeneRax reconciliation are used as calibration points.
@@ -346,6 +348,11 @@ process {
 #### 4. [`ORTHOFINDER_MCL`](../modules/local/orthofinder_mcl.nf):
 
 - `mcl_inflation`: Comma-separated list of inflation parameter values to be used in testing. MCL inflation testing is optional. Set `--test_run_mcl true` to enable. When disabled (default), the pipeline uses the `--mcl_inflation` value directly.
+- Full-dataset runs create a temporary, fingerprinted checkpoint of the raw
+  `Orthogroups/` and `Orthogroup_Sequences/` outputs before NovelTree
+  postprocessing. Process retries restore this checkpoint and skip OrthoFinder.
+  A lightweight cleanup task removes it only after the module outputs have
+  been successfully stored; no large result directory is restaged for cleanup.
 - [OrthoFinder2 documentation](https://github.com/davidemms/OrthoFinder)
 
 #### 5. `ALIGN_SEQS`

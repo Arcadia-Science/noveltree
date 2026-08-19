@@ -7,10 +7,8 @@ include { PARSE_PHYLOHOGS      } from '../../modules/local/parse_phylohogs'
 
 workflow RECONCILIATION_SUMMARIES {
     take:
-    event_counts           // [ val(meta), path(tsv) ]
     species_event_counts   // [ val(meta), path(tsv) ]
     species_coverage       // [ val(meta), path(tsv) ]
-    inflation_dir          // path
     generax_nhx            // [ val(meta), path(nhx) ]
     labeled_species_tree   // path
 
@@ -18,11 +16,9 @@ workflow RECONCILIATION_SUMMARIES {
     //
     // PHYLO_PROFILES: generate per-gene-family phylogenetic profiles
     //
-    ch_phylo_profiles_input = event_counts
-        .join(species_event_counts)
-        .join(species_coverage)
+    ch_phylo_profiles_input = species_event_counts.join(species_coverage)
 
-    PHYLO_PROFILES(ch_phylo_profiles_input, inflation_dir.first())
+    PHYLO_PROFILES(ch_phylo_profiles_input)
 
     // Merge per-OG phylo profile outputs.
     // collectFile() concatenates TSVs natively in Nextflow, avoiding the need
