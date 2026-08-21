@@ -18,6 +18,7 @@ process SPECIESRAX {
     path "*.txt"
     path "generax.log"
     path "speciesrax_orthogroup.families"
+    path "speciesrax_gene_tree_validation.tsv"
 
     when:
     task.ext.when == null || task.ext.when
@@ -33,6 +34,15 @@ process SPECIESRAX {
         tar -xf "\$archive"
         rm -f "\$archive"
     done
+
+    # SpeciesRax requires rooted-binary Newick input, while an otherwise binary
+    # unrooted tree is commonly serialized with a three-child root. Resolve all
+    # multifurcations deterministically in these task-local copies, then fail
+    # before MPI initialization if any tree is still not strictly binary.
+    # Stored upstream gene trees are never modified.
+    prepare_speciesrax_gene_trees.py \
+        --manifest-glob 'speciesrax_inputs_*.tsv' \
+        --report speciesrax_gene_tree_validation.tsv
 
     # Construct the family file from the validated shard manifests.
     echo "[FAMILIES]" > speciesrax_orthogroup.families
