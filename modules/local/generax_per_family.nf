@@ -45,6 +45,14 @@ process GENERAX_PER_FAMILY {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/X/g' *.fa
 
+    # Repair malformed cached mappings in this task-local staged copy. Protein
+    # identifiers are consistently Genus-species_<protein-id>; the species tree
+    # provides the authoritative set of valid species labels.
+    normalize_gene_species_mapping.py \\
+        --mapping ${map_link} \\
+        --species-tree ${species_tree} \\
+        --orthogroup ${og}
+
     # Populate the family file for this gene family for the
     # analysis with GeneRax
     # We will be using LG+G4+F for all gene families
