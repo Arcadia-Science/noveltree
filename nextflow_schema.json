@@ -71,6 +71,31 @@
                     "minimum": 1,
                     "description": "Numeric orthogroup IDs per uncompressed SpeciesRax tree/mapping input shard."
                 },
+                "speciesrax_min_species_occupancy": {
+                    "type": "number",
+                    "default": 0.50,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Temporary SpeciesRax-local minimum fraction of species represented in a final gene tree. Planned for integration into upstream orthogroup routing."
+                },
+                "speciesrax_max_mean_copies": {
+                    "type": "number",
+                    "default": 4.0,
+                    "minimum": 1,
+                    "description": "Temporary SpeciesRax-local maximum mean gene copies among represented species. Planned for integration into upstream orthogroup routing."
+                },
+                "speciesrax_max_copies_per_species": {
+                    "type": "integer",
+                    "default": 8,
+                    "minimum": 1,
+                    "description": "Temporary SpeciesRax-local maximum gene copies observed in any one species. Planned for integration into upstream orthogroup routing."
+                },
+                "speciesrax_max_total_leaves_factor": {
+                    "type": "number",
+                    "default": 4.0,
+                    "minimum": 1,
+                    "description": "Temporary SpeciesRax-local maximum total tree leaves as a multiple of the total species count. Planned for integration into upstream orthogroup routing."
+                },
                 "aligner": {
                     "type": "string",
                     "default": "adaptive",

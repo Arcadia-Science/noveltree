@@ -71,7 +71,11 @@ workflow RECONCILE_TREES {
     //
     // SPECIESRAX: infer rooted species tree with gene-tree/species-tree reconciliation
     //
-    SPECIESRAX(BUNDLE_SPECIESRAX_INPUTS.out.archive.collect(), ch_asteroid)
+    SPECIESRAX(
+        BUNDLE_SPECIESRAX_INPUTS.out.archive.collect(),
+        ch_asteroid,
+        species_name_list
+    )
         .speciesrax_tree
         .set { ch_speciesrax }
 

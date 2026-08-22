@@ -185,6 +185,10 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | `min_prop_spp_for_spptree` | `0.50` | Minimum proportion of species for inclusion in species tree inference |
 | `max_copy_num_spp_tree` | `10` | Maximum per-species gene copy number for species tree inference |
 | `speciesrax_bundle_size` | `128` | Numeric orthogroup IDs per uncompressed SpeciesRax tree/mapping staging shard |
+| `speciesrax_min_species_occupancy` | `0.50` | Temporary SpeciesRax-local minimum fraction of represented species |
+| `speciesrax_max_mean_copies` | `4.0` | Temporary SpeciesRax-local maximum mean copies among represented species |
+| `speciesrax_max_copies_per_species` | `8` | Temporary SpeciesRax-local maximum copies in any one species |
+| `speciesrax_max_total_leaves_factor` | `4.0` | Temporary SpeciesRax-local maximum total leaves as a multiple of the species count |
 | `min_protein_length` | `50` | Minimum amino acid sequence length during preprocessing (only when `--preprocess` enabled) |
 
 ### Alignment
@@ -423,6 +427,22 @@ process {
 
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
 - `--rec-model UndatedDL --si-strategy SKIP --si-quartet-support`
+
+Before constructing the SpeciesRax family file, NovelTree currently applies a
+late-stage scaling guard to the final validated gene trees. Families must retain
+at least 50% species occupancy, have no more than four mean copies among
+represented species, have no more than eight copies in any one species, and
+contain no more than four times the dataset species count in total leaves. This
+retains multicopy information for duplication/loss-aware inference while
+preventing exceptionally expanded families from dominating MiniNJ runtime.
+`speciesrax_family_selection.tsv` records every decision and exclusion reason,
+and `speciesrax_selected_species_coverage.tsv` reports retained coverage by
+species.
+
+This is intentionally implemented within `SPECIESRAX` for now so existing
+alignments and gene trees remain reusable. After the cutoffs have been validated
+across production datasets, this classification will be incorporated into the
+upstream orthogroup filtering and routing logic.
 
 #### 10. [`GENERAX_PER_FAMILY`](../modules/local/generax_per_family.nf):
 

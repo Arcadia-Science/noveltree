@@ -10,6 +10,7 @@ process SPECIESRAX {
     input:
     file input_bundles   // Sharded archives of trees, maps, and manifests
     file rooted_spp_tree // Filepath to the rooted asteroid species tree
+    val species_names    // Complete list of input-dataset species names
 
     output:
     path "inferred_species_tree.newick"  , emit: speciesrax_tree
@@ -19,6 +20,9 @@ process SPECIESRAX {
     path "generax.log"
     path "speciesrax_orthogroup.families"
     path "speciesrax_gene_tree_validation.tsv"
+    path "speciesrax_selected_families.tsv"
+    path "speciesrax_family_selection.tsv"
+    path "speciesrax_selected_species_coverage.tsv"
 
     when:
     task.ext.when == null || task.ext.when
@@ -44,31 +48,53 @@ process SPECIESRAX {
         --manifest-glob 'speciesrax_inputs_*.tsv' \
         --report speciesrax_gene_tree_validation.tsv
 
-    # Construct the family file from the validated shard manifests.
+    # Preserve the complete run-level denominator for occupancy and leaf caps.
+    echo "$species_names" \
+        | sed "s/\\[//g; s/\\]//g" \
+        | tr "," "\\n" \
+        | sed "s/^[[:space:]]*//; s/[[:space:]]*\$//" \
+        > speciesrax_expected_species.txt
+
+    # Temporarily enforce the production-scale SpeciesRax limits here, after
+    # final tree validation. These cutoffs intentionally retain multicopy
+    # families. Once validated across datasets, move the same classification
+    # into upstream orthogroup routing to avoid staging rejected families.
+    select_speciesrax_families.py \
+        --manifest-glob 'speciesrax_inputs_*.tsv' \
+        --validation-report speciesrax_gene_tree_validation.tsv \
+        --expected-species-file speciesrax_expected_species.txt \
+        --min-species-occupancy ${params.speciesrax_min_species_occupancy} \
+        --max-mean-copies ${params.speciesrax_max_mean_copies} \
+        --max-copies-per-species ${params.speciesrax_max_copies_per_species} \
+        --max-total-leaves-factor ${params.speciesrax_max_total_leaves_factor} \
+        --selected-manifest speciesrax_selected_families.tsv \
+        --report speciesrax_family_selection.tsv \
+        --species-coverage-report speciesrax_selected_species_coverage.tsv
+
+    # Construct the family file from the selected, validated families.
     echo "[FAMILIES]" > speciesrax_orthogroup.families
-    for manifest in speciesrax_inputs_*.tsv
+    while IFS=\$'\t' read -r og tree map_link
     do
-        while IFS=\$'\t' read -r og tree map_link
+        if [ "\$og" = "orthogroup" ]; then
+            continue
+        fi
+        for required in "\$tree" "\$map_link"
         do
-            if [ "\$og" = "orthogroup" ]; then
-                continue
+            if [ ! -s "\$required" ]; then
+                echo "Missing or empty SpeciesRax input: \$required" >&2
+                exit 1
             fi
-            for required in "\$tree" "\$map_link"
-            do
-                if [ ! -s "\$required" ]; then
-                    echo "Missing or empty SpeciesRax input: \$required" >&2
-                    exit 1
-                fi
-            done
+        done
 
-            echo "- \${og}" >> speciesrax_orthogroup.families
-            echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
-            echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
-        done < "\$manifest"
-    done
-    rm -f speciesrax_inputs_*.tsv
+        echo "- \${og}" >> speciesrax_orthogroup.families
+        echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
+        echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
+    done < speciesrax_selected_families.tsv
+    rm -f speciesrax_inputs_*.tsv speciesrax_expected_species.txt
 
 
+    # Do not request per-species or per-family rates: the REROOT path uses the
+    # shared global D/L parameterization.
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
@@ -79,7 +105,6 @@ process SPECIESRAX {
         --prefix SpeciesRax \\
         --strategy SKIP \\
         --si-estimate-bl \\
-        --per-species-rates \\
         $args
 
     # Move SpeciesRax output into the working directory and clean up
