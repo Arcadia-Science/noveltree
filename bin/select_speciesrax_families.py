@@ -132,12 +132,14 @@ def read_expected_species(path):
     return species
 
 
-def read_mapping(path, orthogroup):
+def read_mapping(path, orthogroup, expected_species):
     mapping_path = Path(path)
     if not mapping_path.is_file():
         raise ValueError(f"Missing mapping for {orthogroup}: {mapping_path}")
 
     gene_to_species = {}
+    normalized_rows = []
+    corrected_rows = 0
     with mapping_path.open() as handle:
         for line_number, line in enumerate(handle, start=1):
             fields = line.split()
@@ -148,15 +150,36 @@ def read_mapping(path, orthogroup):
                     f"Invalid mapping row for {orthogroup} at "
                     f"{mapping_path}:{line_number}"
                 )
-            gene, species = fields
+            gene, mapped_species = fields
             if gene in gene_to_species:
                 raise ValueError(
                     f"Duplicate gene {gene!r} in mapping for {orthogroup}"
                 )
+            species, separator, _protein = gene.partition("_")
+            if not separator or species not in expected_species:
+                raise ValueError(
+                    f"Cannot derive a run-level species from gene {gene!r} for "
+                    f"{orthogroup} at {mapping_path}:{line_number}"
+                )
+            if mapped_species != species:
+                corrected_rows += 1
             gene_to_species[gene] = species
+            normalized_rows.append((gene, species))
     if not gene_to_species:
         raise ValueError(f"Empty mapping for {orthogroup}: {mapping_path}")
-    return Counter(gene_to_species.values())
+
+    # Mapping files are staged copies inside the SpeciesRax task. Normalize a
+    # malformed cached mapping here so GeneRax consumes the same validated
+    # Genus-species assignment used by the family-size filters. Stored upstream
+    # mapping outputs are never modified.
+    if corrected_rows:
+        temporary = mapping_path.with_name(f"{mapping_path.name}.normalized.tmp")
+        with temporary.open("w", newline="") as handle:
+            writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+            writer.writerows(normalized_rows)
+        temporary.replace(mapping_path)
+
+    return Counter(gene_to_species.values()), corrected_rows
 
 
 def write_tsv(path, fieldnames, rows):
@@ -178,11 +201,17 @@ def main():
 
     families = []
     all_species = set()
+    corrected_mapping_rows = 0
+    corrected_mapping_files = 0
     for row in manifest_rows:
         orthogroup = row["orthogroup"]
         if orthogroup not in validated_leaves:
             raise ValueError(f"Family lacks tree validation: {orthogroup}")
-        copies = read_mapping(row["mapping"], orthogroup)
+        copies, corrected_rows = read_mapping(
+            row["mapping"], orthogroup, expected_species_set
+        )
+        corrected_mapping_rows += corrected_rows
+        corrected_mapping_files += corrected_rows > 0
         mapping_leaves = sum(copies.values())
         if mapping_leaves != validated_leaves[orthogroup]:
             raise ValueError(
@@ -306,6 +335,12 @@ def main():
     )
     if reason_summary:
         print(f"SpeciesRax family exclusions: {reason_summary}")
+    if corrected_mapping_rows:
+        print(
+            "SpeciesRax mapping normalization: "
+            f"{corrected_mapping_rows} rows corrected across "
+            f"{corrected_mapping_files} task-local mapping files"
+        )
 
 
 if __name__ == "__main__":

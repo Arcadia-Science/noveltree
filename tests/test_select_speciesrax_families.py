@@ -34,7 +34,9 @@ class SelectSpeciesRaxFamiliesTests(unittest.TestCase):
                 (root / tree).write_text("(A:1,B:1);\n")
                 with (root / mapping).open("w") as mapping_handle:
                     for index, name in enumerate(species):
-                        mapping_handle.write(f"{orthogroup}_gene{index} {name}\n")
+                        mapping_handle.write(
+                            f"{name}_{orthogroup}_gene{index} {name}\n"
+                        )
                 manifest_writer.writerow([orthogroup, tree, mapping])
                 validation_writer.writerow(
                     {
@@ -156,6 +158,24 @@ class SelectSpeciesRaxFamiliesTests(unittest.TestCase):
             self.assertIn(
                 "input species absent from all staged families: D", result.stderr
             )
+
+    def test_repairs_malformed_species_from_gene_prefix(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            self.write_inputs(root, {"OG_REPAIR": ["A", "B", "C", "D"]})
+            mapping = root / "OG_REPAIR.map"
+            lines = mapping.read_text().splitlines()
+            gene = lines[0].split()[0]
+            lines[0] = f"{gene}\t{gene}_cds"
+            mapping.write_text("\n".join(lines) + "\n")
+
+            result = self.run_selection(root)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(
+                "1 rows corrected across 1 task-local mapping files", result.stdout
+            )
+            self.assertEqual(mapping.read_text().splitlines()[0], f"{gene}\tA")
 
 
 if __name__ == "__main__":
