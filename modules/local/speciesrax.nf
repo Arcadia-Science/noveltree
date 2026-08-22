@@ -29,6 +29,12 @@ process SPECIESRAX {
 
     script:
     def args = task.ext.args ?: ''
+    if (args.contains('--prune-species-tree') && args.contains('UndatedDL')) {
+        throw new IllegalArgumentException(
+            'GeneRax 2.1.3 cannot combine UndatedDL with --prune-species-tree: ' +
+            'incomplete family coverage triggers an internal rate-vector assertion'
+        )
+    }
     def starting_tree = (rooted_spp_tree && file(rooted_spp_tree).exists()) ? rooted_spp_tree : "MiniNJ"
     """
     # Extract uncompressed shards locally. The archive layer reduces S3/API
@@ -93,8 +99,10 @@ process SPECIESRAX {
     rm -f speciesrax_inputs_*.tsv speciesrax_expected_species.txt
 
 
-    # Do not request per-species or per-family rates: the REROOT path uses the
-    # shared global D/L parameterization.
+    # Keep the REROOT analysis on shared global D/L rates. GeneRax 2.1.3's
+    # UndatedDL implementation is incompatible with --prune-species-tree when
+    # families have incomplete species coverage, so absent taxa remain in the
+    # species tree and are represented by the model's loss process.
     mpiexec \\
         -np ${task.cpus} \\
         --allow-run-as-root \\
