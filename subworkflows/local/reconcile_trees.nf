@@ -2,9 +2,6 @@
 // Species tree inference + gene-tree/species-tree reconciliation
 //
 
-if (params.outgroups != 'none') {
-    include { ASTEROID } from '../../modules/local/asteroid'
-}
 include { SPECIESRAX          } from '../../modules/local/speciesrax'
 include { BUNDLE_SPECIESRAX_INPUTS } from '../../modules/local/bundle_speciesrax_inputs'
 include { GENERAX_PER_SPECIES } from '../../modules/local/generax_per_species'
@@ -21,6 +18,7 @@ workflow RECONCILE_TREES {
     remaining_gene_trees   // [ val(meta), path(tree) ]
     remaining_map_links    // [ val(meta), path(map_link) ]
     remaining_clean_msas   // [ val(meta), path(msa) ]
+    reference_chronogram   // rooted TimeTree chronogram, or 'none' with explicit outgroups
 
     main:
     // Join each core family's mapping and tree, then create bounded
@@ -54,27 +52,15 @@ workflow RECONCILE_TREES {
 
     BUNDLE_SPECIESRAX_INPUTS(ch_speciesrax_bundle_inputs)
 
-    // ASTEROID still consumes only the much smaller tree collection.
-    core_gene_tree_list    = core_gene_trees.collect { it[1] }
-
     //
-    // ASTEROID: infer initial unrooted species tree (optional, when outgroups provided)
-    //
-    if (params.outgroups != "none") {
-        ASTEROID(species_name_list, core_gene_tree_list, params.outgroups)
-            .rooted_spp_tree
-            .set { ch_asteroid }
-    } else {
-        ch_asteroid = Channel.value("none")
-    }
-
-    //
-    // SPECIESRAX: infer rooted species tree with gene-tree/species-tree reconciliation
+    // SPECIESRAX: infer MiniNJ, transfer the trusted root, then estimate final
+    // branch lengths/support while preserving that rooted topology.
     //
     SPECIESRAX(
         BUNDLE_SPECIESRAX_INPUTS.out.archive.collect(),
-        ch_asteroid,
-        species_name_list
+        reference_chronogram,
+        species_name_list,
+        params.outgroups
     )
         .speciesrax_tree
         .set { ch_speciesrax }

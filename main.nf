@@ -34,10 +34,12 @@ if (params.mcl_inflation) {
 } else {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
-// Check if zoogle mode has required parameters for time calibration
-if (params.zoogle && (!params.reference_time_tree || params.reference_time_tree == 'none')) {
+// A trusted root is required before SpeciesRax. Zoogle also reuses this exact
+// chronogram for dating, so root inference and calibration cannot disagree.
+def needs_reference_chronogram = params.zoogle || params.outgroups == 'none'
+if (needs_reference_chronogram && (!params.reference_time_tree || params.reference_time_tree == 'none')) {
     if (!params.ncbi_email || params.ncbi_email == 'none') {
-        exit 1, 'Zoogle mode without --reference_time_tree requires --ncbi_email to auto-build a reference chronogram from TimeTree.org. Please provide --ncbi_email or --reference_time_tree.'
+        exit 1, 'Species-tree rooting requires --outgroups, --reference_time_tree, or --ncbi_email to auto-build a rooted TimeTree chronogram. SpeciesRax no longer guesses the root with --si-strategy REROOT.'
     }
 }
 
@@ -54,6 +56,7 @@ include { INFER_GENE_TREES as SPECIESTREE_GENE_FAMILIES  } from './subworkflows/
 include { INFER_GENE_TREES as REMAINING_GENE_FAMILIES    } from './subworkflows/local/infer_gene_trees'
 include { RECONCILE_TREES                                } from './subworkflows/local/reconcile_trees'
 include { RECONCILIATION_SUMMARIES                       } from './subworkflows/local/reconciliation_summaries'
+include { BUILD_REFERENCE_CHRONOGRAM                     } from './modules/local/build_reference_chronogram'
 
 if (params.zoogle) {
     include { ZOOGLE } from './subworkflows/local/zoogle'
@@ -88,6 +91,23 @@ workflow NOVELTREE {
     // These value channels are consumed by multiple downstream subworkflows
     species_name_list   = ch_renamed_prots.collect { it[0].id }
     complete_prots_list = ch_renamed_prots.collect { it[1] }
+
+    // Prepare the trusted chronogram once, before reconciliation. When no
+    // explicit outgroup is supplied, its encoded root split roots the
+    // MiniNJ topology passed to the final SpeciesRax fit. Zoogle later uses the
+    // same file for calibration ages.
+    if (needs_reference_chronogram) {
+        if (!params.reference_time_tree || params.reference_time_tree == 'none') {
+            ch_species_names_file = species_name_list
+                .collectFile(name: 'species_names.txt', newLine: true)
+            BUILD_REFERENCE_CHRONOGRAM(ch_species_names_file, params.ncbi_email)
+            ch_reference_tree = BUILD_REFERENCE_CHRONOGRAM.out.chronogram
+        } else {
+            ch_reference_tree = Channel.value(file(params.reference_time_tree, checkIfExists: true))
+        }
+    } else {
+        ch_reference_tree = Channel.value(file("${projectDir}/assets/no_reference_chronogram.sentinel"))
+    }
 
     // Warn if ref_species is set but not found in the dataset
     if (params.zoogle && ref_species != 'none') {
@@ -138,7 +158,8 @@ workflow NOVELTREE {
         SPECIESTREE_GENE_FAMILIES.out.cleaned_msas,
         REMAINING_GENE_FAMILIES.out.phylogeny,
         REMAINING_GENE_FAMILIES.out.map_link,
-        REMAINING_GENE_FAMILIES.out.cleaned_msas
+        REMAINING_GENE_FAMILIES.out.cleaned_msas,
+        ch_reference_tree
     )
 
     // 7. Reconciliation summaries (phylo profiles, HOG parsing)
@@ -160,7 +181,8 @@ workflow NOVELTREE {
             species_name_list,
             ref_species,
             RECONCILIATION_SUMMARIES.out.orthologs,
-            RECONCILIATION_SUMMARIES.out.paralogs
+            RECONCILIATION_SUMMARIES.out.paralogs,
+            ch_reference_tree
         )
     }
 }

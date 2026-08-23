@@ -3,7 +3,6 @@
 //
 
 include { PROTEIN_PROPERTIES          } from '../../modules/local/protein_properties'
-include { BUILD_REFERENCE_CHRONOGRAM  } from '../../modules/local/build_reference_chronogram'
 include { TIME_CALIBRATE_SPECIES_TREE } from '../../modules/local/time_calibrate_species_tree'
 include { DATE_GENE_FAMILY_TREES      } from '../../modules/local/date_gene_family_trees'
 include { ZOOGLE_ANALYSIS             } from '../../modules/local/zoogle_analysis'
@@ -19,6 +18,7 @@ workflow ZOOGLE {
     ref_species            // string value
     orthologs              // [ val(meta), path(tsv) ]
     paralogs               // [ val(meta), path(tsv) ]
+    reference_tree         // same rooted chronogram used for SpeciesRax rooting
 
     main:
     //
@@ -29,20 +29,9 @@ workflow ZOOGLE {
     PROTEIN_PROPERTIES(ch_physchem_input)
 
     //
-    // Time calibration: either auto-build from TimeTree.org or use user-provided tree
-    //
-    if (!params.reference_time_tree || params.reference_time_tree == 'none') {
-        ch_species_names_file = species_name_list
-            .collectFile(name: 'species_names.txt', newLine: true)
-        BUILD_REFERENCE_CHRONOGRAM(ch_species_names_file, params.ncbi_email)
-        ch_reference_tree = BUILD_REFERENCE_CHRONOGRAM.out.chronogram
-    } else {
-        ch_reference_tree = file(params.reference_time_tree)
-    }
-
     TIME_CALIBRATE_SPECIES_TREE(
         speciesrax_tree,
-        ch_reference_tree,
+        reference_tree,
         params.time_calibration_method,
         params.age_bracket
     )

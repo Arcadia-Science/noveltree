@@ -125,7 +125,7 @@
                 "outgroups": {
                     "type": "string",
                     "default": "none",
-                    "description": "If provided, these taxa will be used to manually root the species tree inferred using Asteroid. This tree (with branch lengths inferred using SpeciesRax) will be used in GeneRax analyses. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
+                    "description": "If provided, these taxa manually root the MiniNJ species-tree topology. Otherwise, the root split is transferred from --reference_time_tree or an automatically built TimeTree chronogram. The final SpeciesRax fit preserves the explicit root. This should be a comma-separated string of sample/species IDs corresponding to the samplesheet. Example: \"Genus_species1,Genus_species2\""
                 },
                 "iqtree_fasttree_fallback": {
                     "type": "boolean",
@@ -317,7 +317,7 @@
                 "reference_time_tree": {
                     "type": "string",
                     "default": "none",
-                    "description": "Path to a pre-existing time-calibrated reference tree. If 'none', one will be built from TimeTree.org divergence times.",
+                    "description": "Path to a rooted, ultrametric reference chronogram. Its encoded root split is transferred to the species topology before SpeciesRax and the same tree supplies calibration ages in Zoogle mode. If 'none', one is built from TimeTree.org divergence times.",
                     "fa_icon": "fas fa-tree"
                 },
                 "ncbi_email": {

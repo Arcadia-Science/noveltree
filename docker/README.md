@@ -33,7 +33,8 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `COGEQC` | [cogeqc v1.2.1](./cogeqc/) | `arcadiascience/cogeqc_1.2.1:1.0.0` |
 | `FAMSA` | [FAMSA 2.5.0 @ commit 5a326d5 (container name `famsa_2.0.0` is historical)](./famsa/) | `arcadiascience/famsa_2.0.0:1.0.0` |
 | `FASTTREE` | [FastTree v2.1.11](./fasttree/) | `arcadiascience/fasttree_2.1.11:1.0.0` |
-| `GENERAX_PER_FAMILY`, `GENERAX_PER_SPECIES`, `SPECIESRAX` | [GeneRax @ commit 56f3ed0](./generax/) | `arcadiascience/generax_56f3ed0:1.1.3` |
+| `GENERAX_PER_FAMILY`, `GENERAX_PER_SPECIES` | [GeneRax @ commit 56f3ed0](./generax/) | `arcadiascience/generax_56f3ed0:1.1.3` |
+| `SPECIESRAX` | [GeneRax @ commit 56f3ed0 + Biopython 1.83](./generax/) | `arcadiascience/generax_56f3ed0:1.1.4` |
 | `IQTREE` | [IQ-TREE v2.2.0.5](./iqtree/) | `arcadiascience/iqtree_2.2.0.5:1.0.0` |
 | `ORTHOFINDER_PREP`, `ORTHOFINDER_MCL` | [OrthoFinder v2.5.4](./orthofinder/) | `arcadiascience/orthofinder_2.5.4:1.0.0` |
 | `PARSE_PHYLOHOGS`, `PHYLO_PROFILES` | [phylo_profiles v1.0.0](./phylo_profiles/) | `arcadiascience/phylo_profiles:1.0.0` |

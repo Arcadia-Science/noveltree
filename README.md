@@ -329,10 +329,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    CORE["Core gene trees<br/>(species-tree families)"] --> OGQ{"Outgroups<br/>specified?"}
-    OGQ -->|yes| AST["ASTEROID<br/>Unrooted species tree"]
-    OGQ -->|no| SRAX
-    AST --> SRAX["SPECIESRAX<br/>Rooted species tree<br/>(DL model)"]
+    CORE["Core gene trees<br/>(species-tree families)"] --> MINI["MiniNJ<br/>Unrooted species topology"]
+    MINI --> ROOT{"Root source"}
+    OUTGROUP["Explicit outgroups"] --> ROOT
+    TIMETREE["Rooted TimeTree<br/>chronogram"] --> ROOT
+    ROOT --> SRAX["SPECIESRAX<br/>Preserve MiniNJ topology/root;<br/>estimate lengths/support"]
     CORE --> SRAX
 
     SRAX --> SPP["Rooted Species Tree"]

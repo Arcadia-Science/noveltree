@@ -294,14 +294,13 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family using the adaptive three-tier strategy ([`MAFFT`](https://mafft.cbrc.jp/alignment/software/) for ≤200 seqs, [`WITCH`](https://github.com/c5shen/WITCH) for ≤3000, [`FAMSA`](https://github.com/refresh-bio/FAMSA) for larger), or a single aligner if specified
 9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`IQ-TREE`](http://www.iqtree.org/) (default) or [`FastTree2`](http://www.microbesonline.org/fasttree/)
-11. `ASTEROID`: Infer an unrooted species tree using [`Asteroid`](https://github.com/BenoitMorel/Asteroid). If outgroups are specified, this tree will be rooted using these species.
-12. `SPECIESRAX`: Infer a MiniNJ species-tree topology and optimize its root under a model of gene duplication and loss using [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). Core trees and mappings are validated and staged in bounded uncompressed shards; alignments are omitted because gene-tree optimization is disabled. If outgroups are provided, SpeciesRax preserves the rooted `ASTEROID` topology while estimating its branch lengths and support.
+11. `BUILD_REFERENCE_CHRONOGRAM`: When no explicit outgroup is provided, load a user-supplied rooted chronogram or build one from TimeTree.org. Zoogle mode reuses this exact tree for calibration.
+12. `SPECIESRAX`: Infer the MiniNJ topology under MPI, transfer the encoded root split of the trusted chronogram (or explicit outgroups) onto that exact topology, then estimate branch lengths and quartet support under a duplication/loss model with [`SpeciesRax`](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax). The final pass uses `--si-strategy SKIP`, so SpeciesRax preserves the transferred root. Core trees and mappings are validated and staged in bounded uncompressed shards, and alignments are omitted because gene-tree optimization is disabled.
 13. `GENERAX_PER_FAMILY` _(full mode only)_: Reconcile gene family trees with the species tree, inferring rates of gene duplication and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-family model (rates are constant across all species/branches)
 14. `GENERAX_PER_SPECIES`: Reconcile gene family trees with the species tree, inferring rates of gene duplication and loss using [`GeneRax`](https://github.com/BenoitMorel/GeneRax) under the per-species model (each species/branch has own rates). Uses SPR strategy in full mode, EVAL strategy in simplified/zoogle modes.
 15. `PARSE_PHYLOHOGS`: Parse ortholog/paralog relationships and HOG membership from GeneRax reconciliation output
 16. `PHYLO_PROFILES`: Generate phylogenetic profiles from each family's small GeneRax event and coverage files, summarizing gene duplication, loss, and speciation events across species and gene families
-17. `BUILD_REFERENCE_CHRONOGRAM` _(zoogle mode only, when `--reference_time_tree` not provided)_: Auto-build a reference chronogram by querying TimeTree.org for pairwise divergence times among input species and constructing a UPGMA tree
-17b. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Time-calibrate the inferred species tree against the reference chronogram (auto-built or user-provided) using treePL penalized likelihood
+17. `TIME_CALIBRATE_SPECIES_TREE` _(zoogle mode only)_: Validate that the SpeciesRax root still matches the shared reference chronogram, then time-calibrate it using treePL penalized likelihood
 18. `DATE_GENE_FAMILY_TREES` _(zoogle mode only)_: Time-calibrate gene family trees using speciation node ages from the dated species tree. Only speciation nodes from GeneRax reconciliation are used as calibration points.
 19. `PROTEIN_PROPERTIES` _(zoogle mode only)_: Calculate amino acid composition and physicochemical properties for all gene families
 20. `ZOOGLE` _(zoogle mode only)_: Calculate phylogenetically-corrected protein distances using Mahalanobis distances and permutation tests
@@ -411,19 +410,19 @@ process {
 - All other custom parameters should be specified in [`conf/modules.config`](../conf/modules.config).
 - [IQ-TREE documentation](http://www.iqtree.org/)
 
-#### 8. [`ASTEROID`](../modules/local/asteroid.nf):
+#### 8. MiniNJ initialization
 
-- Parameters should be specified in [`conf/modules.config`](../conf/modules.config).
-- `--random-starting-trees 10`: Number of random starting trees used in species tree inference.
-- `--bs-replicates 100`: Number of bootstrap replicates for assessing species tree support.
-- [Asteroid documentation](https://github.com/BenoitMorel/Asteroid)
+MiniNJ is run inside [`SPECIESRAX`](../modules/local/speciesrax.nf) as an
+initialization-only pass. It uses all selected core gene trees under MPI, with
+species-tree search and reconciliation disabled. NovelTree then replaces its
+arbitrary serialized root using the trusted chronogram or explicit outgroups.
 
 #### 9. [`SPECIESRAX`](../modules/local/speciesrax.nf):
 
 ##### **PLEASE** read the [SpeciesRax documentation](https://github.com/BenoitMorel/GeneRax/wiki/GeneRax) to GeneRax and SpeciesRax for a more detailed explanation, both of these options as well as other possible parameter specifications.
 
 - The following parameters are specified within the [SpeciesRax module file](../modules/local/speciesrax.nf)
-- `--strategy SKIP --si-estimate-bl --per-species-rates`
+- `--strategy SKIP --si-estimate-bl`
 
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
 - `--rec-model UndatedDL --si-strategy SKIP --si-quartet-support`
@@ -434,7 +433,7 @@ at least 50% species occupancy, have no more than four mean copies among
 represented species, have no more than eight copies in any one species, and
 contain no more than four times the dataset species count in total leaves. This
 retains multicopy information for duplication/loss-aware inference while
-preventing exceptionally expanded families from dominating MiniNJ runtime.
+preventing exceptionally expanded families from dominating SpeciesRax runtime.
 `speciesrax_family_selection.tsv` records every decision and exclusion reason,
 and `speciesrax_selected_species_coverage.tsv` reports retained coverage by
 species.

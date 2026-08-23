@@ -1,40 +1,14 @@
-# Use an Ubuntu base image
-FROM ubuntu:20.04
+# Preserve the exact GeneRax binary already used by the production workflow.
+# This SpeciesRax-only derivative adds the Newick tooling needed to transfer a
+# trusted reference root without rebuilding or changing GeneRax itself.
+FROM arcadiascience/generax_56f3ed0:1.1.3
 
-# Prevent interactive querying of geographic area during build
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install the required dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends --no-install-suggests \
-        bison \
-        build-essential \
-        ca-certificates \
-        cmake \
-        curl \
-        flex \
-        git \
-        libopenmpi-dev \
-        libcurl4-openssl-dev \
-        libgmp3-dev \
-        libssl-dev \
-        openmpi-bin \
-        openmpi-doc \
-        python3
-
-# Clone the GeneRax repository and install with MPI
-RUN git clone --recursive https://github.com/BenoitMorel/GeneRax && \
-    cd GeneRax/ && \
-    git checkout 56f3ed0fb55a6e57397d2816348b70e4c31a3890 && \
-    bash ./install.sh
-
-# Clean up
-RUN apt-get -y autoremove && \
-    apt-get clean && \
+    apt-get install -y --no-install-recommends python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Add the GeneRax binary to path
-ENV PATH="/GeneRax/build/bin:$PATH"
-
-# Set the default command to launch an interactive Ubuntu shell
-CMD ["/bin/bash", "-l"]
+# SpeciesRax computes MiniNJ and transfers a trusted reference root within one
+# task; Biopython provides the validated Newick rooting implementation.
+RUN python3 -m pip install --no-cache-dir biopython==1.83

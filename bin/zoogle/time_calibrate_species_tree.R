@@ -73,6 +73,50 @@ if (length(shared_species) < 2) {
 
 cat("Shared species:", paste(shared_species, collapse = ", "), "\n")
 
+# Rooting is established before SpeciesRax from this same reference
+# chronogram. Confirm SpeciesRax preserved that split before assigning ages;
+# otherwise calibration could make a biologically incorrect root look valid.
+root_shared_sides <- function(tree, shared, label) {
+  root_candidates <- setdiff(unique(tree$edge[, 1]), unique(tree$edge[, 2]))
+  if (length(root_candidates) != 1) {
+    stop(label, " does not have one encoded root")
+  }
+  root_node <- root_candidates[1]
+  root_children <- tree$edge[tree$edge[, 1] == root_node, 2]
+  if (length(root_children) != 2) {
+    stop(label, " must have a bifurcating root; found ",
+         length(root_children), " root children")
+  }
+  lapply(root_children, function(child) {
+    if (child <= length(tree$tip.label)) {
+      descendants <- tree$tip.label[child]
+    } else {
+      descendants <- tree$tip.label[unlist(
+        Descendants(tree, child, type = "tips")
+      )]
+    }
+    intersect(descendants, shared)
+  })
+}
+
+reference_root_sides <- root_shared_sides(
+  reference_tree, shared_species, "Reference chronogram"
+)
+species_root_sides <- root_shared_sides(
+  species_tree, shared_species, "SpeciesRax tree"
+)
+root_matches <- (
+  setequal(reference_root_sides[[1]], species_root_sides[[1]]) &&
+  setequal(reference_root_sides[[2]], species_root_sides[[2]])
+) || (
+  setequal(reference_root_sides[[1]], species_root_sides[[2]]) &&
+  setequal(reference_root_sides[[2]], species_root_sides[[1]])
+)
+if (!root_matches) {
+  stop("SpeciesRax root split does not match the reference chronogram; refusing to time-calibrate")
+}
+cat("Validated SpeciesRax root split against the reference chronogram\n")
+
 # ============================================================================
 # Step 1: Extract calibrations from reference chronogram
 # ============================================================================
