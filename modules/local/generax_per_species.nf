@@ -81,8 +81,16 @@ process GENERAX_PER_SPECIES {
     echo "alignment = $alignment" >> ${og}.family
     echo "subst_model = LG+G4+F" >> ${og}.family
 
-    # Resolve polytomies — GeneRax requires strictly binary gene trees
-    resolve_polytomies.py ${gene_tree} ${gene_tree}.resolved
+    # Resolve polytomies and put all resulting branch lengths inside libpll's
+    # optimization bounds. This is done after resolution so its new zero-length
+    # edges cannot be inflated to GeneRax's internal 0.1 default, while tiny
+    # positive FastTree branches cannot remain below libpll's 1e-6 minimum.
+    resolve_polytomies.py \
+        ${gene_tree} \
+        ${gene_tree}.resolved \
+        --min-branch-length 1e-6 \
+        --max-branch-length 100 \
+        --branch-length-qc ${og}_branch_length_qc.tsv
     mv ${gene_tree}.resolved ${gene_tree}
 
     mpiexec \\
@@ -116,6 +124,11 @@ process GENERAX_PER_SPECIES {
 
     # Extract GeneRax-labeled species tree (has Node_X_Y_0 internal labels, identical across all OGs)
     cp $og/species_trees/inferred_species_tree.newick generax_labeled_species_tree.newick
+
+    # Preserve branch-length adjustment counts inside the full GeneRax archive
+    # without adding a new declared process output. The latter would invalidate
+    # storeDir reuse for every family completed before this QC file existed.
+    cp ${og}_branch_length_qc.tsv $og/
 
     # Archive full GeneRax output, then replace with clean structure
     tar -czf ${og}_full_output.tar.gz $og/
