@@ -40,7 +40,8 @@ def test_speciesrax_preserves_an_explicit_reference_root():
     assert "BUILD_REFERENCE_CHRONOGRAM" in main
     assert "Channel.value([])" in main
     assert "no_reference_chronogram.sentinel" not in main
-    assert "arity: '0..1'" in module
+    assert "path reference_chronogram" in module
+    assert "Channel.value([])" in main
 
 
 def test_reference_root_transfer_validates_the_chronogram():

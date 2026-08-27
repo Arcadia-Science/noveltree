@@ -10,7 +10,9 @@ process SPECIESRAX {
 
     input:
     file input_bundles
-    path reference_chronogram, arity: '0..1'
+    // Nextflow represents a missing optional file as an empty list. The
+    // outgroup branch passes [] and never dereferences this input.
+    path reference_chronogram
     val species_names
     val outgroups
     path speciesrax_selection
