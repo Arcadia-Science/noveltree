@@ -1,8 +1,26 @@
 process FASTTREE {
     tag "$meta.og"
 
-    cpus { Math.min( 16 * task.attempt, params.max_cpus as int ) }
-    time { 3.h * Math.pow(3, task.attempt - 1) }
+    cpus {
+        def n = (meta?.n_seq ?: 0) as long
+        n >= (params.fasttree_large_family_min_sequences as long) \
+            ? Math.min(
+                (params.fasttree_large_family_cpus as int) +
+                    ((task.attempt - 1) * (params.fasttree_large_family_retry_cpu_step as int)),
+                params.max_cpus as int
+            ) \
+            : Math.min(16 * task.attempt, params.max_cpus as int)
+    }
+    time {
+        def n = (meta?.n_seq ?: 0) as long
+        def maxTime = params.max_time as nextflow.util.Duration
+        def requested = n >= (params.fasttree_large_family_min_sequences as long) \
+            ? (task.attempt == 1 \
+                ? params.fasttree_large_family_time as nextflow.util.Duration \
+                : params.fasttree_large_family_retry_time as nextflow.util.Duration) \
+            : 3.h * Math.pow(3, task.attempt - 1)
+        requested.compareTo(maxTime) > 0 ? maxTime : requested
+    }
     memory {
         def n = (meta?.n_seq ?: 50) as long
         def L = (meta?.max_len ?: 500) as long
@@ -10,7 +28,10 @@ process FASTTREE {
         def nj_bytes = (long)(16.0 * Math.pow(n, 1.5))
         def estimated_gb = Math.max(8L, (long)((profile_bytes + nj_bytes) / (1024L * 1024L * 1024L)) + 2L)
         def capped_gb = (int) Math.min(estimated_gb, 128L)
-        def requested = capped_gb.GB * task.attempt
+        def multiplier = n >= (params.fasttree_large_family_min_sequences as long) \
+            ? (params.fasttree_large_family_memory_multiplier as int) + task.attempt - 1 \
+            : task.attempt
+        def requested = capped_gb.GB * multiplier
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }

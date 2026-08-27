@@ -94,15 +94,12 @@ def test_snapshot_verification_ignores_new_outputs_but_detects_changes(
     )
 
 
-def test_arcadia_override_is_limited_to_remaining_fasttree_tier() -> None:
-    config = (ROOT / "conf" / "arcadia.config").read_text()
-    fasttree_block = config.split(
-        "withName:'NOVELTREE:REMAINING_GENE_FAMILIES:FASTTREE_TIER2'", 1
-    )[1]
+def test_large_family_scaling_is_portable_and_not_arcadia_name_specific() -> None:
+    arcadia = (ROOT / "conf" / "arcadia.config").read_text()
+    module = (ROOT / "modules" / "local" / "fasttree.nf").read_text()
 
-    assert "NOVELTREE:REMAINING_GENE_FAMILIES:FASTTREE_TIER2" in config
-    assert "fasttree_large_family_min_sequences" in config
-    assert "fasttree_large_family_memory_multiplier" in config
-    assert "fasttree_large_family_retry_cpu_step" in config
-    assert "queue = params.awsqueue" in fasttree_block
-    assert "params.awsqueue_ondemand" not in fasttree_block
+    assert "REMAINING_GENE_FAMILIES:FASTTREE_TIER2" not in arcadia
+    assert "fasttree_large_family_min_sequences" in module
+    assert "fasttree_large_family_memory_multiplier" in module
+    assert "fasttree_large_family_retry_cpu_step" in module
+    assert "params.awsqueue_ondemand" not in module

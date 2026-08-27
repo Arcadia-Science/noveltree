@@ -76,25 +76,25 @@
                     "default": 0.50,
                     "exclusiveMinimum": 0,
                     "maximum": 1,
-                    "description": "Temporary SpeciesRax-local minimum fraction of species represented in a final gene tree. Planned for integration into upstream orthogroup routing."
+                    "description": "Minimum fraction of input species represented in an orthogroup routed to SpeciesRax. Applied from the native OrthoFinder gene-count table before alignment; excluded families remain eligible for ordinary gene-tree inference."
                 },
                 "speciesrax_max_mean_copies": {
                     "type": "number",
                     "default": 4.0,
                     "minimum": 1,
-                    "description": "Temporary SpeciesRax-local maximum mean gene copies among represented species. Planned for integration into upstream orthogroup routing."
+                    "description": "Maximum mean gene copies among represented species for an orthogroup routed to SpeciesRax. Applied before alignment."
                 },
                 "speciesrax_max_copies_per_species": {
                     "type": "integer",
                     "default": 8,
                     "minimum": 1,
-                    "description": "Temporary SpeciesRax-local maximum gene copies observed in any one species. Planned for integration into upstream orthogroup routing."
+                    "description": "Maximum gene copies observed in any one species for an orthogroup routed to SpeciesRax. Applied before alignment."
                 },
                 "speciesrax_max_total_leaves_factor": {
                     "type": "number",
                     "default": 4.0,
                     "minimum": 1,
-                    "description": "Temporary SpeciesRax-local maximum total tree leaves as a multiple of the total species count. Planned for integration into upstream orthogroup routing."
+                    "description": "Maximum total orthogroup proteins as a multiple of the input species count for routing to SpeciesRax. Applied before alignment."
                 },
                 "aligner": {
                     "type": "string",
@@ -138,6 +138,46 @@
                     "default": 1000,
                     "minimum": 3,
                     "description": "Maximum sequences for IQ-TREE inference. Larger families are sent directly to FastTree."
+                },
+                "fasttree_large_family_min_sequences": {
+                    "type": "integer",
+                    "default": 15000,
+                    "minimum": 1,
+                    "description": "Sequence count at which FastTree uses the large-family CPU, memory, and wall-time policy.",
+                    "hidden": true
+                },
+                "fasttree_large_family_cpus": {
+                    "type": "integer",
+                    "default": 48,
+                    "minimum": 1,
+                    "description": "Initial CPU request for a large FastTree family.",
+                    "hidden": true
+                },
+                "fasttree_large_family_retry_cpu_step": {
+                    "type": "integer",
+                    "default": 16,
+                    "minimum": 0,
+                    "description": "Additional CPUs requested for each large-family FastTree retry.",
+                    "hidden": true
+                },
+                "fasttree_large_family_memory_multiplier": {
+                    "type": "integer",
+                    "default": 3,
+                    "minimum": 1,
+                    "description": "First-attempt memory multiplier for a large FastTree family.",
+                    "hidden": true
+                },
+                "fasttree_large_family_time": {
+                    "type": "string",
+                    "default": "168.h",
+                    "description": "First-attempt wall time for a large FastTree family.",
+                    "hidden": true
+                },
+                "fasttree_large_family_retry_time": {
+                    "type": "string",
+                    "default": "240.h",
+                    "description": "Retry wall time for a large FastTree family.",
+                    "hidden": true
                 },
                 "busco": {
                     "type": "boolean",
@@ -257,7 +297,7 @@
                     "type": "string",
                     "description": "An On-Demand AWS Batch queue for long-running, monolithic tasks.",
                     "fa_icon": "fas fa-server",
-                    "help_text": "The Arcadia profile routes OrthoFinder and SpeciesRax to this queue while keeping other tasks on the default Spot queue."
+                    "help_text": "The opt-in arcadia_large profile routes OrthoFinder and SpeciesRax to this queue while keeping other tasks on the default Spot queue."
                 },
                 "awsregion": {
                     "type": "string",
