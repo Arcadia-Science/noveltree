@@ -351,11 +351,9 @@ process {
 #### 4. [`ORTHOFINDER_MCL`](../modules/local/orthofinder_mcl.nf):
 
 - `mcl_inflation`: Comma-separated list of inflation parameter values to be used in testing. MCL inflation testing is optional. Set `--test_run_mcl true` to enable. When disabled (default), the pipeline uses the `--mcl_inflation` value directly.
-- Full-dataset runs create a temporary, fingerprinted checkpoint of the raw
-  `Orthogroups/` and `Orthogroup_Sequences/` outputs before NovelTree
-  postprocessing. Process retries restore this checkpoint and skip OrthoFinder.
-  A lightweight cleanup task removes it only after the module outputs have
-  been successfully stored; no large result directory is restaged for cleanup.
+- OrthoFinder's native membership and gene-count tables remain unchanged.
+  Normal Nextflow task caching and stable published outputs provide `-resume`;
+  NovelTree does not create a separate OrthoFinder checkpoint archive.
 - [OrthoFinder2 documentation](https://github.com/davidemms/OrthoFinder)
 
 #### 5. `ALIGN_SEQS`

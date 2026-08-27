@@ -9,7 +9,6 @@ include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL } from '../../modules/local/o
 include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL     } from '../../modules/nf-core-modified/diamond_blastp'
 include { BUNDLE_BLAST_RESULTS as BUNDLE_BLAST_RESULTS_ALL } from '../../modules/local/bundle_blast_results'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL   } from '../../modules/local/orthofinder_mcl'
-include { CLEAN_ORTHOFINDER_CHECKPOINT } from '../../modules/local/orthofinder_checkpoint_cleanup'
 
 workflow INFER_ORTHOGROUPS {
     take:
@@ -87,7 +86,7 @@ workflow INFER_ORTHOGROUPS {
     BUNDLE_BLAST_RESULTS_ALL(ch_blast_groups)
 
     // Using the best-performing inflation parameter, infer orthogroups for
-    // all samples. Also runs chimera detection and orthogroup filtering.
+    // all samples and apply the ordinary orthogroup filters once.
     ORTHOFINDER_MCL_ALL(
         ch_best_inflation,
         BUNDLE_BLAST_RESULTS_ALL.out.archive.collect(),
@@ -102,11 +101,6 @@ workflow INFER_ORTHOGROUPS {
         params.min_prop_spp_for_spptree,
         params.max_copy_num_spp_tree
     )
-
-    // This receipt is emitted only after Nextflow has successfully finalized
-    // and stored every ORTHOFINDER_MCL output. The cleanup task therefore
-    // stages one tiny file and cannot erase recovery data during finalization.
-    CLEAN_ORTHOFINDER_CHECKPOINT(ORTHOFINDER_MCL_ALL.out.checkpoint_receipt)
 
     // Parse one compact manifest and join its resource metadata to the FASTA
     // paths by orthogroup. This avoids controller-side reads of every FASTA.
