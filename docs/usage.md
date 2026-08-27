@@ -271,9 +271,11 @@ nextflow run . -profile awsbatch,zoogle \
 See the README for [AWS Batch](../README.md#running-on-aws-batch) and [Singularity](../README.md#running-with-singularity) setup instructions.
 
 Use `-profile arcadia` for ordinary Arcadia production runs. Use
-`-profile arcadia_large` only when the dataset requires the large production-validated
-On-Demand allocations for monolithic OrthoFinder MCL and SpeciesRax tasks. The
-large profile does not change biological parameters or per-family scheduling.
+`-profile arcadia_large` only when the dataset requires the validated
+On-Demand allocations for monolithic OrthoFinder MCL and SpeciesRax tasks. It
+also enables the large-run scheduling footprint for bundle, ClipKIT, and very
+large FastTree jobs. The large profile changes resources only—not biological
+parameters, family eligibility, or method selection.
 
 ### Nextflow Tower (Publication Example)
 

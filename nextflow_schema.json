@@ -143,40 +143,40 @@
                     "type": "integer",
                     "default": 15000,
                     "minimum": 1,
-                    "description": "Sequence count at which FastTree uses the large-family CPU, memory, and wall-time policy.",
+                    "description": "Sequence count at which the arcadia_large profile uses its large-family FastTree resource policy.",
                     "hidden": true
                 },
                 "fasttree_large_family_cpus": {
                     "type": "integer",
                     "default": 48,
                     "minimum": 1,
-                    "description": "Initial CPU request for a large FastTree family.",
+                    "description": "Initial arcadia_large CPU request for a large FastTree family.",
                     "hidden": true
                 },
                 "fasttree_large_family_retry_cpu_step": {
                     "type": "integer",
                     "default": 16,
                     "minimum": 0,
-                    "description": "Additional CPUs requested for each large-family FastTree retry.",
+                    "description": "Additional CPUs requested for each large-family FastTree retry under arcadia_large.",
                     "hidden": true
                 },
                 "fasttree_large_family_memory_multiplier": {
                     "type": "integer",
                     "default": 3,
                     "minimum": 1,
-                    "description": "First-attempt memory multiplier for a large FastTree family.",
+                    "description": "First-attempt arcadia_large memory multiplier for a large FastTree family.",
                     "hidden": true
                 },
                 "fasttree_large_family_time": {
                     "type": "string",
                     "default": "168.h",
-                    "description": "First-attempt wall time for a large FastTree family.",
+                    "description": "First-attempt arcadia_large wall time for a large FastTree family.",
                     "hidden": true
                 },
                 "fasttree_large_family_retry_time": {
                     "type": "string",
                     "default": "240.h",
-                    "description": "Retry wall time for a large FastTree family.",
+                    "description": "Retry wall time for a large FastTree family under arcadia_large.",
                     "hidden": true
                 },
                 "busco": {
@@ -297,7 +297,7 @@
                     "type": "string",
                     "description": "An On-Demand AWS Batch queue for long-running, monolithic tasks.",
                     "fa_icon": "fas fa-server",
-                    "help_text": "The opt-in arcadia_large profile routes OrthoFinder and SpeciesRax to this queue while keeping other tasks on the default Spot queue."
+                    "help_text": "The opt-in arcadia_large profile routes OrthoFinder and SpeciesRax to this queue while retaining bundle, ClipKIT, and FastTree tasks on the default queue with large-run resource scaling."
                 },
                 "awsregion": {
                     "type": "string",

@@ -140,7 +140,7 @@ The `awsbatch` profile includes optimized executor settings (queue size of 1000 
 
 Arcadia's normal production profile keeps ordinary datasets on baseline
 allocations. For exceptionally large datasets, opt into the high-memory
-OrthoFinder and SpeciesRax allocations validated on the 218-species large production
+OrthoFinder and SpeciesRax allocations validated on a 218-species plant
 plant run:
 
 ```bash
@@ -152,7 +152,9 @@ nextflow run . -profile arcadia_large \
 ```
 
 Only OrthoFinder MCL and SpeciesRax are moved to the configured On-Demand
-queue by this profile; per-family tasks retain standard Arcadia behavior.
+queue. The profile also restores the empirically validated scheduling footprint
+for bundle tasks and input-size-aware ClipKIT and large-family FastTree jobs.
+Biological parameters and method selection are unchanged.
 
 **Requirements:**
 
