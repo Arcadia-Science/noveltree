@@ -45,7 +45,7 @@ process CLIPKIT {
     storeDir "${params.outdir}/alignments/trimmed"
 
     input:
-    tuple val(meta), path(fasta)              // Filepaths to the MSAs
+    tuple val(meta), path(fasta), path(family_map)
 
     output:
     tuple val(meta), path("${fasta.baseName}_clipkit.fa")  , emit: cleaned_msas
@@ -86,9 +86,13 @@ process CLIPKIT {
     # Verify the trimmed alignment still meets minimum sequence/species thresholds.
     # Trimming can remove sequences, potentially dropping an OG below the filters
     # that were applied to the raw FASTA files.
-    if [ -f \${prefix}_clipkit.fa ]; then
+    if [ -s \${prefix}_clipkit.fa ]; then
         n_seq=\$(grep -c ">" \${prefix}_clipkit.fa || true)
-        n_spp=\$(grep ">" \${prefix}_clipkit.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+        subset_gene_species_map.py \
+            --mapping ${family_map} \
+            --fasta \${prefix}_clipkit.fa \
+            --output \${prefix}_map.link
+        n_spp=\$(cut -f2 \${prefix}_map.link | sort -u | wc -l | tr -d ' ')
     else
         n_seq=0
         n_spp=0
@@ -101,14 +105,7 @@ process CLIPKIT {
         touch \${prefix}_clipkit.fa
         touch species_protein_maps/\${prefix}_map.link
     else
-        # Create a protein-species map-file:
-        # Pull out the sequences, and split into a TreeRecs format mapping
-        # file, where each protein in the tree is a new line, listing species
-        # and then the protein
-        grep ">" \${prefix}_clipkit.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/\${prefix}_map.link
-        rm prot && rm spp
+        mv \${prefix}_map.link species_protein_maps/\${prefix}_map.link
     fi
 
     cat <<-END_VERSIONS > versions.yml

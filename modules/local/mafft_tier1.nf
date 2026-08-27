@@ -23,7 +23,7 @@ process MAFFT_TIER1 {
     storeDir "${params.outdir}/alignments/original"
 
     input:
-    tuple val(meta), path(fasta)
+    tuple val(meta), path(fasta), path(family_map)
 
     output:
     tuple val(meta), path("${fasta.baseName}_${(meta.n_seq as int) <= (params.align_tier1_max as int) ? 'einsi' : 'linsi'}.fa"), emit: msas
@@ -33,30 +33,19 @@ process MAFFT_TIER1 {
     task.ext.when == null || task.ext.when
 
     script:
-    def aln_trimmer = params.msa_trimmer
     def mafft_mode  = params.mafft_mode ?: 'einsi'
     def mafft_args  = mafft_mode == 'linsi' ?
         '--localpair --maxiterate 1000 --anysymbol' :
         '--genafpair --maxiterate 1000 --ep 0 --anysymbol'
     def prefix = fasta.baseName
     """
-    # Remove non-standard amino acid codes
-    sed -E -i '/>/!s/U/X/g' ${fasta} # selenocysteine
-    sed -E -i '/>/!s/O/X/g' ${fasta} # pyrrolysine
-
     mafft \\
         --thread ${task.cpus} \\
         ${mafft_args} \\
         ${fasta} > ${prefix}_${mafft_mode}.fa
 
-    # Create protein-species map files if we are not doing any alignment cleaning
-    if [ "${aln_trimmer}" == "none" ]; then
-        mkdir species_protein_maps
-        grep ">" ${prefix}_${mafft_mode}.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/${prefix}_map.link
-        rm prot && rm spp
-    fi
+    mkdir species_protein_maps
+    cp ${family_map} species_protein_maps/${prefix}_map.link
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

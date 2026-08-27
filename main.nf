@@ -34,6 +34,29 @@ if (params.mcl_inflation) {
 } else {
     exit 1, 'MCL Inflation parameter(s) not specified!'
 }
+if ((params.min_prop_spp_for_spptree as double) <= 0.0 ||
+    (params.min_prop_spp_for_spptree as double) > 1.0) {
+    exit 1, '--min_prop_spp_for_spptree must be in (0, 1]'
+}
+if ((params.max_copy_num_spp_tree as double) < 1.0) {
+    exit 1, '--max_copy_num_spp_tree must be at least 1'
+}
+if ((params.speciesrax_min_species_occupancy as double) <= 0.0 ||
+    (params.speciesrax_min_species_occupancy as double) > 1.0) {
+    exit 1, '--speciesrax_min_species_occupancy must be in (0, 1]'
+}
+if ((params.speciesrax_max_mean_copies as double) < 1.0 ||
+    (params.speciesrax_max_copies_per_species as int) < 1 ||
+    (params.speciesrax_max_total_leaves_factor as double) < 1.0) {
+    exit 1, 'SpeciesRax copy-number and total-leaf limits must be at least 1'
+}
+if ((params.speciesrax_bundle_size as int) < 1) {
+    exit 1, '--speciesrax_bundle_size must be at least 1'
+}
+if ((params.align_tier1_max as int) < 1 ||
+    (params.align_tier2_max as int) < (params.align_tier1_max as int)) {
+    exit 1, 'Adaptive alignment thresholds must satisfy 1 <= --align_tier1_max <= --align_tier2_max'
+}
 // A trusted root is required before SpeciesRax. Zoogle also reuses this exact
 // chronogram for dating, so root inference and calibration cannot disagree.
 def needs_reference_chronogram = params.zoogle || params.outgroups == 'none'
@@ -87,6 +110,7 @@ workflow NOVELTREE {
     // 2. Download, preprocess, rename
     PREPARE_INPUTS(ch_all_data.remote_prots, ch_all_data.local_prots)
     ch_renamed_prots = PREPARE_INPUTS.out.renamed_prots
+    ch_protein_maps = PREPARE_INPUTS.out.protein_maps
 
     // These value channels are consumed by multiple downstream subworkflows
     species_name_list   = ch_renamed_prots.collect { it[0].id }
@@ -106,7 +130,9 @@ workflow NOVELTREE {
             ch_reference_tree = Channel.value(file(params.reference_time_tree, checkIfExists: true))
         }
     } else {
-        ch_reference_tree = Channel.value(file("${projectDir}/assets/no_reference_chronogram.sentinel"))
+        // An explicit outgroup roots SpeciesRax without a reference file.
+        // Pass an empty optional path rather than staging a fake sentinel.
+        ch_reference_tree = Channel.value([])
     }
 
     // Warn if ref_species is set but not found in the dataset
@@ -143,7 +169,8 @@ workflow NOVELTREE {
         ch_renamed_prots,
         complete_prots_list,
         mcl_inflation,
-        INPUT_CHECK.out.complete_samplesheet
+        INPUT_CHECK.out.complete_samplesheet,
+        ch_protein_maps.collect { it[1] }
     )
 
     // 5. Gene tree inference (alignment → trimming → phylogeny)
@@ -159,7 +186,9 @@ workflow NOVELTREE {
         REMAINING_GENE_FAMILIES.out.phylogeny,
         REMAINING_GENE_FAMILIES.out.map_link,
         REMAINING_GENE_FAMILIES.out.cleaned_msas,
-        ch_reference_tree
+        ch_reference_tree,
+        INFER_ORTHOGROUPS.out.speciesrax_selection,
+        INFER_ORTHOGROUPS.out.speciesrax_coverage
     )
 
     // 7. Reconciliation summaries (phylo profiles, HOG parsing)

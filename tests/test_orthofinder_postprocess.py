@@ -68,6 +68,58 @@ class OrthofinderPostprocessTests(unittest.TestCase):
         self.assertNotIn("checkpoint", module.lower())
         self.assertNotIn("Orthogroups.post_", module)
 
+    def test_speciesrax_constraints_route_rejected_families_to_gene_trees(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            counts = root / "Orthogroups.GeneCount.tsv"
+            counts.write_text(
+                "Orthogroup\tA\tB\tC\tD\tTotal\n"
+                "OG_CORE\t1\t1\t1\t1\t4\n"
+                "OG_OCC_BOUNDARY\t2\t2\t0\t0\t4\n"
+                "OG_MAX_COPY_FAIL\t9\t1\t1\t1\t12\n"
+            )
+            samplesheet = root / "samplesheet.csv"
+            samplesheet.write_text(
+                "species,input_data,input_type\n"
+                "A,a.fa,proteins\nB,b.fa,proteins\n"
+                "C,c.fa,proteins\nD,d.fa,proteins\n"
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "bin/og_tax_summary.py"),
+                    str(counts),
+                    str(samplesheet),
+                    "4",
+                    "2",
+                    "0.5",
+                    "10",
+                    "0.5",
+                    "4",
+                    "8",
+                    "4",
+                ],
+                cwd=root,
+                check=True,
+            )
+            with (root / "spptree_core_ogs_counts.csv").open() as handle:
+                species_tree = [row["orthogroup"] for row in csv.DictReader(handle)]
+            with (root / "genetree_core_ogs_counts.csv").open() as handle:
+                gene_tree = [row["orthogroup"] for row in csv.DictReader(handle)]
+            self.assertEqual(species_tree, ["OG_CORE", "OG_OCC_BOUNDARY"])
+            self.assertEqual(gene_tree, ["OG_MAX_COPY_FAIL"])
+
+            with (root / "speciesrax_family_selection.tsv").open() as handle:
+                report = {
+                    row["orthogroup"]: row
+                    for row in csv.DictReader(handle, delimiter="\t")
+                }
+            self.assertEqual(report["OG_OCC_BOUNDARY"]["selected"], "true")
+            self.assertEqual(
+                report["OG_MAX_COPY_FAIL"]["exclusion_reasons"],
+                "species_copy_count_above_maximum",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

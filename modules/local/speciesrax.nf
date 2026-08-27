@@ -10,9 +10,11 @@ process SPECIESRAX {
 
     input:
     file input_bundles
-    path reference_chronogram
+    path reference_chronogram, arity: '0..1'
     val species_names
     val outgroups
+    path speciesrax_selection
+    path speciesrax_coverage
 
     output:
     path "inferred_species_tree.newick"  , emit: speciesrax_tree
@@ -24,7 +26,6 @@ process SPECIESRAX {
     path "generax.log"
     path "mininj_generax.log"
     path "speciesrax_orthogroup.families"
-    path "speciesrax_gene_tree_validation.tsv"
     path "speciesrax_selected_families.tsv"
     path "speciesrax_family_selection.tsv"
     path "speciesrax_selected_species_coverage.tsv"
@@ -47,27 +48,26 @@ process SPECIESRAX {
         rm -f "\$archive"
     done
 
-    prepare_speciesrax_gene_trees.py \\
-        --manifest-glob 'speciesrax_inputs_*.tsv' \\
-        --report speciesrax_gene_tree_validation.tsv
+    # Family eligibility is already determined from the native OrthoFinder
+    # gene-count table. Consolidate the bounded bundle manifests without
+    # repeating selection or repairing task-local mapping files.
+    printf 'orthogroup\tgene_tree\tmapping\n' > speciesrax_selected_families.tsv
+    for manifest in \$(find . -maxdepth 1 -name 'speciesrax_inputs_*.tsv' -print | LC_ALL=C sort)
+    do
+        tail -n +2 "\$manifest"
+    done | LC_ALL=C sort -k1,1 >> speciesrax_selected_families.tsv
 
-    echo "$species_names" \\
-        | sed "s/\\[//g; s/\\]//g" \\
-        | tr "," "\\n" \\
-        | sed "s/^[[:space:]]*//; s/[[:space:]]*\$//" \\
-        > speciesrax_expected_species.txt
-
-    select_speciesrax_families.py \\
-        --manifest-glob 'speciesrax_inputs_*.tsv' \\
-        --validation-report speciesrax_gene_tree_validation.tsv \\
-        --expected-species-file speciesrax_expected_species.txt \\
-        --min-species-occupancy ${params.speciesrax_min_species_occupancy} \\
-        --max-mean-copies ${params.speciesrax_max_mean_copies} \\
-        --max-copies-per-species ${params.speciesrax_max_copies_per_species} \\
-        --max-total-leaves-factor ${params.speciesrax_max_total_leaves_factor} \\
-        --selected-manifest speciesrax_selected_families.tsv \\
-        --report speciesrax_family_selection.tsv \\
-        --species-coverage-report speciesrax_selected_species_coverage.tsv
+    duplicate_ogs=\$(tail -n +2 speciesrax_selected_families.tsv | cut -f1 | uniq -d | head)
+    if [ -n "\$duplicate_ogs" ]; then
+        echo "Duplicate SpeciesRax family manifests: \$duplicate_ogs" >&2
+        exit 1
+    fi
+    if [ "\$(wc -l < speciesrax_selected_families.tsv)" -le 1 ]; then
+        echo "No upstream-selected SpeciesRax families were staged" >&2
+        exit 1
+    fi
+    cp ${speciesrax_selection} speciesrax_family_selection.tsv
+    cp ${speciesrax_coverage} speciesrax_selected_species_coverage.tsv
 
     echo "[FAMILIES]" > speciesrax_orthogroup.families
     while IFS=\$'\\t' read -r og tree map_link
@@ -86,7 +86,7 @@ process SPECIESRAX {
         echo "starting_gene_tree = \${tree}" >> speciesrax_orthogroup.families
         echo "mapping = \${map_link}" >> speciesrax_orthogroup.families
     done < speciesrax_selected_families.tsv
-    rm -f speciesrax_inputs_*.tsv speciesrax_expected_species.txt
+    rm -f speciesrax_inputs_*.tsv
 
     # Pass 1: compute only the MPI-parallel MiniNJ topology. Its serialized
     # root is arbitrary, so do not optimize or use it for reconciliation.
@@ -137,6 +137,10 @@ process SPECIESRAX {
         $args
 
     mv SpeciesRax/* .
+    validate_root_split.py \
+        --expected rooted_mininj_species_tree.newick \
+        --observed inferred_species_tree.newick \
+        --qc-output species_tree_root_qc.tsv
     rm -rf reconciliations results SpeciesRax MiniNJ
     mv species_trees/* .
     rm -r species_trees

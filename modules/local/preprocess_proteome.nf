@@ -27,12 +27,13 @@ process PREPROCESS_PROTEOME {
         input_file="input.fasta"
     fi
 
-    # Remove trailing stop codons (*), replace internal stops with X
-    # Handle rare amino acids: U→C (selenocysteine), J/B/Z→X (ambiguous)
+    # Remove trailing stop codons and replace internal/ambiguous residues.
+    # U and O are deliberately left intact here: the mandatory canonical
+    # normalization boundary converts both to X consistently for every input,
+    # regardless of whether optional preprocessing was enabled.
     sed '/^>/!{
         s/\\*\$//
         s/\\*/X/g
-        s/U/C/g
         s/J/X/g
         s/B/X/g
         s/Z/X/g

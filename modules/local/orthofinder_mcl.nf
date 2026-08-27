@@ -19,6 +19,7 @@ process ORTHOFINDER_MCL {
     val min_num_spp
     val min_prop_spp_for_spptree
     val max_copy_num
+    path canonical_maps, arity: '0..*'
 
     output:
     path("*/Results_Inflation*"),           emit: inflation_dir
@@ -28,6 +29,9 @@ process ORTHOFINDER_MCL {
     path("spptree_core_ogs_counts.csv"),    emit: spptree_core_ogs, optional: true
     path("genetree_core_ogs_counts.csv"),   emit: genetree_core_ogs, optional: true
     path("og_fasta_metadata.tsv"),          emit: og_metadata, optional: true
+    path("family_maps/*.map.link"),         emit: family_maps, optional: true
+    path("speciesrax_family_selection.tsv"), emit: speciesrax_selection, optional: true
+    path("speciesrax_selected_species_coverage.tsv"), emit: speciesrax_coverage, optional: true
 
     when:
     task.ext.when == null || task.ext.when
@@ -73,7 +77,11 @@ process ORTHOFINDER_MCL {
         og_tax_summary.py \\
             OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroups/Orthogroups.GeneCount.tsv \\
             ${samplesheet} \\
-            ${min_num_seqs} ${min_num_spp} ${min_prop_spp_for_spptree} ${max_copy_num}
+            ${min_num_seqs} ${min_num_spp} ${min_prop_spp_for_spptree} ${max_copy_num} \\
+            ${params.speciesrax_min_species_occupancy} \\
+            ${params.speciesrax_max_mean_copies} \\
+            ${params.speciesrax_max_copies_per_species} \\
+            ${params.speciesrax_max_total_leaves_factor}
 
         # Move filtered FASTAs into separate directories
         msa_dir=OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences
@@ -91,6 +99,14 @@ process ORTHOFINDER_MCL {
                 mv "\${msa_dir}/\${og}.fa" gene_tree_og_fas/
             fi
         done
+
+        # Join retained proteins to the canonical input mapping once. Every
+        # downstream aligner and trimmer propagates or subsets these files.
+        build_family_maps.py \
+            --canonical-map-glob '*.protein_map.tsv' \
+            --species-tree-dir species_tree_og_fas \
+            --gene-tree-dir gene_tree_og_fas \
+            --output-dir family_maps
 
         # Summarize the retained FASTAs once on local scratch. Downstream
         # resource routing consumes this small manifest instead of asking the

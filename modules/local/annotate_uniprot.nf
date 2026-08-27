@@ -32,9 +32,11 @@ process ANNOTATE_UNIPROT {
     # proteomes come from UniProt).
     # Check below - if from uniprot, go ahead and annotate, otherwise skip the species.
     if [ "$is_uniprot" == "yes" ]; then
-        # Pull out the sequence names, strip trailing info, and remove spp name.
-        # Handle both colon-delimited (>Species:Accession) and pipe-delimited (>Species|Accession|Entry) formats
-        grep ">" $fasta | cut -d" " -f1 | awk -F'[:|]' '{print \$2}' > ${spp}_protein_accessions.txt
+        # RENAME_FASTAS has already canonicalized every ID to exactly
+        # Genus-species_accession. Remove only that validated species prefix;
+        # never infer species by splitting an arbitrary protein identifier.
+        grep ">" $fasta | cut -d" " -f1 | sed 's/^>//' | \
+            sed 's/^${spp}_//' > ${spp}_protein_accessions.txt
 
         # Retrieve InterPro annotations from UniProt REST API.
         protein_annotation.py $spp ${spp}_protein_accessions.txt

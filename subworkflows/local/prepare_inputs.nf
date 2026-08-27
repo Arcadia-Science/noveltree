@@ -34,4 +34,6 @@ workflow PREPARE_INPUTS {
 
     emit:
     renamed_prots = RENAME_FASTAS.out.renamed
+    protein_maps = RENAME_FASTAS.out.protein_map
+    normalization_qc = RENAME_FASTAS.out.normalization_qc
 }

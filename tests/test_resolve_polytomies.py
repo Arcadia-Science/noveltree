@@ -97,16 +97,19 @@ class ResolvePolytomiesTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("greater than or equal", result.stderr)
 
-    def test_generax_enables_bounds_after_polytomy_resolution(self):
-        module = (REPO / "modules" / "local" / "generax_per_species.nf").read_text()
+    def test_reconciliation_boundary_owns_branch_length_normalization(self):
+        preparation = (
+            REPO / "modules" / "local" / "prepare_reconciliation_tree.nf"
+        ).read_text()
+        generax = (
+            REPO / "modules" / "local" / "generax_per_species.nf"
+        ).read_text()
 
-        self.assertIn("--min-branch-length 1e-6", module)
-        self.assertIn("--max-branch-length 100", module)
-        self.assertIn("--branch-length-qc ${og}_branch_length_qc.tsv", module)
-        self.assertIn("cp ${og}_branch_length_qc.tsv $og/", module)
-
-        output_block = module.split("output:", 1)[1].split("when:", 1)[0]
-        self.assertNotIn("branch_length_qc", output_block)
+        self.assertIn("prepare_reconciliation_tree.py", preparation)
+        self.assertIn("_reconciliation_ready.newick", preparation)
+        self.assertIn("_reconciliation_qc.tsv", preparation)
+        self.assertNotIn("resolve_polytomies.py", generax)
+        self.assertNotIn("--min-branch-length", generax)
 
 
 if __name__ == "__main__":

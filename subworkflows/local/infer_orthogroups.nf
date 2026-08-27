@@ -16,6 +16,7 @@ workflow INFER_ORTHOGROUPS {
     complete_prots_list  // value: collected list of fasta paths
     mcl_inflation        // list of inflation values
     complete_samplesheet // path: validated samplesheet
+    canonical_maps       // value: collected per-proteome canonical ID mappings
 
     main:
     //
@@ -99,7 +100,8 @@ workflow INFER_ORTHOGROUPS {
         params.min_num_seq_per_og,
         params.min_num_spp_per_og,
         params.min_prop_spp_for_spptree,
-        params.max_copy_num_spp_tree
+        params.max_copy_num_spp_tree,
+        canonical_maps
     )
 
     // Parse one compact manifest and join its resource metadata to the FASTA
@@ -123,16 +125,22 @@ workflow INFER_ORTHOGROUPS {
         .filter { og, family_set, meta -> family_set == 'gene_tree' }
         .map { og, family_set, meta -> tuple(og, meta) }
 
+    ch_family_maps = ORTHOFINDER_MCL_ALL.out.family_maps
+        .flatten()
+        .map { mapping -> tuple(mapping.simpleName.replaceFirst(/_map$/, ''), mapping) }
+
     ch_spptree_fas = ORTHOFINDER_MCL_ALL.out.spptree_fas
         .flatten()
         .map { fasta -> tuple(fasta.simpleName, fasta) }
         .join(ch_spptree_metadata)
-        .map { og, fasta, meta -> tuple(meta, fasta) }
+        .join(ch_family_maps)
+        .map { og, fasta, meta, mapping -> tuple(meta, fasta, mapping) }
     ch_genetree_fas = ORTHOFINDER_MCL_ALL.out.genetree_fas
         .flatten()
         .map { fasta -> tuple(fasta.simpleName, fasta) }
         .join(ch_genetree_metadata)
-        .map { og, fasta, meta -> tuple(meta, fasta) }
+        .join(ch_family_maps)
+        .map { og, fasta, meta, mapping -> tuple(meta, fasta, mapping) }
 
     // --test mode: keep only gene families that contain ALL species in the dataset.
     // This dramatically reduces the number of OGs for quick end-to-end smoke tests.
@@ -142,21 +150,23 @@ workflow INFER_ORTHOGROUPS {
 
         ch_spptree_fas = ch_spptree_fas
             .combine(ch_total_species)
-            .filter { meta, fasta, n_spp ->
+            .filter { meta, fasta, mapping, n_spp ->
                 meta.n_species >= n_spp
             }
-            .map { meta, fasta, n_spp -> [meta, fasta] }
+            .map { meta, fasta, mapping, n_spp -> [meta, fasta, mapping] }
 
         ch_genetree_fas = ch_genetree_fas
             .combine(ch_total_species)
-            .filter { meta, fasta, n_spp ->
+            .filter { meta, fasta, mapping, n_spp ->
                 meta.n_species >= n_spp
             }
-            .map { meta, fasta, n_spp -> [meta, fasta] }
+            .map { meta, fasta, mapping, n_spp -> [meta, fasta, mapping] }
     }
 
     emit:
     spptree_fas   = ch_spptree_fas
     genetree_fas  = ch_genetree_fas
     inflation_dir = ORTHOFINDER_MCL_ALL.out.inflation_dir
+    speciesrax_selection = ORTHOFINDER_MCL_ALL.out.speciesrax_selection
+    speciesrax_coverage = ORTHOFINDER_MCL_ALL.out.speciesrax_coverage
 }

@@ -38,6 +38,9 @@ def test_speciesrax_preserves_an_explicit_reference_root():
     assert "root_species_tree_from_reference.py" in module
     assert "--species-tree rooted_mininj_species_tree.newick" in module
     assert "BUILD_REFERENCE_CHRONOGRAM" in main
+    assert "Channel.value([])" in main
+    assert "no_reference_chronogram.sentinel" not in main
+    assert "arity: '0..1'" in module
 
 
 def test_reference_root_transfer_validates_the_chronogram():

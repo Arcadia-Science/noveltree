@@ -18,7 +18,9 @@ workflow RECONCILE_TREES {
     remaining_gene_trees   // [ val(meta), path(tree) ]
     remaining_map_links    // [ val(meta), path(map_link) ]
     remaining_clean_msas   // [ val(meta), path(msa) ]
-    reference_chronogram   // rooted TimeTree chronogram, or 'none' with explicit outgroups
+    reference_chronogram   // optional rooted TimeTree chronogram; empty with explicit outgroups
+    speciesrax_selection   // upstream family-selection audit table
+    speciesrax_coverage    // upstream per-species selected-family coverage
 
     main:
     // Join each core family's mapping and tree, then create bounded
@@ -60,7 +62,9 @@ workflow RECONCILE_TREES {
         BUNDLE_SPECIESRAX_INPUTS.out.archive.collect(),
         reference_chronogram,
         species_name_list,
-        params.outgroups
+        params.outgroups,
+        speciesrax_selection,
+        speciesrax_coverage
     )
         .speciesrax_tree
         .set { ch_speciesrax }
