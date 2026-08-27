@@ -4,6 +4,13 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
 
 > **Mode-specific outputs**: Some outputs are only produced in certain workflow modes. These are marked with *(full mode only)* or *(zoogle mode only)*. Outputs without annotations are produced in all modes.
 
+**0.** `preprocessing/final_proteomes/`: Canonical analysis inputs. Each
+proteome is written as `{species}.fa` with collision-checked
+`Genus-species_protein-id` identifiers. The adjacent `*.protein_map.tsv`
+records original-to-canonical IDs and `*.normalization_qc.json` records input
+counts plus U/O-to-X residue normalization. These mappings, rather than header
+parsing, are the authoritative source of protein-to-species identity downstream.
+
 **1.** `busco/` *(full mode only)*: Contains output of all BUSCO analyses. Primary directory includes:  
 
 - Short summary results for each species, to each lineage dataset (shallow or broad) in text and json formats.  
@@ -22,6 +29,9 @@ Note that a detailed walkthrough of how the results of NovelTree may be summariz
   - `gene_tree_og_fas/`: FASTA files for gene families used in gene-family tree inference (broader set: ≥4 species).
   - `all_ogs_counts.csv`: comma-separated CSV listing, for all orthogroups, the number of included species, total copy number, mean copy number, and number of higher-level taxonomic groups included.
   - `spptree_core_ogs_counts.csv` / `genetree_core_ogs_counts.csv`: the same as above, but for only the two respective subsets of gene families.
+  - `family_maps/`: Authoritative GeneRax protein-to-species mappings for every retained family.
+  - `speciesrax_family_selection.tsv`: Upstream SpeciesRax eligibility decisions and exclusion reasons derived from the native gene-count table.
+  - `speciesrax_selected_species_coverage.tsv`: Per-species coverage among families routed to SpeciesRax.
 
 OrthoFinder's native orthogroup membership and gene-count tables are retained
 unchanged. Normal Nextflow task caching and the stable published outputs support
@@ -42,6 +52,7 @@ unchanged. Normal Nextflow task caching and the stable published outputs support
 **7.** `gene_family_trees/`: Gene family trees organized by processing stage.
 
 - `original/`: Gene family trees as inferred by FastTree2 or IQ-TREE. Files are named `{alignment_prefix}_{method}.newick` where method is `ft` (FastTree) or `iqt` (IQ-TREE), and the alignment prefix encodes the aligner and trimmer used (e.g., `OG0000001_witch_clipkit_iqt.newick`).
+- `reconciliation_ready/`: Validated copies used by SpeciesRax and GeneRax. Leaf sets are checked against the cleaned alignment and authoritative mapping, multifurcations are resolved deterministically, and only missing, non-finite, non-positive, or out-of-bound branch lengths are clamped. Per-family `*_reconciliation_qc.tsv` files record every adjustment. The corresponding trees in `original/` are never modified.
 - `reconciled/`: Gene family trees reconciled with the species tree by GeneRax. Contains `generax_per_species/` (per-species rate model) and `generax_per_family/` *(full mode only)* (per-family rate model). Files are named `{OG}_reconciled_gft.newick`.
 - `time_calibrated/` *(zoogle mode only)*: Time-calibrated gene family trees dated using speciation node ages from the species tree.
   - `{OG}_dated.newick`: Time-calibrated gene family tree.

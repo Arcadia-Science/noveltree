@@ -126,13 +126,21 @@ Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,proteins,yes,n
 | `no` | `no` | `yes` | Isoform filter → CD-HIT 100% (exact dedup) |
 | `no` | `no` | `no` | Quality cleanup → CD-HIT 100% (exact dedup) |
 
-Quality cleanup always runs: removes stop codons, replaces rare amino acids (U→C, J/B/Z→X), and filters sequences shorter than `--min_protein_length` (default: 50 aa).
+Optional preprocessing removes stop codons, replaces ambiguous J/B/Z residues
+with X, and filters sequences shorter than `--min_protein_length` (default: 50
+aa). The subsequent mandatory canonicalization step converts selenocysteine (U)
+and pyrrolysine (O) to X for both preprocessed and unprocessed inputs.
 
 ### FASTA Headers
 
-When using NCBI/UniProt sources or `--preprocess`, the pipeline's `RENAME_FASTAS` module auto-standardizes headers to `Species-name_ProteinID`. Manual header formatting is only needed for local files used without `--preprocess`.
-
-For local files without `--preprocess`, proteins must follow this convention: `Species-name:ProteinID`. If `has_uniprot_ids=yes`, the protein ID must be a UniProt accession.
+All inputs pass through `RENAME_FASTAS`, including local files when
+`--preprocess false`. The process creates collision-checked
+`Genus-species_protein-id` identifiers once, replaces underscores inside the
+protein portion with hyphens, normalizes U/O residues to X, and writes an
+original-to-canonical mapping. Downstream family mappings are joined from that
+table; they are not reconstructed by splitting protein names. When
+`has_uniprot_ids=yes`, the original protein identifier should still be a
+UniProt accession so annotation lookup remains possible.
 
 **2.** Create a parameter file (see [Parameters](#parameters) for all options):
 
@@ -185,10 +193,10 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | `min_prop_spp_for_spptree` | `0.50` | Minimum proportion of species for inclusion in species tree inference |
 | `max_copy_num_spp_tree` | `10` | Maximum per-species gene copy number for species tree inference |
 | `speciesrax_bundle_size` | `128` | Numeric orthogroup IDs per uncompressed SpeciesRax tree/mapping staging shard |
-| `speciesrax_min_species_occupancy` | `0.50` | Temporary SpeciesRax-local minimum fraction of represented species |
-| `speciesrax_max_mean_copies` | `4.0` | Temporary SpeciesRax-local maximum mean copies among represented species |
-| `speciesrax_max_copies_per_species` | `8` | Temporary SpeciesRax-local maximum copies in any one species |
-| `speciesrax_max_total_leaves_factor` | `4.0` | Temporary SpeciesRax-local maximum total leaves as a multiple of the species count |
+| `speciesrax_min_species_occupancy` | `0.50` | Upstream minimum fraction of represented species for SpeciesRax routing |
+| `speciesrax_max_mean_copies` | `4.0` | Upstream maximum mean copies among represented species for SpeciesRax routing |
+| `speciesrax_max_copies_per_species` | `8` | Upstream maximum copies in any one species for SpeciesRax routing |
+| `speciesrax_max_total_leaves_factor` | `4.0` | Upstream maximum family leaves as a multiple of the species count for SpeciesRax routing |
 | `min_protein_length` | `50` | Minimum amino acid sequence length during preprocessing (only when `--preprocess` enabled) |
 
 ### Alignment
@@ -262,6 +270,11 @@ nextflow run . -profile awsbatch,zoogle \
 
 See the README for [AWS Batch](../README.md#running-on-aws-batch) and [Singularity](../README.md#running-with-singularity) setup instructions.
 
+Use `-profile arcadia` for ordinary Arcadia production runs. Use
+`-profile arcadia_large` only when the dataset requires the large production-validated
+On-Demand allocations for monolithic OrthoFinder MCL and SpeciesRax tasks. The
+large profile does not change biological parameters or per-family scheduling.
+
 ### Nextflow Tower (Publication Example)
 
 When applying NovelTree to the dataset used in [the associated pub](https://doi.org/10.57844/arcadia-z08x-v798), we launched the workflow via Nextflow Tower to run on AWS Batch with:
@@ -291,7 +304,7 @@ When applying NovelTree to the dataset used in [the associated pub](https://doi.
 
 
 
-8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family using the adaptive three-tier strategy ([`MAFFT`](https://mafft.cbrc.jp/alignment/software/) for ≤200 seqs, [`WITCH`](https://github.com/c5shen/WITCH) for ≤3000, [`FAMSA`](https://github.com/refresh-bio/FAMSA) for larger), or a single aligner if specified
+8. `ALIGN_SEQS`: Infer multiple sequence alignments for each focal gene family using the adaptive three-tier strategy ([`MAFFT`](https://mafft.cbrc.jp/alignment/software/) for ≤200 seqs, [`WITCH`](https://github.com/c5shen/WITCH) for ≤1000, [`FAMSA`](https://github.com/refresh-bio/FAMSA) for larger), or a single aligner if specified
 9. `TRIM_SEQS` _(optional)_: Trim uninformative/memory-consuming/gappy segments of alignments with either [`CIAlign`](https://github.com/KatyBrown/CIAlign) or [`ClipKit`](https://jlsteenwyk.com/ClipKIT/)
 10. `INFER_TREES`: Infer gene family trees using either [`IQ-TREE`](http://www.iqtree.org/) (default) or [`FastTree2`](http://www.microbesonline.org/fasttree/)
 11. `BUILD_REFERENCE_CHRONOGRAM`: When no explicit outgroup is provided, load a user-supplied rooted chronogram or build one from TimeTree.org. Zoogle mode reuses this exact tree for calibration.
@@ -425,21 +438,24 @@ arbitrary serialized root using the trusted chronogram or explicit outgroups.
 - The following parameters are specified in [`conf/modules.config`](../conf/modules.config).
 - `--rec-model UndatedDL --si-strategy SKIP --si-quartet-support`
 
-Before constructing the SpeciesRax family file, NovelTree currently applies a
-late-stage scaling guard to the final validated gene trees. Families must retain
+NovelTree applies the SpeciesRax scaling guard directly to OrthoFinder's native
+gene-count table, before alignment and gene-tree inference. Families must have
 at least 50% species occupancy, have no more than four mean copies among
 represented species, have no more than eight copies in any one species, and
 contain no more than four times the dataset species count in total leaves. This
 retains multicopy information for duplication/loss-aware inference while
-preventing exceptionally expanded families from dominating SpeciesRax runtime.
+preventing exceptionally expanded families from consuming upstream compute or
+dominating SpeciesRax runtime. Families excluded from SpeciesRax are still
+routed through ordinary gene-family tree inference and reconciliation.
 `speciesrax_family_selection.tsv` records every decision and exclusion reason,
 and `speciesrax_selected_species_coverage.tsv` reports retained coverage by
 species.
 
-This is intentionally implemented within `SPECIESRAX` for now so existing
-alignments and gene trees remain reusable. After the cutoffs have been validated
-across production datasets, this classification will be incorporated into the
-upstream orthogroup filtering and routing logic.
+Every inferred source tree is preserved byte-for-byte in
+`gene_family_trees/original`. A separate reconciliation-preparation process
+checks exact tree/alignment/mapping leaf agreement, resolves multifurcations,
+and bounds only invalid or numerically unsafe branch lengths. SpeciesRax and
+GeneRax consume these audited copies from `gene_family_trees/reconciliation_ready`.
 
 #### 10. [`GENERAX_PER_FAMILY`](../modules/local/generax_per_family.nf):
 
