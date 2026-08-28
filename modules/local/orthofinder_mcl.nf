@@ -29,7 +29,7 @@ process ORTHOFINDER_MCL {
     path("spptree_core_ogs_counts.csv"),    emit: spptree_core_ogs, optional: true
     path("genetree_core_ogs_counts.csv"),   emit: genetree_core_ogs, optional: true
     path("og_fasta_metadata.tsv"),          emit: og_metadata, optional: true
-    path("family_maps/*.map.link"),         emit: family_maps, optional: true
+    path("family_maps/*_map.link"),         emit: family_maps, optional: true
     path("speciesrax_family_selection.tsv"), emit: speciesrax_selection, optional: true
     path("speciesrax_selected_species_coverage.tsv"), emit: speciesrax_coverage, optional: true
 
@@ -107,6 +107,13 @@ process ORTHOFINDER_MCL {
             --species-tree-dir species_tree_og_fas \
             --gene-tree-dir gene_tree_og_fas \
             --output-dir family_maps
+
+        retained_family_count=\$(find species_tree_og_fas gene_tree_og_fas -maxdepth 1 -type f -name '*.fa' | wc -l)
+        family_map_count=\$(find family_maps -maxdepth 1 -type f -name '*_map.link' | wc -l)
+        if [ "\${family_map_count}" -ne "\${retained_family_count}" ]; then
+            echo "ERROR: built \${family_map_count} family mappings for \${retained_family_count} retained families" >&2
+            exit 1
+        fi
 
         # Summarize the retained FASTAs once on local scratch. Downstream
         # resource routing consumes this small manifest instead of asking the

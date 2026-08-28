@@ -24,6 +24,18 @@ SUBSET = load_script("subset_gene_species_map.py")
 
 
 class CanonicalMappingTests(unittest.TestCase):
+    def test_orthofinder_emits_and_validates_helper_mapping_names(self):
+        module = (REPO / "modules" / "local" / "orthofinder_mcl.nf").read_text()
+
+        self.assertIn('path("family_maps/*_map.link")', module)
+        self.assertNotIn('path("family_maps/*.map.link")', module)
+        self.assertIn("retained_family_count=", module)
+        self.assertIn("family_map_count=", module)
+        self.assertIn(
+            'if [ "\\${family_map_count}" -ne "\\${retained_family_count}" ]',
+            module,
+        )
+
     def test_normalizes_gzip_ids_and_rare_amino_acids(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
