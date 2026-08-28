@@ -68,8 +68,16 @@ process SPECIESRAX {
         echo "No upstream-selected SpeciesRax families were staged" >&2
         exit 1
     fi
-    cp ${speciesrax_selection} speciesrax_family_selection.tsv
-    cp ${speciesrax_coverage} speciesrax_selected_species_coverage.tsv
+    # These audit tables are already staged under their final output names.
+    # Validate them in place instead of copying a file onto itself, which GNU
+    # cp treats as an error under `set -e`.
+    for upstream_audit in "${speciesrax_selection}" "${speciesrax_coverage}"
+    do
+        if [ ! -s "\$upstream_audit" ]; then
+            echo "Missing or empty upstream SpeciesRax audit: \$upstream_audit" >&2
+            exit 1
+        fi
+    done
 
     echo "[FAMILIES]" > speciesrax_orthogroup.families
     while IFS=\$'\\t' read -r og tree map_link

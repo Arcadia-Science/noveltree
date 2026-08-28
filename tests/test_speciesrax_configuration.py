@@ -44,6 +44,17 @@ def test_speciesrax_preserves_an_explicit_reference_root():
     assert "Channel.value([])" in main
 
 
+def test_speciesrax_validates_staged_audits_without_copying_them_onto_themselves():
+    module = (REPO_ROOT / "modules" / "local" / "speciesrax.nf").read_text()
+
+    assert "cp ${speciesrax_selection} speciesrax_family_selection.tsv" not in module
+    assert (
+        'for upstream_audit in "${speciesrax_selection}" "${speciesrax_coverage}"'
+        in module
+    )
+    assert "Missing or empty upstream SpeciesRax audit" in module
+
+
 def test_reference_root_transfer_validates_the_chronogram():
     script = (REPO_ROOT / "bin" / "root_species_tree_from_reference.py").read_text()
     calibration = (
