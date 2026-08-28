@@ -24,7 +24,11 @@ workflow ZOOGLE {
     //
     // PROTEIN_PROPERTIES: physicochemical properties and AA composition for all gene families
     //
-    ch_all_og_original_fas = spptree_fas.concat(genetree_fas)
+    // Orthogroup routing also carries the authoritative mapping used by the
+    // alignment/reconciliation path. Zoogle only needs the original FASTA.
+    ch_all_og_original_fas = spptree_fas
+        .concat(genetree_fas)
+        .map { meta, fasta, family_map -> tuple(meta, fasta) }
     ch_physchem_input = ch_all_og_original_fas.join(all_clean_msas)
     PROTEIN_PROPERTIES(ch_physchem_input)
 

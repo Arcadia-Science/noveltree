@@ -1,13 +1,11 @@
-// Rename FASTA files and normalize sequence headers.
+// Normalize FASTA files and sequence identifiers once at the input boundary.
 // OrthoFinder uses filenames as species identifiers, so filenames are set
-// to the normalized species name. Headers are rewritten as
-// >{species_name}_{sanitized_id} where underscores in the protein ID are
-// replaced with hyphens. This ensures all downstream tools can extract the
-// species name by stripping everything after the last underscore.
+// to the normalized species name. The emitted mapping is the authoritative
+// source of gene-to-species identity for downstream reconciliation.
 process RENAME_FASTAS {
     tag "${meta.id}"
     label 'process_single'
-    container 'arcadiascience/rbase_4.2.2:1.0.0'
+    container 'arcadiascience/preprocess_proteomes:1.1.0'
     maxRetries 0
     errorStrategy 'terminate'
 
@@ -18,30 +16,16 @@ process RENAME_FASTAS {
 
     output:
     tuple val(meta), path("${meta.id}.fa"), emit: renamed
+    tuple val(meta), path("${meta.id}.protein_map.tsv"), emit: protein_map
+    tuple val(meta), path("${meta.id}.normalization_qc.json"), emit: normalization_qc
 
     script:
     """
-    awk -v species="${meta.id}" '
-    /^>/ {
-        # Extract first word (sequence ID)
-        id = \$1
-        sub(/^>/, "", id)
-
-        # If already prefixed with species name, strip it
-        prefix = species "_"
-        if (index(id, prefix) == 1) {
-            prot = substr(id, length(prefix) + 1)
-        } else {
-            prot = id
-        }
-
-        # Replace underscores with hyphens in protein part
-        gsub(/_/, "-", prot)
-
-        print ">" species "_" prot
-        next
-    }
-    { print }
-    ' ${fasta} > ${meta.id}.fa
+    normalize_proteome_fasta.py \
+        --input ${fasta} \
+        --species '${meta.id}' \
+        --output ${meta.id}.fa \
+        --mapping ${meta.id}.protein_map.tsv \
+        --qc ${meta.id}.normalization_qc.json
     """
 }

@@ -27,7 +27,7 @@ process MAFFT {
     storeDir "${params.outdir}/alignments/original"
 
     input:
-    tuple val(meta), path(fasta)
+    tuple val(meta), path(fasta), path(family_map)
 
     output:
     tuple val(meta), path("${fasta.baseName}_mafft.fa")          , emit: msas
@@ -38,29 +38,14 @@ process MAFFT {
 
     script:
     def args = task.ext.args ?: ''
-    def aln_trimmer = params.msa_trimmer
     """
-    # Be sure to remove any non-standard amino acid codes in the input sequences, as this
-    # can cause errors downstream and in parsing.
-    sed -E -i '/>/!s/U/X/g' ${fasta} # selenocysteine
-    sed -E -i '/>/!s/O/X/g' ${fasta} # pyrrolysine
-
     prefix=\$(basename "${fasta}" .fa)
     mafft \\
         --thread ${task.cpus} \\
         ${args} ${fasta} > \${prefix}_mafft.fa
 
-    # Create protein-species map files if we are not doing any alignment cleaning
-    if [ $aln_trimmer == "none" ]; then
-        # Now pull out the sequences, and split into a TreeRecs format mapping
-        # file, where each protein in the tree is a new line, listing species
-        # and then the protein
-        mkdir species_protein_maps
-        grep ">" \${prefix}_mafft.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/\${prefix}_map.link
-        rm prot && rm spp
-    fi
+    mkdir species_protein_maps
+    cp ${family_map} species_protein_maps/\${prefix}_map.link
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

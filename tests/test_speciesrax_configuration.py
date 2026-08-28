@@ -37,7 +37,23 @@ def test_speciesrax_preserves_an_explicit_reference_root():
     assert "--do-not-reconcile" in module
     assert "root_species_tree_from_reference.py" in module
     assert "--species-tree rooted_mininj_species_tree.newick" in module
+    assert "--observed species_trees/inferred_species_tree.newick" in module
     assert "BUILD_REFERENCE_CHRONOGRAM" in main
+    assert "Channel.value([])" in main
+    assert "no_reference_chronogram.sentinel" not in main
+    assert "path reference_chronogram" in module
+    assert "Channel.value([])" in main
+
+
+def test_speciesrax_validates_staged_audits_without_copying_them_onto_themselves():
+    module = (REPO_ROOT / "modules" / "local" / "speciesrax.nf").read_text()
+
+    assert "cp ${speciesrax_selection} speciesrax_family_selection.tsv" not in module
+    assert (
+        'for upstream_audit in "${speciesrax_selection}" "${speciesrax_coverage}"'
+        in module
+    )
+    assert "Missing or empty upstream SpeciesRax audit" in module
 
 
 def test_reference_root_transfer_validates_the_chronogram():

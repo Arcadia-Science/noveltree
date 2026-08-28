@@ -82,7 +82,8 @@ workflow MCL_INFLATION_SELECTION {
             0,    // min_num_seqs — not used for mcl_test_dataset
             0,    // min_num_spp — not used for mcl_test_dataset
             0,    // min_prop_spp_for_spptree — not used for mcl_test_dataset
-            0     // max_copy_num — not used for mcl_test_dataset
+            0,    // max_copy_num — not used for mcl_test_dataset
+            []    // canonical maps — not used for mcl_test_dataset
         )
 
         COGEQC(

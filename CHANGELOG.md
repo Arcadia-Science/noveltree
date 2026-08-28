@@ -3,6 +3,23 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Opt-in `arcadia_large` profile containing the OrthoFinder, SpeciesRax, bundle, ClipKIT, and large-family FastTree allocations validated on a 218-species plant dataset. Ordinary process resources remain aligned with the v2.0.0 release.
+- Canonical per-proteome and per-family protein-to-species mapping artifacts, with collision and leaf-set validation.
+- A dedicated reconciliation-ready tree layer that preserves original inferred trees while resolving multifurcations and bounding invalid branch lengths for SpeciesRax/GeneRax.
+
+### Changed
+- SpeciesRax family-size constraints are applied to OrthoFinder's native gene-count table before alignment and tree inference; excluded multicopy families continue through ordinary gene-family analysis.
+- Large-production resource scaling is isolated in `arcadia_large`; ordinary ClipKIT, FastTree, bundle, and OrthoFinder allocations follow the v2.0.0 resource policy.
+- Explicit-outgroup runs use an optional empty reference input rather than a placeholder sentinel file.
+
+### Removed
+- Cross-orthogroup chimera flagging and mutation of OrthoFinder membership.
+- Custom OrthoFinder checkpoint creation, restore, receipt, and cleanup stages; standard Nextflow caching and stable outputs provide resume behavior.
+- The one-off dataset-specific FastTree resume-audit utility.
+
 ## v2.0.0 - 2026-03-30
 
 ### Added

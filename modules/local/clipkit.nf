@@ -2,40 +2,13 @@ process CLIPKIT {
     tag "${meta.og}"
 
     cpus 1
-    time {
-        def bytes = fasta.size() as long
-        def mib = 1024L * 1024L
-
-        // Large FAMSA alignments can contain billions of alignment cells.
-        // Give them enough wall time on the first attempt so an otherwise
-        // successful trim is never discarded just because it crossed 6 h.
-        bytes >= 1024L * mib ? 168.h :
-        bytes >=  512L * mib ?  72.h :
-        bytes >=  256L * mib ?  48.h :
-        bytes >=  128L * mib ?  24.h : 12.h
-    }
+    time { 6.h * task.attempt }
     memory {
-        def bytes = fasta.size() as long
-        def mib = 1024L * 1024L
-
-        // Size from the aligned FASTA, not the longest unaligned protein.
-        // Progressive aligners can expand a few-kb protein family into a
-        // tens-of-thousands-column MSA, and ClipKIT 2.1.1 materializes several
-        // in-memory representations of that full alignment. These tiers leave
-        // headroom below AWS R-family instance boundaries while putting every
-        // known large production OOM family on a substantially larger first attempt.
-        def base_gb = bytes >= 1024L * mib ? 480L :
-                      bytes >=  512L * mib ? 240L :
-                      bytes >=  256L * mib ? 120L :
-                      bytes >=  128L * mib ?  60L :
-                      bytes >=   64L * mib ?  30L : 8L
-
-        // A retry jumps one full instance tier instead of adding a few GB.
-        // Cap at 480 GB so the container still fits on a 512-GiB worker after
-        // accounting for the operating system and ECS agent.
-        def retry_multiplier = task.attempt > 1 ? 2L : 1L
-        def requested_gb = Math.min(base_gb * retry_multiplier, 480L)
-        def requested = requested_gb.GB
+        def n = (meta?.n_seq ?: 50) as long
+        def L = (meta?.max_len ?: 500) as long
+        def estimated_gb = Math.max(4L, (long)(n * L * 20L / (1024L * 1024L * 1024L)) + 1L)
+        def capped_gb = (int) Math.min(estimated_gb, 64L)
+        def requested = capped_gb.GB * task.attempt
         def max_mem = params.max_memory as nextflow.util.MemoryUnit
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }
@@ -45,7 +18,7 @@ process CLIPKIT {
     storeDir "${params.outdir}/alignments/trimmed"
 
     input:
-    tuple val(meta), path(fasta)              // Filepaths to the MSAs
+    tuple val(meta), path(fasta), path(family_map)
 
     output:
     tuple val(meta), path("${fasta.baseName}_clipkit.fa")  , emit: cleaned_msas
@@ -61,8 +34,6 @@ process CLIPKIT {
     def min_seq = params.min_num_seq_per_og
     def min_spp = params.min_num_spp_per_og
     """
-    echo "ClipKIT input: ${fasta} (\$(stat -c %s ${fasta}) bytes); allocated memory: ${task.memory}; time limit: ${task.time}" >&2
-
     # Get the alignment prefix (strip .fa extension, preserving aligner provenance)
     prefix=\$(basename "$fasta" .fa)
 
@@ -86,9 +57,13 @@ process CLIPKIT {
     # Verify the trimmed alignment still meets minimum sequence/species thresholds.
     # Trimming can remove sequences, potentially dropping an OG below the filters
     # that were applied to the raw FASTA files.
-    if [ -f \${prefix}_clipkit.fa ]; then
+    if [ -s \${prefix}_clipkit.fa ]; then
         n_seq=\$(grep -c ">" \${prefix}_clipkit.fa || true)
-        n_spp=\$(grep ">" \${prefix}_clipkit.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+        subset_gene_species_map.py \
+            --mapping ${family_map} \
+            --fasta \${prefix}_clipkit.fa \
+            --output \${prefix}_map.link
+        n_spp=\$(cut -f2 \${prefix}_map.link | sort -u | wc -l | tr -d ' ')
     else
         n_seq=0
         n_spp=0
@@ -101,14 +76,7 @@ process CLIPKIT {
         touch \${prefix}_clipkit.fa
         touch species_protein_maps/\${prefix}_map.link
     else
-        # Create a protein-species map-file:
-        # Pull out the sequences, and split into a TreeRecs format mapping
-        # file, where each protein in the tree is a new line, listing species
-        # and then the protein
-        grep ">" \${prefix}_clipkit.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/\${prefix}_map.link
-        rm prot && rm spp
+        mv \${prefix}_map.link species_protein_maps/\${prefix}_map.link
     fi
 
     cat <<-END_VERSIONS > versions.yml

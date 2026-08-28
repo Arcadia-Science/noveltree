@@ -29,7 +29,7 @@ process WITCH {
     storeDir "${params.outdir}/alignments/original"
 
     input:
-    tuple val(meta), path(fasta)
+    tuple val(meta), path(fasta), path(family_map)
 
     output:
     tuple val(meta), path("${fasta.baseName}_witch.fa"), emit: msas, optional: true
@@ -49,11 +49,6 @@ process WITCH {
     if [ -d "alignments/" ]; then
         rm -rf alignments/
     fi
-
-    # Be sure to remove any non-standard amino acid codes in the input sequences, as this
-    # can cause errors downstream and in parsing.
-    sed -E -i '/>/!s/U/X/g' ${fasta} # selenocysteine
-    sed -E -i '/>/!s/O/X/g' ${fasta} # pyrrolysine
 
     # Run WITCH alignment (failure exits non-zero → Nextflow ignores, routes to fallback)
     witch-msa \\
@@ -91,16 +86,22 @@ process WITCH {
     # Verify the cleaned alignment meets minimum thresholds.
     # If QC fails, remove the output so nothing is emitted (optional: true handles it).
     n_seq=\$(grep -c ">" ${og}_witch.fa || true)
-    n_spp=\$(grep ">" ${og}_witch.fa | sed "s/>//" | sed "s/_[^_]*\$//" | sort -u | wc -l | tr -d ' ')
+    if [ "\$n_seq" -gt 0 ]; then
+        subset_gene_species_map.py \
+            --mapping ${family_map} \
+            --fasta ${og}_witch.fa \
+            --output ${og}_map.link
+        n_spp=\$(cut -f2 ${og}_map.link | sort -u | wc -l | tr -d ' ')
+    else
+        n_spp=0
+    fi
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
         rm ${og}_witch.fa
     else
-        # Build species-protein mapping file
+        # Propagate the authoritative species-protein mapping after subsetting
+        # it to sequences retained by WITCH's masking and length filters.
         mkdir -p species_protein_maps
-        grep ">" ${og}_witch.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
-        paste prot spp > species_protein_maps/${og}_map.link
-        rm prot && rm spp
+        mv ${og}_map.link species_protein_maps/${og}_map.link
     fi
     """
 }

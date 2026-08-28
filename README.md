@@ -74,7 +74,7 @@ NovelTree supports three workflow modes to accommodate different use cases and c
 | Time-calibrated species tree |    ✗     |     ✗      |    ✓     |
 | Phylo-dist analysis          |    ✗     |     ✗      |    ✓     |
 
-_Adaptive mode routes families through MAFFT (≤200 seqs), WITCH (≤3000), and FAMSA (>3000)._
+_Adaptive mode routes families through MAFFT (≤200 seqs), WITCH (≤1000), and FAMSA (>1000)._
 
 **Which mode should I use?** Use **simplified** mode (the default) for most analyses. Use **full** for smaller datasets (≤30 species) where you want additional analyses (BUSCO, per-family GeneRax). Use **zoogle** when you need physicochemical distance analysis for organism prioritization.
 
@@ -137,6 +137,24 @@ nextflow run . \
 ```
 
 The `awsbatch` profile includes optimized executor settings (queue size of 1000 jobs) and automatic report overwriting for seamless pipeline resumption.
+
+Arcadia's normal production profile keeps ordinary datasets on baseline
+allocations. For exceptionally large datasets, opt into the high-memory
+OrthoFinder and SpeciesRax allocations validated on a 218-species plant
+plant run:
+
+```bash
+nextflow run . -profile arcadia_large \
+  --input samplesheet.csv \
+  --outdir 's3://bucket/results' \
+  -work-dir 's3://bucket/work' \
+  --ncbi_email you@example.com
+```
+
+Only OrthoFinder MCL and SpeciesRax are moved to the configured On-Demand
+queue. The profile also restores the empirically validated scheduling footprint
+for bundle tasks and input-size-aware ClipKIT and large-family FastTree jobs.
+Biological parameters and method selection are unchanged.
 
 **Requirements:**
 
@@ -250,8 +268,8 @@ flowchart TD
     MIX --> PPQ{"Preprocessing<br/>enabled?"}
     PPQ -->|yes| PP["PREPROCESS_PROTEOMES<br/>TransDecoder · Isoform filter<br/>Min length · Redundancy removal"]
     PPQ -->|no| RENAME
-    PP --> RENAME["RENAME_FASTAS<br/>Normalize species names"]
-    RENAME --> OUT["Renamed proteomes<br/>(ready for OrthoFinder)"]
+    PP --> RENAME["RENAME_FASTAS<br/>Canonical IDs · residue cleanup<br/>authoritative mapping"]
+    RENAME --> OUT["Canonical proteomes + maps<br/>(ready for OrthoFinder)"]
 ```
 
 </details>
@@ -293,8 +311,8 @@ flowchart TD
 
     MODE -->|adaptive| BRANCH{"Family size?"}
     BRANCH -->|"≤200 seqs"| MAFFT["MAFFT<br/>(E-INS-i / L-INS-i)"]
-    BRANCH -->|"201–3000"| WITCH["WITCH"]
-    BRANCH -->|">3000"| FAMSA["FAMSA"]
+    BRANCH -->|"201–1000"| WITCH["WITCH"]
+    BRANCH -->|">1000"| FAMSA["FAMSA"]
     MAFFT -.->|failure| FAMSA_FB["FAMSA<br/>(fallback)"]
     WITCH -.->|failure| FAMSA_FB
     MODE -->|single| SINGLE["Selected Aligner"]

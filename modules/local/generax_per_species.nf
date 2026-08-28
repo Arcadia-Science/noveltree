@@ -53,24 +53,6 @@ process GENERAX_PER_SPECIES {
     def args = task.ext.args ?: ''
     def og   = "${meta.og}"
     """
-    # Recode selenocysteine as a gap character:
-    # RAxML-NG (used under the hood by SpeciesRax and
-    # GeneRax) cannot handle these. Even if rare,
-    # their inclusion leads a number of gene families
-    # to be excluded from analyses.
-    sed -E -i '/>/!s/U/X/g' *.fa
-
-    # Do the same for Pyrrolysine
-    sed -E -i '/>/!s/O/X/g' *.fa
-
-    # Repair malformed cached mappings in this task-local staged copy. Protein
-    # identifiers are consistently Genus-species_<protein-id>; the species tree
-    # provides the authoritative set of valid species labels.
-    normalize_gene_species_mapping.py \\
-        --mapping ${map_link} \\
-        --species-tree ${species_tree} \\
-        --orthogroup ${og}
-
     # Populate the family file for this gene family for the
     # analysis with GeneRax
     # We will be using LG+G4+F for all gene families
@@ -80,18 +62,6 @@ process GENERAX_PER_SPECIES {
     echo "mapping = ${map_link}" >> ${og}.family
     echo "alignment = $alignment" >> ${og}.family
     echo "subst_model = LG+G4+F" >> ${og}.family
-
-    # Resolve polytomies and put all resulting branch lengths inside libpll's
-    # optimization bounds. This is done after resolution so its new zero-length
-    # edges cannot be inflated to GeneRax's internal 0.1 default, while tiny
-    # positive FastTree branches cannot remain below libpll's 1e-6 minimum.
-    resolve_polytomies.py \
-        ${gene_tree} \
-        ${gene_tree}.resolved \
-        --min-branch-length 1e-6 \
-        --max-branch-length 100 \
-        --branch-length-qc ${og}_branch_length_qc.tsv
-    mv ${gene_tree}.resolved ${gene_tree}
 
     mpiexec \\
         -np ${task.cpus} \\
@@ -124,11 +94,6 @@ process GENERAX_PER_SPECIES {
 
     # Extract GeneRax-labeled species tree (has Node_X_Y_0 internal labels, identical across all OGs)
     cp $og/species_trees/inferred_species_tree.newick generax_labeled_species_tree.newick
-
-    # Preserve branch-length adjustment counts inside the full GeneRax archive
-    # without adding a new declared process output. The latter would invalidate
-    # storeDir reuse for every family completed before this QC file existed.
-    cp ${og}_branch_length_qc.tsv $og/
 
     # Archive full GeneRax output, then replace with clean structure
     tar -czf ${og}_full_output.tar.gz $og/

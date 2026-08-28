@@ -111,6 +111,13 @@ def check_samplesheet(file_in, file_out):
                 print(f"WARNING: Species name normalized: {original_species} -> {species}")
             if not species:
                 print_error("Species name is empty!", "Line", line)
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.\-]*", species):
+                print_error(
+                    "species must contain only letters, digits, dots, and hyphens "
+                    "after normalization",
+                    "Line",
+                    line,
+                )
 
             # Validate input_type
             if input_type.lower() not in ("proteins", "transcriptome"):

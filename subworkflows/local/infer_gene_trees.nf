@@ -34,6 +34,7 @@ if (params.tree_method == "iqtree") {
 if (params.iqtree_fasttree_fallback && params.tree_method == "iqtree") {
     include { FASTTREE as FASTTREE_FALLBACK   } from '../../modules/local/fasttree'
 }
+include { PREPARE_RECONCILIATION_TREE } from '../../modules/local/prepare_reconciliation_tree'
 
 workflow INFER_GENE_TREES {
     take:
@@ -57,12 +58,12 @@ workflow INFER_GENE_TREES {
         // routing to FAMSA_FALLBACK.  We check storeDir upfront.
         def alnStore = "${params.outdir}/alignments/original"
 
-        tiered.tier1.branch { meta, fasta ->
+        tiered.tier1.branch { meta, fasta, family_map ->
             has_famsa: file("${alnStore}/${fasta.baseName}_famsa.fa").exists()
             needs_aligner: true
         }.set { tier1_routed }
 
-        tiered.tier2.branch { meta, fasta ->
+        tiered.tier2.branch { meta, fasta, family_map ->
             has_famsa: file("${alnStore}/${fasta.baseName}_famsa.fa").exists()
             needs_aligner: true
         }.set { tier2_routed }
@@ -81,21 +82,21 @@ workflow INFER_GENE_TREES {
         // producing no output for that OG — route it to FAMSA_FALLBACK.
         tier1_produced = MAFFT_TIER1.out.msas.map { meta, aln -> [meta.og, true] }
         newly_failed_tier1 = tier1_routed.needs_aligner
-            .map { meta, fasta -> [meta.og, true] }
+            .map { meta, fasta, family_map -> [meta.og, true] }
             .join(tier1_produced, remainder: true)
             .filter { it[2] == null }          // no match in output → vanished
             .map { it[0] }                     // OG id
-            .join(tier1_routed.needs_aligner.map { meta, fasta -> [meta.og, meta, fasta] })
-            .map { og, meta, fasta -> [meta, fasta] }
+            .join(tier1_routed.needs_aligner.map { meta, fasta, family_map -> [meta.og, meta, fasta, family_map] })
+            .map { og, meta, fasta, family_map -> [meta, fasta, family_map] }
 
         tier2_produced = WITCH_TIER2.out.msas.map { meta, aln -> [meta.og, true] }
         newly_failed_tier2 = tier2_routed.needs_aligner
-            .map { meta, fasta -> [meta.og, true] }
+            .map { meta, fasta, family_map -> [meta.og, true] }
             .join(tier2_produced, remainder: true)
             .filter { it[2] == null }
             .map { it[0] }
-            .join(tier2_routed.needs_aligner.map { meta, fasta -> [meta.og, meta, fasta] })
-            .map { og, meta, fasta -> [meta, fasta] }
+            .join(tier2_routed.needs_aligner.map { meta, fasta, family_map -> [meta.og, meta, fasta, family_map] })
+            .map { og, meta, fasta, family_map -> [meta, fasta, family_map] }
 
         // Run FAMSA fallback: fresh failures + pre-existing fallback OGs
         FAMSA_FALLBACK(
@@ -125,7 +126,11 @@ workflow INFER_GENE_TREES {
     }
 
     if (params.msa_trimmer != 'none') {
-        TRIM_MSAS(all_msas)
+        trim_inputs = all_msas
+            .map { meta, msa -> tuple(meta.og, meta, msa) }
+            .join(all_map_links.map { meta, mapping -> tuple(meta.og, mapping) })
+            .map { og, meta, msa, mapping -> tuple(meta, msa, mapping) }
+        TRIM_MSAS(trim_inputs)
         // Filter out empty files (QC-failed OGs produce empty placeholders for storeDir)
         map_link = TRIM_MSAS.out.map_link.filter { meta, f -> f.size() > 0 }
         cleaned_msas = TRIM_MSAS.out.cleaned_msas.filter { meta, f -> f.size() > 0 }
@@ -170,21 +175,35 @@ workflow INFER_GENE_TREES {
 
             FASTTREE_FALLBACK(newly_failed.mix(routed.has_ft), params.tree_model)
 
-            phylogeny = TREES.out.phylogeny
+            raw_phylogeny = TREES.out.phylogeny
                 .mix(FASTTREE_FALLBACK.out.phylogeny)
                 .mix(FASTTREE_TIER2.out.phylogeny)
         } else {
             TREES(tree_tiered.iqtree, params.tree_model)
-            phylogeny = TREES.out.phylogeny.mix(FASTTREE_TIER2.out.phylogeny)
+            raw_phylogeny = TREES.out.phylogeny.mix(FASTTREE_TIER2.out.phylogeny)
         }
     } else {
         // FastTree selected globally: run it on every family.
         TREES(cleaned_msas, params.tree_model)
-        phylogeny = TREES.out.phylogeny
+        raw_phylogeny = TREES.out.phylogeny
     }
 
+    // Preserve the tree inferer's output unchanged in gene_family_trees/original.
+    // Reconciliation receives a separately validated, binary, numerically safe
+    // copy so tool-specific constraints never mutate the scientific source tree.
+    reconciliation_inputs = raw_phylogeny
+        .map { meta, tree -> tuple(meta.og, meta, tree) }
+        .join(map_link.map { meta, mapping -> tuple(meta.og, mapping) })
+        .join(cleaned_msas.map { meta, alignment -> tuple(meta.og, alignment) })
+        .map { og, meta, tree, mapping, alignment ->
+            tuple(meta, tree, mapping, alignment)
+        }
+    PREPARE_RECONCILIATION_TREE(reconciliation_inputs)
+
     emit:
-    phylogeny
+    phylogeny = PREPARE_RECONCILIATION_TREE.out.tree
+    original_phylogeny = raw_phylogeny
+    reconciliation_qc = PREPARE_RECONCILIATION_TREE.out.qc
     map_link
     cleaned_msas
 }
