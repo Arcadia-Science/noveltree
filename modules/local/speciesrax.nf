@@ -149,7 +149,7 @@ process SPECIESRAX {
     mv SpeciesRax/* .
     validate_root_split.py \
         --expected rooted_mininj_species_tree.newick \
-        --observed inferred_species_tree.newick \
+        --observed species_trees/inferred_species_tree.newick \
         --qc-output species_tree_root_qc.tsv
     rm -rf reconciliations results SpeciesRax MiniNJ
     mv species_trees/* .

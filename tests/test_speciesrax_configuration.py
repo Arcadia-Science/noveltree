@@ -37,6 +37,7 @@ def test_speciesrax_preserves_an_explicit_reference_root():
     assert "--do-not-reconcile" in module
     assert "root_species_tree_from_reference.py" in module
     assert "--species-tree rooted_mininj_species_tree.newick" in module
+    assert "--observed species_trees/inferred_species_tree.newick" in module
     assert "BUILD_REFERENCE_CHRONOGRAM" in main
     assert "Channel.value([])" in main
     assert "no_reference_chronogram.sentinel" not in main
