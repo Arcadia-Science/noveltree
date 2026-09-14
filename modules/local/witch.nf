@@ -20,10 +20,7 @@ process WITCH {
         requested.compareTo(max_mem) > 0 ? max_mem : requested
     }
 
-    container 'arcadiascience/witch_1.0.10:1.0.0'
-    // WITCH may write to its install directory, requiring writable container filesystem
-    containerOptions = workflow.containerEngine == 'docker' ? '--user root' : \
-        (workflow.containerEngine == 'singularity' ? '--writable-tmpfs' : '')
+    container 'arcadiascience/witch_1.0.10:1.0.1'
 
     stageInMode = 'copy'
     storeDir "${params.outdir}/alignments/original"
@@ -32,6 +29,9 @@ process WITCH {
     tuple val(meta), path(fasta), path(family_map)
 
     output:
+    // One required outcome prevents storeDir from accepting an empty directory.
+    // Existing successful alignments need no new sidecar to remain reusable.
+    tuple val(meta), path("${fasta.baseName}_witch.{fa,qc_failed.json}", arity: '1'), emit: outcome
     tuple val(meta), path("${fasta.baseName}_witch.fa"), emit: msas, optional: true
     tuple val(meta), path("species_protein_maps/${fasta.baseName}_map.link"), emit: map_link, optional: true
 
@@ -45,6 +45,10 @@ process WITCH {
     def min_seq  = params.min_num_seq_per_og
     def min_spp  = params.min_num_spp_per_og
     """
+    mkdir -p .witch_home
+    export HOME="\$PWD/.witch_home"
+    test -w "\$HOME"
+
     # If we are resuming a run, do some cleanup:
     if [ -d "alignments/" ]; then
         rm -rf alignments/
@@ -57,6 +61,17 @@ process WITCH {
         -t ${task.cpus} \\
         --molecule amino \\
         $args
+
+    # WITCH 1.0.10 exits early after backbone alignment when there are no
+    # queries. No insertion columns exist in that case, so aligned.fasta is
+    # already the masked result. Do not accept an arbitrary missing mask.
+    if [ ! -s alignments/aligned.masked.fasta ] &&
+       [ -f alignments/tree_decomp/backbone/queries.fasta ] &&
+       [ ! -s alignments/tree_decomp/backbone/queries.fasta ] &&
+       [ -s alignments/aligned.fasta ]; then
+        cp alignments/aligned.fasta alignments/aligned.masked.fasta
+    fi
+    test -s alignments/aligned.masked.fasta
 
     # Remove sequences with fewer than min_ungapped_length AAs remaining once masked.
     awk -v N=${min_len} -F "" \
@@ -84,7 +99,7 @@ process WITCH {
     rm -rf alignments/ tmp.fasta
 
     # Verify the cleaned alignment meets minimum thresholds.
-    # If QC fails, remove the output so nothing is emitted (optional: true handles it).
+    # QC failure emits the required record, but no alignment/map tuple.
     n_seq=\$(grep -c ">" ${og}_witch.fa || true)
     if [ "\$n_seq" -gt 0 ]; then
         subset_gene_species_map.py \
@@ -97,6 +112,8 @@ process WITCH {
     fi
     if [ "\$n_seq" -lt "$min_seq" ] || [ "\$n_spp" -lt "$min_spp" ]; then
         rm ${og}_witch.fa
+        printf '{"orthogroup":"%s","reason":"alignment_qc","n_sequences":%s,"n_species":%s}\n' \
+            '${og}' "\$n_seq" "\$n_spp" > ${og}_witch.qc_failed.json
     else
         # Propagate the authoritative species-protein mapping after subsetting
         # it to sequences retained by WITCH's masking and length filters.

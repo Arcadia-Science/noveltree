@@ -20,5 +20,10 @@ RUN apt-get update && \
 # Install WITCH v1.0.10 via pip (includes MAGUS backbone aligner and FastTree2)
 RUN pip install --no-cache-dir witch-msa==1.0.10
 
+# WITCH initializes both main.config and a pointer at import time. Keep both
+# in the task-local home, allowing arbitrary UIDs and read-only installations.
+COPY patch_user_config.py /tmp/patch_user_config.py
+RUN python /tmp/patch_user_config.py && rm /tmp/patch_user_config.py
+
 # Set the default command to launch an interactive Ubuntu shell
 CMD ["/bin/bash", "-l"]
