@@ -163,8 +163,16 @@ workflow INFER_GENE_TREES {
             // Run IQ-TREE only on OGs that do not already have a FastTree result.
             TREES(routed.needs_iqtree, params.tree_model)
 
-            // Detect vanished OGs: present in IQ-TREE input but absent from output.
-            tree_produced = TREES.out.phylogeny.map { meta, tree -> [meta.og, true] }
+            // Handled failures are schedulable immediately, independent of other tasks.
+            handled_failures = TREES.out.outcome
+                .filter { meta, result -> result.name.endsWith('.fallback.json') }
+                .map { meta, result -> tuple(meta.og, true) }
+                .join(routed.needs_iqtree.map { meta, aln -> tuple(meta.og, meta, aln) })
+                .map { og, reported, meta, aln -> tuple(meta, aln) }
+
+            // Safety net only for killed/lost tasks that returned NO outcome.
+            // Count failures as reported too, otherwise they would be submitted twice.
+            tree_produced = TREES.out.outcome.map { meta, result -> [meta.og, true] }
             newly_failed = routed.needs_iqtree
                 .map { meta, aln -> [meta.og, true] }
                 .join(tree_produced, remainder: true)
@@ -173,7 +181,7 @@ workflow INFER_GENE_TREES {
                 .join(routed.needs_iqtree.map { meta, aln -> [meta.og, meta, aln] })
                 .map { og, meta, aln -> [meta, aln] }
 
-            FASTTREE_FALLBACK(newly_failed.mix(routed.has_ft), params.tree_model)
+            FASTTREE_FALLBACK(handled_failures.mix(newly_failed).mix(routed.has_ft), params.tree_model)
 
             raw_phylogeny = TREES.out.phylogeny
                 .mix(FASTTREE_FALLBACK.out.phylogeny)

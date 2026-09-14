@@ -133,6 +133,16 @@
                     "description": "When using IQ-TREE, fall back to FastTree for gene families that fail or time out.",
                     "fa_icon": "fas fa-redo"
                 },
+                "iqtree_timeout": {
+                    "type": "string",
+                    "default": "3h",
+                    "description": "IQ-TREE computation budget in fallback mode, multiplied by the existing attempt scaling. Minimum 1 second."
+                },
+                "iqtree_timeout_grace": {
+                    "type": "string",
+                    "default": "5m",
+                    "description": "Additional task time for stopping IQ-TREE and reporting a fallback. Minimum 2 seconds."
+                },
                 "tree_iqtree_max": {
                     "type": "integer",
                     "default": 1000,

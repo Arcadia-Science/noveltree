@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Test double: exercise REAL NovelTree modules and channel routing."""
+import os
+from pathlib import Path
+import sys
+import time
+
+if "-version" in sys.argv:
+    print("IQ-TREE integration test double")
+    sys.exit(0)
+alignment = Path(sys.argv[sys.argv.index("-s") + 1])
+og = alignment.name.split("_")[0]
+events = Path(os.environ["FAKE_EVENT_DIR"])
+(events / (og + ".iq_start")).write_text(str(time.time()))
+if og == "OGfail":
+    sys.exit(1)
+if og == "OGexternal":
+    sys.exit(127)  # No task outcome: exercises the late safety net.
+if og == "OGtimeout":
+    Path(str(alignment) + ".treefile").write_text("(partial")
+    time.sleep(30)
+if og == "OGslow":
+    time.sleep(6)
+Path(str(alignment) + ".treefile").write_text("((A_p:0.1,B_p:0.1):0.1,(C_p:0.1,D_p:0.1):0.1);\n")
+(events / (og + ".iq_done")).write_text(str(time.time()))

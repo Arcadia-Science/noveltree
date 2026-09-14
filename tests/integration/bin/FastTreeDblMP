@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+import os
+from pathlib import Path
+import sys
+import time
+if len(sys.argv) == 1:
+    print("FastTree integration test double")
+else:
+    og = Path(sys.argv[-1]).name.split("_")[0]
+    with (Path(os.environ["FAKE_EVENT_DIR"]) / (og + ".ft_start")).open("a") as handle:
+        handle.write(str(time.time()) + "\n")
+    print("((A_p:0.1,B_p:0.1):0.1,(C_p:0.1,D_p:0.1):0.1);")
