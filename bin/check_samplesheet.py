@@ -5,6 +5,7 @@ import sys
 import re
 import errno
 import argparse
+import csv
 
 
 def parse_args(args=None):
@@ -43,14 +44,15 @@ def check_samplesheet(file_in, file_out):
 
     Optional columns (any order after required, any subset):
         has_uniprot_ids, include_in_mcl_test, transdecoder,
-        filter_isoforms, reference_proteome, busco_shallow, busco_broad
+        filter_isoforms, reference_proteome, busco_shallow, busco_broad,
+        annotation_gff3
 
     All boolean columns use yes/no. Defaults: 'no' for booleans, 'NA' for BUSCO.
     Output CSV always contains all columns in a fixed order.
     """
 
     # Valid extensions for protein FASTAs
-    PROTEIN_EXTENSIONS = (".fasta", ".fa", ".fasta.gz", ".fa.gz")
+    PROTEIN_EXTENSIONS = (".fasta", ".fa", ".faa", ".fasta.gz", ".fa.gz", ".faa.gz")
     NUCLEOTIDE_EXTENSIONS = (".fna", ".fna.gz")
     ALL_EXTENSIONS = PROTEIN_EXTENSIONS + NUCLEOTIDE_EXTENSIONS
 
@@ -66,17 +68,21 @@ def check_samplesheet(file_in, file_out):
         "reference_proteome": "no",
         "busco_shallow":      "NA",
         "busco_broad":        "NA",
+        "annotation_gff3":    "",
     }
     # Columns that accept free text (not validated as yes/no)
-    FREE_TEXT = {"busco_shallow", "busco_broad"}
+    FREE_TEXT = {"busco_shallow", "busco_broad", "annotation_gff3"}
     VALID_YES_NO = {"yes", "no"}
 
     # Output column order (fixed, always written)
     OUTPUT_COLS = ["species", "input_data", "input_type"] + list(OPTIONAL.keys())
 
     species_mapping_dict = {}
-    with open(file_in, "r", encoding="utf-8-sig") as fin:
-        header = [x.strip().strip('"') for x in fin.readline().strip().split(",")]
+    with open(file_in, "r", encoding="utf-8-sig", newline="") as fin:
+        reader = csv.reader(fin)
+        header = [x.strip() for x in next(reader, [])]
+        if len(set(header)) != len(header):
+            print_error("Duplicate column names in samplesheet header")
 
         # Validate required columns are first
         if header[: len(REQUIRED)] != REQUIRED:
@@ -90,12 +96,13 @@ def check_samplesheet(file_in, file_out):
         for col in OPTIONAL:
             has_col[col] = col in extra_header
 
-        for line in fin:
-            if not line.strip():
+        for fields in reader:
+            if not fields or not any(x.strip() for x in fields):
                 continue
-            lspl = [x.strip().strip('"') for x in line.strip().split(",")]
+            lspl = [x.strip() for x in fields]
+            line = repr(fields)
 
-            if len(lspl) < len(REQUIRED):
+            if len(lspl) < len(REQUIRED) or len(lspl) > len(header):
                 print_error(
                     f"Invalid number of columns (minimum = {len(REQUIRED)})!",
                     "Line", line,
@@ -146,6 +153,13 @@ def check_samplesheet(file_in, file_out):
                 opt[col] = val
 
             # Cross-field validations
+            if opt["annotation_gff3"] and (input_type != "proteins" or opt["transdecoder"] == "yes"):
+                print_error("annotation_gff3 requires proteins and transdecoder=no", "Line", line)
+            if not input_data:
+                print_error("input_data is empty!", "Line", line)
+            for value in (input_data, opt["annotation_gff3"]):
+                if any(character in value for character in ('"', "'", "$", "\x60", "\n", "\r")):
+                    print_error("Input paths/URLs contain unsupported shell metacharacters", "Line", line)
             if opt["reference_proteome"] == "yes" and opt["has_uniprot_ids"] != "yes":
                 print_error(
                     "reference_proteome=yes requires has_uniprot_ids=yes!",
@@ -179,20 +193,18 @@ def check_samplesheet(file_in, file_out):
             if species not in species_mapping_dict:
                 species_mapping_dict[species] = [row_data]
             else:
-                if row_data in species_mapping_dict[species]:
-                    print_error("Samplesheet contains duplicate rows!", "Line", line)
-                else:
-                    species_mapping_dict[species].append(row_data)
+                print_error("Samplesheet contains duplicate species identifiers!", "Line", line)
 
     # Write normalized output
     if len(species_mapping_dict) > 0:
         out_dir = os.path.dirname(file_out)
         make_dir(out_dir)
-        with open(file_out, "w") as fout:
-            fout.write(",".join(OUTPUT_COLS) + "\n")
+        with open(file_out, "w", newline="") as fout:
+            writer = csv.writer(fout, lineterminator="\n")
+            writer.writerow(OUTPUT_COLS)
             for species in sorted(species_mapping_dict.keys()):
                 for row_data in species_mapping_dict[species]:
-                    fout.write(",".join([species] + row_data) + "\n")
+                    writer.writerow([species] + row_data)
     else:
         print_error("No entries to process!", f"Samplesheet: {file_in}")
 

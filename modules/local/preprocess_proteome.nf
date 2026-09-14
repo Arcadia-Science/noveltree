@@ -17,7 +17,7 @@ process PREPROCESS_PROTEOME {
     task.ext.when == null || task.ext.when
 
     script:
-    def skip_cdhit = meta.reference_proteome == 'yes'
+    def skip_cdhit = meta.reference_proteome == 'yes' || meta.gene_filtered == true
     def cdhit_threshold = meta.transdecoder == 'yes' ? '0.97' : '1.00'
     """
     # Decompress if gzipped
@@ -44,7 +44,7 @@ process PREPROCESS_PROTEOME {
 
     # CD-HIT clustering (conditional on meta flags)
     if [ "${skip_cdhit}" == "true" ]; then
-        # Reference proteomes: skip CD-HIT (already one protein per gene)
+        # Keep distinct annotated genes, including identical protein sequences.
         cp length_filtered.fasta "${meta.id}_preprocessed.fasta"
     else
         cd-hit -i length_filtered.fasta -o "${meta.id}_preprocessed.fasta" \

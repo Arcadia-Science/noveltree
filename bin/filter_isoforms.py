@@ -14,13 +14,16 @@ If no pattern matches, each sequence is treated as its own group (all kept).
 
 import re
 import sys
+from pathlib import Path
+
+from normalize_proteome_fasta import open_text
 
 
 def parse_fasta(filepath):
     """Yield (header, sequence) tuples from a FASTA file."""
     header = None
     seq_parts = []
-    with open(filepath) as f:
+    with open_text(Path(filepath)) as f:
         for line in f:
             line = line.rstrip()
             if line.startswith(">"):
@@ -46,7 +49,7 @@ def extract_gene_id(header):
         return m.group(1)
 
     # Pattern 2: gene=GENENAME (NCBI RefSeq style)
-    m = re.search(r"\bgene=(\S+)", full_header)
+    m = re.search(r"\bgene=([^\s\]]+)", full_header)
     if m:
         return m.group(1)
 
@@ -72,12 +75,20 @@ def extract_gene_id(header):
 def filter_isoforms(input_path, output_path):
     """Keep only the longest sequence per gene group."""
     gene_best = {}  # gene_id → (header, sequence, length)
+    unrecognized = 0
 
     for header, seq in parse_fasta(input_path):
         gene_id = extract_gene_id(header)
+        if gene_id == header.split()[0]:
+            unrecognized += 1
         seq_len = len(seq)
         if gene_id not in gene_best or seq_len > gene_best[gene_id][2]:
             gene_best[gene_id] = (header, seq, seq_len)
+
+    if unrecognized:
+        print(f"WARNING: {unrecognized} proteins have no recognized gene-grouping header; "
+              "retaining them as separate groups. Supply a matched annotation_gff3 for "
+              "authoritative gene-level filtering.", file=sys.stderr)
 
     with open(output_path, "w") as out:
         for gene_id in gene_best:

@@ -65,10 +65,12 @@ process DOWNLOAD_INPUT {
         def ext = url_basename.endsWith('.fsa_nt.gz') ? '.fna.gz' :
                   url_basename.endsWith('.fna.gz') ? '.fna.gz' :
                   url_basename.endsWith('.fa.gz')  ? '.fa.gz' :
+                  url_basename.endsWith('.faa.gz') ? '.fasta.gz' :
                   url_basename.endsWith('.fasta.gz') ? '.fasta.gz' :
                   url_basename.endsWith('.fna') ? '.fna' :
                   url_basename.endsWith('.fasta') ? '.fasta' :
                   url_basename.endsWith('.fa') ? '.fa' :
+                  url_basename.endsWith('.faa') ? '.fasta' :
                   '.fasta'  // default for API URLs with no extension
         """
         wget -q -O "${meta.id}_downloaded${ext}" "${source}"

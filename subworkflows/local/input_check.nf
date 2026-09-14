@@ -13,7 +13,7 @@ workflow INPUT_CHECK {
 
     SAMPLESHEET_CHECK.out
         .csv
-        .splitCsv (header:true, sep:',')
+        .splitCsv (header:true, sep:',', quote: '"')
         .map { create_prots_channel(it) }
         .branch {
             remote: it[0].needs_download == true
@@ -47,6 +47,7 @@ def create_prots_channel(LinkedHashMap row) {
         meta.reference_proteome = row.reference_proteome
         meta.busco_shallow = row.busco_shallow
         meta.busco_broad = row.busco_broad
+        meta.annotation_gff3 = row.annotation_gff3 ?: ''
 
     // Detect source type from input_data column value
     def is_url = row.input_data.startsWith('http://') || row.input_data.startsWith('https://') ||
@@ -58,14 +59,28 @@ def create_prots_channel(LinkedHashMap row) {
         meta.source_type = 'ncbi_refseq'
         // RefSeq proteomes always include isoforms — auto-override
         meta.filter_isoforms = 'yes'
+        if (!params.preprocess) {
+            log.warn "NCBI input '${meta.id}' is not being isoform-filtered: enable --preprocess to use its paired GFF3 annotation."
+        }
     } else if (is_uniprot) {
         meta.source_type = 'uniprot'
+    } else if (row.input_data.startsWith('s3://')) {
+        // Let Nextflow stage S3 objects; wget cannot download s3:// URLs.
+        meta.source_type = 's3'
     } else if (is_url) {
         meta.source_type = 'url'
     } else {
         meta.source_type = 'local'
     }
-    meta.needs_download = (meta.source_type != 'local')
+    meta.needs_download = !(meta.source_type in ['local', 's3'])
+    if (meta.annotation_gff3 && (!params.preprocess || meta.filter_isoforms != 'yes')) {
+        error "Species '${meta.id}' supplies annotation_gff3: enable --preprocess and filter_isoforms=yes."
+    }
+    meta.has_gff3 = !!meta.annotation_gff3 ||
+        (meta.source_type == 'ncbi_refseq' && params.preprocess)
+    if (meta.has_gff3 && meta.input_type != 'proteins') {
+        error "GFF3 protein mapping for '${meta.id}' requires input_type=proteins."
+    }
 
     // Guard: TransDecoder is for nucleotide inputs only. If the input mode
     // is 'proteins', running ORF prediction will produce garbage. Auto-fix
@@ -79,6 +94,6 @@ def create_prots_channel(LinkedHashMap row) {
     if (meta.needs_download) {
         return [meta, row.input_data]
     } else {
-        return [meta, file(row.input_data)]
+        return [meta, file(row.input_data, checkIfExists: true)]
     }
 }
