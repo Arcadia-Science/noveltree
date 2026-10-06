@@ -255,6 +255,8 @@ Alternatively, you can use the test dataset provided by Arcadia Science [here](h
 | `tree_model` | `"LG+F+G4"` | Amino acid substitution model for phylogenetic inference |
 | `outgroups` | — | Comma-separated species IDs for manual rooting of the Asteroid species tree. If set, SpeciesRax estimates branch lengths on this tree |
 | `iqtree_fasttree_fallback` | `true` | Automatically fall back to FastTree for IQ-TREE failures |
+| `iqtree_timeout` | `3h` | IQ-TREE computation budget in fallback mode; retains attempt-based scaling |
+| `iqtree_timeout_grace` | `5m` | Additional task time for stopping IQ-TREE and emitting its fallback record |
 
 ### Time Calibration (Zoogle Mode)
 
@@ -459,6 +461,28 @@ process {
 - `tree_model`: Model of amino acid substitution to be used for phylogenetic inference. Specified in parameter-file.
 - All other custom parameters should be specified in [`conf/modules.config`](../conf/modules.config).
 - [IQ-TREE documentation](http://www.iqtree.org/)
+
+With fallback enabled, IQ-TREE has its existing three-hour computation budget
+plus five minutes of task-level cleanup grace. `--iqtree_timeout` and
+`--iqtree_timeout_grace` control these separately; computation retains the
+existing attempt scaling. A custom process time limit must include both.
+CPU/memory requests, tree models, and direct-to-FastTree thresholds are unchanged.
+
+Handled tool exits, missing tree outputs and application timeouts emit
+`gene_family_trees/original/<alignment>_iqt.fallback.json`, recording the OG,
+reason, exit status and elapsed seconds. They immediately make that family's
+existing FastTree fallback eligible for scheduling, without waiting for
+unrelated IQ-TREE jobs. Executor capacity can still delay actual submission.
+A partial tree left by a failed/timed-out process is never published as success.
+Original IQ-TREE logs/checkpoints remain in the task work directory.
+
+External task kills/lost nodes (or setup failures that produce no outcome)
+still use the existing end-of-channel absence-detection safety net. They are
+not claimed to have immediate fallback. A family with an explicit outcome is
+excluded from this safety net, preventing duplicate fallback submissions.
+Disabling `--iqtree_fasttree_fallback` preserves direct IQ-TREE error behavior.
+Existing stored successful trees need no additional status file. No cache or
+`storeDir` reuse policy has been redesigned by this change.
 
 #### 8. MiniNJ initialization
 
