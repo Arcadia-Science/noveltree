@@ -415,11 +415,12 @@ process {
 - `--localpair --maxiterate 1000 --anysymbol`: Runs MAFFT L-INS-i. Iterative refinement method incorporating local pairwise alignment information. Highly accurate, but slower.
 - [MAFFT documentation](https://mafft.cbrc.jp/alignment/software/)
 
-##### [`WITCH`](../modules/nf-core-modified/witch.nf):
+##### [`WITCH`](../modules/local/witch.nf):
 
 - Parameters specified in [`conf/modules.config`](../conf/modules.config).
 - See [WITCH documentation](https://github.com/c5shen/WITCH) for detailed description of options.
-- **Known limitation (non-determinism):** WITCH selects its alignment backbone with an unseeded random sample, and the upstream `witch-msa` package exposes no option to set a random seed. As a result, WITCH alignments (and anything downstream of them) may vary slightly between runs on the same input. The proper long-term fix is an upstream `--seed` feature ([c5shen/WITCH](https://github.com/c5shen/WITCH)); we deliberately do not patch the third-party package internals.
+- **Known limitation (non-determinism):** WITCH selects its alignment backbone with an unseeded random sample, and the upstream `witch-msa` package exposes no option to set a random seed. As a result, WITCH alignments (and anything downstream of them) may vary slightly between runs on the same input. The proper long-term fix is an upstream `--seed` feature ([c5shen/WITCH](https://github.com/c5shen/WITCH)); the configuration-permissions patch does not change backbone sampling.
+- WITCH uses a task-local writable home and image `arcadiascience/witch_1.0.10:1.0.1`; it does not require root or a writable installation. Its required alignment-or-QC outcome prevents an empty directory from counting as a stored completion. Backbone-only results (no query sequences) are supported.
 
 ##### [`FAMSA`](../modules/local/famsa.nf):
 

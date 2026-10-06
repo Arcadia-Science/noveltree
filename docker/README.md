@@ -40,11 +40,23 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | `PARSE_PHYLOHOGS`, `PHYLO_PROFILES` | [phylo_profiles v1.0.0](./phylo_profiles/) | `arcadiascience/phylo_profiles:1.0.0` |
 | `PROTEIN_PROPERTIES` | [protein_properties v1.0.0](./physicochemical_props/) | `arcadiascience/protein_properties:1.0.0` |
 | `SELECT_INFLATION` | [select_mcl_inflation_params](./select_mcl_inflation_params/) | `arcadiascience/select_mcl_inflation_params_08302023:1.0.0` |
-| `WITCH` | [WITCH v1.0.10](./witch/) | `arcadiascience/witch_1.0.10:1.0.0` |
+| `WITCH` | [WITCH v1.0.10, task-local config patch](./witch/) | `arcadiascience/witch_1.0.10:1.0.1` |
 | `BUILD_REFERENCE_CHRONOGRAM` | [build_reference_chronogram v1.0.0](./build_reference_chronogram/) | `arcadiascience/build_reference_chronogram:1.0.0` |
 | `ZOOGLE_ANALYSIS`, `TIME_CALIBRATE_SPECIES_TREE`, `DATE_GENE_FAMILY_TREES` | [zoogle v1.2.0](./zoogle/) | `arcadiascience/zoogle:1.2.0` |
 
 ## Reproducibility and upstream availability
+
+WITCH image `1.0.1` requires a new build/publication before remote deployment:
+
+```bash
+docker build --platform linux/amd64 -t arcadiascience/witch_1.0.10:1.0.1 docker/witch
+```
+
+Build this image locally for testing; publication is a separate release step.
+The patch relocates
+WITCH's runtime-written configuration pointer out of site-packages and into
+the task-local home. It leaves bundled executables and alignment algorithms
+unchanged, and fails the image build if the pinned source no longer matches.
 
 Several Dockerfiles build tools directly from third-party GitHub repositories (e.g. Asteroid, DISCO, GeneRax, CIAlign, IQ-TREE 2, FAMSA). To keep builds reproducible, each of these is pinned to a specific upstream commit SHA or release tag rather than a moving branch. There are two independent layers of protection:
 
