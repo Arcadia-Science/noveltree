@@ -32,6 +32,7 @@ The first 3 columns are required. All remaining columns are optional — include
 | `include_in_mcl_test` | no | `no` | `yes` / `no` | Include in MCL inflation parameter testing. Requires `has_uniprot_ids=yes` |
 | `transdecoder` | no | `no` | `yes` / `no` | Run TransDecoder ORF prediction. Only valid with `input_type=transcriptome`. Auto-disabled if `input_type=proteins` |
 | `filter_isoforms` | no | `no` | `yes` / `no` | Filter to longest isoform per gene. Auto-set to `yes` for NCBI accessions |
+| `annotation_gff3` | no | blank | Local path or HTTPS/FTP/S3 location | Matched protein annotation (.gff/.gff3, optionally gzipped). Requires proteins, `--preprocess`, and `filter_isoforms=yes` |
 | `reference_proteome` | no | `no` | `yes` / `no` | Curated reference proteome — skips redundancy removal. Requires `has_uniprot_ids=yes` |
 | `busco_shallow` | no | `NA` | BUSCO lineage or `NA` | e.g. `primates_odb10`. Only used with `--busco true` |
 | `busco_broad` | no | `NA` | BUSCO lineage or `NA` | e.g. `eukaryota_odb10`. Only used with `--busco true` |
@@ -51,7 +52,7 @@ Preferred for model organisms with curated reference proteomes. The pipeline que
 
 **b) NCBI genome accession** — e.g. `GCA_030068145.1` or `GCF_000240725.1`
 
-For organisms with annotated genomes on NCBI. The pipeline uses the NCBI `datasets` CLI to download and extract the `protein.faa` file. Isoform filtering is auto-enabled since NCBI proteomes typically include multiple isoforms per gene.
+For organisms with annotated genomes on NCBI. With `--preprocess`, the pipeline downloads proteins and GFF3 together using NCBI Datasets and filters by annotated gene identity. A supplied `annotation_gff3` takes precedence over automatic annotation download. Without `--preprocess`, only proteins are downloaded and a warning explains that isoforms are not filtered.
 
 - **When to use:** The organism has an annotated genome on NCBI with protein predictions
 - **Format:** `GCA_` or `GCF_` followed by digits, optionally with version (e.g. `.1`)
@@ -118,6 +119,41 @@ Neurospora-crassa,euk_test_data/proteomes/Neurospora-crassa.fasta,proteins,yes,n
 | N. crassa | Local file | Pre-existing protein FASTA |
 
 ### Preprocessing Behavior (when `--preprocess true`)
+
+For local or URL-based NCBI proteins, supply the matching annotation explicitly:
+
+```csv
+species,input_data,input_type,filter_isoforms,annotation_gff3
+Lytechinus-pictus,/data/pictus.faa.gz,proteins,yes,/data/pictus.gff3.gz
+Lytechinus-variegatus,GCF_018143015.1,proteins,yes,
+```
+
+GFF3 filtering matches exact FASTA accessions (including versions) to CDS
+`protein_id`, follows transcript/gene parents, and groups by `GeneID` or an
+unambiguous parent gene feature. It does not group by display names or strip
+accession versions. Every input protein must map unambiguously: unmapped IDs,
+duplicate FASTA IDs, conflicting gene assignments and broken ancestry stop
+preprocessing with diagnostics. Use proteins and annotation from the same
+annotation release. Arbitrary TransDecoder products are not supported by
+this mapping route.
+
+The longest protein per gene is retained; one terminal stop is excluded from
+the length comparison, and equal lengths are resolved by lexical protein ID.
+Distinct genes remain distinct even if their protein sequences are identical:
+GFF3-verified representatives skip CD-HIT, but still undergo the existing
+residue cleanup and minimum-length filtering. Other inputs retain their
+existing header-based filtering/CD-HIT behavior. Header filtering warns when
+it cannot identify gene groups; it is not a substitute for matched annotation.
+
+Successful filtering writes `preprocessing/isofiltered/<species>_isoform_selection.tsv`
+and `<species>_isoform_qc.json`: input IDs, gene assignments, representatives,
+selection reasons, counts and source checksums. On failure, inspect these
+diagnostics in the failing task's work directory; failed-task outputs are not
+published by Nextflow. Original selected IDs connect the ledger to
+`preprocessing/final_proteomes/<species>.protein_map.tsv` after canonicalization.
+Paired NCBI downloads retain assembly/annotation metadata under `downloads/`.
+Supplied annotations are staged as actual task files, including S3 objects.
+Quote CSV fields containing commas; normalized species names must be unique.
 
 | `reference_proteome` | `transdecoder` | `filter_isoforms` | What Happens |
 |---------------------|---------------|-------------------|--------------|

@@ -24,7 +24,7 @@ The Docker image names follow this convention: `<BASE_NAME>:<SEMANTIC_VERSIONING
 | Process name | Docker image | Container |
 | --- | --- | --- |
 | `SAMPLESHEET_CHECK` | [python 3.9](./python/) | `arcadiascience/python_3.9` |
-| `DOWNLOAD_INPUT`, `TRANSDECODER`, `FILTER_ISOFORMS`, `PREPROCESS_PROTEOME` | [preprocess_proteomes v1.1.0](./preprocess_proteomes/) | `arcadiascience/preprocess_proteomes:1.1.0` |
+| `DOWNLOAD_INPUT`, `DOWNLOAD_NCBI_ANNOTATED`, `TRANSDECODER`, `FILTER_ISOFORMS`, `FILTER_ISOFORMS_GFF3`, `PREPROCESS_PROTEOME` | [preprocess_proteomes v1.1.0](./preprocess_proteomes/) | `arcadiascience/preprocess_proteomes:1.1.0` |
 | `RENAME_FASTAS` | [R v4.2.2](./rbase/) | `arcadiascience/rbase_4.2.2:1.0.0` |
 | `ANNOTATE_UNIPROT` | [bioservices v1.10.0](./bioservices/) | `arcadiascience/bioservices_1.10.0:1.0.0` |
 | `ASTEROID` | [Asteroid @ commit 3aae117d](./asteroid/) | `arcadiascience/asteroid_3aae117d-disco_20e10c33:1.0.0` |
